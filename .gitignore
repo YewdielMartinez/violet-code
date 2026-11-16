@@ -1,0 +1,35 @@
+node_modules/
+dist/
+!packages/design-tokens/dist/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+# Android
+apps/mobile/**/build/
+apps/mobile/.gradle/
+apps/mobile/local.properties
+*.apk
+*.aab
+*.jks
+*.keystore
+# .NET
+apps/core/**/bin/
+apps/core/**/obj/
+*.user
+# Datos: solo sintéticos. Nunca versionar datos reales.
+data/real/
+*.dump
+*.sql.gz
+docs
+# Android Studio
+apps/mobile/.idea/
+apps/mobile/captures/
+apps/mobile/**/*.iml
+
+# Builds
+apps/admin/dist/

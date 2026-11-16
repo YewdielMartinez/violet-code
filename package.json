@@ -1,0 +1,16 @@
+{
+  "name": "violet-code",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Violet Code — 2do Hackathon FIM-UAS 2026 × SEMUJERES Ahome (monorepo)",
+  "workspaces": [
+    "apps/admin",
+    "packages/*"
+  ],
+  "scripts": {
+    "tokens": "npm run build -w @violet-code/design-tokens"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

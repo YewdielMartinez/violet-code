@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      core: ${{ steps.f.outputs.core }}
+      admin: ${{ steps.f.outputs.admin }}
+      mobile: ${{ steps.f.outputs.mobile }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: f
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            core: ['apps/core/**']
+            admin: ['apps/admin/**', 'packages/**', 'package.json', 'package-lock.json']
+            mobile: ['apps/mobile/**', 'packages/design-tokens/**']
+
+  core:
+    needs: changes
+    if: needs.changes.outputs.core == 'true' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: apps/core } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: apps/core/global.json }
+      - run: dotnet restore
+      - run: dotnet build --no-restore -c Release
+      - run: dotnet test --no-build -c Release
+
+  admin:
+    needs: changes
+    if: needs.changes.outputs.admin == 'true' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run lint -w @violet-code/admin
+      - run: npm run build -w @violet-code/admin
+
+  mobile:
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: apps/mobile } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: violet-code-debug-apk
+          path: apps/mobile/app/build/outputs/apk/debug/*.apk
