@@ -2,9 +2,10 @@ import { lazy, Suspense, type ComponentType } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { ALL_PAGES } from './navigation';
+import { RequireAuth } from './RequireAuth';
 
-// Cada página es su propio chunk: la tabla de datos, gráficas, etc. solo se descargan
-// al entrar a la ruta que los usa (bundle-dynamic-imports).
+// Cada página es su propio chunk: solo se descarga al entrar a esa ruta.
+const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
 const DirectoryPage = lazy(() => import('@/features/directory/DirectoryPage'));
 const PendingModulePage = lazy(() => import('@/shared/ui/PendingModulePage'));
@@ -19,7 +20,19 @@ const pageFallback = <div className="h-64 animate-pulse rounded-3xl bg-surface-c
 
 export const router = createBrowserRouter([
   {
-    element: <AppLayout />,
+    path: '/login',
+    element: (
+      <Suspense fallback={null}>
+        <LoginPage />
+      </Suspense>
+    ),
+  },
+  {
+    element: (
+      <RequireAuth>
+        <AppLayout />
+      </RequireAuth>
+    ),
     children: [
       ...ALL_PAGES.map(({ path, label }) => {
         const Page = READY[path];

@@ -1,10 +1,28 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { themeHeadScript } from '@yewdiel21/motion-kit/theme';
 import { fileURLToPath, URL } from 'node:url';
 
+/**
+ * Inserta el script de tema de motion-kit en <head>: aplica tema y modo (claro/oscuro) guardados
+ * ANTES del primer pintado, sin destello. Misma clave que src/app/theme.ts.
+ */
+function motionKitTheme(): Plugin {
+  return {
+    name: 'motion-kit-theme',
+    transformIndexHtml: () => [
+      {
+        tag: 'script',
+        children: themeHeadScript({ default: 'purple', mode: 'system', storageKey: 'vc-theme' }),
+        injectTo: 'head-prepend',
+      },
+    ],
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [motionKitTheme(), react(), tailwindcss()],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
@@ -22,6 +40,7 @@ export default defineConfig({
   server: {
     port: 5173,
     // En desarrollo, /api y /health se reenvían a Violet Code Core (dotnet run → :5080).
+    // Mismo origen para el navegador: la cookie de sesión (SameSite=Strict) funciona.
     proxy: {
       '/api': 'http://localhost:5080',
       '/health': 'http://localhost:5080',
