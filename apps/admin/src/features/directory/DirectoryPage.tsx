@@ -1,14 +1,38 @@
 import { DataTable, EmptyState } from '@yewdiel21/motion-kit/react';
+import type { DataTableProps } from '@yewdiel21/motion-kit/react';
+// data-table compone menús, filtros, selects y paginación del kit: se cargan sus estilos aquí.
+import '@yewdiel21/motion-kit/css/components/data-table';
+import '@yewdiel21/motion-kit/css/components/filter-builder';
+import '@yewdiel21/motion-kit/css/components/menu';
+import '@yewdiel21/motion-kit/css/components/select';
+import '@yewdiel21/motion-kit/css/components/pagination';
+import '@yewdiel21/motion-kit/css/components/empty-state';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { useDirectory, type DirectoryEntry } from './api';
 
-const KIND_OPTIONS = [
-  { value: 'Institution', label: 'Instancia' },
-  { value: 'VioletPoint', label: 'Punto Violeta' },
-];
+type Row = DirectoryEntry & Record<string, unknown>;
 
-export function DirectoryPage() {
-  const { data, isLoading, isError, refetch } = useDirectory();
+// Configuración estática fuera del componente: la tabla no recibe un arreglo nuevo en cada render.
+const COLUMNS: DataTableProps<Row>['columns'] = [
+  { key: 'name', label: 'Nombre', sortable: true, searchable: true },
+  {
+    key: 'kind',
+    label: 'Tipo',
+    type: 'select',
+    filterable: true,
+    options: [
+      { value: 'Institution', label: 'Instancia' },
+      { value: 'VioletPoint', label: 'Punto Violeta' },
+    ],
+  },
+  { key: 'phone', label: 'Teléfono' },
+  { key: 'schedule', label: 'Horario' },
+  { key: 'address', label: 'Dirección', hidden: true },
+];
+const RETRY_ACTION = [{ id: 'retry', label: 'Reintentar' }];
+
+export default function DirectoryPage() {
+  const { data, isError, refetch } = useDirectory();
 
   return (
     <>
@@ -23,25 +47,14 @@ export function DirectoryPage() {
             illustration="error"
             title="No se pudo cargar el directorio"
             description="Verifica que Violet Code Core esté en ejecución."
-            actions={[{ id: 'retry', label: 'Reintentar' }]}
+            actions={RETRY_ACTION}
             onAction={() => refetch()}
           />
         </div>
-      ) : isLoading ? (
-        <div className="h-64 animate-pulse rounded-3xl bg-surface-container" />
+      ) : data ? (
+        <DataTable<Row> caption="Directorio" rows={data as Row[]} columns={COLUMNS} pageSize={10} />
       ) : (
-        <DataTable<DirectoryEntry & Record<string, unknown>>
-          caption="Directorio"
-          rows={(data ?? []) as Array<DirectoryEntry & Record<string, unknown>>}
-          columns={[
-            { key: 'name', label: 'Nombre', sortable: true, searchable: true },
-            { key: 'kind', label: 'Tipo', type: 'select', options: KIND_OPTIONS, filterable: true },
-            { key: 'phone', label: 'Teléfono' },
-            { key: 'schedule', label: 'Horario' },
-            { key: 'address', label: 'Dirección', hidden: true },
-          ]}
-          pageSize={10}
-        />
+        <div className="h-64 animate-pulse rounded-3xl bg-surface-container" />
       )}
     </>
   );

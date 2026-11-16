@@ -5,6 +5,7 @@
 
     <!-- allowBackup=false: los datos de la usuaria no se copian a respaldos en la nube. -->
     <application
+        android:name=".VioletApplication"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="false"

@@ -1,12 +1,24 @@
 import { StatCard } from '@yewdiel21/motion-kit/react';
+import '@yewdiel21/motion-kit/css/components/stat-card';
 import { PageHeader } from '@/shared/ui/PageHeader';
-import { useDirectory } from '@/features/directory/api';
+import { useDirectory, type DirectoryEntry } from '@/features/directory/api';
 import { ApiStatus } from './ApiStatus';
 
-export function DashboardPage() {
-  const { data = [], isLoading } = useDirectory();
-  const institutions = data.filter((e) => e.kind === 'Institution').length;
-  const violetPoints = data.filter((e) => e.kind === 'VioletPoint').length;
+/** Cuenta por tipo en un solo recorrido. */
+function countByKind(entries: DirectoryEntry[]) {
+  let institutions = 0;
+  let violetPoints = 0;
+  for (const e of entries) {
+    if (e.kind === 'Institution') institutions++;
+    else if (e.kind === 'VioletPoint') violetPoints++;
+  }
+  return { institutions, violetPoints };
+}
+
+export default function DashboardPage() {
+  // `select` deriva los conteos dentro de React Query: el componente solo se re-renderiza
+  // si cambian los números, no cada vez que llega el mismo directorio.
+  const { data, isLoading } = useDirectory(undefined, countByKind);
 
   return (
     <>
@@ -17,12 +29,12 @@ export function DashboardPage() {
       />
 
       <section aria-label="Indicadores" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {isLoading ? (
+        {isLoading || !data ? (
           <div className="h-32 animate-pulse rounded-3xl bg-surface-container" />
         ) : (
           <>
-            <StatCard label="Instancias en el directorio" value={institutions} countOnView />
-            <StatCard label="Puntos Violeta" value={violetPoints} countOnView />
+            <StatCard label="Instancias en el directorio" value={data.institutions} />
+            <StatCard label="Puntos Violeta" value={data.violetPoints} />
           </>
         )}
       </section>

@@ -1,7 +1,7 @@
 package mx.violetcode.mobile.feature.orientacion
 
 import androidx.compose.runtime.Composable
-import mx.violetcode.mobile.ui.components.PendingFeature
+import mx.violetcode.mobile.core.designsystem.component.PendingFeature
 
 /** Pendiente: violentómetro, triaje de orientación inicial y contenido offline (aprobado por SEMUJERES). */
 @Composable

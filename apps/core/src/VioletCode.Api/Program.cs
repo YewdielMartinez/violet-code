@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -11,6 +12,7 @@ using VioletCode.Modules.Identity;
 using VioletCode.Modules.Notifications;
 using VioletCode.Modules.Scheduling;
 using VioletCode.SharedKernel.Modules;
+using VioletCode.SharedKernel.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,8 +33,18 @@ foreach (var module in modules)
     module.Register(builder.Services, builder.Configuration);
 
 // ── Infraestructura transversal ──
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
+
+// Fuerza bruta: máx. 10 intentos de login/refresh por minuto por IP.
+builder.Services.AddRateLimiter(o =>
+{
+    o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    o.AddPolicy(RateLimitPolicies.Auth, http => RateLimitPartition.GetFixedWindowLimiter(
+        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+});
 
 builder.Services.AddCors(o => o.AddPolicy("admin", p => p
     .WithOrigins(builder.Configuration.GetSection("Cors:AdminOrigins").Get<string[]>() ?? [])
@@ -57,6 +69,8 @@ builder.Services
             ValidAudience = jwt["Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
             ClockSkew = TimeSpan.FromSeconds(30),
+            NameClaimType = StaffClaims.Name,
+            RoleClaimType = StaffClaims.Role,
         };
     });
 builder.Services.AddAuthorization();
@@ -77,6 +91,7 @@ else
 }
 
 app.UseCors("admin");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

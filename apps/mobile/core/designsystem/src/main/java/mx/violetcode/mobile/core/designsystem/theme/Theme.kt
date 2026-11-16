@@ -1,4 +1,4 @@
-package mx.violetcode.mobile.ui.theme
+package mx.violetcode.mobile.core.designsystem.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape

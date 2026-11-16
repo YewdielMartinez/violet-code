@@ -1,8 +1,9 @@
 import { EmptyState } from '@yewdiel21/motion-kit/react';
+import '@yewdiel21/motion-kit/css/components/empty-state';
 import { PageHeader } from './PageHeader';
 
 /** Página de un módulo aún no implementado. Reemplazar por la feature real en src/features/<modulo>. */
-export function PendingModulePage({ title }: { title: string }) {
+export default function PendingModulePage({ title }: { title: string }) {
   return (
     <>
       <PageHeader title={title} />

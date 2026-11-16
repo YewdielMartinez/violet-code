@@ -17,8 +17,14 @@ export interface DirectoryEntry {
   isEmergency: boolean;
 }
 
-export const useDirectory = (kind?: EntryKind) =>
-  useQuery({
+/**
+ * Directorio desde Core. Varias pantallas pueden llamarlo: React Query deduplica la petición.
+ * `select` (opcional, estable/fuera del componente) deriva datos sin re-renderizar de más.
+ */
+export function useDirectory<T = DirectoryEntry[]>(kind?: EntryKind, select?: (entries: DirectoryEntry[]) => T) {
+  return useQuery({
     queryKey: ['directory', kind ?? 'all'],
     queryFn: () => api<DirectoryEntry[]>(`/api/catalogs/directory${kind ? `?kind=${kind}` : ''}`),
+    select,
   });
+}

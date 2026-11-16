@@ -1,6 +1,14 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { BranchNav } from '@yewdiel21/motion-kit/react';
+import '@yewdiel21/motion-kit/css/components/branch-nav';
 import { NAVIGATION } from './navigation';
+
+// Estáticos: se calculan una vez, no en cada render (evita que BranchNav reciba props nuevas).
+const NAV_ITEMS = NAVIGATION.map((section) => ({
+  label: section.label,
+  children: section.items.map((item) => ({ label: item.label, value: item.path })),
+}));
+const ALL_SECTIONS_OPEN = NAVIGATION.map((_, i) => i);
 
 export function AppLayout() {
   const navigate = useNavigate();
@@ -21,13 +29,10 @@ export function AppLayout() {
 
         <BranchNav
           label="Navegación principal"
-          items={NAVIGATION.map((section) => ({
-            label: section.label,
-            children: section.items.map((item) => ({ label: item.label, value: item.path })),
-          }))}
-          defaultOpen={NAVIGATION.map((_, i) => i)}
+          items={NAV_ITEMS}
+          defaultOpen={ALL_SECTIONS_OPEN}
           defaultActive={pathname}
-          onSelect={(value) => navigate(value)}
+          onSelect={(path) => navigate(path)}
         />
 
         <p className="mt-auto rounded-2xl bg-tertiary-container px-3 py-2 text-xs text-on-tertiary-container">

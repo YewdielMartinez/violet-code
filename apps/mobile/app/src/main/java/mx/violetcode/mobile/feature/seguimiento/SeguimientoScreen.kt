@@ -1,7 +1,7 @@
 package mx.violetcode.mobile.feature.seguimiento
 
 import androidx.compose.runtime.Composable
-import mx.violetcode.mobile.ui.components.PendingFeature
+import mx.violetcode.mobile.core.designsystem.component.PendingFeature
 
 /** Pendiente: solicitud de orientación y estado del caso (depende de Q-35 y del módulo Cases). */
 @Composable

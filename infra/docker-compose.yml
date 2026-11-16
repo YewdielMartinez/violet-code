@@ -34,6 +34,7 @@ services:
       Cors__AdminOrigins__0: http://localhost:5173
       Database__MigrateOnStartup: "true"
       Database__SeedSyntheticData: "true"
+      Identity__DemoPassword: ${DEMO_PASSWORD:-Violeta.Demo.2026}
     ports:
       - "5080:8080"
 

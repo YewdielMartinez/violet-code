@@ -3,9 +3,8 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Tema Violet generado con motion-kit (Material 3). Fuente única de color para Admin (CSS) y Mobile (Compose).",
+  "description": "Colores del tema purple de motion-kit para Android (Compose) y JSON. El panel importa el tema directo de motion-kit.",
   "exports": {
-    "./violet.css": "./dist/violet.css",
     "./tokens.json": "./dist/tokens.json"
   },
   "scripts": {

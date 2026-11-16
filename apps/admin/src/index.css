@@ -1,8 +1,13 @@
-/* Orden: motion-kit (componentes + tokens) → tema violet → Tailwind.
+/* Orden: motion-kit (tokens + controles base) → tema violet → Tailwind.
+   El CSS de cada componente de motion-kit se importa en el archivo que lo usa
+   (ej. `import '@yewdiel21/motion-kit/css/components/data-table'`), así solo viaja
+   en el chunk de esa ruta. NO importar '@yewdiel21/motion-kit/css' completo (~650 KB).
+   Las fuentes se cargan con <link> en index.html (no @import: bloquea el render en cadena).
    Tailwind usa los MISMOS colores del tema: bg-primary, text-on-surface, bg-surface-container, etc.
    Cambiar el color = regenerar el tema (npm run tokens), no tocar clases. */
-@import '@yewdiel21/motion-kit/css/fonts';
-@import '@yewdiel21/motion-kit/css';
+@import '@yewdiel21/motion-kit/css/tokens';
+@import '@yewdiel21/motion-kit/css/controls';
+@import '@yewdiel21/motion-kit/css/effects';
 @import '@violet-code/design-tokens/violet.css';
 @import 'tailwindcss';
 

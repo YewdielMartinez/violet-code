@@ -6,15 +6,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Call
+import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -22,7 +25,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -30,30 +35,68 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import mx.violetcode.mobile.core.domain.AppError
+import mx.violetcode.mobile.core.domain.model.DirectoryEntry
+import mx.violetcode.mobile.core.domain.model.EntryKind
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun DirectorioScreen(vm: DirectorioViewModel = viewModel()) {
+fun DirectorioScreen(vm: DirectorioViewModel = koinViewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
+    DirectorioContent(state = state, onRetry = vm::refresh)
+}
 
-    when (val s = state) {
-        DirectorioUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+/** Sin estado propio ni ViewModel: se puede previsualizar y probar con cualquier DirectorioUiState. */
+@Composable
+internal fun DirectorioContent(state: DirectorioUiState, onRetry: () -> Unit) {
+    when {
+        state.showFullError -> FullError(state.lastError, onRetry)
+        state.entries.isEmpty() && state.isRefreshing -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
-        DirectorioUiState.Error -> Column(
-            Modifier.fillMaxSize().padding(24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text("No se pudo cargar el directorio.", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(12.dp))
-            Button(onClick = vm::load) { Text("Reintentar") }
+        state.entries.isEmpty() -> Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+            Text("Aún no hay lugares en el directorio.", style = MaterialTheme.typography.bodyLarge)
         }
-        is DirectorioUiState.Ready -> LazyColumn(
+        else -> LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            items(s.entries, key = { it.id }) { DirectoryCard(it) }
+            if (state.lastError != null) {
+                item(key = "offline") { OfflineBanner(onRetry) }
+            }
+            items(state.entries, key = { it.id }) { DirectoryCard(it) }
+        }
+    }
+}
+
+@Composable
+private fun FullError(error: AppError?, onRetry: () -> Unit) {
+    Column(
+        Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(error.toMessage(), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(12.dp))
+        Button(onClick = onRetry) { Text("Reintentar") }
+    }
+}
+
+@Composable
+private fun OfflineBanner(onRetry: () -> Unit) {
+    Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.medium) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Outlined.CloudOff, contentDescription = null)
+            Spacer(Modifier.width(12.dp))
+            Text(
+                "Sin conexión. Mostrando información guardada.",
+                Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            TextButton(onClick = onRetry) { Text("Actualizar") }
         }
     }
 }
@@ -67,7 +110,7 @@ private fun DirectoryCard(entry: DirectoryEntry) {
     Card(colors = CardDefaults.cardColors(containerColor = container), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text(
-                if (entry.kind == "VioletPoint") "Punto Violeta" else "Instancia",
+                if (entry.kind == EntryKind.VioletPoint) "Punto Violeta" else "Instancia",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -80,9 +123,17 @@ private fun DirectoryCard(entry: DirectoryEntry) {
                     context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone")))
                 }) {
                     Icon(Icons.Outlined.Call, contentDescription = null)
-                    Text("  Llamar $phone")
+                    Spacer(Modifier.width(8.dp))
+                    Text("Llamar $phone")
                 }
             }
         }
     }
+}
+
+private fun AppError?.toMessage(): String = when (this) {
+    AppError.Network -> "Sin conexión. Conéctate a internet para descargar el directorio."
+    AppError.Unauthorized -> "Tu sesión expiró."
+    is AppError.Server -> "El servicio no está disponible. Intenta más tarde."
+    AppError.Unexpected, null -> "No se pudo cargar el directorio."
 }

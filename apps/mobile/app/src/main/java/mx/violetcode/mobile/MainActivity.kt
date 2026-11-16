@@ -6,7 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import mx.violetcode.mobile.ui.VioletApp
-import mx.violetcode.mobile.ui.theme.VioletTheme
+import mx.violetcode.mobile.core.designsystem.theme.VioletTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

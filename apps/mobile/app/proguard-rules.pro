@@ -1,3 +1,1 @@
-# kotlinx.serialization
--keepattributes *Annotation*, InnerClasses
--keepclassmembers @kotlinx.serialization.Serializable class mx.violetcode.mobile.** { *** Companion; *; }
+# Reglas de core:data se aplican vía consumer-rules.pro.

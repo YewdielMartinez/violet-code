@@ -20,4 +20,12 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "VioletCodeMobile"
+
+// Clean Architecture (ver README):
+//   app → core:data, core:domain, core:designsystem
+//   core:data → core:domain
+//   core:domain → (nada: Kotlin puro)
 include(":app")
+include(":core:domain")
+include(":core:data")
+include(":core:designsystem")
