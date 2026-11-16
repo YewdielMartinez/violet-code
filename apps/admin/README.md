@@ -28,3 +28,7 @@ src/
 - **Componentes complejos** (tablas, gráficas, navegación, estados vacíos, diálogos): `@yewdiel21/motion-kit/react`.
 - **Layout y estilos propios:** Tailwind. Los colores de Tailwind son los del tema: `bg-primary`, `text-on-surface`, `bg-surface-container`, `border-outline-variant`, `bg-error-container`…
 - **No usar colores de la paleta por defecto de Tailwind** (`bg-purple-500`, etc.): rompen el modo oscuro y el tema.
+
+## Problemas conocidos de motion-kit
+
+Ver [MOTION-KIT-ISSUES.md](MOTION-KIT-ISSUES.md): errores y fricciones detectados, con su parche temporal y la corrección sugerida.

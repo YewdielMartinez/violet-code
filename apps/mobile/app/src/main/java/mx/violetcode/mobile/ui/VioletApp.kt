@@ -1,13 +1,25 @@
 package mx.violetcode.mobile.ui
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Sos
+import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Sos
 import androidx.compose.material.icons.outlined.TaskAlt
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -15,42 +27,89 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import mx.violetcode.mobile.core.designsystem.component.ThemeModeSwitch
+import mx.violetcode.mobile.core.designsystem.motion.VioletEasing
+import mx.violetcode.mobile.core.designsystem.motion.VioletMotion
+import mx.violetcode.mobile.core.designsystem.motion.pressScale
+import mx.violetcode.mobile.core.designsystem.motion.rememberReducedMotion
+import mx.violetcode.mobile.core.designsystem.theme.ThemeMode
+import mx.violetcode.mobile.core.designsystem.theme.isDark
 import mx.violetcode.mobile.feature.auxilio.AuxilioScreen
 import mx.violetcode.mobile.feature.directorio.DirectorioScreen
+import mx.violetcode.mobile.feature.inicio.InicioScreen
 import mx.violetcode.mobile.feature.orientacion.OrientacionScreen
 import mx.violetcode.mobile.feature.seguimiento.SeguimientoScreen
 
-private enum class Destination(val route: String, val label: String, val icon: ImageVector) {
-    Auxilio("auxilio", "Auxilio", Icons.Outlined.Sos),
-    Orientacion("orientacion", "Orientación", Icons.AutoMirrored.Outlined.MenuBook),
-    Directorio("directorio", "Directorio", Icons.Outlined.Place),
-    Seguimiento("seguimiento", "Mi caso", Icons.Outlined.TaskAlt),
+private enum class Destination(
+    val route: String,
+    val label: String,
+    val icon: ImageVector,
+    val selectedIcon: ImageVector,
+) {
+    Inicio("inicio", "Inicio", Icons.Outlined.Home, Icons.Filled.Home),
+    Auxilio("auxilio", "Auxilio", Icons.Outlined.Sos, Icons.Filled.Sos),
+    Orientacion("orientacion", "Orientación", Icons.AutoMirrored.Outlined.MenuBook, Icons.AutoMirrored.Filled.MenuBook),
+    Directorio("directorio", "Directorio", Icons.Outlined.Place, Icons.Filled.Place),
+    Seguimiento("seguimiento", "Mi caso", Icons.Outlined.TaskAlt, Icons.Filled.TaskAlt),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VioletApp(onQuickExit: () -> Unit) {
+fun VioletApp(
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit,
+    onQuickExit: () -> Unit,
+) {
     val nav = rememberNavController()
     val current by nav.currentBackStackEntryAsState()
+    val darkTheme = themeMode.isDark()
+
+    fun navigateTab(route: String) {
+        nav.navigate(route) {
+            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    // Cambio de pestaña = navegación lateral: solo desvanecer, corto (sin deslizar).
+    val reducedMotion = rememberReducedMotion()
+    val enterFade = if (reducedMotion) EnterTransition.None
+    else fadeIn(tween(VioletMotion.TabFadeMillis, delayMillis = 60, easing = VioletEasing.Flow))
+    val exitFade = if (reducedMotion) ExitTransition.None
+    else fadeOut(tween(100, easing = VioletEasing.Flow))
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Violet Code") },
+            TopAppBar(
+                title = { Text("Violet Code", fontWeight = FontWeight.SemiBold) },
                 actions = {
+                    ThemeModeSwitch(
+                        darkTheme = darkTheme,
+                        onDarkThemeChange = { dark -> onThemeModeChange(if (dark) ThemeMode.Dark else ThemeMode.Light) },
+                    )
                     // Salida rápida siempre visible (requisito de seguridad de la usuaria).
-                    TextButton(onClick = onQuickExit) {
+                    val exitSource = remember { MutableInteractionSource() }
+                    TextButton(
+                        onClick = onQuickExit,
+                        interactionSource = exitSource,
+                        modifier = Modifier.pressScale(exitSource),
+                    ) {
                         Icon(Icons.Outlined.Close, contentDescription = null)
-                        Text("Salir rápido")
+                        Text("Salir rápido", maxLines = 1)
                     }
                 },
             )
@@ -58,27 +117,55 @@ fun VioletApp(onQuickExit: () -> Unit) {
         bottomBar = {
             NavigationBar {
                 Destination.entries.forEach { dest ->
-                    NavigationBarItem(
+                    NavItem(
+                        destination = dest,
                         selected = current?.destination?.route == dest.route,
-                        onClick = {
-                            nav.navigate(dest.route) {
-                                popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(dest.icon, contentDescription = null) },
-                        label = { Text(dest.label) },
+                        onClick = { navigateTab(dest.route) },
                     )
                 }
             }
         },
     ) { padding ->
-        NavHost(nav, startDestination = Destination.Auxilio.route, modifier = Modifier.padding(padding)) {
+        NavHost(
+            navController = nav,
+            startDestination = Destination.Inicio.route,
+            modifier = Modifier.padding(padding),
+            enterTransition = { enterFade },
+            exitTransition = { exitFade },
+            popEnterTransition = { enterFade },
+            popExitTransition = { exitFade },
+        ) {
+            composable(Destination.Inicio.route) {
+                InicioScreen(
+                    onEmergency = { navigateTab(Destination.Auxilio.route) },
+                    onOrientacion = { navigateTab(Destination.Orientacion.route) },
+                    onDirectorio = { navigateTab(Destination.Directorio.route) },
+                    onSeguimiento = { navigateTab(Destination.Seguimiento.route) },
+                )
+            }
             composable(Destination.Auxilio.route) { AuxilioScreen() }
             composable(Destination.Orientacion.route) { OrientacionScreen() }
             composable(Destination.Directorio.route) { DirectorioScreen() }
             composable(Destination.Seguimiento.route) { SeguimientoScreen() }
         }
     }
+}
+
+/** Ítem de la barra inferior: ícono relleno al estar seleccionado y presión elástica en el ícono. */
+@Composable
+private fun RowScope.NavItem(destination: Destination, selected: Boolean, onClick: () -> Unit) {
+    val source = remember { MutableInteractionSource() }
+    NavigationBarItem(
+        selected = selected,
+        onClick = onClick,
+        icon = {
+            Icon(
+                imageVector = if (selected) destination.selectedIcon else destination.icon,
+                contentDescription = null,
+                modifier = Modifier.pressScale(source, pressedScale = 0.85f),
+            )
+        },
+        label = { Text(destination.label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        interactionSource = source,
+    )
 }

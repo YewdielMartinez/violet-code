@@ -33,3 +33,4 @@ apps/mobile/**/*.iml
 
 # Builds
 apps/admin/dist/
+apps/admin/MOTION-KIT-ISSUES.md

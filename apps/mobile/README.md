@@ -23,7 +23,7 @@ core:domain ◄─────────────────────�
 |---|---|---|---|
 | `core:domain` | **Kotlin puro** (sin Android) | Modelos, interfaces de repositorio, casos de uso, `Outcome`/`AppError` | nada (solo coroutines) |
 | `core:data` | Android library | DTO (Retrofit), entidades y DAO (Room), mappers, implementaciones de repositorio, módulo Koin | `core:domain` |
-| `core:designsystem` | Android library | `VioletTheme`, colores generados, componentes reutilizables | nada |
+| `core:designsystem` | Android library | `VioletTheme`, colores generados, tipografía, movimiento y componentes reutilizables | nada |
 | `app` | Aplicación | Pantallas, ViewModels, navegación, `VioletApplication` (Koin) | todos los anteriores |
 
 Gradle **impide** romper las reglas: `core:domain` no puede importar `android.*`, y los DTO, entidades y DAO son `internal` en `core:data`, así que la UI solo ve modelos de dominio.
@@ -53,6 +53,27 @@ DirectorioScreen ──collect── DirectorioViewModel ──► ObserveDirect
 
 `core/designsystem/.../theme/VioletColors.kt` lo **genera** `npm run tokens` (mismo color que el panel web). No editar a mano.
 Tailwind no aplica en Android nativo (Compose no usa CSS); la consistencia con el panel viene de los mismos tokens.
+
+## Línea de diseño y microinteracciones
+
+La app comparte la línea del panel web: los colores salen del tema `purple` de `@yewdiel21/motion-kit` (claro y oscuro) y el movimiento imita su vocabulario (`dist/css/tokens.css`). Todo vive en `core:designsystem`; las pantallas no definen curvas ni duraciones sueltas.
+
+| Pieza (`core:designsystem`) | Qué hace | Equivalente en motion-kit |
+|---|---|---|
+| `motion/VioletMotion.kt` (`VioletEasing`, `VioletMotion`, `rememberReducedMotion`) | Curvas, duraciones y muelle de presión; detecta animaciones del sistema apagadas (`ANIMATOR_DURATION_SCALE == 0`) | `--mk-ease-*`, `--mk-dur*`, `prefers-reduced-motion` |
+| `Modifier.pressScale(interactionSource)` | Presión elástica: baja a 0.95 y regresa con `spring(dampingRatio = 0.45, stiffness = 400)` | `--mk-ease-press` ("Motion 400/10") |
+| `Modifier.fadeInOnAppear(index)` | Aparición con fade + ascenso de 16 dp, 60 ms de retraso por índice (máx. 8 pasos), una sola vez por elemento | `fade-content` (sin desenfoque) |
+| `HoldToConfirmButton` | Botón circular: mantener ~1 s llena un anillo; soltar antes lo regresa; al completar vibra y llama `onConfirm`. Con TalkBack basta el doble toque (acción semántica `onClick`) | `hold-confirm` |
+| `ThemeModeSwitch` | Interruptor claro/oscuro con sol que gira hacia luna en la perilla | `glass-switch` con `icons="theme"` |
+| `VioletTheme(themeMode)` + `ThemeMode` | Claro / oscuro / sistema sobre `VioletLightScheme` / `VioletDarkScheme`; tipografía DM Sans | temas `purple`, `--mk-font` |
+
+Detalles:
+
+- **Reducir movimiento:** si el sistema tiene las animaciones apagadas, `pressScale`, `fadeInOnAppear`, `ThemeModeSwitch` y las transiciones de pestañas no animan. El tiempo de `HoldToConfirmButton` se mide con el reloj de fotogramas, así que la confirmación sigue exigiendo mantener presionado.
+- **Transiciones de pestañas** (`ui/VioletApp.kt`): navegación lateral = solo fade corto (~200 ms), sin deslizar. Los íconos de la barra inferior son rellenos al seleccionarse y se encogen al presionar.
+- **Tema elegido por la usuaria:** `ThemePreferences` (app, `SharedPreferences`, clave `theme_mode`, expuesto como `StateFlow` y registrado en Koin) alimenta `VioletTheme` desde `MainActivity`. El interruptor está en la barra superior, junto a "Salir rápido".
+- **Tipografía:** DM Sans (OFL) va empaquetada como fuente variable en `core/designsystem/src/main/res/font/dm_sans.ttf`; su licencia está en `core/designsystem/FONT-LICENSE-DMSans-OFL.txt`.
+- **Pantallas:** `feature/inicio` (saludo, tarjeta de emergencia, accesos rápidos), `Auxilio` (911 con mantener presionado) y `Directorio` (tarjetas escalonadas, botón de llamada con presión elástica).
 
 ## Seguridad de la usuaria (incluido)
 

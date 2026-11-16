@@ -1,0 +1,45 @@
+/* Copia de motion-kit 0.20.1 · recipes/slot-text/slot-text.css (solo está dentro de dist/index.css).
+   TODO: cuando motion-kit exporte '@yewdiel21/motion-kit/css/recipes/slot-text', importar de ahí y borrar este archivo. */
+/* slot-text: each letter sits in a slot whose face rolls out and in; the hidden sizer gives the slot its width. */
+.mk-slot {
+  display: inline;
+}
+
+.mk-slot__word {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: pre;
+}
+
+.mk-slot__char {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  justify-content: center;
+  align-items: baseline;
+  overflow-x: visible;
+  overflow-y: clip;
+  /* Descenders stay inside the clip. */
+  overflow-clip-margin: 0.15em;
+  line-height: inherit;
+}
+
+.mk-slot__char.is-resizing {
+  overflow-x: clip;
+}
+
+.mk-slot__sizer {
+  visibility: hidden;
+  white-space: pre;
+}
+
+.mk-slot__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: pre;
+  will-change: transform;
+}
+

@@ -1,14 +1,18 @@
-/* Orden: motion-kit (tokens + controles base) → tema violet → Tailwind.
+/* Orden: motion-kit (tokens + controles base) → tema "purple" de motion-kit → Tailwind.
    El CSS de cada componente de motion-kit se importa en el archivo que lo usa
    (ej. `import '@yewdiel21/motion-kit/css/components/data-table'`), así solo viaja
    en el chunk de esa ruta. NO importar '@yewdiel21/motion-kit/css' completo (~650 KB).
-   Las fuentes se cargan con <link> en index.html (no @import: bloquea el render en cadena).
-   Tailwind usa los MISMOS colores del tema: bg-primary, text-on-surface, bg-surface-container, etc.
-   Cambiar el color = regenerar el tema (npm run tokens), no tocar clases. */
-@import '@yewdiel21/motion-kit/css/tokens';
-@import '@yewdiel21/motion-kit/css/controls';
-@import '@yewdiel21/motion-kit/css/effects';
-@import '@violet-code/design-tokens/violet.css';
+   Las fuentes se cargan con <link> en index.html. El script de <head> (vite.config.ts) aplica
+   tema y modo guardados antes del primer pintado.
+   Tailwind usa los MISMOS colores del tema: bg-primary, text-on-surface, bg-surface-container…
+   Claro/oscuro funciona solo: las variables cambian con data-mk-mode. */
+/* Capas: motion-kit va ANTES de las utilidades de Tailwind, así `absolute`, `w-full`, etc.
+   pueden ajustar un .mk-button o .mk-field sin pelear especificidad. */
+@layer theme, base, motion-kit, components, utilities;
+@import '@yewdiel21/motion-kit/css/tokens' layer(motion-kit);
+@import '@yewdiel21/motion-kit/css/controls' layer(motion-kit);
+@import '@yewdiel21/motion-kit/css/effects' layer(motion-kit);
+@import '@yewdiel21/motion-kit/css/themes/purple' layer(motion-kit);
 @import 'tailwindcss';
 
 @theme inline {
@@ -57,4 +61,60 @@ body {
   color: var(--md-sys-color-on-background);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* ── View Transitions (React <ViewTransition>) ─────────────────────────────
+   Cambio de página lateral: la anterior se desvanece y la nueva sube y aparece.
+   Duraciones y curva de motion-kit para que se sienta igual que sus componentes. */
+:root {
+  --vt-exit: 140ms;
+  --vt-enter: 240ms;
+}
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-rise {
+  from {
+    translate: 0 10px;
+  }
+}
+
+::view-transition-old(.page-exit) {
+  animation: var(--vt-exit) ease-in both vt-fade reverse;
+}
+
+::view-transition-new(.page-enter) {
+  animation:
+    var(--vt-enter) var(--mk-ease-flow, ease-out) var(--vt-exit) both vt-fade,
+    var(--vt-enter) var(--mk-ease-flow, ease-out) var(--vt-exit) both vt-rise;
+}
+
+/* Elementos persistentes: navegación y barra superior se quedan quietas. */
+::view-transition-group(app-nav),
+::view-transition-group(app-topbar) {
+  animation: none;
+  z-index: 100;
+}
+
+/* La barra superior usa transparencia: se oculta la instantánea vieja para evitar destello. */
+::view-transition-old(app-topbar) {
+  display: none;
+}
+
+::view-transition-new(app-topbar) {
+  animation: none;
+}
+
+/* Accesibilidad: sin animaciones si la persona lo pidió al sistema. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
 }

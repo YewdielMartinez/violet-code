@@ -1,12 +1,14 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useId, useState, type FormEvent } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { FadeContent, LoadingButton, toast } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/fade-content';
+import { Dialog, LoadingButton, PillButton, toast } from '@yewdiel21/motion-kit/react';
+import '@yewdiel21/motion-kit/css/components/dialog';
 import '@yewdiel21/motion-kit/css/components/loading-button';
+import '@yewdiel21/motion-kit/css/components/pill-button';
 import { AuthError, login, refreshSession } from '@/shared/auth/session';
 import { useAuth } from '@/shared/auth/useAuth';
-import { Icon } from '@/shared/ui/Icon';
-import { ThemeToggle } from '@/shared/ui/ThemeToggle';
+import { PasswordField } from './PasswordField';
+import { LoginHero } from './LoginHero';
+import { PrivacyNoticeDialog } from './PrivacyNoticeDialog';
 
 type LoadingState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -15,29 +17,21 @@ const DEMO_ACCOUNTS = import.meta.env.DEV
   ? ['admin@violetcode.demo', 'coordinacion@violetcode.demo', 'psicologia@violetcode.demo']
   : [];
 
-export default function LoginPage() {
-  const { status } = useAuth();
+function LoginForm({ formId }: { formId: string }) {
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? '/';
+  const errorId = useId();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [state, setState] = useState<LoadingState>('idle');
   const [error, setError] = useState<string | null>(null);
 
-  // Si ya hay una sesión válida (cookie), no pedir credenciales de nuevo.
-  useEffect(() => {
-    if (status === 'checking') void refreshSession();
-  }, [status]);
-
-  if (status === 'authenticated' && state !== 'success') return <Navigate to={from} replace />;
-
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    const submitter = (e.nativeEvent as SubmitEvent).submitter;
     if (state === 'loading') return;
+    const submitter = (e.nativeEvent as SubmitEvent).submitter;
     setError(null);
     setState('loading');
     try {
@@ -55,112 +49,132 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-full lg:grid-cols-[1.1fr_1fr]">
-      {/* Panel de marca */}
-      <aside className="relative hidden overflow-hidden bg-primary-container p-12 text-on-primary-container lg:flex lg:flex-col lg:justify-between">
-        <div className="flex items-center gap-3">
-          <span className="grid size-11 place-items-center rounded-2xl bg-primary text-xl font-semibold text-on-primary">V</span>
-          <span className="text-lg font-semibold">Violet Code</span>
-        </div>
-        <FadeContent as="div" stagger={90} className="max-w-md">
-          <h1 data-mk-fade-item className="text-4xl leading-tight font-semibold tracking-tight">
-            Cada solicitud, atendida y acompañada.
-          </h1>
-          <p data-mk-fade-item className="mt-4 text-lg opacity-80">
-            Plataforma de atención, seguimiento y analítica para la Secretaría de las Mujeres de Ahome.
+    <>
+      <Dialog.Body>
+        <form id={formId} onSubmit={onSubmit} className="grid gap-4" noValidate>
+          <label className="mk-field">
+            <span className="mk-field__label">Correo institucional</span>
+            <input
+              type="email"
+              name="email"
+              autoComplete="username"
+              inputMode="email"
+              required
+              autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? errorId : undefined}
+            />
+          </label>
+
+          <PasswordField
+            value={password}
+            onChange={setPassword}
+            invalid={Boolean(error)}
+            describedBy={error ? errorId : undefined}
+          />
+
+          <p id={errorId} role="alert" className="min-h-5 text-sm text-error">
+            {error}
           </p>
-        </FadeContent>
-        <p className="text-sm opacity-70">2do Hackathon FIM-UAS 2026 · Entorno de demostración con datos sintéticos</p>
-        <div aria-hidden className="pointer-events-none absolute -right-24 -bottom-24 size-96 rounded-full bg-primary opacity-20 blur-3xl" />
-      </aside>
-
-      {/* Formulario */}
-      <main className="flex flex-col px-6 py-8 sm:px-12">
-        <div className="flex justify-end">
-          <ThemeToggle />
-        </div>
-
-        <FadeContent as="section" stagger={60} className="m-auto w-full max-w-sm py-10">
-          <h2 data-mk-fade-item className="text-3xl font-semibold tracking-tight text-on-surface">Iniciar sesión</h2>
-          <p data-mk-fade-item className="mt-2 text-on-surface-variant">Acceso exclusivo para el personal de SEMUJERES.</p>
-
-          <form data-mk-fade-item onSubmit={onSubmit} className="mt-8 grid gap-4" noValidate>
-            <label className="mk-field">
-              <span className="mk-field__label">Correo institucional</span>
-              <input
-                type="email"
-                name="email"
-                autoComplete="username"
-                inputMode="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                aria-invalid={error ? true : undefined}
-                aria-describedby={error ? 'login-error' : undefined}
-              />
-            </label>
-
-            <label className="mk-field">
-              <span className="mk-field__label">Contraseña</span>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  aria-invalid={error ? true : undefined}
-                  aria-describedby={error ? 'login-error' : undefined}
-                  className="pr-12"
-                />
-                <button
-                  type="button"
-                  className="mk-button mk-button--icon mk-button--text absolute top-1/2 right-1 -translate-y-1/2"
-                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                  aria-pressed={showPassword}
-                  onClick={() => setShowPassword((v) => !v)}
-                >
-                  <Icon name={showPassword ? 'visibility_off' : 'visibility'} />
-                </button>
-              </div>
-            </label>
-
-            <p id="login-error" role="alert" className="min-h-5 text-sm text-error">
-              {error}
-            </p>
-
-            <LoadingButton
-              type="submit"
-              state={state}
-              className="mk-button mk-button--primary mk-button--lg w-full"
-              labels={{ loading: 'Verificando…', success: 'Bienvenida', error: 'Intenta de nuevo' }}
-              compact={false}
-              resetAfter={1800}
-              onStateChange={(s) => s === 'idle' && setState('idle')}
-              disabled={!email || !password}
-            >
-              Entrar
-            </LoadingButton>
-          </form>
 
           {DEMO_ACCOUNTS.length > 0 && (
-            <div data-mk-fade-item className="mt-8 rounded-3xl bg-surface-container p-4 text-sm text-on-surface-variant">
+            <div className="rounded-2xl bg-surface-container px-4 py-3 text-sm text-on-surface-variant">
               <p className="font-medium text-on-surface">Cuentas de demostración</p>
-              <ul className="mt-2 flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-wrap gap-2">
                 {DEMO_ACCOUNTS.map((account) => (
-                  <li key={account}>
-                    <button type="button" className="mk-chip" onClick={() => setEmail(account)}>
-                      {account.split('@')[0]}
-                    </button>
-                  </li>
+                  <button key={account} type="button" className="mk-chip" onClick={() => setEmail(account)}>
+                    {account.split('@')[0]}
+                  </button>
                 ))}
-              </ul>
-              <p className="mt-2">Contraseña: la de <code>Identity:DemoPassword</code> en appsettings.Development.json</p>
+              </div>
             </div>
           )}
-        </FadeContent>
+        </form>
+      </Dialog.Body>
+
+      <Dialog.Footer>
+        <div className="grid w-full gap-3">
+          <LoadingButton
+            type="submit"
+            form={formId}
+            state={state}
+            className="mk-button mk-button--primary mk-button--lg w-full"
+            labels={{ loading: 'Verificando…', success: 'Acceso concedido', error: 'Intenta de nuevo' }}
+            compact={false}
+            resetAfter={1800}
+            onStateChange={(s) => s === 'idle' && setState('idle')}
+            disabled={!email || !password}
+          >
+            Entrar
+          </LoadingButton>
+          <p className="text-center text-xs text-on-surface-variant">
+            ¿Olvidaste tu contraseña? Solicita el restablecimiento a la administración del sistema.
+          </p>
+        </div>
+      </Dialog.Footer>
+    </>
+  );
+}
+
+export default function LoginPage() {
+  const { status } = useAuth();
+  const location = useLocation();
+  const from = (location.state as { from?: string } | null)?.from ?? '/';
+  const formId = useId();
+  const [open, setOpen] = useState(false);
+
+  // Si ya hay una sesión válida (cookie), no pedir credenciales de nuevo.
+  useEffect(() => {
+    if (status === 'checking') void refreshSession();
+  }, [status]);
+
+  if (status === 'authenticated' && !open) return <Navigate to={from} replace />;
+
+  return (
+    <div className="relative flex min-h-full flex-col overflow-hidden bg-background">
+
+      <header className="relative flex items-center justify-between gap-4 px-6 py-6 sm:px-10">
+        <div className="flex items-center gap-3">
+          <span aria-hidden className="grid size-9 place-items-center rounded-xl bg-primary font-semibold text-on-primary">
+            V
+          </span>
+          <span className="font-semibold text-on-surface">Violet Code</span>
+        </div>
+        <PrivacyNoticeDialog />
+      </header>
+
+      <main className="relative mx-auto flex w-full max-w-6xl flex-1 items-center px-6 py-10 sm:px-10">
+        <LoginHero
+          cta={
+            <>
+              {/* motion-kit PillButton: el relleno se recoge en el círculo de la flecha al pasar el cursor. */}
+              <PillButton
+                onClick={() => setOpen(true)}
+                style={{ '--mk-pill-ink': 'var(--md-sys-color-primary)', '--mk-pill-on-ink': 'var(--md-sys-color-on-primary)' } as React.CSSProperties}
+              >
+                Iniciar sesión
+              </PillButton>
+              {/* El Dialog crece desde el botón que tenía el foco (motion-kit). */}
+              <Dialog.Root open={open} onOpenChange={setOpen}>
+                <Dialog.Content size="sm">
+                  <Dialog.Header>
+                    <Dialog.Title>Iniciar sesión</Dialog.Title>
+                    <Dialog.Close label="Cerrar" />
+                  </Dialog.Header>
+                  <Dialog.Description>Usa tu correo institucional y tu contraseña personal.</Dialog.Description>
+                  <LoginForm formId={formId} />
+                </Dialog.Content>
+              </Dialog.Root>
+            </>
+          }
+        />
       </main>
+
+      <footer className="relative px-6 py-6 text-xs text-on-surface-variant sm:px-10">
+        Prototipo académico · 2do Hackathon FIM-UAS 2026 · Datos sintéticos
+      </footer>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 package mx.violetcode.mobile.core.designsystem.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
@@ -19,11 +18,14 @@ private val VioletShapes = Shapes(
 /**
  * Tema de Violet Code. Los colores vienen de VioletColors.kt, generado desde el mismo
  * tema que usa el panel web (packages/design-tokens). No usar colores sueltos en pantallas.
+ *
+ * @param themeMode claro, oscuro o el del sistema (por defecto).
  */
 @Composable
-fun VioletTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+fun VioletTheme(themeMode: ThemeMode = ThemeMode.System, content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = if (darkTheme) VioletDarkScheme else VioletLightScheme,
+        colorScheme = if (themeMode.isDark()) VioletDarkScheme else VioletLightScheme,
+        typography = VioletTypography,
         shapes = VioletShapes,
         content = content,
     )

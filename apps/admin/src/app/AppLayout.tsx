@@ -5,7 +5,7 @@ import '@yewdiel21/motion-kit/css/components/nav';
 import { logout } from '@/shared/auth/session';
 import { ROLE_LABELS, useAuth } from '@/shared/auth/useAuth';
 import { Icon } from '@/shared/ui/Icon';
-import { ThemeToggle } from '@/shared/ui/ThemeToggle';
+import { ThemeModeSelector } from '@/shared/ui/ThemeModeSelector';
 import { NAVIGATION } from './navigation';
 
 // Estático: se calcula una vez. En el teléfono Nav se vuelve barra inferior con las páginas `mobile`.
@@ -84,7 +84,7 @@ export function AppLayout() {
             Demostración · datos sintéticos
           </p>
           <div className="flex items-center gap-4">
-            <ThemeToggle />
+            <ThemeModeSelector compact />
             <UserMenu />
           </div>
         </header>
