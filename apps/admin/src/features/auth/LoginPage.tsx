@@ -7,6 +7,7 @@ import '@yewdiel21/motion-kit/css/components/pill-button';
 import { AuthError, login, refreshSession } from '@/shared/auth/session';
 import { useAuth } from '@/shared/auth/useAuth';
 import { PasswordField } from './PasswordField';
+import { BrandMark } from '@/shared/ui/BrandMark';
 import { LoginHero } from './LoginHero';
 import { PrivacyNoticeDialog } from './PrivacyNoticeDialog';
 
@@ -32,10 +33,19 @@ function LoginForm({ formId }: { formId: string }) {
     e.preventDefault();
     if (state === 'loading') return;
     const submitter = (e.nativeEvent as SubmitEvent).submitter;
+    // Se leen del formulario (no solo del estado): el autocompletado del navegador
+    // llena los campos sin disparar onChange hasta que la persona interactúa.
+    const data = new FormData(e.currentTarget as HTMLFormElement);
+    const emailValue = String(data.get('email') ?? email).trim();
+    const passwordValue = String(data.get('password') ?? password);
+    if (!emailValue || !passwordValue) {
+      setError('Escribe tu correo y tu contraseña.');
+      return;
+    }
     setError(null);
     setState('loading');
     try {
-      await login(email, password);
+      await login(emailValue, passwordValue);
       setState('success');
       // Deja ver el check de éxito del botón antes de entrar.
       setTimeout(() => navigate(from, { replace: true }), 600);
@@ -51,6 +61,7 @@ function LoginForm({ formId }: { formId: string }) {
   return (
     <>
       <Dialog.Body>
+        <p className="mb-6 text-on-surface-variant">Usa tu correo institucional y tu contraseña personal.</p>
         <form id={formId} onSubmit={onSubmit} className="grid gap-4" noValidate>
           <label className="mk-field">
             <span className="mk-field__label">Correo institucional</span>
@@ -105,7 +116,6 @@ function LoginForm({ formId }: { formId: string }) {
             compact={false}
             resetAfter={1800}
             onStateChange={(s) => s === 'idle' && setState('idle')}
-            disabled={!email || !password}
           >
             Entrar
           </LoadingButton>
@@ -135,11 +145,15 @@ export default function LoginPage() {
   return (
     <div className="relative flex min-h-full flex-col overflow-hidden bg-background">
 
+      {/* Acento de color muy suave: el morado se usa con moderación. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-40 -right-40 size-[36rem] rounded-full bg-primary opacity-[0.07] blur-3xl"
+      />
+
       <header className="relative flex items-center justify-between gap-4 px-6 py-6 sm:px-10">
         <div className="flex items-center gap-3">
-          <span aria-hidden className="grid size-9 place-items-center rounded-xl bg-primary font-semibold text-on-primary">
-            V
-          </span>
+          <BrandMark size={36} />
           <span className="font-semibold text-on-surface">Violet Code</span>
         </div>
         <PrivacyNoticeDialog />
@@ -157,13 +171,12 @@ export default function LoginPage() {
                 Iniciar sesión
               </PillButton>
               {/* El Dialog crece desde el botón que tenía el foco (motion-kit). */}
-              <Dialog.Root open={open} onOpenChange={setOpen}>
-                <Dialog.Content size="sm">
+              <Dialog.Root open={open} onOpenChange={setOpen} closeOnBackdrop={false}>
+                <Dialog.Content size="md">
                   <Dialog.Header>
                     <Dialog.Title>Iniciar sesión</Dialog.Title>
                     <Dialog.Close label="Cerrar" />
                   </Dialog.Header>
-                  <Dialog.Description>Usa tu correo institucional y tu contraseña personal.</Dialog.Description>
                   <LoginForm formId={formId} />
                 </Dialog.Content>
               </Dialog.Root>
@@ -173,7 +186,7 @@ export default function LoginPage() {
       </main>
 
       <footer className="relative px-6 py-6 text-xs text-on-surface-variant sm:px-10">
-        Prototipo académico · 2do Hackathon FIM-UAS 2026 · Datos sintéticos
+        Prototipo · 2do Hackathon FIM-UAS 2026 · Funciona solo con datos sintéticos
       </footer>
     </div>
   );

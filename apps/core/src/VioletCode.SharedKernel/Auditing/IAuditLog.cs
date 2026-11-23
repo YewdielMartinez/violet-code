@@ -32,4 +32,5 @@ public static class AuditActions
     public const string LoginFailure = "auth.login.failure";
     public const string LoginLocked = "auth.login.locked";
     public const string Logout = "auth.logout";
+    public const string CaseList = "case.list";
 }

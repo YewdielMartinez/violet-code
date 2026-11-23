@@ -22,7 +22,10 @@ src/
       Domain/                  entidades y reglas, sin EF ni ASP.NET
       Infrastructure/          DbContext (schema "catalogs"), migraciones, seed sintético
       Endpoints/               Minimal APIs → /api/catalogs/...
-    Identity · Alerts · Cases · Scheduling · Notifications · Analytics · Audit   (esqueleto)
+    Alerts       → /api/alerts (lista por prioridad, ?status=&take=) · /api/alerts/summary
+    Cases        → /api/cases (?mine=&needsReview=&take=; audita case.list) · /api/cases/summary   (solo alias de usuarias)
+    Scheduling   → /api/scheduling/appointments (?from=&to=&mine=) · /api/scheduling/summary
+    Identity · Audit · Notifications · Analytics   (Notifications y Analytics: esqueleto)
 tests/
   VioletCode.ArchitectureTests/   un módulo no referencia a otro; el dominio no depende de infraestructura
 ```
@@ -34,5 +37,7 @@ tests/
 3. Migración: `dotnet ef migrations add Inicial -p src/Modules/VioletCode.Modules.Xxx -s src/VioletCode.Api -c XxxDbContext -o Infrastructure/Migrations`
 4. Llamar `MigrateAsync` + seed en `InitializeAsync` (ver Catalogs).
 5. `dotnet test` debe seguir en verde.
+
+Alerts, Cases y Scheduling (solo lectura, requieren sesión de personal) alimentan los widgets del dashboard; "hoy" se calcula en hora de Los Mochis (`SharedKernel.Time.LocalClock`, America/Mazatlan) y todo se guarda en UTC. Sus seeds sintéticos son deterministas y relativos a la fecha actual.
 
 **Reglas:** un módulo no usa clases ni tablas de otro módulo; los datos sensibles se auditan con `IAuditLog`; nunca datos reales en seeds.

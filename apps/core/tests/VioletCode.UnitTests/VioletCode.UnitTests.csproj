@@ -14,6 +14,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Modules\VioletCode.Modules.Identity\VioletCode.Modules.Identity.csproj" />
+    <ProjectReference Include="..\..\src\Modules\VioletCode.Modules.Alerts\VioletCode.Modules.Alerts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\VioletCode.Modules.Cases\VioletCode.Modules.Cases.csproj" />
+    <ProjectReference Include="..\..\src\Modules\VioletCode.Modules.Scheduling\VioletCode.Modules.Scheduling.csproj" />
   </ItemGroup>
 
 </Project>

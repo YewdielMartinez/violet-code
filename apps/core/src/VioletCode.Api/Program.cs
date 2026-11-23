@@ -35,6 +35,10 @@ foreach (var module in modules)
 // ── Infraestructura transversal ──
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddProblemDetails();
+
+// Enums como texto ("Institution", no 1): contrato legible y estable para Admin y Mobile.
+builder.Services.ConfigureHttpJsonOptions(o =>
+    o.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 builder.Services.AddOpenApi();
 
 // Fuerza bruta: máx. 10 intentos de login/refresh por minuto por IP.

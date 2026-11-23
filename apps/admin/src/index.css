@@ -13,6 +13,13 @@
 @import '@yewdiel21/motion-kit/css/controls' layer(motion-kit);
 @import '@yewdiel21/motion-kit/css/effects' layer(motion-kit);
 @import '@yewdiel21/motion-kit/css/themes/purple' layer(motion-kit);
+/* Temas ofrecidos en Configuración → Apariencia (ver THEME_CHOICES en src/app/preferences.ts). */
+@import '@yewdiel21/motion-kit/css/themes/blue' layer(motion-kit);
+@import '@yewdiel21/motion-kit/css/themes/pink' layer(motion-kit);
+@import '@yewdiel21/motion-kit/css/themes/red' layer(motion-kit);
+@import '@yewdiel21/motion-kit/css/themes/neogreen' layer(motion-kit);
+@import '@yewdiel21/motion-kit/css/themes/black' layer(motion-kit);
+@import '@yewdiel21/motion-kit/css/themes/oled' layer(motion-kit);
 @import 'tailwindcss';
 
 @theme inline {
@@ -55,6 +62,41 @@ body,
   height: 100%;
 }
 
+/* Escala base un poco mayor: textos y controles más cómodos de leer (todo en rem crece con ella). */
+html {
+  font-size: 106.25%; /* 17px */
+}
+
+/* ── Blanco profundo en modo claro ──────────────────────────────────────────
+   Los temas de motion-kit tiñen las superficies claras con su color. Para un sistema
+   institucional usamos blanco puro y grises neutros; el color queda solo en acentos.
+   Aplica a cualquier tema, solo cuando el modo resuelto es claro. */
+:root[data-mk-mode='light'] {
+  --md-sys-color-background: #ffffff;
+  --md-sys-color-surface: #ffffff;
+  --md-sys-color-surface-bright: #ffffff;
+  --md-sys-color-surface-container-lowest: #ffffff;
+  --md-sys-color-surface-container-low: #f7f7f8;
+  --md-sys-color-surface-container: #f1f1f3;
+  --md-sys-color-surface-container-high: #ebebee;
+  --md-sys-color-surface-container-highest: #e4e4e8;
+  --md-sys-color-outline-variant: #e2e2e7;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-mk-mode='dark']) {
+    --md-sys-color-background: #ffffff;
+    --md-sys-color-surface: #ffffff;
+    --md-sys-color-surface-bright: #ffffff;
+    --md-sys-color-surface-container-lowest: #ffffff;
+    --md-sys-color-surface-container-low: #f7f7f8;
+    --md-sys-color-surface-container: #f1f1f3;
+    --md-sys-color-surface-container-high: #ebebee;
+    --md-sys-color-surface-container-highest: #e4e4e8;
+    --md-sys-color-outline-variant: #e2e2e7;
+  }
+}
+
 body {
   margin: 0;
   background: var(--md-sys-color-background);
@@ -93,19 +135,18 @@ body {
     var(--vt-enter) var(--mk-ease-flow, ease-out) var(--vt-exit) both vt-rise;
 }
 
-/* Elementos persistentes: navegación y barra superior se quedan quietas. */
-::view-transition-group(app-nav),
-::view-transition-group(app-topbar) {
+/* Elemento persistente: la navegación se queda quieta al cambiar de página.
+   Sin la imagen vieja: si no, el activo anterior se ve "fantasma" encima del nuevo. */
+::view-transition-group(app-nav) {
   animation: none;
   z-index: 100;
 }
 
-/* La barra superior usa transparencia: se oculta la instantánea vieja para evitar destello. */
-::view-transition-old(app-topbar) {
+::view-transition-old(app-nav) {
   display: none;
 }
 
-::view-transition-new(app-topbar) {
+::view-transition-new(app-nav) {
   animation: none;
 }
 
@@ -117,4 +158,82 @@ body {
     animation-duration: 0s !important;
     animation-delay: 0s !important;
   }
+}
+
+/* ── Ajustes sobre motion-kit (cada uno documentado en MOTION-KIT-ISSUES.md) ── */
+
+/* Nombres del nav en una sola línea (los estilos laterales los centraban y partían en dos). */
+.mk-nav__name {
+  overflow: hidden;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Íconos de Material Symbols dentro del nav: bloque de 24 px, sin línea base de texto (#16). */
+.mk-nav__icon > .mk-icon {
+  display: block;
+  font-size: var(--mk-nav-icon-size, 24px);
+}
+
+/* Dock centrado: el kit usa sticky + left:50% + translate, que no centra en un shell en columna (#15).
+   Riel: el kit no deja espacio entre botones (gap: 0) y el activo se encima con el vecino (#17). */
+@media only screen and (min-width: 680px) {
+  .mk-shell:has(> .mk-nav--dock) > .mk-nav--dock {
+    align-self: center;
+    left: auto;
+    transform: none;
+  }
+
+  .mk-nav--rail .mk-nav__buttons {
+    gap: 8px;
+  }
+
+  .mk-nav--rail .mk-nav__button.mk-nav__button--first {
+    margin-bottom: 16px;
+  }
+}
+
+/* Menús de la app: más aire que el menú compacto por defecto. */
+.mk-menu.vc-menu {
+  min-width: 288px;
+  padding: 12px;
+}
+
+.mk-menu.vc-menu [data-mk-item] {
+  min-height: 52px;
+  padding: 0 18px;
+  gap: 16px;
+}
+
+/* Calendario compacto (widget de Agenda en columna lateral): días bajos y un punto en los días con citas,
+   en lugar de los chips de evento (que en 24rem de ancho se cortan en "+1 más"). */
+.mk-calendar.vc-calendar-compact {
+  --mk-calendar-day-height: 44px;
+}
+
+.mk-calendar.vc-calendar-compact .mk-calendar__title {
+  font-size: 1.25rem;
+}
+
+.mk-calendar.vc-calendar-compact .mk-calendar__events,
+.mk-calendar.vc-calendar-compact .mk-calendar__more {
+  display: none;
+}
+
+.mk-calendar.vc-calendar-compact .mk-calendar__day {
+  position: relative;
+  align-items: center;
+}
+
+.mk-calendar.vc-calendar-compact .mk-calendar__day:has(.mk-calendar__event, .mk-calendar__more)::after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary);
+  translate: -50% 0;
 }

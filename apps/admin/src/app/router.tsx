@@ -1,14 +1,9 @@
-import { lazy, Suspense, type ComponentType } from 'react';
+import { Suspense, type ComponentType } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { ALL_PAGES } from './navigation';
+import { DashboardPage, DirectoryPage, LoginPage, PendingModulePage } from './pages';
 import { RequireAuth } from './RequireAuth';
-
-// Cada página es su propio chunk: solo se descarga al entrar a esa ruta.
-const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
-const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
-const DirectoryPage = lazy(() => import('@/features/directory/DirectoryPage'));
-const PendingModulePage = lazy(() => import('@/shared/ui/PendingModulePage'));
 
 // Páginas implementadas. Al terminar un módulo: agregarlo aquí y marcar `ready: true` en navigation.ts.
 const READY: Record<string, ComponentType> = {
@@ -16,7 +11,8 @@ const READY: Record<string, ComponentType> = {
   '/directorio': DirectoryPage,
 };
 
-const pageFallback = <div className="h-64 animate-pulse rounded-3xl bg-surface-container" />;
+// Sin esqueleto: las páginas ya están precargadas; si alguna tarda, no se muestra un parpadeo intermedio.
+const pageFallback = null;
 
 export const router = createBrowserRouter([
   {
@@ -34,11 +30,11 @@ export const router = createBrowserRouter([
       </RequireAuth>
     ),
     children: [
-      ...ALL_PAGES.map(({ path, label }) => {
+      ...ALL_PAGES.map(({ path, label, title }) => {
         const Page = READY[path];
         return {
           path,
-          element: <Suspense fallback={pageFallback}>{Page ? <Page /> : <PendingModulePage title={label} />}</Suspense>,
+          element: <Suspense fallback={pageFallback}>{Page ? <Page /> : <PendingModulePage title={title ?? label} />}</Suspense>,
         };
       }),
       {
