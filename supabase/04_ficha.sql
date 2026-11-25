@@ -7,7 +7,7 @@ create table estudio_socioeconomico (
   tiene_otro_aportante boolean not null default false,
   nombre_aportante     text,
   
-  --ocupacion (libre como pediste)
+  --ocupacion 
   ocupacion           text,
   
   monto_ingreso       numeric(10, 2) check (monto_ingreso >= 0),
@@ -45,7 +45,7 @@ create table agresor (
                         check (length(curp) = 18 and curp = upper(curp)),
   parentesco            text,
   
-  -- Domicilio: Referencia a la tabla domicilio (ya existente en 01_base)
+  -- Domicilio: Referencia a la tabla domicilio ( 01_base)
   domicilio_id          uuid references domicilio (id) on delete restrict,
   
   ocupacion             text,
