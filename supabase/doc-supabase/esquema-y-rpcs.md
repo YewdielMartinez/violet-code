@@ -1,6 +1,6 @@
 # Arquitectura de Base de Datos, Esquema y RPCs
 
-Referencia técnica del modelo relacional, reglas de integridad, auditoría y contratos de vistas/RPCs en PostgreSQL (`supabase/migrations/`). Diagrama DBML completo en [esquema.dbml](./esquema.dbml), modelo de autorización en [roles-y-permisos.md](./roles-y-permisos.md) y cumplimiento LGPDPPSO/seguridad en [seguridad-y-privacidad.md](./seguridad-y-privacidad.md).
+Referencia técnica del modelo relacional, reglas de integridad, auditoría y contratos de vistas/RPCs en PostgreSQL (`supabase/migrations/`). Diagrama DBML completo en [esquema.dbml](./esquema.dbml), modelo de autorización en [roles-y-permisos.md](./roles-y-permisos.md), contratos individuales de RPCs en [rpcs/](./rpcs/README.md) y cumplimiento LGPDPPSO/seguridad en [seguridad-y-privacidad.md](./seguridad-y-privacidad.md).
 
 ---
 
@@ -19,6 +19,11 @@ Referencia técnica del modelo relacional, reglas de integridad, auditoría y co
 | [20261125000800_08_cita_prioridad.sql](../migrations/20261125000800_08_cita_prioridad.sql) | Columna operativa opcional `prioridad` (`prioridad_nivel`) en `cita` para agendado en Recepción.                                                                                              |
 | [20261125000900_09_grants_authenticated.sql](../migrations/20261125000900_09_grants_authenticated.sql) | Privilegios SQL base (`GRANT`) al rol `authenticated` sobre tablas, vistas y secuencias de `public` (sin exponer `anon`), requeridos en Supabase Cloud para operar con RLS (`07_rls.sql`). |
 | [20261125001000_10_rpc_ficha_y_enums_arrays.sql](../migrations/20261125001000_10_rpc_ficha_y_enums_arrays.sql) | `ENUM`s nativos (`servicio_vivienda`, `bien_vivienda`, `tipo_droga`) en reemplazo de `text[] + CHECK`, y RPC transaccional atómico `crear_ficha_completa(p_payload jsonb)`. |
+| [20261126000100_11_revertir_catalogos_y_tipo_arma.sql](../migrations/20261126000100_11_revertir_catalogos_y_tipo_arma.sql) | Revierte `cat_discapacidad`, `cat_religion`, `cat_grupo_etnico` y `tipo_arma` a campos `text` en `persona` y `agresor`, y actualiza `crear_ficha_completa()`. |
+| [20261126000200_12_fix_rpc_crear_ficha_conflictos.sql](../migrations/20261126000200_12_fix_rpc_crear_ficha_conflictos.sql) | Corrige manejo de conflictos y reutilización de persona en `crear_ficha_completa()`. |
+| [20261126000300_13_fix_rpc_ambiguous_columns.sql](../migrations/20261126000300_13_fix_rpc_ambiguous_columns.sql) | Agrega alias explícitos en `crear_ficha_completa()` para evitar ambigüedad con columnas de `RETURNS TABLE`. |
+| [20261126000400_14_quitar_check_arma.sql](../migrations/20261126000400_14_quitar_check_arma.sql) | Elimina restricciones `CHECK` sobre arma y la columna `utilizo_arma_u_objeto` en `agresor`, dejando `especificacion_arma` como `text` libre. |
+| [20261126000500_15_permisos_rbac_abac.sql](../migrations/20261126000500_15_permisos_rbac_abac.sql) | Centraliza claves de permiso del Sprint 01 en `tiene_permiso()` y migra `get_mapa_calor_asentamiento()` a `tiene_permiso('expediente.ver')`. |
 
 ---
 
