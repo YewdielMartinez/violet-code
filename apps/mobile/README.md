@@ -2,7 +2,7 @@
 
 App Android de la usuaria. Kotlin + Jetpack Compose + Material 3. **Clean Architecture + MVVM**, inyección con **Koin**, directorio **offline-first** con Room.
 
-Abrir `apps/mobile` en Android Studio (JDK 17, SDK 35) y correr en emulador. En debug la API es `http://10.0.2.2:5080/` (localhost de la PC). En dispositivo físico, cambiar `API_BASE_URL` en `app/build.gradle.kts` a la IP de la PC.
+Abrir `apps/mobile` en Android Studio (JDK 17, SDK 35) y correr en emulador. En debug usa Supabase local en `http://10.0.2.2:54321/` (localhost de la PC) y lee `SUPABASE_URL` / `SUPABASE_ANON_KEY` desde `apps/mobile/local.properties` o variables de entorno.
 
 ```sh
 ./gradlew test            # pruebas de dominio y ViewModels (sin emulador)

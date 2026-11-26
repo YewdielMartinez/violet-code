@@ -1,9 +1,21 @@
 // Capa de presentación + punto de entrada: pantallas, ViewModels, navegación y cableado de DI.
 // No accede a Retrofit ni a Room directamente: solo a casos de uso del dominio.
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+}
+
+val localProps = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use(::load)
+}
+
+fun configValue(name: String, fallback: String): String {
+    val raw = (localProps.getProperty(name) ?: System.getenv(name) ?: fallback).trim()
+    return raw.ifEmpty { fallback }.replace("\\", "\\\\").replace("\"", "\\\"")
 }
 
 android {
@@ -20,13 +32,15 @@ android {
 
     buildTypes {
         debug {
-            // Emulador Android → localhost de la PC. En dispositivo físico usar la IP de la PC.
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:5080/\"")
+            // Emulador Android → Supabase local en la PC (:54321). En Cloud, definir en local.properties.
+            buildConfigField("String", "SUPABASE_URL", "\"${configValue("SUPABASE_URL", "http://10.0.2.2:54321/")}\"")
+            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${configValue("SUPABASE_ANON_KEY", "")}\"")
         }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            buildConfigField("String", "API_BASE_URL", "\"https://api.violetcode.example/\"")
+            buildConfigField("String", "SUPABASE_URL", "\"${configValue("SUPABASE_URL", "https://placeholder.supabase.co/")}\"")
+            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${configValue("SUPABASE_ANON_KEY", "")}\"")
         }
     }
 

@@ -11,7 +11,13 @@ class VioletApplication : Application() {
         super.onCreate()
         startKoin {
             androidContext(this@VioletApplication)
-            modules(dataModule(BuildConfig.API_BASE_URL), appModule)
+            modules(
+                dataModule(
+                    supabaseUrl = BuildConfig.SUPABASE_URL,
+                    supabaseAnonKey = BuildConfig.SUPABASE_ANON_KEY,
+                ),
+                appModule,
+            )
         }
     }
 }

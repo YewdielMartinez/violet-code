@@ -1,18 +1,49 @@
 package mx.violetcode.mobile.core.data.mapper
 
 import mx.violetcode.mobile.core.data.local.DirectoryEntryEntity
-import mx.violetcode.mobile.core.data.remote.DirectoryEntryDto
+import mx.violetcode.mobile.core.data.remote.SupabaseDirectoryDto
 import mx.violetcode.mobile.core.domain.model.DirectoryEntry
 import mx.violetcode.mobile.core.domain.model.EntryKind
 import mx.violetcode.mobile.core.domain.model.GeoPoint
 
-internal fun DirectoryEntryDto.toEntity() = DirectoryEntryEntity(
-    id = id, kind = kind, name = name, description = description, phone = phone,
-    address = address, schedule = schedule, latitude = latitude, longitude = longitude,
-    isEmergency = isEmergency,
+private val CATEGORY_LABELS = mapOf(
+    "emergencia" to "Emergencia",
+    "denuncia" to "Denuncia",
+    "orientacion_legal" to "Orientación legal",
+    "atencion_psicologica" to "Atención psicológica",
+    "trabajo_social" to "Trabajo social",
+    "refugio" to "Refugio",
+    "salud" to "Salud",
+    "linea_apoyo" to "Línea de apoyo",
 )
 
-/** null si el servidor envía un tipo que esta versión de la app no conoce (se ignora, no truena). */
+internal fun SupabaseDirectoryDto.toEntity(): DirectoryEntryEntity {
+    // Seguridad: nunca exponer domicilio de refugios confidenciales.
+    val formattedAddress = if (categoria == "refugio") {
+        null
+    } else {
+        listOfNotNull(calle, numeroExterior, codigoPostal)
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .joinToString(", ")
+            .ifEmpty { null }
+    }
+
+    return DirectoryEntryEntity(
+        id = id.toString(),
+        kind = EntryKind.Institution.name,
+        name = nombre,
+        description = CATEGORY_LABELS[categoria],
+        phone = telefono,
+        address = formattedAddress,
+        schedule = horario,
+        latitude = null,
+        longitude = null,
+        isEmergency = es24Horas || categoria == "emergencia",
+    )
+}
+
+/** null si la fila local contiene un tipo desconocido por esta versión de la app. */
 internal fun DirectoryEntryEntity.toDomainOrNull(): DirectoryEntry? {
     val entryKind = EntryKind.entries.firstOrNull { it.name == kind } ?: return null
     return DirectoryEntry(
