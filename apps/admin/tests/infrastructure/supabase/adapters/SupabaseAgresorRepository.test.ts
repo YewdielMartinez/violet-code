@@ -5,14 +5,14 @@ const { fromMock, rpcMock } = vi.hoisted(() => ({
   rpcMock: vi.fn(),
 }));
 
-vi.mock('../client', () => ({
+vi.mock('@/infrastructure/supabase/client', () => ({
   supabase: {
     from: fromMock,
     rpc: rpcMock,
   },
 }));
 
-import { supabaseAgresorRepository } from './SupabaseAgresorRepository';
+import { supabaseAgresorRepository } from '@/infrastructure/supabase/adapters/SupabaseAgresorRepository';
 
 function buildChain(result: { data: unknown; error: unknown }) {
   const chain = {

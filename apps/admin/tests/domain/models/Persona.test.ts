@@ -4,8 +4,8 @@ import {
   formatFullName,
   isValidCurp,
   normalizeCurp,
-} from './Persona';
-import { canLookupPreRegistro, mapPreRegistroRow } from './PreRegistroMovil';
+} from '@/domain/models/Persona';
+import { canLookupPreRegistro, mapPreRegistroRow } from '@/domain/models/PreRegistroMovil';
 
 describe('Persona (CURP y utilidades de búsqueda)', () => {
   it('normaliza espacios y minúsculas de CURP', () => {

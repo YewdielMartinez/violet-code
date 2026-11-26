@@ -4,13 +4,13 @@ const { fromMock } = vi.hoisted(() => ({
   fromMock: vi.fn(),
 }));
 
-vi.mock('../client', () => ({
+vi.mock('@/infrastructure/supabase/client', () => ({
   supabase: {
     from: fromMock,
   },
 }));
 
-import { supabaseDirectorioRepository } from './SupabaseDirectorioRepository';
+import { supabaseDirectorioRepository } from '@/infrastructure/supabase/adapters/SupabaseDirectorioRepository';
 
 function buildQueryMock(result: { data: unknown[] | null; error: unknown }) {
   const chain = {

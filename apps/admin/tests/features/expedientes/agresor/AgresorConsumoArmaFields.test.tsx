@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import {
   AgresorConsumoArmaFields,
   type ConsumoArmaValues,
-} from '../AgresorConsumoArmaFields';
+} from '@/features/expedientes/AgresorConsumoArmaFields';
 
 const INITIAL_VALUES: ConsumoArmaValues = {
   tieneConsumoDroga: null,

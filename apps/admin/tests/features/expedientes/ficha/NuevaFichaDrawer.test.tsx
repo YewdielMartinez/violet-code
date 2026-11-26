@@ -108,7 +108,7 @@ vi.mock('@yewdiel21/motion-kit/react', () => {
   };
 });
 
-import { NuevaFichaDrawer } from './NuevaFichaDrawer';
+import { NuevaFichaDrawer } from '@/features/expedientes/ficha/NuevaFichaDrawer';
 
 function renderDrawer(props: Partial<Parameters<typeof NuevaFichaDrawer>[0]> = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });

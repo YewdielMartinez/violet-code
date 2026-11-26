@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isAttentionRole, isSupervisor, ROLE_LABELS, type StaffRole } from './Auth';
+import { isAttentionRole, isSupervisor, ROLE_LABELS, type StaffRole } from '@/domain/models/Auth';
 
 const ALL_ROLES: StaffRole[] = [
   'titular',

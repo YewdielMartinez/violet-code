@@ -10,7 +10,7 @@ const { fromMock, storageFromMock, uploadMock, removeMock, createSignedUrlMock, 
     getPublicUrlMock: vi.fn(),
   }));
 
-vi.mock('../client', () => ({
+vi.mock('@/infrastructure/supabase/client', () => ({
   supabase: {
     from: fromMock,
     storage: {
@@ -19,7 +19,7 @@ vi.mock('../client', () => ({
   },
 }));
 
-import { supabaseDocumentoStorageRepository } from './SupabaseDocumentoStorageRepository';
+import { supabaseDocumentoStorageRepository } from '@/infrastructure/supabase/adapters/SupabaseDocumentoStorageRepository';
 
 function buildTableMock(result: { data: unknown; error: unknown }) {
   const chain = {

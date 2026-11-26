@@ -4,7 +4,7 @@ import {
   mapOrdenProteccionOpcion,
   mapTipoDocumentoRow,
   traducirErrorDocumento,
-} from './documento.mapper';
+} from '@/infrastructure/supabase/adapters/documento.mapper';
 
 describe('documento.mapper', () => {
   it('traduce filas snake_case de documento con cat_tipo_documento a DocumentoAdjunto camelCase', () => {

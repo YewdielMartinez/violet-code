@@ -10,7 +10,7 @@ import {
   formatFechaNacimiento,
   formatPhoneDisplay,
   formatSexo,
-} from './drawer/formatters';
+} from '@/features/expedientes/drawer/formatters';
 
 const {
   listarPorFichaMock,
@@ -40,21 +40,21 @@ vi.mock('@/infrastructure/supabase/adapters/SupabaseAgresorRepository', () => ({
   },
 }));
 
-vi.mock('./ficha/FichaDetalleResumen', () => ({
+vi.mock('@/features/expedientes/ficha/FichaDetalleResumen', () => ({
   FichaDetalleResumen: () => <div data-testid="ficha-resumen" />,
 }));
 
-vi.mock('./ficha/FichaGestionAcciones', () => ({
+vi.mock('@/features/expedientes/ficha/FichaGestionAcciones', () => ({
   FichaGestionAcciones: () => <div data-testid="ficha-gestion" />,
 }));
 
-vi.mock('./DocumentosAdjuntosPanel', () => ({
+vi.mock('@/features/expedientes/DocumentosAdjuntosPanel', () => ({
   DocumentosAdjuntosPanel: () => <div data-testid="documentos-panel" />,
 }));
 
 // La sección de agresor envuelve su lista en un Dialog.Root propio (el diálogo crece desde el botón);
 // aquí se simula sin ocultar la lista, que el Dialog real siempre muestra.
-vi.mock('./agresor/motionCompat', () => {
+vi.mock('@/features/expedientes/agresor/motionCompat', () => {
   const Pass = ({ children }: { children?: ReactNode }) => <>{children}</>;
   return {
     prefersReducedMotion: () => true,
@@ -137,7 +137,7 @@ vi.mock('@yewdiel21/motion-kit/react', () => ({
   toast: toastMock,
 }));
 
-import { ExpedienteDrawer } from './ExpedienteDrawer';
+import { ExpedienteDrawer } from '@/features/expedientes/ExpedienteDrawer';
 
 const SAMPLE_EXPEDIENTE: ExpedienteResumen = {
   id: '55555555-5555-4555-8555-555555555501',

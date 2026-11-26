@@ -8,14 +8,14 @@ const { fromMock, rpcMock } = vi.hoisted(() => ({
   rpcMock: vi.fn(),
 }));
 
-vi.mock('../client', () => ({
+vi.mock('@/infrastructure/supabase/client', () => ({
   supabase: {
     from: fromMock,
     rpc: rpcMock,
   },
 }));
 
-import { supabaseFichaRepository } from './SupabaseFichaRepository';
+import { supabaseFichaRepository } from '@/infrastructure/supabase/adapters/SupabaseFichaRepository';
 
 function createTableChain(singleResult?: { data: unknown; error: unknown }) {
   const chain = {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { availableWidgets } from './layout';
+import { availableWidgets } from '@/features/dashboard/layout';
 
 describe('dashboard widgets by role', () => {
   it('reserva security exclusivamente para titular y subdirección', () => {
