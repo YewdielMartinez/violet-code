@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   CommandSearch,
   DataTable,
-  Dialog,
   EmptyState,
   Skeleton,
   type CommandItem,
@@ -11,7 +11,6 @@ import {
 } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/command-search';
 import '@yewdiel21/motion-kit/css/components/data-table';
-import '@yewdiel21/motion-kit/css/components/dialog';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/filter-builder';
 import '@yewdiel21/motion-kit/css/components/menu';
@@ -29,6 +28,8 @@ import {
   type ExpedienteResumen,
   type PreRegistroMovil,
 } from './api';
+import { FichaDetalleDialog } from './ficha/FichaDetalleDialog';
+import type { FichaSeedContext } from './ficha/useFichaForm';
 import { VerificarCurpDialog } from './VerificarCurpDialog';
 
 type QuickFilter = 'todos' | 'abierto' | 'en_seguimiento' | 'prioritarios' | 'cerrado';
@@ -100,6 +101,7 @@ function formatDate(iso: string): string {
  *   accionado desde `+ Nuevo expediente` para roles autorizados.
  */
 export default function ExpedientesPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { data, isLoading, isError, refetch } = useExpedientes();
   const { mutate: registerConsult } = useRegisterConsult();
@@ -110,6 +112,10 @@ export default function ExpedientesPage() {
   const [preloadedDraft, setPreloadedDraft] = useState<PreRegistroMovil | null>(null);
 
   const canCreateExpediente = user ? canLookupPreRegistro(user.role) : false;
+
+  function handleStartFicha(seed: FichaSeedContext) {
+    navigate('/expedientes/nuevo', { state: seed });
+  }
 
   const byId = useMemo(() => {
     const map = new Map<string, ExpedienteResumen>();
@@ -286,77 +292,15 @@ export default function ExpedientesPage() {
           allowPreRegistroLookup={canCreateExpediente}
           onOpenExpediente={openExpediente}
           onPreloadConfirmed={setPreloadedDraft}
+          onStartFicha={handleStartFicha}
         />
       ) : null}
 
-      <Dialog.Root open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
-        <Dialog.Content size="md">
-          <Dialog.Header>
-            <Dialog.Title>
-              {selected ? `Expediente ${selected.folio}` : 'Detalle del expediente'}
-            </Dialog.Title>
-            <Dialog.Close label="Cerrar" />
-          </Dialog.Header>
-          <Dialog.Body>
-            {selected ? (
-              <div className="grid gap-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-secondary-container px-3 py-1 text-xs font-medium text-on-secondary-container">
-                    {ESTADO_FICHA_LABELS[selected.estado]}
-                  </span>
-                  {selected.enListaUrgencias ? (
-                    <span className="rounded-full bg-status-danger-bg px-3 py-1 text-xs font-medium text-status-danger">
-                      Caso prioritario
-                    </span>
-                  ) : null}
-                  <span className="text-xs text-on-surface-variant">
-                    Consulta registrada en bitácora (RF-22)
-                  </span>
-                </div>
-
-                <dl className="grid gap-3 rounded-2xl bg-surface-container-low p-4 sm:grid-cols-2">
-                  <div>
-                    <dt className="text-xs font-medium text-on-surface-variant">Nombre completo</dt>
-                    <dd className="mt-0.5 text-sm font-medium text-on-surface">
-                      {selected.persona.nombreCompleto}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium text-on-surface-variant">CURP</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-on-surface">{selected.persona.curp}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium text-on-surface-variant">Fecha de nacimiento / Sexo</dt>
-                    <dd className="mt-0.5 text-sm text-on-surface">
-                      {selected.persona.fechaNacimiento} · {selected.persona.entidadNacimiento} ·{' '}
-                      {selected.persona.sexo}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium text-on-surface-variant">Teléfono celular</dt>
-                    <dd className="mt-0.5 font-mono text-sm text-on-surface">
-                      {selected.persona.celular ?? 'No registrado'}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium text-on-surface-variant">Alta del expediente</dt>
-                    <dd className="mt-0.5 text-sm text-on-surface">{formatDate(selected.creadoEn)}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium text-on-surface-variant">Última actualización</dt>
-                    <dd className="mt-0.5 text-sm text-on-surface">{formatDate(selected.actualizadoEn)}</dd>
-                  </div>
-                </dl>
-              </div>
-            ) : null}
-          </Dialog.Body>
-          <Dialog.Footer>
-            <button type="button" className="mk-button mk-button--filled" onClick={() => setSelected(null)}>
-              Cerrar
-            </button>
-          </Dialog.Footer>
-        </Dialog.Content>
-      </Dialog.Root>
+      <FichaDetalleDialog
+        expediente={selected}
+        canManage={canCreateExpediente}
+        onClose={() => setSelected(null)}
+      />
     </>
   );
 }

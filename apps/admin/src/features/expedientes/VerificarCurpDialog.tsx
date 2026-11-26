@@ -13,6 +13,7 @@ import {
   type VerificacionCurpResult,
 } from './api';
 import { BannerPrecargaMovil } from './BannerPrecargaMovil';
+import type { FichaSeedContext } from './ficha/useFichaForm';
 
 interface Props {
   open: boolean;
@@ -20,6 +21,7 @@ interface Props {
   allowPreRegistroLookup: boolean;
   onOpenExpediente: (expediente: ExpedienteResumen) => void;
   onPreloadConfirmed: (preRegistro: PreRegistroMovil | null) => void;
+  onStartFicha: (seed: FichaSeedContext) => void;
 }
 
 /**
@@ -32,6 +34,7 @@ export function VerificarCurpDialog({
   allowPreRegistroLookup,
   onOpenExpediente,
   onPreloadConfirmed,
+  onStartFicha,
 }: Props) {
   const inputId = useId();
   const hintId = useId();
@@ -202,10 +205,25 @@ export function VerificarCurpDialog({
           {result?.kind === 'persona_sin_ficha' ? (
             <div
               role="status"
-              className="mt-5 rounded-2xl border border-status-info/40 bg-status-info-bg/40 p-4 text-sm text-on-surface"
+              className="mt-5 grid gap-3 rounded-2xl border border-status-info/40 bg-status-info-bg/40 p-4 text-sm text-on-surface"
             >
-              La CURP <strong className="font-mono">{result.persona.curp}</strong> ya pertenece a{' '}
-              <strong>{result.persona.nombreCompleto}</strong> en el padrón (sin Ficha Única activa).
+              <p>
+                La CURP <strong className="font-mono">{result.persona.curp}</strong> ya pertenece a{' '}
+                <strong>{result.persona.nombreCompleto}</strong> en el padrón (sin Ficha Única activa).
+              </p>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  className="mk-button mk-button--filled"
+                  onClick={() => {
+                    const p = result.persona;
+                    onOpenChange(false);
+                    onStartFicha({ curp: p.curp, existingPersonaId: p.id });
+                  }}
+                >
+                  Continuar a Ficha Única
+                </button>
+              </div>
             </div>
           ) : null}
 
@@ -217,6 +235,11 @@ export function VerificarCurpDialog({
                 setConfirmedPreloadId(pre.preRegistroId);
                 onPreloadConfirmed(pre);
                 onOpenChange(false);
+                onStartFicha({
+                  curp: pre.curp,
+                  existingPersonaId: pre.personaId,
+                  preRegistro: pre,
+                });
               }}
               onDismiss={() => {
                 resetVerification();
@@ -228,13 +251,26 @@ export function VerificarCurpDialog({
           {result?.kind === 'nuevo' ? (
             <div
               role="status"
-              className="mt-5 flex items-center gap-3 rounded-2xl border border-status-success/40 bg-status-success-bg/40 p-4 text-sm text-on-surface"
+              className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-status-success/40 bg-status-success-bg/40 p-4 text-sm text-on-surface"
             >
-              <Icon name="verified_user" className="text-status-success" />
-              <span>
-                CURP <strong className="font-mono">{result.curp}</strong> disponible sin duplicados ni
-                pre-registro previo. Lista para capturar la Ficha Única.
-              </span>
+              <div className="flex items-center gap-3">
+                <Icon name="verified_user" className="text-status-success" />
+                <span>
+                  CURP <strong className="font-mono">{result.curp}</strong> disponible sin duplicados ni
+                  pre-registro previo.
+                </span>
+              </div>
+              <button
+                type="button"
+                className="mk-button mk-button--filled"
+                onClick={() => {
+                  const curp = result.curp;
+                  onOpenChange(false);
+                  onStartFicha({ curp });
+                }}
+              >
+                Continuar a Ficha Única
+              </button>
             </div>
           ) : null}
         </Dialog.Body>
