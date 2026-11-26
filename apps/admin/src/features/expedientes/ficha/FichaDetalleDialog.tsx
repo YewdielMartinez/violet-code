@@ -166,7 +166,7 @@ export function FichaDetalleDialog({ expediente, canManage, onClose }: Props) {
                             <dd className="text-on-surface">
                               {detail.domicilio.asentamientoNombre
                                 ? `${detail.domicilio.asentamientoNombre} (${detail.domicilio.codigoPostal ?? ''})`
-                                : `Foráneo CP ${detail.domicilio.codigoPostal ?? '—'}`}
+                                : `CP ${detail.domicilio.codigoPostal ?? '—'}`}
                             </dd>
                           </div>
                           {detail.domicilio.referencias ? (

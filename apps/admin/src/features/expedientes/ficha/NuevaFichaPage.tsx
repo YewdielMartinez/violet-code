@@ -14,7 +14,7 @@ import { useFichaForm, type FichaSeedContext } from './useFichaForm';
 
 const STEP_ITEMS = [
   { label: 'Ficha Única', description: 'Identidad, servicios y aviso' },
-  { label: 'Domicilio', description: 'SEPOMEX Ahome o foráneo' },
+  { label: 'Domicilio', description: 'Dirección y asentamiento' },
   { label: 'Estudio Socioeconómico', description: 'Vivienda y aportantes' },
 ];
 
