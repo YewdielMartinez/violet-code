@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useTabs } from '@yewdiel21/motion-kit/react';
 import { Icon } from '@/shared/ui/Icon';
 
-export type DrawerTab = 'resumen' | 'agresor' | 'documentos';
+export type DrawerTab = 'resumen' | 'agresor' | 'documentos' | 'canalizaciones';
 
 interface TabDefinition {
   id: DrawerTab;
@@ -15,6 +15,7 @@ const ALL_TABS: readonly TabDefinition[] = [
   { id: 'resumen', label: 'Datos', icon: 'badge', sensitive: false },
   { id: 'agresor', label: 'Persona agresora', icon: 'shield_person', sensitive: true },
   { id: 'documentos', label: 'Documentos', icon: 'folder_open', sensitive: true },
+  { id: 'canalizaciones', label: 'Canalizaciones', icon: 'alt_route', sensitive: true },
 ];
 
 interface Props {
