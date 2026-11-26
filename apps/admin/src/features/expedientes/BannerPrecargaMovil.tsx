@@ -27,11 +27,7 @@ export function BannerPrecargaMovil({ preRegistro, confirmed, onConfirm, onDismi
   return (
     <section
       aria-live="polite"
-      className={`rounded-2xl border p-4 transition-colors ${
-        confirmed
-          ? 'border-status-success/40 bg-status-success-bg/35'
-          : 'border-status-info/40 bg-status-info-bg/35'
-      }`}
+      className="rounded-2xl border border-outline-variant bg-surface-container-low p-4"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
@@ -70,7 +66,7 @@ export function BannerPrecargaMovil({ preRegistro, confirmed, onConfirm, onDismi
         </div>
       </div>
 
-      <dl className="mt-3 grid gap-3 rounded-xl bg-surface-container-lowest/90 p-3.5 text-sm sm:grid-cols-2">
+      <dl className="mt-3 grid gap-3 rounded-xl bg-surface-container-lowest p-3.5 text-sm sm:grid-cols-2">
         <div>
           <dt className="text-xs font-medium text-on-surface-variant">Nombre completo</dt>
           <dd className="mt-0.5 font-medium text-on-surface">{preRegistro.nombreCompleto}</dd>

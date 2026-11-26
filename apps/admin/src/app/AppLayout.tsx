@@ -157,7 +157,7 @@ export function AppLayout() {
         {/* Cambio de página lateral (sin jerarquía): cruce suave. key = ruta: sale una página y entra otra. */}
         <ViewTransition key={pathname} enter="page-enter" exit="page-exit" default="none">
           {/* En dock el contenido usa todo el ancho; en los estilos laterales se limita para leer cómodo. */}
-          <div className={`w-full px-2 py-4 md:px-6 md:py-6 ${navStyle === 'dock' ? '' : 'mx-auto max-w-[96rem]'}`}>
+          <div className={`w-full px-2 pt-0 pb-4 md:px-6 md:pt-0 md:pb-6 ${navStyle === 'dock' ? '' : 'mx-auto max-w-[96rem]'}`}>
             {outlet}
           </div>
         </ViewTransition>

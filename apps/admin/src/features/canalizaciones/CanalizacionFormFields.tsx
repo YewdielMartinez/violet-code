@@ -64,7 +64,7 @@ export function CanalizacionFormFields({ form, fixedFolio }: Props) {
   const destinoError = errors.destino ?? form.reglaError;
 
   return (
-    <div className="grid gap-4">
+    <div className="vc-canalizacion-form grid gap-5">
       {fixedFolio ? (
         <p className="flex items-center gap-2 rounded-2xl bg-surface-container px-4 py-3 text-sm text-on-surface">
           <Icon name="folder_open" className="text-[18px] text-on-surface-variant" />

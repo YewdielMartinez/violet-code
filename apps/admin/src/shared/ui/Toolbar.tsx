@@ -8,13 +8,13 @@ import { Icon } from './Icon';
  */
 
 const BASE =
-  'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl text-sm font-medium ' +
+  'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full text-sm font-medium ' +
   'transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ' +
   'disabled:cursor-not-allowed disabled:opacity-50';
 
 /** Clases de una píldora de la barra (para usarlas en `Menu.Trigger` u otros botones nativos). */
 export function toolbarPillClass(active = false, extra = ''): string {
-  return `${BASE} px-3 ${
+  return `${BASE} px-3.5 ${
     active
       ? 'bg-secondary-container text-on-secondary-container'
       : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest'
@@ -40,7 +40,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(f
       ref={ref}
       type={type}
       aria-pressed={props['aria-pressed'] ?? (active || undefined)}
-      className={`${BASE} px-3 ${
+      className={`${BASE} px-3.5 ${
         active
           ? 'bg-secondary-container text-on-secondary-container'
           : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest'

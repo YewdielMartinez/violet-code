@@ -96,6 +96,19 @@ export function NuevaFichaDrawer({
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
+    function ignoreStaleClose(event: Event) {
+      const target = event.target;
+      if (target instanceof HTMLDialogElement && target.hasAttribute('open')) {
+        event.stopPropagation();
+      }
+    }
+    host.addEventListener('close', ignoreStaleClose, true);
+    return () => host.removeEventListener('close', ignoreStaleClose, true);
+  }, []);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
     function handleNativeClose(event: Event) {
       const target = event.target;
       if (!(target instanceof Element) || !target.hasAttribute('data-mk-drawer')) return;
@@ -117,16 +130,29 @@ export function NuevaFichaDrawer({
 
   function handleDrawerOpenChange(nextOpen: boolean) {
     if (nextOpen) return;
-    if (bypassCloseGuardRef.current) {
+
+    function finalizeClose() {
+      if (bypassCloseGuardRef.current) {
+        onClose();
+        return;
+      }
+      if (isSubmittingRef.current) return;
+      if (isDirtyRef.current) {
+        setConfirmDiscardOpen(true);
+        return;
+      }
       onClose();
+    }
+
+    if (hostRef.current?.querySelector('dialog') && !bypassCloseGuardRef.current) {
+      window.setTimeout(() => {
+        if (hostRef.current?.querySelector('dialog')?.open) return;
+        finalizeClose();
+      }, 0);
       return;
     }
-    if (isSubmittingRef.current) return;
-    if (isDirtyRef.current && !bypassCloseGuardRef.current) {
-      setConfirmDiscardOpen(true);
-      return;
-    }
-    onClose();
+
+    finalizeClose();
   }
 
   function requestClose() {

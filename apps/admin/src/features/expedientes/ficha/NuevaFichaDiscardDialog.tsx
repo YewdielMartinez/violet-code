@@ -1,4 +1,5 @@
 import { Dialog } from '@yewdiel21/motion-kit/react';
+import '@yewdiel21/motion-kit/css/components/dialog';
 
 interface Props {
   open: boolean;
@@ -6,10 +7,12 @@ interface Props {
   onConfirmDiscard: () => void;
 }
 
+const NO_ORIGIN = typeof document !== 'undefined' ? document.createElement('span') : null;
+
 /** Diálogo de confirmación para evitar perder datos capturados en la Ficha Única. */
 export function NuevaFichaDiscardDialog({ open, onOpenChange, onConfirmDiscard }: Props) {
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root anchor={NO_ORIGIN} open={open} onOpenChange={onOpenChange}>
       <Dialog.Content size="sm">
         <Dialog.Header>
           <Dialog.Title>¿Descartar cambios sin guardar?</Dialog.Title>

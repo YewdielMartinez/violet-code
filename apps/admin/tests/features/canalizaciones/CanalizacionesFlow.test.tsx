@@ -193,7 +193,12 @@ function getDialog(selector = 'dialog.vc-canalizacion-form-dialog') {
 async function openCreateDialog(trigger: HTMLElement) {
   fireEvent.click(trigger);
   await waitFor(() => expect(getDialog()?.hasAttribute('open')).toBe(true));
-  return getDialog()!;
+  const dialog = getDialog()!;
+  expect(dialog.getAttribute('data-mk-placement')).toBe('side');
+  expect(
+    within(dialog).getByText('Derivaciones internas entre áreas y canalizaciones a instituciones externas.'),
+  ).toBeTruthy();
+  return dialog;
 }
 
 describe('Canalizaciones: diálogo de alta, detalle lateral y filtros', () => {
@@ -321,5 +326,19 @@ describe('Canalizaciones: diálogo de alta, detalle lateral y filtros', () => {
         motivo: 'Contención.',
       }),
     );
+  });
+
+  it('permite cerrar el panel de nueva canalización y volver a abrirlo sin quedarse pegado', async () => {
+    renderWithApp(<CanalizacionesPage />);
+    await screen.findByText('SEM-2026-0010');
+
+    const trigger = screen.getByRole('button', { name: /Nueva canalización/i });
+    const firstDialog = await openCreateDialog(trigger);
+
+    fireEvent.click(within(firstDialog).getByRole('button', { name: 'Cerrar' }));
+    await waitFor(() => expect(getDialog()?.hasAttribute('open') ?? false).toBe(false), { timeout: 2000 });
+
+    const reopenedDialog = await openCreateDialog(trigger);
+    expect(reopenedDialog.hasAttribute('open')).toBe(true);
   });
 });

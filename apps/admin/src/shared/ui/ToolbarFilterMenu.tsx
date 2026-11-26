@@ -71,7 +71,8 @@ export function ToolbarFilterMenu(props: ToolbarFilterMenuProps) {
         ) : null}
         <Icon name="expand_more" className="-mr-1 text-[18px]" />
       </Menu.Trigger>
-      <Menu.Content density="compact" aria-label={label}>
+      <Menu.Content className="vc-filter-menu" aria-label={label}>
+        <p className="px-4 pt-1.5 pb-2 text-xs font-medium uppercase tracking-wide text-on-surface-variant">{label}</p>
         {options.map((o) => {
           const on = selected.includes(o.value);
           return (
@@ -83,8 +84,8 @@ export function ToolbarFilterMenu(props: ToolbarFilterMenuProps) {
               className={on ? 'font-medium text-primary' : undefined}
             >
               {o.icon ? <Icon name={o.icon} /> : null}
-              <span className="flex-1 text-left">{o.label}</span>
-              {o.count !== undefined ? <span className="font-mono text-xs opacity-75">{o.count}</span> : null}
+              <span className="min-w-0 flex-1 text-left">{o.label}</span>
+              {o.count !== undefined ? <span className="ml-2 font-mono text-xs opacity-75">{o.count}</span> : null}
               <Icon name="check" className={on ? 'text-[18px]' : 'invisible text-[18px]'} />
             </Menu.Item>
           );

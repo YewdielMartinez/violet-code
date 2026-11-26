@@ -143,7 +143,7 @@ export default function IntervencionesPage() {
                 return (
                   <li
                     key={cita.citaId}
-                    className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-outline-variant bg-surface-container-lowest p-4 transition-colors hover:bg-surface-container-low"
+                    className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-outline-variant bg-surface-container-lowest p-5 transition-colors hover:bg-surface-container-low"
                   >
                     <div className="flex min-w-0 flex-1 items-center gap-3.5">
                       <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-primary-container text-center text-on-primary-container">
@@ -153,19 +153,21 @@ export default function IntervencionesPage() {
                       </span>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium text-on-surface">{cita.nombreCompleto}</span>
+                          <span className="text-base font-semibold text-on-surface sm:text-lg">
+                            {cita.nombreCompleto}
+                          </span>
                           <span
-                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${ESTADO_BADGE[cita.estado]}`}
+                            className={`rounded-full px-3 py-1 text-sm font-medium ${ESTADO_BADGE[cita.estado]}`}
                           >
                             {ESTADO_CITA_LABELS[cita.estado]}
                           </span>
                           {cita.prioridad ? (
-                            <span className="rounded-full bg-surface-container-high px-2.5 py-0.5 text-xs text-on-surface-variant">
+                            <span className="rounded-full bg-surface-container-high px-3 py-1 text-sm font-medium text-on-surface-variant">
                               Prioridad {PRIORIDAD_CITA_LABELS[cita.prioridad].toLowerCase()}
                             </span>
                           ) : null}
                         </div>
-                        <p className="mt-1 text-sm text-on-surface-variant">
+                        <p className="mt-1.5 text-sm sm:text-[0.95rem] text-on-surface-variant">
                           {formatDia(cita.programadaEn)}
                           {canRegister ? '' : ` · ${cita.areaClave.replace('_', ' ')}`}
                         </p>
@@ -177,7 +179,7 @@ export default function IntervencionesPage() {
                         setSelectedId(cita.citaId);
                         setDrawerOpen(true);
                       }}
-                      className={`mk-button mk-button--sm ${
+                      className={`mk-button ${
                         canRegister && pendiente ? 'mk-button--filled' : 'mk-button--tonal'
                       }`}
                     >

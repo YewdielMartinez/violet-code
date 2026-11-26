@@ -233,6 +233,19 @@ body {
   gap: 16px;
 }
 
+.mk-menu.vc-filter-menu {
+  min-width: 240px;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 10px;
+}
+
+.mk-menu.vc-filter-menu [data-mk-item] {
+  min-height: 46px;
+  padding: 0 16px;
+  gap: 14px;
+  border-radius: 20px;
+}
+
 /* Calendario compacto (widget de Agenda en columna lateral): días bajos y un punto en los días con citas,
    en lugar de los chips de evento (que en 24rem de ancho se cortan en "+1 más"). */
 .mk-calendar.vc-calendar-compact {

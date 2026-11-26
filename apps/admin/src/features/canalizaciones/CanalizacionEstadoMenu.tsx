@@ -22,7 +22,7 @@ export function CanalizacionEstadoMenu({ value, counts, onChange }: Props) {
         <span>{active && current ? `Estado: ${current.label}` : 'Estado'}</span>
         <Icon name="arrow_drop_down" className="-mr-1 text-[20px]" />
       </Menu.Trigger>
-      <Menu.Content density="compact" aria-label="Estado de la canalización">
+      <Menu.Content className="vc-filter-menu" aria-label="Estado de la canalización">
         {QUICK_FILTERS.map((f) => (
           <Menu.Item key={f.id} value={f.id} aria-current={f.id === value ? 'true' : undefined}>
             <Icon name={f.id === value ? 'check' : 'chevron_right'} className={f.id === value ? '' : 'opacity-0'} />

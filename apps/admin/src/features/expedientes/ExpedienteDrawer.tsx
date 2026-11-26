@@ -5,7 +5,6 @@ import {
   Suspense,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -68,10 +67,6 @@ export function preloadExpedienteDrawerTabs(): void {
 // El morph de apertura de motion-kit dura 0.7 s (TIMING.dialog.open). Montar el detalle a la mitad
 // provocaba un tirón; se monta al terminar y mientras tanto se ve el placeholder ligero.
 const DEFERRED_CONTENT_DELAY_MS = 700;
-// El cierre de motion-kit (morphCloseWithGhost) dura 0.5 s (TIMING.dialog.close) y anima una copia
-// del panel. Durante ese tiempo no tocamos la URL ni el árbol de React: cualquier render a mitad
-// de la animación se notaba como un "frenón".
-const CLOSE_ANIMATION_MS = 550;
 
 const DrawerSectionPlaceholder = memo(function DrawerSectionPlaceholder({
   label,
@@ -161,21 +156,8 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isOpen = Boolean(expediente);
-  // Cierre en dos fases sin renders a mitad de animación: el kit ya cerró el <dialog> y anima su
-  // ghost; la URL (y con ella la limpieza) se actualiza al terminar. `open` sigue en true mientras
-  // tanto, pero el wrapper del kit solo sincroniza cuando la prop cambia, así que no reabre.
-  const closingIdRef = useRef<string | null>(null);
-  const closeTimerRef = useRef(0);
-  // Si se abre otro expediente mientras el anterior termina de cerrarse, `open` no cambia (true → true)
-  // y el kit no lo abriría: se remonta el Dialog con una generación nueva.
-  const [generation, setGeneration] = useState(0);
-  useLayoutEffect(() => {
-    const pending = closingIdRef.current;
-    if (!pending || !expediente || expediente.id === pending) return;
-    window.clearTimeout(closeTimerRef.current);
-    closingIdRef.current = null;
-    setGeneration((g) => g + 1);
-  }, [expediente]);
+  const expedienteRef = useRef(expediente);
+  expedienteRef.current = expediente;
   const [contentReady, setContentReady] = useState(() => isOpen && prefersReducedMotion());
 
   const rawTab = searchParams.get('tab');
@@ -190,9 +172,6 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
       : 'resumen';
   const activeTab: DrawerTab = canAccessSensitiveTabs ? requestedTab : 'resumen';
 
-  // Workaround motion-kit 0.20.3: `createDialog.close()` llama a `dialog.close()` sin incrementar
-  // `ownCloses`. Si el diálogo se reabre antes de que se despache el evento nativo `close` en cola,
-  // ese evento obsoleto desincronizaría `isOpen` dejando `<dialog open>` atascado en pantalla.
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
@@ -205,29 +184,6 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     host.addEventListener('close', ignoreStaleClose, true);
     return () => host.removeEventListener('close', ignoreStaleClose, true);
   }, []);
-
-  // Tras el cierre (después del useLayoutEffect donde Dialog cierra y clona el ghost), limpia el
-  // contenido retenido y garantiza que el <dialog> nativo no quede abierto por ningún race.
-  useEffect(() => {
-    if (expediente) return;
-
-    const dialogEl = hostRef.current?.querySelector('dialog');
-    if (dialogEl && dialogEl.hasAttribute('open')) {
-      if (typeof dialogEl.close === 'function') dialogEl.close();
-      else dialogEl.removeAttribute('open');
-    }
-
-    // Desmontar el contenido a mitad del morph de cierre (p. ej. "atrás" del navegador) se nota:
-    // se limpia cuando la animación ya terminó.
-    const timer = window.setTimeout(() => {
-      setDisplayed((prev) => (prev ? null : prev));
-      setExpanded((prev) => (prev ? false : prev));
-      setContentReady((prev) => (prev ? false : prev));
-    }, prefersReducedMotion() ? 0 : CLOSE_ANIMATION_MS);
-    return () => window.clearTimeout(timer);
-  }, [expediente]);
-
-  useEffect(() => () => window.clearTimeout(closeTimerRef.current), []);
 
   // Difiere el montaje de consultas/secciones pesadas (FichaDetalleResumen, FuseButton, Agresor,
   // Documentos, Canalizaciones) hasta pasar los primeros frames del morphOpen.
@@ -276,31 +232,19 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     [isOpen, activeTab, setSearchParams],
   );
 
-  const finishClose = useCallback(() => {
-    closingIdRef.current = null;
-    // motion-kit 0.20.3 también llama a onClose desde destroy() (StrictMode monta dos veces) y el
-    // diálogo se vuelve a abrir enseguida: si sigue abierto, no fue un cierre real.
-    if (hostRef.current?.querySelector('dialog')?.open) return;
-    startTransition(() => onClose());
-  }, [onClose]);
-
-  /** Tras un cierre del kit (X, Escape, backdrop): espera la animación y luego limpia la URL. */
-  const scheduleClose = useCallback(() => {
-    if (!expediente || closingIdRef.current === expediente.id) return;
-    closingIdRef.current = expediente.id;
-    window.clearTimeout(closeTimerRef.current);
-    closeTimerRef.current = window.setTimeout(
-      finishClose,
-      prefersReducedMotion() ? 0 : CLOSE_ANIMATION_MS,
-    );
-  }, [expediente, finishClose]);
-
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
-      if (!nextOpen) scheduleClose();
+      if (!nextOpen) startTransition(() => onClose());
     },
-    [scheduleClose],
+    [onClose],
   );
+
+  const handleAfterClose = useCallback(() => {
+    if (expedienteRef.current) return;
+    setDisplayed(null);
+    setExpanded(false);
+    setContentReady(false);
+  }, []);
 
   /** Cierre pedido por la app (botón del pie, archivar): mismo camino que la X del kit. */
   const requestClose = useCallback(() => {
@@ -315,7 +259,7 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
 
 
   const widthStyle = useMemo(
-    () => ({ '--vc-drawer-width': expanded ? '960px' : '680px' }) as CSSProperties,
+    () => ({ '--vc-drawer-width': expanded ? 'calc(100vw - 16px)' : '680px' }) as CSSProperties,
     [expanded],
   );
 
@@ -325,7 +269,6 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
   return (
     <div ref={hostRef}>
       <Dialog.Root
-        key={generation}
         placement="side"
         variant="morph"
         animateContent={false}
@@ -334,6 +277,7 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
         anchor={dialogAnchor}
         open={isOpen}
         onOpenChange={handleOpenChange}
+        onAfterClose={handleAfterClose}
       >
         <Dialog.Content className="vc-expediente-dialog" style={widthStyle}>
           <ExpedienteTopBar

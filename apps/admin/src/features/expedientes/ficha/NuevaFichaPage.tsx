@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { toast } from '@yewdiel21/motion-kit/react';
+import { FadeContent, toast } from '@yewdiel21/motion-kit/react';
+import '@yewdiel21/motion-kit/css/components/fade-content';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
 import { useAuth } from '@/shared/auth/useAuth';
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard';
@@ -118,54 +119,56 @@ export default function NuevaFichaPage() {
         }
       />
 
-      <div className="mx-auto max-w-4xl rounded-3xl border border-outline-variant bg-surface-container-lowest p-6">
-        <div className="mb-6 border-b border-outline-variant pb-5">
-          <FichaWizardStepper step={step} onSelectStep={handleStepSelect} />
-        </div>
+      <FadeContent rise={10} duration={0.28} trigger="load" once>
+        <div className="mx-auto max-w-4xl rounded-3xl border border-outline-variant bg-surface-container-lowest p-6">
+          <div className="mb-6 border-b border-outline-variant pb-5">
+            <FichaWizardStepper step={step} onSelectStep={handleStepSelect} />
+          </div>
 
-        <FichaWizardSteps
-          formId={formId}
-          formRef={formRef}
-          step={step}
-          stepError={stepError}
-          invalidField={invalidField}
-          duplicateExpediente={duplicateExpediente}
-          identidad={identidad}
-          onIdentidadChange={setIdentidad}
-          domicilio={domicilio}
-          onDomicilioChange={setDomicilio}
-          estudio={estudio}
-          onEstudioChange={setEstudio}
-          catalogos={catalogos}
-          allowPreRegistroLookup={canCreate}
-          onOpenExpediente={handleOpenExpediente}
-          onDuplicateExpedienteChange={setDuplicateExpediente}
-          onNext={handleNext}
-          onSubmit={() => {
-            void handleFinish();
-          }}
-          onStepAnimated={() => {
-            if (!pendingFocusFieldRef.current) return;
-            const target = pendingFocusFieldRef.current;
-            pendingFocusFieldRef.current = null;
-            focusFichaField(formRef.current, target);
-          }}
-        />
-
-        <div className="sticky bottom-0 z-10 mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant bg-surface-container-lowest/95 pt-5 pb-1 backdrop-blur-sm">
-          <FichaWizardFooter
+          <FichaWizardSteps
             formId={formId}
+            formRef={formRef}
             step={step}
-            isSubmitting={isSubmitting}
-            submitError={submitError}
-            canContinue={!duplicateExpediente}
-            onClearSubmitError={() => setSubmitError(false)}
-            onBack={goBack}
-            onCancel={() => navigate('/expedientes')}
+            stepError={stepError}
+            invalidField={invalidField}
+            duplicateExpediente={duplicateExpediente}
+            identidad={identidad}
+            onIdentidadChange={setIdentidad}
+            domicilio={domicilio}
+            onDomicilioChange={setDomicilio}
+            estudio={estudio}
+            onEstudioChange={setEstudio}
+            catalogos={catalogos}
+            allowPreRegistroLookup={canCreate}
+            onOpenExpediente={handleOpenExpediente}
+            onDuplicateExpedienteChange={setDuplicateExpediente}
             onNext={handleNext}
+            onSubmit={() => {
+              void handleFinish();
+            }}
+            onStepAnimated={() => {
+              if (!pendingFocusFieldRef.current) return;
+              const target = pendingFocusFieldRef.current;
+              pendingFocusFieldRef.current = null;
+              focusFichaField(formRef.current, target);
+            }}
           />
+
+          <div className="sticky bottom-0 z-10 mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant bg-surface-container-lowest pt-5 pb-1">
+            <FichaWizardFooter
+              formId={formId}
+              step={step}
+              isSubmitting={isSubmitting}
+              submitError={submitError}
+              canContinue={!duplicateExpediente}
+              onClearSubmitError={() => setSubmitError(false)}
+              onBack={goBack}
+              onCancel={() => navigate('/expedientes')}
+              onNext={handleNext}
+            />
+          </div>
         </div>
-      </div>
+      </FadeContent>
       <UnsavedChangesDialog blocker={blocker} />
     </>
   );

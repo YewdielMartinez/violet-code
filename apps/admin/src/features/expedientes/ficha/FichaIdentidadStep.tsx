@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { GlassSwitch, MultiSelect, Select } from '@yewdiel21/motion-kit/react';
+import { GlassSwitch, MultiSelect, Select, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
 import '@yewdiel21/motion-kit/css/components/glass-switch';
 import '@yewdiel21/motion-kit/css/components/menu';
@@ -181,6 +181,7 @@ export function FichaIdentidadStep({
           if (outcome.kind === 'expediente_existente') {
             setLookup({ status: 'duplicate', curp: targetCurp, expediente: outcome.expediente });
             onDuplicateRef.current?.(outcome.expediente);
+            toast('Esta persona ya cuenta con un expediente registrado.', { tone: 'error' });
             if (latestValueRef.current.existingPersonaId) {
               onChangeRef.current({ ...latestValueRef.current, existingPersonaId: null });
             }
@@ -192,10 +193,12 @@ export function FichaIdentidadStep({
           if (outcome.kind === 'persona_sin_ficha') {
             if (isRestrictedRole) {
               setLookup({ status: 'available', curp: targetCurp });
+              toast('CURP verificada y disponible para registro.', { tone: 'success' });
               return;
             }
             const p = outcome.persona;
             setLookup({ status: 'persona_sin_ficha', curp: targetCurp, persona: p });
+            toast('Persona encontrada en padrón. Datos precargados.', { tone: 'info' });
             const cur = latestValueRef.current;
             onChangeRef.current({
               ...cur,
@@ -212,6 +215,7 @@ export function FichaIdentidadStep({
           if (outcome.kind === 'pre_registro_movil') {
             if (isRestrictedRole || !canLookupPre) {
               setLookup({ status: 'available', curp: targetCurp });
+              toast('CURP verificada y disponible para registro.', { tone: 'success' });
               return;
             }
             setLookup({
@@ -220,15 +224,18 @@ export function FichaIdentidadStep({
               preRegistro: outcome.preRegistro,
               applied: false,
             });
+            toast('Pre-registro móvil encontrado para esta persona.', { tone: 'info' });
             return;
           }
 
           setLookup({ status: 'available', curp: targetCurp });
+          toast('CURP verificada y disponible para registro.', { tone: 'success' });
         })
         .catch(() => {
           if (cancelled || latestCurpRef.current !== targetCurp) return;
           onDuplicateRef.current?.(null);
           setLookup({ status: 'error', curp: targetCurp });
+          toast('No se pudo verificar la CURP en este momento.', { tone: 'error' });
         });
     }, 350);
 
@@ -299,18 +306,31 @@ export function FichaIdentidadStep({
               Al capturar los 18 caracteres se verifica automáticamente si la persona tiene registro previo.
             </p>
           </div>
-          {normalizedCurp.length > 0 ? (
-            <span
-              className={`rounded-full px-3 py-1 font-mono text-xs font-medium ${
-                curpValid
-                  ? 'bg-status-success-bg text-status-success'
-                  : curpComplete
-                    ? 'bg-status-danger-bg text-status-danger'
-                    : 'bg-surface-container-high text-on-surface-variant'
-              }`}
-            >
-              {normalizedCurp.length}/18 {curpValid ? '· Formato válido' : curpComplete ? '· Formato inválido' : ''}
-            </span>
+          {normalizedCurp.length > 0 || lookup.status === 'available' ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {lookup.status === 'available' ? (
+                <span
+                  role="status"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-status-success-bg px-3 py-1 text-xs font-medium text-status-success"
+                >
+                  <Icon name="verified_user" className="text-[16px]" />
+                  <span>CURP verificada</span>
+                </span>
+              ) : null}
+              {normalizedCurp.length > 0 ? (
+                <span
+                  className={`rounded-full px-3 py-1 font-mono text-xs font-medium ${
+                    curpValid
+                      ? 'bg-status-success-bg text-status-success'
+                      : curpComplete
+                        ? 'bg-status-danger-bg text-status-danger'
+                        : 'bg-surface-container-high text-on-surface-variant'
+                  }`}
+                >
+                  {normalizedCurp.length}/18 {curpValid ? '· Formato válido' : curpComplete ? '· Formato inválido' : ''}
+                </span>
+              ) : null}
+            </div>
           ) : null}
         </header>
 
@@ -366,7 +386,7 @@ export function FichaIdentidadStep({
         {lookup.status === 'duplicate' ? (
           <div
             role="alert"
-            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-status-warning/40 bg-status-warning-bg/35 p-4"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-4"
           >
             <div className="flex items-start gap-3">
               <Icon name="warning" className="mt-0.5 text-status-warning" />
@@ -403,7 +423,7 @@ export function FichaIdentidadStep({
         {lookup.status === 'persona_sin_ficha' ? (
           <div
             role="status"
-            className="flex items-start gap-3 rounded-2xl border border-status-info/40 bg-status-info-bg/35 p-4 text-sm text-on-surface"
+            className="flex items-start gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-4 text-sm text-on-surface"
           >
             <Icon name="person_check" className="mt-0.5 text-status-info" />
             <div>
@@ -422,16 +442,6 @@ export function FichaIdentidadStep({
             onConfirm={handleApplyPreRegistro}
             onDismiss={() => setLookup({ status: 'available', curp: lookup.curp })}
           />
-        ) : null}
-
-        {lookup.status === 'available' ? (
-          <div
-            role="status"
-            className="flex items-center gap-2.5 rounded-xl border border-status-success/35 bg-status-success-bg/30 px-4 py-2.5 text-sm text-on-surface"
-          >
-            <Icon name="verified_user" className="text-status-success" />
-            <span>CURP verificada, disponible para registrar un nuevo expediente.</span>
-          </div>
         ) : null}
 
         {lookup.status === 'error' ? (

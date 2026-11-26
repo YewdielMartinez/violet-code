@@ -145,12 +145,12 @@ export function AlertaDetalleDrawer({
               {alerta ? (
                 <>
                   <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${PRIORIDAD_CHIP_CLASS[alerta.prioridad]}`}
+                    className={`rounded-full px-3 py-1 text-sm font-medium ${PRIORIDAD_CHIP_CLASS[alerta.prioridad]}`}
                   >
                     Prioridad {PRIORIDAD_ALERTA_LABELS[alerta.prioridad].toLowerCase()}
                   </span>
                   <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${ESTADO_CHIP_CLASS[alerta.estado]}`}
+                    className={`rounded-full px-3 py-1 text-sm font-medium ${ESTADO_CHIP_CLASS[alerta.estado]}`}
                   >
                     {ESTADO_ALERTA_LABELS[alerta.estado]}
                   </span>
@@ -158,7 +158,7 @@ export function AlertaDetalleDrawer({
               ) : null}
             </div>
             {alerta ? (
-              <Drawer.Description>
+              <Drawer.Description className="mt-1 text-sm text-on-surface-variant">
                 Canal: {ORIGEN_ALERTA_LABELS[alerta.origen]} · Recibida {formatFechaHora(alerta.creadoEn)}
               </Drawer.Description>
             ) : null}
@@ -172,11 +172,11 @@ export function AlertaDetalleDrawer({
               {alerta.tieneOrdenVigente ? (
                 <div
                   role="status"
-                  className="flex items-start gap-3 rounded-2xl border border-outline-variant bg-status-danger-bg px-4 py-3 text-status-danger"
+                  className="flex items-start gap-3 rounded-2xl border border-outline-variant bg-status-danger-bg p-5 text-status-danger"
                 >
                   <Icon name="gavel" className="mt-0.5 shrink-0" />
-                  <div className="text-sm">
-                    <p className="font-medium">Orden de protección vigente (RN-17)</p>
+                  <div className="text-sm sm:text-base">
+                    <p className="font-semibold">Orden de protección vigente (RN-17)</p>
                     <p className="opacity-90">
                       Esta persona cuenta con una orden de protección vigente; la prioridad de la alerta se elevó a alta automáticamente.
                     </p>
@@ -186,25 +186,25 @@ export function AlertaDetalleDrawer({
 
               <section
                 aria-label="Persona y expediente"
-                className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-4"
+                className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-5"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-on-surface-variant">
+                  <div className="flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-on-surface-variant">
                     <Icon name={ORIGEN_ICON[alerta.origen]} className="text-base" />
                     <span>{ORIGEN_ALERTA_LABELS[alerta.origen]}</span>
                   </div>
                   {alerta.folio ? (
-                    <span className="rounded-full bg-surface-container-high px-2.5 py-0.5 font-mono text-xs text-on-surface">
+                    <span className="rounded-full bg-surface-container-high px-3 py-1 font-mono text-sm text-on-surface">
                       {alerta.folio}
                     </span>
                   ) : null}
                 </div>
 
                 <div>
-                  <p className="text-base font-medium text-on-surface">
+                  <p className="text-lg font-semibold text-on-surface">
                     {alerta.nombreCompleto ?? 'Alerta sin expediente vinculado'}
                   </p>
-                  <p className="mt-1 text-sm text-on-surface-variant">
+                  <p className="mt-1.5 text-base text-on-surface-variant">
                     {alerta.celular ? (
                       <a
                         href={`tel:${alerta.celular}`}
@@ -223,14 +223,14 @@ export function AlertaDetalleDrawer({
                   <div className="pt-1">
                     <Link
                       to={`/expedientes?expediente=${encodeURIComponent(alerta.fichaId)}`}
-                      className="mk-button mk-button--tonal mk-button--sm inline-flex items-center gap-1.5"
+                      className="mk-button mk-button--tonal inline-flex items-center gap-1.5"
                     >
                       <Icon name="folder_shared" />
                       <span>Ver expediente {alerta.folio ?? ''}</span>
                     </Link>
                   </div>
                 ) : (
-                  <p className="text-xs text-on-surface-variant">
+                  <p className="text-sm text-on-surface-variant">
                     La alerta no está ligada aún a una Ficha Única de Registro.
                   </p>
                 )}
@@ -238,12 +238,12 @@ export function AlertaDetalleDrawer({
 
               <section
                 aria-label="Ubicación reportada"
-                className="flex items-start gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest p-4"
+                className="flex items-start gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest p-5"
               >
                 <Icon name="location_on" className="mt-0.5 shrink-0 text-primary" />
                 <div>
-                  <h3 className="text-sm font-medium text-on-surface">Colonia / asentamiento</h3>
-                  <p className="mt-0.5 text-sm text-on-surface-variant">
+                  <h3 className="text-base font-semibold text-on-surface">Colonia / asentamiento</h3>
+                  <p className="mt-1 text-base text-on-surface-variant">
                     {alerta.asentamientoNombre ?? 'Sin colonia reportada (ubicación reservada).'}
                   </p>
                 </div>
@@ -251,11 +251,11 @@ export function AlertaDetalleDrawer({
 
               <section
                 aria-label="Historial de atención"
-                className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest p-4"
+                className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest p-5"
               >
-                <h3 className="text-sm font-medium text-on-surface">Historial de la alerta</h3>
+                <h3 className="text-base font-semibold text-on-surface">Historial de la alerta</h3>
                 <Skeleton loading={detalleQuery.isLoading} shape="text" lines={3} label="Cargando historial">
-                  <ol className="grid gap-2.5 text-sm">
+                  <ol className="grid gap-2.5 text-base">
                     <li className="flex items-center justify-between gap-2">
                       <span className="text-on-surface-variant">Emitida</span>
                       <span className="font-medium text-on-surface">
@@ -278,8 +278,8 @@ export function AlertaDetalleDrawer({
                     </li>
                   </ol>
                   {detalle?.observaciones ? (
-                    <div className="mt-3 rounded-xl bg-surface-container-low p-3 text-sm text-on-surface">
-                      <p className="mb-1 text-xs font-medium text-on-surface-variant">
+                    <div className="mt-3 rounded-xl bg-surface-container-low p-3.5 text-base text-on-surface">
+                      <p className="mb-1 text-sm font-medium text-on-surface-variant">
                         Observaciones registradas
                       </p>
                       <p className="whitespace-pre-wrap">{detalle.observaciones}</p>
@@ -290,17 +290,17 @@ export function AlertaDetalleDrawer({
 
               <section
                 aria-label="Acciones de atención"
-                className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-4"
+                className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-5"
               >
-                <h3 className="text-sm font-medium text-on-surface">Atención Línea 24/7</h3>
+                <h3 className="text-base font-semibold text-on-surface">Atención Línea 24/7</h3>
 
                 {!canAttend ? (
-                  <p className="text-sm text-on-surface-variant">
+                  <p className="text-sm sm:text-base text-on-surface-variant">
                     Solo Titular, Subdirección o Jurídico pueden tomar y concluir alertas de la Línea 24/7.
                   </p>
                 ) : alerta.estado === 'nueva' ? (
                   <div className="grid gap-2">
-                    <p className="text-sm text-on-surface-variant">
+                    <p className="text-sm sm:text-base text-on-surface-variant">
                       Mantén presionado el botón para tomar esta alerta de forma atómica y asignarla a tu usuario.
                     </p>
                     <div>
@@ -324,7 +324,7 @@ export function AlertaDetalleDrawer({
                     <div>
                       <label
                         htmlFor={observacionesId}
-                        className="mb-1.5 block text-sm font-medium text-on-surface"
+                        className="mb-1.5 block text-sm sm:text-base font-medium text-on-surface"
                       >
                         Observaciones de atención (opcional)
                       </label>
@@ -335,9 +335,9 @@ export function AlertaDetalleDrawer({
                         value={observaciones}
                         onChange={(e) => setObservaciones(e.target.value)}
                         placeholder="Describe brevemente las acciones realizadas o la canalización efectuada…"
-                        className="w-full rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface focus:border-primary focus:outline-none"
+                        className="min-h-28 w-full rounded-2xl border border-outline-variant bg-surface px-4 py-3 text-base text-on-surface focus:border-primary focus:outline-none"
                       />
-                      <div className="mt-1 flex items-center justify-between text-xs text-on-surface-variant">
+                      <div className="mt-1.5 flex items-center justify-between text-sm text-on-surface-variant">
                         <span className={obsError ? 'text-status-danger' : ''}>
                           {obsError ?? 'Máximo 2000 caracteres.'}
                         </span>
@@ -355,7 +355,7 @@ export function AlertaDetalleDrawer({
                     />
                   </div>
                 ) : (
-                  <p className="inline-flex items-center gap-2 text-sm font-medium text-status-success">
+                  <p className="inline-flex items-center gap-2 text-sm sm:text-base font-medium text-status-success">
                     <Icon name="check_circle" />
                     <span>Esta alerta ya fue atendida y cerrada.</span>
                   </p>

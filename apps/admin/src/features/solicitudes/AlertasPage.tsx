@@ -305,32 +305,35 @@ export default function AlertasPage() {
               </ToolbarButton>
             ) : null}
             <span
-              className={`inline-flex items-center gap-1.5 h-9 rounded-full px-3 text-xs font-medium ${
-                realtimeLive
-                  ? 'bg-status-success-bg text-status-success'
-                  : 'bg-surface-container-high text-on-surface-variant'
-              }`}
+              className="relative inline-flex"
+              title={realtimeLive ? 'Conexión en tiempo real activa' : 'Conectando en tiempo real…'}
             >
-              <span
-                aria-hidden
-                className={`size-2 rounded-full ${
-                  realtimeLive ? 'bg-status-success' : 'bg-on-surface-variant'
-                }`}
+              <NotificationBell
+                count={stackItems.length}
+                message={latestBellMsg}
+                label="Alertas entrantes"
+                onOpen={() => setStackExpanded((prev) => !prev)}
               />
-              {realtimeLive ? 'En vivo' : 'Conectando…'}
+              <span aria-hidden className="pointer-events-none absolute right-0.5 bottom-0.5 flex size-2">
+                {realtimeLive ? (
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-status-success opacity-75" />
+                ) : null}
+                <span
+                  className={`relative inline-flex size-2 rounded-full ring-2 ring-surface ${
+                    realtimeLive ? 'bg-status-success' : 'bg-on-surface-variant/60'
+                  }`}
+                />
+              </span>
+              <span className="sr-only">
+                {realtimeLive ? 'Conexión en tiempo real activa' : 'Conectando en tiempo real'}
+              </span>
             </span>
-            <NotificationBell
-              count={stackItems.length}
-              message={latestBellMsg}
-              label="Alertas entrantes"
-              onOpen={() => setStackExpanded((prev) => !prev)}
-            />
           </>
         }
       />
 
       {!canAttend ? (
-        <div className="mb-4 flex items-center gap-2.5 rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+        <div className="mb-4 flex items-center gap-2.5 rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3.5 text-sm sm:text-base text-on-surface-variant">
           <Icon name="visibility" className="shrink-0 text-primary" />
           <span>
             Vista de solo lectura: únicamente Titular, Subdirección y Jurídico (Línea 24/7) pueden tomar y atender alertas.
@@ -384,46 +387,48 @@ export default function AlertasPage() {
                     <li
                       key={item.alertaId}
                       data-flip-id={item.alertaId}
-                      className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-outline-variant bg-surface-container-lowest p-4 transition-colors hover:bg-surface-container-low"
+                      className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-outline-variant bg-surface-container-lowest p-5 transition-colors hover:bg-surface-container-low"
                     >
                       <div className="flex min-w-0 flex-1 items-start gap-3.5">
                         <span
                           aria-hidden
-                          className={`grid size-11 shrink-0 place-items-center rounded-full ${pStyle.avatar}`}
+                          className={`grid size-12 shrink-0 place-items-center rounded-full ${pStyle.avatar}`}
                         >
-                          <Icon name={ORIGEN_ICON[item.origen]} />
+                          <Icon name={ORIGEN_ICON[item.origen]} className="text-[22px]" />
                         </span>
 
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-medium text-on-surface">
+                            <span className="text-base font-semibold text-on-surface sm:text-lg">
                               {item.nombreCompleto ?? `Alerta #${item.alertaId.slice(0, 8).toUpperCase()}`}
                             </span>
                             <span
-                              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${pStyle.badge}`}
+                              className={`rounded-full px-3 py-1 text-sm font-medium ${pStyle.badge}`}
                             >
                               Prioridad {PRIORIDAD_ALERTA_LABELS[item.prioridad].toLowerCase()}
                             </span>
                             <span
-                              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${ESTADO_BADGE[item.estado]}`}
+                              className={`rounded-full px-3 py-1 text-sm font-medium ${ESTADO_BADGE[item.estado]}`}
                             >
                               {ESTADO_ALERTA_LABELS[item.estado]}
                             </span>
                             {item.tieneOrdenVigente ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-status-danger-bg px-2.5 py-0.5 text-xs font-medium text-status-danger">
-                                <Icon name="gavel" className="text-sm" />
+                              <span className="inline-flex items-center gap-1 rounded-full bg-status-danger-bg px-3 py-1 text-sm font-medium text-status-danger">
+                                <Icon name="gavel" className="text-base" />
                                 <span>Orden vigente</span>
                               </span>
                             ) : null}
                           </div>
 
-                          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-on-surface-variant">
+                          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm sm:text-[0.95rem] text-on-surface-variant">
                             <span className="inline-flex items-center gap-1">
                               <Icon name={ORIGEN_ICON[item.origen]} className="text-base" />
                               <span>{ORIGEN_ALERTA_LABELS[item.origen]}</span>
                             </span>
                             {item.folio ? (
-                              <span className="font-mono text-xs text-on-surface">{item.folio}</span>
+                              <span className="rounded-full bg-surface-container-high px-2.5 py-0.5 font-mono text-xs sm:text-sm text-on-surface">
+                                {item.folio}
+                              </span>
                             ) : null}
                             <span>{item.asentamientoNombre ?? 'Ubicación reservada'}</span>
                             <span>
@@ -436,13 +441,13 @@ export default function AlertasPage() {
                       </div>
 
                       <div className="flex shrink-0 items-center gap-3">
-                        <span className="text-xs text-on-surface-variant">
+                        <span className="text-sm text-on-surface-variant">
                           {formatTiempoRelativo(item.creadoEn)}
                         </span>
                         <button
                           type="button"
                           onClick={() => openAlerta(item.alertaId)}
-                          className="mk-button mk-button--tonal mk-button--sm"
+                          className="mk-button mk-button--tonal"
                         >
                           {canAttend && item.estado !== 'atendida' ? 'Atender' : 'Ver detalle'}
                         </button>

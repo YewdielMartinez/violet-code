@@ -35,7 +35,7 @@ import {
 /**
  * Módulo de Canalizaciones (`RF-08`, `RN-03`, `RN-11`).
  * Tabla a ancho completo (`reflow`), detalle en panel lateral al pulsar una fila y alta en un
- * diálogo centrado; el filtro de estado vive en la barra de la pantalla.
+ * panel lateral; el filtro de estado vive en la barra de la pantalla.
  */
 export default function CanalizacionesPage() {
   const navigate = useNavigate();

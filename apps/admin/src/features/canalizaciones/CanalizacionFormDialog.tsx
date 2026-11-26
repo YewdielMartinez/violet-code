@@ -5,6 +5,7 @@ import '@yewdiel21/motion-kit/css/components/loading-button';
 import { Icon } from '@/shared/ui/Icon';
 import { CanalizacionFormFields } from './CanalizacionFormFields';
 import { useCanalizacionForm } from './useCanalizacionForm';
+import './canalizacion-drawer.css';
 
 const LOADING_LABELS = {
   loading: 'Registrando…',
@@ -58,13 +59,14 @@ interface Props {
   /** Expediente fijo (pestaña del expediente): oculta el selector. */
   fixedFichaId?: string;
   fixedFolio?: string;
-  /** Control del que crece el diálogo; sin él, el kit usa el último control pulsado. */
+  /** Control del que nace el panel lateral; sin él, el kit usa el último control pulsado. */
   anchor?: RefObject<HTMLElement | null> | HTMLElement | null;
 }
 
 /**
- * Diálogo centrado para registrar una canalización (`RF-08`, `RN-01`, `RN-03`).
- * El formulario se monta al abrir por primera vez y se reinicia en cada apertura.
+ * Panel lateral derecho para registrar una canalización (`RF-08`, `RN-01`, `RN-03`).
+ * Usa `Dialog` (motion-kit) con `placement="side"`, `variant="morph"` y `anchor` para nacer
+ * desde el botón disparador; el formulario se reinicia en cada apertura.
  */
 export function CanalizacionFormDialog({ open, onOpenChange, fixedFichaId, fixedFolio, anchor }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -78,25 +80,37 @@ export function CanalizacionFormDialog({ open, onOpenChange, fixedFichaId, fixed
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
-      if (next) return;
-      // motion-kit 0.20.x también llama a onClose desde destroy() (StrictMode) y reabre el diálogo
-      // enseguida: si sigue abierto tras ese turno, no fue un cierre real.
-      window.setTimeout(() => {
-        if (hostRef.current?.querySelector('dialog')?.open) return;
-        onOpenChange(false);
-      }, 0);
+      if (!next) onOpenChange(false);
     },
     [onOpenChange],
   );
 
-  const close = useCallback(() => onOpenChange(false), [onOpenChange]);
+  const requestClose = useCallback(() => {
+    const closeBtn = hostRef.current?.querySelector<HTMLButtonElement>('[data-mk-part="close"]');
+    if (closeBtn) closeBtn.click();
+    else onOpenChange(false);
+  }, [onOpenChange]);
 
   return (
     <div ref={hostRef}>
-      <Dialog.Root open={open} onOpenChange={handleOpenChange} anchor={anchor ?? undefined}>
-        <Dialog.Content size="md" className="vc-canalizacion-form-dialog">
+      <Dialog.Root
+        placement="side"
+        variant="morph"
+        animateContent={false}
+        autoResize={false}
+        drag={false}
+        anchor={anchor ?? undefined}
+        open={open}
+        onOpenChange={handleOpenChange}
+      >
+        <Dialog.Content dividers className="vc-canalizacion-form-dialog">
           <Dialog.Header>
-            <Dialog.Title>Nueva canalización</Dialog.Title>
+            <div className="min-w-0">
+              <Dialog.Title>Nueva canalización</Dialog.Title>
+              <Dialog.Description>
+                Derivaciones internas entre áreas y canalizaciones a instituciones externas.
+              </Dialog.Description>
+            </div>
             <Dialog.Close label="Cerrar" />
           </Dialog.Header>
           {formKey > 0 ? (
@@ -104,7 +118,7 @@ export function CanalizacionFormDialog({ open, onOpenChange, fixedFichaId, fixed
               key={formKey}
               fixedFichaId={fixedFichaId}
               fixedFolio={fixedFolio}
-              onDone={close}
+              onDone={requestClose}
             />
           ) : null}
         </Dialog.Content>

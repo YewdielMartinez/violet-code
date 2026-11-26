@@ -7,6 +7,8 @@ interface Props {
   message?: string;
 }
 
+const NO_ORIGIN = typeof document !== 'undefined' ? document.createElement('span') : null;
+
 /** Diálogo de confirmación cuando el usuario intenta salir con cambios sin guardar. */
 export function UnsavedChangesDialog({
   blocker,
@@ -16,6 +18,7 @@ export function UnsavedChangesDialog({
 
   return (
     <Dialog.Root
+      anchor={NO_ORIGIN}
       open={isBlocked}
       onOpenChange={(open) => {
         if (!open && blocker.state === 'blocked') {

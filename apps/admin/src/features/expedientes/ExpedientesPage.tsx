@@ -1,16 +1,13 @@
 import {
-  lazy,
   memo,
-  Suspense,
   useCallback,
   useMemo,
   useRef,
-  useState,
   type KeyboardEvent,
   type MouseEvent,
   type RefObject,
 } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DataTable, EmptyState, Skeleton } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/data-table';
 import '@yewdiel21/motion-kit/css/components/empty-state';
@@ -19,6 +16,7 @@ import '@yewdiel21/motion-kit/css/components/menu';
 import '@yewdiel21/motion-kit/css/components/pagination';
 import '@yewdiel21/motion-kit/css/components/select';
 import '@yewdiel21/motion-kit/css/components/skeleton';
+import { preloadPage } from '@/app/pages';
 import { puedeAccederAgresor } from '@/domain/models/Agresor';
 import { useAuth } from '@/shared/auth/useAuth';
 import { PageHeader } from '@/shared/ui/PageHeader';
@@ -42,15 +40,6 @@ import {
   type QuickFilter,
 } from './drawer/expedientesTableConfig';
 import { ExpedienteDrawer, preloadExpedienteDrawerTabs } from './ExpedienteDrawer';
-
-// Panel lateral del alta en chunk propio: se descarga al mostrar intención (hover/foco en
-// «Nuevo expediente») y se monta la primera vez que se abre.
-const loadNuevaFichaDrawer = () => import('./ficha/NuevaFichaDrawer');
-const NuevaFichaDrawer = lazy(() => loadNuevaFichaDrawer().then((m) => ({ default: m.NuevaFichaDrawer })));
-
-function preloadNuevoExpediente() {
-  void loadNuevaFichaDrawer();
-}
 
 interface TableSectionProps {
   tableContainerRef: RefObject<HTMLDivElement | null>;
@@ -104,6 +93,7 @@ const ExpedientesTableSection = memo(function ExpedientesTableSection({
  * - «Nuevo expediente» abre directamente el asistente de Nueva Ficha Única con verificación de CURP inline.
  */
 export default function ExpedientesPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { data, isLoading, isError, refetch } = useExpedientes();
@@ -112,7 +102,6 @@ export default function ExpedientesPage() {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   // Se usa ref en vez de useState para el ancla: evita re-render extra y carreras con setSearchParams.
   const originRef = useRef<HTMLElement | null>(null);
-  const [nuevaFichaOpen, setNuevaFichaOpen] = useState(false);
 
   const rawFilter = searchParams.get('filtro');
   const quickFilter: QuickFilter = QUICK_FILTERS.some((f) => f.id === rawFilter)
@@ -122,11 +111,6 @@ export default function ExpedientesPage() {
 
   const canCreateExpediente = user ? canLookupPreRegistro(user.role) : false;
   const canAccessSensitiveTabs = puedeAccederAgresor(user?.role);
-
-  // El panel perezoso se monta la primera vez que se abre y permanece montado
-  // para conservar sus animaciones de cierre.
-  const [nuevaFichaMounted, setNuevaFichaMounted] = useState(false);
-  if (nuevaFichaOpen && !nuevaFichaMounted) setNuevaFichaMounted(true);
 
   const handleRowIntent = useCallback(() => {
     if (canAccessSensitiveTabs) preloadExpedienteDrawerTabs();
@@ -286,18 +270,6 @@ export default function ExpedientesPage() {
     [byId, openExpediente],
   );
 
-  const handleCloseNuevaFicha = useCallback(() => {
-    setNuevaFichaOpen(false);
-  }, []);
-
-  const handleOpenExpedienteFromFicha = useCallback(
-    (expediente: ExpedienteResumen) => {
-      setNuevaFichaOpen(false);
-      openExpediente(expediente);
-    },
-    [openExpediente],
-  );
-
   const emptyDescription = canCreateExpediente
     ? 'Usa «Nuevo expediente» arriba para registrar una nueva Ficha Única.'
     : 'No hay expedientes activos que coincidan con el filtro seleccionado.';
@@ -321,9 +293,9 @@ export default function ExpedientesPage() {
                 label="Nuevo expediente"
                 icon="person_add"
                 showLabel
-                onPointerEnter={preloadNuevoExpediente}
-                onFocus={preloadNuevoExpediente}
-                onClick={() => setNuevaFichaOpen(true)}
+                onPointerEnter={() => preloadPage('/expedientes/nuevo')}
+                onFocus={() => preloadPage('/expedientes/nuevo')}
+                onClick={() => navigate('/expedientes/nuevo')}
               />
             ) : null}
           </>
@@ -360,16 +332,6 @@ export default function ExpedientesPage() {
         canManage={canCreateExpediente}
         onClose={closeExpediente}
       />
-      {nuevaFichaMounted ? (
-        <Suspense fallback={null}>
-          <NuevaFichaDrawer
-            open={nuevaFichaOpen}
-            seed={null}
-            onClose={handleCloseNuevaFicha}
-            onOpenExpediente={handleOpenExpedienteFromFicha}
-          />
-        </Suspense>
-      ) : null}
     </>
   );
 }

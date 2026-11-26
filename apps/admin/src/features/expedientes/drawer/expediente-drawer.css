@@ -3,6 +3,7 @@
 
 .mk-dialog.vc-expediente-dialog[data-mk-placement='side'] {
   width: min(var(--vc-drawer-width, 680px), calc(100vw - 16px));
+  max-width: none;
   transition: width 320ms var(--mk-ease-signature);
 }
 
@@ -102,6 +103,39 @@
   border-radius: 999px;
   background: var(--md-sys-color-primary);
   pointer-events: none;
+}
+
+/* Controles amplios y legibles dentro del panel del expediente. */
+.vc-expediente-dialog .mk-field :is(input, textarea, select),
+.vc-expediente-dialog input:not([type='checkbox']):not([type='radio']):not([type='file']):not([data-mk-ms-input]),
+.vc-expediente-dialog textarea,
+.vc-expediente-dialog select {
+  min-height: 48px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.vc-expediente-dialog textarea {
+  min-height: 112px;
+}
+
+.vc-expediente-dialog .mk-select,
+.vc-expediente-dialog .mk-multi-select {
+  display: block;
+  width: 100%;
+}
+
+.vc-expediente-dialog [data-mk-select-trigger],
+.vc-expediente-dialog [data-mk-ms-field] {
+  width: 100%;
+  min-height: 48px;
+  height: auto;
+  padding: 10px 14px 10px 16px;
+  border-radius: 14px;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 /* Filas clicables en la tabla de expedientes */

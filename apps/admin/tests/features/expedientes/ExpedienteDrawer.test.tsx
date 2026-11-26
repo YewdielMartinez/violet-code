@@ -317,7 +317,7 @@ describe('ExpedienteDrawer (RBAC, rediseño y bitácora RF-05 / RF-22)', () => {
 
     const collapseButton = screen.getByRole('button', { name: /Contraer/i });
     expect(collapseButton.getAttribute('aria-pressed')).toBe('true');
-    expect(dialog!.style.getPropertyValue('--vc-drawer-width')).toBe('960px');
+    expect(dialog!.style.getPropertyValue('--vc-drawer-width')).toBe('calc(100vw - 16px)');
   });
 
   it('abre, cierra completamente sin dejar cascarón y vuelve a abrir otro expediente de forma repetida', async () => {
