@@ -17,6 +17,7 @@ Referencia técnica del modelo relacional, reglas de integridad, auditoría y co
 | [20261125000600_06_reglas_negocio.sql](../migrations/20261125000600_06_reglas_negocio.sql) | Folio automático (`ficha_folio_seq`, formato `SEM-AAAA-NNNN`), mayoría de edad `>= 18` en Psicología/Jurídico, columnas generadas de CURP en `pre_registro` y `buscar_pre_registro_por_curp()`. |
 | [20261125000700_07_rls.sql](../migrations/20261125000700_07_rls.sql)                       | Helpers RBAC + ABAC (`tiene_permiso()`, roles y áreas) y políticas RLS en las 32 tablas públicas + bucket `documentos`.                                                                         |
 | [20261125000800_08_cita_prioridad.sql](../migrations/20261125000800_08_cita_prioridad.sql) | Columna operativa opcional `prioridad` (`prioridad_nivel`) en `cita` para agendado en Recepción.                                                                                              |
+| [20261125000900_09_grants_authenticated.sql](../migrations/20261125000900_09_grants_authenticated.sql) | Privilegios SQL base (`GRANT`) al rol `authenticated` sobre tablas, vistas y secuencias de `public` (sin exponer `anon`), requeridos en Supabase Cloud para operar con RLS (`07_rls.sql`). |
 
 ---
 
@@ -48,7 +49,7 @@ Referencia técnica del modelo relacional, reglas de integridad, auditoría y co
 - **Prioridad automática de alertas (`alerta`):** trigger `alerta_prioridad` fuerza origen `app_movil` a `'media'` y eleva a `'alta'` cuando `tiene_orden_vigente()` es verdadero (`REVOKE EXECUTE` a clientes).
 - **Auditoría inmutable (`bitacora_acceso`):** sin `actualizado_en`; los triggers `registrar_cambio()` registran altas, modificaciones y bajas lógicas (`desactivar`).
 - **Realtime y Storage:** `public.alerta` está publicada en `supabase_realtime`; el bucket privado `documentos` limita archivos a `10 MB` (`image/jpeg`, `image/png`, `application/pdf`).
-- **Índices:** `pg_trgm` (GIN) para búsqueda parcial por nombre en `persona` y `agresor` (`nombres`, `apellido_paterno`), y `btree` en FKs, `codigo_postal`, agenda (`cita`), cola de alertas (`alerta`) y bitácora.
+- **Índices:** `pg_trgm` (GIN con clase de operador `extensions.gin_trgm_ops` por compatibilidad con Supabase Cloud) para búsqueda parcial por nombre en `persona` y `agresor` (`nombres`, `apellido_paterno`), y `btree` en FKs, `codigo_postal`, agenda (`cita`), cola de alertas (`alerta`) y bitácora.
 
 ---
 

@@ -1,6 +1,6 @@
 # Roles, Permisos y Seguridad en Base de Datos (RBAC + ABAC)
 
-Referencia técnica del modelo de autorización implementado en [20261125000700_07_rls.sql](../migrations/20261125000700_07_rls.sql) sobre PostgreSQL Row Level Security (RLS).
+Referencia técnica del modelo de autorización implementado en [20261125000700_07_rls.sql](../migrations/20261125000700_07_rls.sql) sobre PostgreSQL Row Level Security (RLS), complementado con los privilegios SQL base a `authenticated` (sin abrir `anon`) en [20261125000900_09_grants_authenticated.sql](../migrations/20261125000900_09_grants_authenticated.sql).
 
 ---
 
