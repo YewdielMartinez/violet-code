@@ -8,26 +8,25 @@ import '@yewdiel21/motion-kit/css/components/select';
 import '@yewdiel21/motion-kit/css/components/pagination';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import { PageHeader } from '@/shared/ui/PageHeader';
-import { useDirectory, type DirectoryEntry } from './api';
+import { CATEGORIA_LABELS, useDirectory, type DirectorioInstitucion } from './api';
 
-type Row = DirectoryEntry & Record<string, unknown>;
+type Row = DirectorioInstitucion & Record<string, unknown>;
+
+const CATEGORIA_OPTIONS = Object.entries(CATEGORIA_LABELS).map(([value, label]) => ({ value, label }));
 
 // Configuración estática fuera del componente: la tabla no recibe un arreglo nuevo en cada render.
 const COLUMNS: DataTableProps<Row>['columns'] = [
-  { key: 'name', label: 'Nombre', sortable: true, searchable: true },
+  { key: 'nombre', label: 'Nombre', sortable: true, searchable: true },
   {
-    key: 'kind',
-    label: 'Tipo',
+    key: 'categoria',
+    label: 'Categoría',
     type: 'select',
     filterable: true,
-    options: [
-      { value: 'Institution', label: 'Instancia' },
-      { value: 'VioletPoint', label: 'Punto Violeta' },
-    ],
+    options: CATEGORIA_OPTIONS,
   },
-  { key: 'phone', label: 'Teléfono' },
-  { key: 'schedule', label: 'Horario' },
-  { key: 'address', label: 'Dirección', hidden: true },
+  { key: 'telefono', label: 'Teléfono' },
+  { key: 'horario', label: 'Horario' },
+  { key: 'direccion', label: 'Dirección', hidden: true },
 ];
 const RETRY_ACTION = [{ id: 'retry', label: 'Reintentar' }];
 
@@ -38,7 +37,7 @@ export default function DirectoryPage() {
     <>
       <PageHeader
         title="Directorio y Puntos Violeta"
-        description="Lo que la app móvil descarga para usar sin conexión. Datos sintéticos."
+        description="Instancias de atención y redes de apoyo desde Supabase (sin dirección pública en refugios)."
       />
 
       {isError ? (
@@ -46,13 +45,13 @@ export default function DirectoryPage() {
           <EmptyState
             illustration="error"
             title="No se pudo cargar el directorio"
-            description="Verifica que Violet Code Core esté en ejecución."
+            description="Verifica tu conexión y configuración de Supabase."
             actions={RETRY_ACTION}
             onAction={() => refetch()}
           />
         </div>
       ) : data ? (
-        <DataTable<Row> caption="Directorio" rows={data as Row[]} columns={COLUMNS} pageSize={10} />
+        <DataTable<Row> caption="Directorio institucional" rows={data as Row[]} columns={COLUMNS} pageSize={10} />
       ) : (
         <div className="h-64 animate-pulse rounded-3xl bg-surface-container" />
       )}

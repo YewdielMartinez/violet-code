@@ -1,118 +1,120 @@
-/**
- * Sesión del personal.
- * - El access token (JWT, 15 min) vive SOLO en memoria: no en localStorage (protege ante XSS).
- * - El refresh token viaja en una cookie httpOnly que JavaScript no puede leer.
- * - Al recargar la página, la sesión se recupera con POST /api/identity/refresh.
- */
-export type StaffRole = 'admin' | 'coordinacion' | 'profesional' | 'recepcion';
+import { supabaseAuthRepository } from '@/infrastructure/supabase/adapters/SupabaseAuthRepository';
+import type { AuthSession, StaffRole, StaffUser, UmecaCita } from '@/domain/models/Auth';
+import { AuthError } from '@/domain/ports/AuthRepository';
 
-export interface StaffUser {
-  id: string;
-  email: string;
-  displayName: string;
-  role: StaffRole;
-  area: string | null;
-}
-
-export interface Session {
-  accessToken: string;
-  expiresAt: string;
-  user: StaffUser;
-}
+export type { AuthSession, StaffRole, StaffUser, UmecaCita };
+export { AuthError };
 
 export type AuthStatus = 'checking' | 'authenticated' | 'anonymous';
 
 interface State {
   status: AuthStatus;
-  session: Session | null;
+  session: AuthSession | null;
 }
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? '';
-const REFRESH_MARGIN_MS = 60_000;
+const IDLE_TIMEOUT_MS = 30 * 60_000;
 
 let state: State = { status: 'checking', session: null };
 const listeners = new Set<() => void>();
-let refreshTimer: ReturnType<typeof setTimeout> | undefined;
-let refreshInFlight: Promise<Session | null> | null = null;
+let initialized = false;
+let sessionPromise: Promise<AuthSession | null> | null = null;
+let idleTimer: ReturnType<typeof setTimeout> | undefined;
 
 function setState(next: State) {
   state = next;
   listeners.forEach((l) => l());
 }
 
-function scheduleRefresh(session: Session) {
-  clearTimeout(refreshTimer);
-  const ms = new Date(session.expiresAt).getTime() - Date.now() - REFRESH_MARGIN_MS;
-  refreshTimer = setTimeout(() => void refreshSession(), Math.max(ms, 5_000));
-}
-
-function startSession(session: Session) {
-  scheduleRefresh(session);
-  setState({ status: 'authenticated', session });
-}
-
-function endSession() {
-  clearTimeout(refreshTimer);
-  setState({ status: 'anonymous', session: null });
-}
-
-export class AuthError extends Error {
-  readonly status: number;
-  constructor(status: number, message: string) {
-    super(message);
-    this.status = status;
+function clearIdleTimer() {
+  if (idleTimer !== undefined) {
+    clearTimeout(idleTimer);
+    idleTimer = undefined;
   }
 }
 
-async function post<T>(path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${BASE_URL}/api/identity${path}`, {
-    method: 'POST',
-    credentials: 'include', // envía/recibe la cookie de refresh
-    headers: body ? { 'Content-Type': 'application/json', Accept: 'application/json' } : { Accept: 'application/json' },
-    body: body ? JSON.stringify(body) : undefined,
+function resetIdleTimer() {
+  clearIdleTimer();
+  if (state.status !== 'authenticated') return;
+  idleTimer = setTimeout(() => {
+    void logout();
+  }, IDLE_TIMEOUT_MS);
+}
+
+let activityBound = false;
+function bindActivityListeners() {
+  if (activityBound || typeof window === 'undefined') return;
+  activityBound = true;
+  const bump = () => resetIdleTimer();
+  for (const evt of ['pointerdown', 'keydown', 'touchstart'] as const) {
+    window.addEventListener(evt, bump, { passive: true });
+  }
+}
+
+function ensureAuthSubscription() {
+  if (initialized) return;
+  initialized = true;
+  bindActivityListeners();
+  supabaseAuthRepository.onAuthStateChange((session) => {
+    if (session) {
+      setState({ status: 'authenticated', session });
+      resetIdleTimer();
+    } else {
+      clearIdleTimer();
+      setState({ status: 'anonymous', session: null });
+    }
   });
-  if (!res.ok) {
-    const problem = await res.json().catch(() => null);
-    const message =
-      res.status === 429 ? 'Demasiados intentos. Espera un minuto.' : (problem?.title ?? 'No se pudo conectar con el servidor.');
-    throw new AuthError(res.status, message);
-  }
-  return res.status === 204 ? (undefined as T) : ((await res.json()) as T);
 }
 
-export async function login(email: string, password: string): Promise<Session> {
-  const session = await post<Session>('/login', { email, password });
-  startSession(session);
+export async function login(email: string, password: string): Promise<AuthSession> {
+  ensureAuthSubscription();
+  const session = await supabaseAuthRepository.login(email, password);
+  setState({ status: 'authenticated', session });
+  resetIdleTimer();
   return session;
 }
 
-/** Renueva la sesión. Varias llamadas simultáneas comparten la misma petición. */
-export function refreshSession(): Promise<Session | null> {
-  refreshInFlight ??= post<Session>('/refresh')
-    .then((s) => {
-      startSession(s);
-      return s;
+/** Recupera la sesión activa desde Supabase Auth y valida que el perfil siga activo. */
+export function refreshSession(): Promise<AuthSession | null> {
+  ensureAuthSubscription();
+  sessionPromise ??= supabaseAuthRepository
+    .getSession()
+    .then((session) => {
+      if (session) {
+        setState({ status: 'authenticated', session });
+        resetIdleTimer();
+      } else {
+        clearIdleTimer();
+        setState({ status: 'anonymous', session: null });
+      }
+      return session;
     })
     .catch(() => {
-      endSession();
+      clearIdleTimer();
+      setState({ status: 'anonymous', session: null });
       return null;
     })
     .finally(() => {
-      refreshInFlight = null;
+      sessionPromise = null;
     });
-  return refreshInFlight;
+  return sessionPromise;
 }
 
 export async function logout(): Promise<void> {
+  clearIdleTimer();
   try {
-    await post('/logout');
+    await supabaseAuthRepository.logout();
   } finally {
-    endSession();
+    setState({ status: 'anonymous', session: null });
   }
+}
+
+export async function fetchUmecaCitas(): Promise<UmecaCita[]> {
+  return supabaseAuthRepository.getUmecaCitas();
 }
 
 export const sessionStore = {
   subscribe(listener: () => void) {
+    ensureAuthSubscription();
     listeners.add(listener);
     return () => listeners.delete(listener);
   },

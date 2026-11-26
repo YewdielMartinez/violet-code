@@ -1,31 +1,29 @@
 import { ActivityFeed } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/activity-feed';
-import { useRecentActivity, type AuditEvent } from '../api';
+import { useRecentActivity, type AccionBitacora, type AuditEvent } from '../api';
 import { WidgetCard, WidgetEmpty, WidgetLoading } from './shared';
 
 type Kind = 'comment' | 'create' | 'update' | 'delete' | 'upload' | 'complete' | 'mention';
 
-// Traducción de acciones de auditoría a lenguaje del equipo.
-const ACTIONS: Record<string, { text: string; kind: Kind }> = {
-  'auth.login.success': { text: 'inició sesión', kind: 'complete' },
-  'auth.login.failure': { text: 'tuvo un intento de acceso fallido', kind: 'delete' },
-  'auth.login.locked': { text: 'quedó bloqueada por intentos fallidos', kind: 'delete' },
-  'auth.logout': { text: 'cerró sesión', kind: 'update' },
-  'case.list': { text: 'consultó expedientes', kind: 'comment' },
+const ACCION_MAP: Record<AccionBitacora, { verb: string; kind: Kind }> = {
+  ver: { verb: 'consultó', kind: 'comment' },
+  crear: { verb: 'registró', kind: 'create' },
+  actualizar: { verb: 'actualizó', kind: 'update' },
+  desactivar: { verb: 'desactivó', kind: 'delete' },
 };
 
 const toItem = (e: AuditEvent) => {
-  const known = ACTIONS[e.action];
+  const mapped = ACCION_MAP[e.accion];
   return {
     id: e.id,
-    actor: e.actorName ?? 'Cuenta desconocida',
-    action: known?.text ?? e.action,
-    time: e.occurredAt,
-    kind: known?.kind ?? ('update' as Kind),
+    actor: e.actorNombre ?? 'Sistema',
+    action: `${mapped.verb} ${e.tablaAfectada}`,
+    time: e.creadoEn,
+    kind: mapped.kind,
   };
 };
 
-/** Actividad de seguridad (bitácora de auditoría). Solo supervisión. */
+/** Actividad de seguridad (`bitacora_acceso`). Solo Titular / Subdirección. */
 export function SecurityWidget() {
   const { data, isLoading, isError } = useRecentActivity(true);
 
@@ -36,7 +34,6 @@ export function SecurityWidget() {
       ) : isError || !data?.length ? (
         <WidgetEmpty error={isError} title="Sin actividad" />
       ) : (
-        // key: al llegar eventos nuevos se remonta con la lista actualizada (MOTION-KIT-ISSUES #4).
         <ActivityFeed key={data[0].id} items={data.map(toItem)} locale="es-MX" />
       )}
     </WidgetCard>

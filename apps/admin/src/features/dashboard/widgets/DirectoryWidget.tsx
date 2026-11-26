@@ -1,20 +1,20 @@
-import { useDirectory, type DirectoryEntry } from '@/features/directory/api';
+import { useDirectory, type DirectorioInstitucion } from '@/features/directory/api';
 import { Icon } from '@/shared/ui/Icon';
 import { WidgetCard, WidgetLoading } from './shared';
 
-function countByKind(entries: DirectoryEntry[]) {
-  let institutions = 0;
-  let violetPoints = 0;
+function summarizeDirectory(entries: DirectorioInstitucion[]) {
+  let total = 0;
+  let emergency24h = 0;
   for (const e of entries) {
-    if (e.kind === 'Institution') institutions++;
-    else if (e.kind === 'VioletPoint') violetPoints++;
+    total++;
+    if (e.es24Horas || e.categoria === 'emergencia') emergency24h++;
   }
-  return { institutions, violetPoints };
+  return { total, emergency24h };
 }
 
-/** Lo que la app móvil ofrece a las usuarias sin conexión. */
+/** Resumen de instancias activas sincronizadas desde Supabase. */
 export function DirectoryWidget() {
-  const { data, isLoading } = useDirectory(undefined, countByKind);
+  const { data, isLoading } = useDirectory(undefined, summarizeDirectory);
 
   return (
     <WidgetCard title="Directorio" action={{ label: 'Ver', to: '/directorio' }}>
@@ -24,13 +24,13 @@ export function DirectoryWidget() {
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-surface-container-low p-4">
             <Icon name="account_balance" className="text-on-surface-variant" />
-            <p className="mt-2 text-3xl font-medium text-on-surface">{data.institutions}</p>
-            <p className="text-sm text-on-surface-variant">Instancias</p>
+            <p className="mt-2 text-3xl font-medium text-on-surface">{data.total}</p>
+            <p className="text-sm text-on-surface-variant">Instancias activas</p>
           </div>
           <div className="rounded-2xl bg-surface-container-low p-4">
-            <Icon name="location_on" className="text-on-surface-variant" />
-            <p className="mt-2 text-3xl font-medium text-on-surface">{data.violetPoints}</p>
-            <p className="text-sm text-on-surface-variant">Puntos Violeta</p>
+            <Icon name="emergency" className="text-on-surface-variant" />
+            <p className="mt-2 text-3xl font-medium text-on-surface">{data.emergency24h}</p>
+            <p className="text-sm text-on-surface-variant">Atención 24 h</p>
           </div>
         </div>
       )}

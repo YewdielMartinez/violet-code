@@ -1,7 +1,9 @@
+import type { StaffRole } from '@/domain/models/Auth';
+
 /**
- * Mapa de navegación del panel. Coincide con docs/discovery/02-estructura-funcional.md.
+ * Mapa de navegación del panel alineado con los 7 roles reales en Supabase.
  * `ready: false` = módulo con página "en construcción".
- * `icon`: nombre de Material Symbols Rounded. `mobile`: aparece en la barra inferior del teléfono (máx. 5).
+ * `icon`: nombre de Material Symbols Rounded. `mobile`: barra inferior móvil (máx. 5).
  */
 export interface NavPage {
   path: string;
@@ -12,21 +14,133 @@ export interface NavPage {
   icon: string;
   ready: boolean;
   mobile?: boolean;
+  allowedRoles: readonly StaffRole[];
 }
 
+const ALL_EMPLOYEES: readonly StaffRole[] = [
+  'titular',
+  'subdireccion',
+  'trabajo_social',
+  'psicologia',
+  'juridico',
+  'recepcion',
+];
+
+const ATTENTION_AND_DIRECTION: readonly StaffRole[] = [
+  'titular',
+  'subdireccion',
+  'trabajo_social',
+  'psicologia',
+  'juridico',
+];
+
+const DIRECTION_ONLY: readonly StaffRole[] = ['titular', 'subdireccion'];
+
 export const NAVIGATION: NavPage[] = [
-  { path: '/', label: 'Dashboard', icon: 'space_dashboard', ready: true, mobile: true },
-  { path: '/solicitudes', label: 'Solicitudes', title: 'Solicitudes y alertas', icon: 'notifications_active', ready: false, mobile: true },
-  { path: '/expedientes', label: 'Expedientes', icon: 'folder_shared', ready: false, mobile: true },
-  { path: '/casos', label: 'Casos', title: 'Gestión de casos', icon: 'account_tree', ready: false },
-  { path: '/profesionales', label: 'Profesionales', icon: 'groups', ready: false },
-  { path: '/intervenciones', label: 'Intervenciones', icon: 'clinical_notes', ready: false },
-  { path: '/canalizaciones', label: 'Canalizaciones', icon: 'alt_route', ready: false },
-  { path: '/agenda', label: 'Agenda', icon: 'calendar_month', ready: false, mobile: true },
-  { path: '/estadisticas', label: 'Estadísticas', icon: 'monitoring', ready: false },
-  { path: '/directorio', label: 'Directorio', title: 'Directorio y Puntos Violeta', icon: 'location_on', ready: true, mobile: true },
-  { path: '/usuarios', label: 'Usuarios', icon: 'manage_accounts', ready: false },
-  { path: '/auditoria', label: 'Auditoría', icon: 'policy', ready: false },
+  {
+    path: '/',
+    label: 'Dashboard',
+    icon: 'space_dashboard',
+    ready: true,
+    mobile: true,
+    allowedRoles: [...ALL_EMPLOYEES, 'umeca'],
+  },
+  {
+    path: '/solicitudes',
+    label: 'Solicitudes',
+    title: 'Solicitudes y alertas',
+    icon: 'notifications_active',
+    ready: false,
+    mobile: true,
+    allowedRoles: ATTENTION_AND_DIRECTION,
+  },
+  {
+    path: '/expedientes',
+    label: 'Expedientes',
+    icon: 'folder_shared',
+    ready: false,
+    mobile: true,
+    allowedRoles: ATTENTION_AND_DIRECTION,
+  },
+  {
+    path: '/casos',
+    label: 'Casos',
+    title: 'Gestión de casos',
+    icon: 'account_tree',
+    ready: false,
+    allowedRoles: ATTENTION_AND_DIRECTION,
+  },
+  {
+    path: '/profesionales',
+    label: 'Profesionales',
+    icon: 'groups',
+    ready: false,
+    allowedRoles: DIRECTION_ONLY,
+  },
+  {
+    path: '/intervenciones',
+    label: 'Intervenciones',
+    icon: 'clinical_notes',
+    ready: false,
+    allowedRoles: ATTENTION_AND_DIRECTION,
+  },
+  {
+    path: '/canalizaciones',
+    label: 'Canalizaciones',
+    icon: 'alt_route',
+    ready: false,
+    allowedRoles: ATTENTION_AND_DIRECTION,
+  },
+  {
+    path: '/agenda',
+    label: 'Agenda',
+    icon: 'calendar_month',
+    ready: false,
+    mobile: true,
+    allowedRoles: ALL_EMPLOYEES,
+  },
+  {
+    path: '/estadisticas',
+    label: 'Estadísticas',
+    icon: 'monitoring',
+    ready: false,
+    allowedRoles: DIRECTION_ONLY,
+  },
+  {
+    path: '/directorio',
+    label: 'Directorio',
+    title: 'Directorio y Puntos Violeta',
+    icon: 'location_on',
+    ready: true,
+    mobile: true,
+    allowedRoles: ALL_EMPLOYEES,
+  },
+  {
+    path: '/usuarios',
+    label: 'Usuarios',
+    icon: 'manage_accounts',
+    ready: false,
+    allowedRoles: DIRECTION_ONLY,
+  },
+  {
+    path: '/auditoria',
+    label: 'Auditoría',
+    icon: 'policy',
+    ready: false,
+    allowedRoles: DIRECTION_ONLY,
+  },
 ];
 
 export const ALL_PAGES = NAVIGATION;
+
+export function getNavigationForRole(role: StaffRole | undefined): NavPage[] {
+  if (!role) return [];
+  return NAVIGATION.filter((page) => page.allowedRoles.includes(role));
+}
+
+export function canAccessPath(role: StaffRole | undefined, pathname: string): boolean {
+  if (!role) return false;
+  const page = NAVIGATION.find((item) => item.path === pathname);
+  if (!page) return role !== 'umeca';
+  return page.allowedRoles.includes(role);
+}

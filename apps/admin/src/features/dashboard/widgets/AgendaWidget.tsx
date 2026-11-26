@@ -14,35 +14,39 @@ function getAgendaRange() {
   };
 }
 
-const KIND: Record<string, string> = {
-  Psicologica: 'Psicológica',
-  Juridica: 'Jurídica',
-  Seguimiento: 'Seguimiento',
-  Visita: 'Visita',
-};
-
 /** Calendario del mes (motion-kit Calendar) y lista de las citas de hoy. */
-export function AgendaWidget({ mine }: { mine: boolean }) {
+export function AgendaWidget() {
   const [{ from, to, today }] = useState(getAgendaRange);
-  const { data, isLoading, isError } = useAppointments(from, to, mine);
+  const { data, isLoading, isError } = useAppointments(from, to);
 
   const events = useMemo(
     () =>
       (data ?? [])
-        .filter((a) => a.status !== 'Cancelled')
-        .map((a) => ({
-          id: a.id,
-          title: `${a.caseFolio} · ${KIND[a.kind] ?? a.kind}`,
-          start: a.startsAt,
-          status: a.status === 'Done' ? ('done' as const) : ('pending' as const),
+        .filter((c) => c.estado !== 'cancelada' && c.estado !== 'reagendada')
+        .map((c) => ({
+          id: c.id,
+          title: `${c.areaNombre} · ${c.usuariaNombre}`,
+          start: c.programadaEn,
+          status: c.estado === 'asistio' ? ('done' as const) : ('pending' as const),
         })),
     [data],
   );
-  const todays = (data ?? []).filter((a) => isoDate(new Date(a.startsAt)) === today && a.status !== 'Cancelled');
+
+  const todays = (data ?? []).filter(
+    (c) => isoDate(new Date(c.programadaEn)) === today && c.estado !== 'cancelada' && c.estado !== 'reagendada',
+  );
 
   return (
     <WidgetCard title="Agenda" action={{ label: 'Abrir agenda', to: '/agenda' }}>
-      <Calendar view="month" hideViews locale="es-MX" firstDay={1} maxEvents={1} events={events} className="vc-calendar-compact" />
+      <Calendar
+        view="month"
+        hideViews
+        locale="es-MX"
+        firstDay={1}
+        maxEvents={1}
+        events={events}
+        className="vc-calendar-compact"
+      />
 
       <h3 className="mt-5 mb-2 text-sm font-medium text-on-surface-variant">Citas de hoy</h3>
       {isLoading ? (
@@ -51,13 +55,11 @@ export function AgendaWidget({ mine }: { mine: boolean }) {
         <WidgetEmpty error={isError} title="Sin citas hoy" />
       ) : (
         <ul className="grid gap-2">
-          {todays.map((a) => (
-            <li key={a.id} className="flex items-center gap-3 rounded-2xl bg-surface-container-low px-4 py-2.5">
-              <span className="font-mono text-sm font-medium text-on-surface">{timeOf(a.startsAt)}</span>
-              <span className="min-w-0 flex-1 truncate text-sm text-on-surface">
-                {a.caseFolio} · {KIND[a.kind] ?? a.kind}
-              </span>
-              <span className="text-xs text-on-surface-variant">{a.professionalName}</span>
+          {todays.map((c) => (
+            <li key={c.id} className="flex items-center gap-3 rounded-2xl bg-surface-container-low px-4 py-2.5">
+              <span className="font-mono text-sm font-medium text-on-surface">{timeOf(c.programadaEn)}</span>
+              <span className="min-w-0 flex-1 truncate text-sm text-on-surface">{c.usuariaNombre}</span>
+              <span className="text-xs text-on-surface-variant">{c.areaNombre}</span>
             </li>
           ))}
         </ul>
