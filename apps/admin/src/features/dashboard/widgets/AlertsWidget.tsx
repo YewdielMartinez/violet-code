@@ -23,7 +23,11 @@ const CHANNEL_ICON: Record<OrigenAlerta, string> = {
   presencial: 'directions_walk',
 };
 
-/** Bandeja de alertas: prioridad alta arriba, ordenadas por antigüedad reciente. */
+/**
+ * Privacidad operacional (LGPDPPSO): la pantalla de inicio suele permanecer visible en
+ * monitores de escritorio; por eso las alertas muestran ID, asentamiento, canal y quién
+ * atiende, reservando el nombre completo de la usuaria para el detalle autorizado.
+ */
 export function AlertsWidget() {
   const [estado, setEstado] = useState<EstadoAlerta | undefined>(undefined);
   const { data, isLoading, isError } = useAlerts(estado);
@@ -49,7 +53,7 @@ export function AlertsWidget() {
       {isLoading ? (
         <WidgetLoading />
       ) : isError || !data?.length ? (
-        <WidgetEmpty error={isError} title="Sin alertas pendientes" />
+        <WidgetEmpty error={isError} title="Sin alertas pendientes de atención." />
       ) : (
         <FlipGroup root={listRef} signature={signature}>
           <ul ref={listRef} className="grid gap-2">
@@ -63,7 +67,7 @@ export function AlertsWidget() {
                   aria-hidden
                   className={`grid size-10 shrink-0 place-items-center rounded-full ${
                     a.prioridad === 'alta'
-                      ? 'bg-error-container text-on-error-container'
+                      ? 'bg-status-danger-bg text-status-danger'
                       : 'bg-surface-container-high text-on-surface-variant'
                   }`}
                 >
@@ -71,12 +75,12 @@ export function AlertsWidget() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="flex flex-wrap items-center gap-2 font-medium text-on-surface">
-                    {a.usuariaNombre ?? 'Alerta registrada'}
+                    <span>Alerta #{a.id.slice(0, 8).toUpperCase()}</span>
                     <PriorityBadge value={a.prioridad} />
                   </p>
                   <p className="truncate text-sm text-on-surface-variant">
                     {a.asentamiento ?? 'Ubicación reservada'} · {CHANNEL_LABEL[a.origen]}
-                    {a.atendidaPorNombre ? ` · ${a.atendidaPorNombre}` : ' · Sin asignar'}
+                    {a.atendidaPorNombre ? ` · Atiende: ${a.atendidaPorNombre}` : ' · Sin asignar'}
                   </p>
                 </div>
                 <span className="shrink-0 text-xs text-on-surface-variant">{relativeTime(a.creadoEn)}</span>

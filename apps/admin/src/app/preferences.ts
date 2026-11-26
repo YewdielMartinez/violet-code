@@ -16,7 +16,13 @@ export const NAV_STYLES: { id: NavStyleId; label: string }[] = [
 ];
 
 const KEY = 'vc-nav-style';
-const DEFAULT: NavStyleId = 'rail';
+/**
+ * Accesibilidad y usabilidad institucional: en una dependencia pública con rotación
+ * de personal y distintos niveles de experiencia digital, mostrar iconos + etiquetas
+ * por defecto ('sidebar') evita memorizar 12 iconos aislados y mejora la descubribilidad.
+ * Quien prefiera mayor densidad visual puede elegir 'rail', 'dock', etc. en Apariencia.
+ */
+const DEFAULT: NavStyleId = 'sidebar';
 const listeners = new Set<() => void>();
 
 function read(): NavStyleId {

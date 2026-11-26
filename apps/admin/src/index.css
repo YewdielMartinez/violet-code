@@ -54,6 +54,15 @@
   --color-surface-container-highest: var(--md-sys-color-surface-container-highest);
   --color-outline: var(--md-sys-color-outline);
   --color-outline-variant: var(--md-sys-color-outline-variant);
+
+  --color-status-success: var(--vc-status-success);
+  --color-status-success-bg: var(--vc-status-success-bg);
+  --color-status-warning: var(--vc-status-warning);
+  --color-status-warning-bg: var(--vc-status-warning-bg);
+  --color-status-info: var(--vc-status-info);
+  --color-status-info-bg: var(--vc-status-info-bg);
+  --color-status-danger: var(--vc-status-danger);
+  --color-status-danger-bg: var(--vc-status-danger-bg);
 }
 
 html,
@@ -111,6 +120,41 @@ body {
 :root {
   --vt-exit: 140ms;
   --vt-enter: 240ms;
+
+  /* Semántica de estados independiente del morado institucional (modo claro):
+     verde/ámbar/azul/rojo con contraste WCAG para distinguir alertas, citas y expedientes. */
+  --vc-status-success: #1e6f4c;
+  --vc-status-success-bg: #e3f4eb;
+  --vc-status-warning: #8f5b0c;
+  --vc-status-warning-bg: #fdf1da;
+  --vc-status-info: #2d5f94;
+  --vc-status-info-bg: #e5effa;
+  --vc-status-danger: #b42336;
+  --vc-status-danger-bg: #fde8eb;
+}
+
+:root[data-mk-mode='dark'] {
+  --vc-status-success: #6fd09d;
+  --vc-status-success-bg: #173325;
+  --vc-status-warning: #ecc06f;
+  --vc-status-warning-bg: #362812;
+  --vc-status-info: #8bb8ea;
+  --vc-status-info-bg: #182a3f;
+  --vc-status-danger: #f28b96;
+  --vc-status-danger-bg: #3d1820;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mk-mode='light']) {
+    --vc-status-success: #6fd09d;
+    --vc-status-success-bg: #173325;
+    --vc-status-warning: #ecc06f;
+    --vc-status-warning-bg: #362812;
+    --vc-status-info: #8bb8ea;
+    --vc-status-info-bg: #182a3f;
+    --vc-status-danger: #f28b96;
+    --vc-status-danger-bg: #3d1820;
+  }
 }
 
 @keyframes vt-fade {

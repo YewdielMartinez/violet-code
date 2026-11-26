@@ -8,6 +8,7 @@ import { AuthError, login, refreshSession } from '@/shared/auth/session';
 import { useAuth } from '@/shared/auth/useAuth';
 import { PasswordField } from './PasswordField';
 import { BrandMark } from '@/shared/ui/BrandMark';
+import { ThemeToggleButton } from '@/shared/ui/ThemeToggleButton';
 import { LoginHero } from './LoginHero';
 import { PrivacyNoticeDialog } from './PrivacyNoticeDialog';
 
@@ -164,7 +165,10 @@ export default function LoginPage() {
           <BrandMark size={36} />
           <span className="font-semibold text-on-surface">Violet Code</span>
         </div>
-        <PrivacyNoticeDialog />
+        <div className="flex items-center gap-2">
+          <ThemeToggleButton variant="header" />
+          <PrivacyNoticeDialog />
+        </div>
       </header>
 
       <main className="relative mx-auto flex w-full max-w-6xl flex-1 items-center px-6 py-10 sm:px-10">

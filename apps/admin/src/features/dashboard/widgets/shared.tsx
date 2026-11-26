@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { EmptyState } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/empty-state';
+import { Icon } from '@/shared/ui/Icon';
 import type { PrioridadNivel } from '../api';
 
 /** Contenedor común de un widget: título, acción opcional y contenido. */
@@ -41,21 +40,38 @@ export function WidgetLoading({ rows = 3 }: { rows?: number }) {
   );
 }
 
-export function WidgetEmpty({ error, title }: { error?: boolean; title: string }) {
+/**
+ * Estado vacío compacto: evita desperdiciar altura con ilustraciones grandes repetidas
+ * cuando las bandejas están en cero y mantiene la densidad operativa del Dashboard.
+ */
+export function WidgetEmpty({
+  error,
+  title,
+  action,
+}: {
+  error?: boolean;
+  title: string;
+  action?: { label: string; to: string };
+}) {
   return (
-    <EmptyState
-      illustration={error ? 'error' : 'inbox'}
-      title={error ? 'No se pudo cargar' : title}
-      description={error ? 'Verifica tu conexión con Supabase.' : undefined}
-      loop={false}
-    />
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-outline-variant bg-surface-container-low/60 px-4 py-4">
+      <div className="flex items-center gap-3 text-sm text-on-surface-variant">
+        <Icon name={error ? 'error_outline' : 'inbox'} className={error ? 'text-status-danger' : 'text-on-surface-variant'} />
+        <span>{error ? 'No se pudo cargar. Verifica tu conexión con Supabase.' : title}</span>
+      </div>
+      {action && !error ? (
+        <Link to={action.to} className="mk-button mk-button--tonal mk-button--sm">
+          {action.label}
+        </Link>
+      ) : null}
+    </div>
   );
 }
 
 const PRIORITY: Record<PrioridadNivel, { label: string; className: string }> = {
-  alta: { label: 'Alta', className: 'bg-error-container text-on-error-container' },
-  media: { label: 'Media', className: 'bg-tertiary-container text-on-tertiary-container' },
-  baja: { label: 'Baja', className: 'bg-surface-container-high text-on-surface-variant' },
+  alta: { label: 'Prioridad alta', className: 'bg-status-danger-bg text-status-danger' },
+  media: { label: 'Prioridad media', className: 'bg-status-warning-bg text-status-warning' },
+  baja: { label: 'Prioridad baja', className: 'bg-status-info-bg text-status-info' },
 };
 
 const RISK: Record<PrioridadNivel, string> = {
@@ -64,7 +80,7 @@ const RISK: Record<PrioridadNivel, string> = {
   baja: 'Riesgo bajo',
 };
 
-/** Prioridad de una alerta ("Alta") o, con `risk`, nivel de riesgo ("Riesgo alto"). */
+/** Prioridad semántica de una alerta o nivel de riesgo de caso. */
 export function PriorityBadge({ value, risk = false }: { value: PrioridadNivel; risk?: boolean }) {
   const p = PRIORITY[value];
   return (

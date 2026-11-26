@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { FlipGroup } from '@yewdiel21/motion-kit/react';
-import { isAttentionRole, useAuth } from '@/shared/auth/useAuth';
+import { isAttentionRole, ROLE_LABELS, useAuth } from '@/shared/auth/useAuth';
 import { Icon } from '@/shared/ui/Icon';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { CustomizeDialog } from './CustomizeDialog';
@@ -19,6 +19,12 @@ function greeting(date = new Date()) {
   return h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
 }
 
+function capitalize(word: string): string {
+  const clean = word.trim();
+  if (!clean) return 'Personal';
+  return clean.charAt(0).toUpperCase() + clean.slice(1);
+}
+
 const today = () =>
   new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -33,6 +39,9 @@ export default function DashboardPage() {
 
   const mine = isAttentionRole(user.role);
   const canViewClinical = user.role !== 'recepcion';
+  const roleContext = user.areaNombre
+    ? `${ROLE_LABELS[user.role]} (${user.areaNombre})`
+    : ROLE_LABELS[user.role];
 
   const render: Record<WidgetId, ReactNode> = {
     kpis: (
@@ -55,11 +64,14 @@ export default function DashboardPage() {
   const full = shown.filter((w) => w.id === 'kpis');
   const main = shown.filter((w) => w.column === 'main' && w.id !== 'kpis');
   const side = shown.filter((w) => w.column === 'side');
-  const firstName = user.displayName.split(' ')[0];
+  const firstName = capitalize(user.displayName.split(/\s+/)[0] ?? '');
 
   return (
     <>
+      {/* Identidad institucional y contexto de rol/área en la cabecera para evitar
+          un saludo genérico y situar de inmediato al personal en su ámbito operativo. */}
       <PageHeader
+        eyebrow={`Secretaría de las Mujeres · Ahome · ${roleContext}`}
         title={`${greeting()}, ${firstName}`}
         subtitle={today()}
         actions={

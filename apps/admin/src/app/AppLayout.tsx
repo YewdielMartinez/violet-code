@@ -6,6 +6,7 @@ import { OptionsMenu } from '@/features/settings/OptionsMenu';
 import { useAuth } from '@/shared/auth/useAuth';
 import { BrandMark } from '@/shared/ui/BrandMark';
 import { Icon } from '@/shared/ui/Icon';
+import { ThemeToggleButton } from '@/shared/ui/ThemeToggleButton';
 import { getNavigationForRole } from './navigation';
 import { useNavStyle } from './preferences';
 import { preloadPages } from './pages';
@@ -56,7 +57,12 @@ export function AppLayout() {
             <span className="mk-nav__name">Violet Code</span>
           </button>
         }
-        actions={<OptionsMenu />}
+        actions={
+          <>
+            <ThemeToggleButton variant="nav" />
+            <OptionsMenu />
+          </>
+        }
       />
 
       <main className="mk-shell__view">

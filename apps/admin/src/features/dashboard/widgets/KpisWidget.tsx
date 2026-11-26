@@ -1,11 +1,7 @@
-import { StatCard } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/stat-card';
+import { Link } from 'react-router-dom';
 import { Icon } from '@/shared/ui/Icon';
 import { useAlertsSummary, useCasesSummary, useSchedulingSummary } from '../api';
 import { dayAndTime } from './format';
-
-// Conteos: siempre enteros (también mientras StatCard anima el número).
-const INTEGER = { maximumFractionDigits: 0 };
 
 interface Props {
   userId: string;
@@ -14,56 +10,111 @@ interface Props {
   canViewCases: boolean;
 }
 
-/** Resumen del día adaptado a permisos reales por RLS. */
+const CARD_BASE =
+  'flex min-h-34 flex-col justify-between rounded-3xl border p-5 transition-colors hover:border-primary/50 focus-visible:outline-2 focus-visible:outline-primary';
+
+/**
+ * KPIs operativos del Dashboard:
+ * - Todas las tarjetas son enlaces accionables hacia su módulo (no contadores decorativos).
+ * - Superficie uniforme cuando el conteo es 0; el énfasis semántico (peligro/aviso) solo
+ *   se activa cuando hay alertas o casos prioritarios reales (> 0).
+ * - Terminología institucional ("Casos prioritarios") y sin nombres personales (LGPDPPSO).
+ */
 export function KpisWidget({ userId, mine, canViewAlerts, canViewCases }: Props) {
   const alerts = useAlertsSummary(canViewAlerts);
   const cases = useCasesSummary(userId, canViewCases);
   const agenda = useSchedulingSummary(true);
 
+  const activeAlerts = alerts.data?.active ?? 0;
+  const activeCases = mine ? (cases.data?.mine ?? 0) : (cases.data?.open ?? 0) + (cases.data?.inFollowUp ?? 0);
+  const priorityCases = cases.data?.urgencias ?? 0;
+
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       {canViewAlerts && (
-        <div className="flex flex-col justify-between rounded-3xl bg-primary p-5 text-on-primary">
-          <div className="flex items-center justify-between">
-            <p className="text-sm opacity-90">Alertas activas</p>
-            <Icon name="notifications_active" filled />
+        <Link
+          to="/solicitudes"
+          className={`${CARD_BASE} ${
+            activeAlerts > 0
+              ? 'border-status-danger/40 bg-status-danger-bg/50'
+              : 'border-outline-variant bg-surface-container-lowest'
+          }`}
+        >
+          <div className="flex items-center justify-between text-on-surface-variant">
+            <p className="text-sm font-medium">Alertas pendientes</p>
+            <Icon
+              name="notifications_active"
+              filled={activeAlerts > 0}
+              className={activeAlerts > 0 ? 'text-status-danger' : 'text-on-surface-variant'}
+            />
           </div>
-          <p className="mt-4 text-5xl font-medium tracking-tight">{alerts.data?.active ?? '—'}</p>
-          <p className="mt-1 text-sm opacity-90">
-            {alerts.data ? `${alerts.data.newToday} nuevas hoy · ${alerts.data.inProgress} tomadas` : 'Cargando…'}
+          <p className={`mt-3 text-4xl font-medium tracking-tight tabular-nums ${activeAlerts > 0 ? 'text-status-danger' : 'text-on-surface'}`}>
+            {alerts.data ? activeAlerts : '—'}
           </p>
-        </div>
+          <p className="mt-1 text-xs text-on-surface-variant">
+            {alerts.data
+              ? `${alerts.data.newToday} nuevas hoy · ${alerts.data.inProgress} tomadas`
+              : 'Cargando alertas…'}
+          </p>
+        </Link>
       )}
 
-      <div className="flex flex-col justify-between rounded-3xl border border-outline-variant p-5">
+      <Link to="/agenda" className={`${CARD_BASE} border-outline-variant bg-surface-container-lowest`}>
         <div className="flex items-center justify-between text-on-surface-variant">
-          <p className="text-sm">Próxima cita</p>
-          <Icon name="event" />
+          <p className="text-sm font-medium">Citas de hoy</p>
+          <Icon name="event" className="text-status-info" />
         </div>
-        {agenda.data?.nextAt ? (
-          <>
-            <p className="mt-4 truncate text-2xl font-medium tracking-tight text-on-surface">
-              {agenda.data.nextUsuaria ?? 'Usuaria'}
-            </p>
-            <p className="mt-1 text-sm text-on-surface-variant">
-              {dayAndTime(agenda.data.nextAt)} · {agenda.data.nextArea ?? 'Área'} · {agenda.data.today} hoy
-            </p>
-          </>
-        ) : (
-          <p className="mt-4 text-on-surface-variant">
-            {agenda.isLoading ? 'Cargando…' : 'Sin citas próximas programadas'}
-          </p>
-        )}
-      </div>
+        <p className="mt-3 text-4xl font-medium tracking-tight tabular-nums text-on-surface">
+          {agenda.data ? agenda.data.today : '—'}
+        </p>
+        <p className="mt-1 truncate text-xs text-on-surface-variant">
+          {agenda.data?.nextAt
+            ? `Próxima: ${dayAndTime(agenda.data.nextAt)} · ${agenda.data.nextArea ?? 'Área'}`
+            : agenda.isLoading
+              ? 'Cargando agenda…'
+              : 'Sin citas próximas programadas'}
+        </p>
+      </Link>
 
       {canViewCases && (
         <>
-          <StatCard
-            label={mine ? 'Mis expedientes activos' : 'Expedientes abiertos / seguimiento'}
-            value={(mine ? cases.data?.mine : (cases.data?.open ?? 0) + (cases.data?.inFollowUp ?? 0)) ?? 0}
-            format={INTEGER}
-          />
-          <StatCard label="En lista de urgencias" value={cases.data?.urgencias ?? 0} format={INTEGER} positive="down" />
+          <Link to="/expedientes" className={`${CARD_BASE} border-outline-variant bg-surface-container-lowest`}>
+            <div className="flex items-center justify-between text-on-surface-variant">
+              <p className="text-sm font-medium">{mine ? 'Mis expedientes activos' : 'Expedientes activos'}</p>
+              <Icon name="folder_shared" className="text-primary" />
+            </div>
+            <p className="mt-3 text-4xl font-medium tracking-tight tabular-nums text-on-surface">
+              {cases.data ? activeCases : '—'}
+            </p>
+            <p className="mt-1 text-xs text-on-surface-variant">
+              {cases.data
+                ? `${cases.data.open} abiertos · ${cases.data.inFollowUp} en seguimiento`
+                : 'Cargando expedientes…'}
+            </p>
+          </Link>
+
+          <Link
+            to="/expedientes"
+            className={`${CARD_BASE} ${
+              priorityCases > 0
+                ? 'border-status-warning/40 bg-status-warning-bg/40'
+                : 'border-outline-variant bg-surface-container-lowest'
+            }`}
+          >
+            <div className="flex items-center justify-between text-on-surface-variant">
+              <p className="text-sm font-medium">Casos prioritarios</p>
+              <Icon
+                name="priority_high"
+                className={priorityCases > 0 ? 'text-status-warning' : 'text-on-surface-variant'}
+              />
+            </div>
+            <p className={`mt-3 text-4xl font-medium tracking-tight tabular-nums ${priorityCases > 0 ? 'text-status-warning' : 'text-on-surface'}`}>
+              {cases.data ? priorityCases : '—'}
+            </p>
+            <p className="mt-1 text-xs text-on-surface-variant">
+              {priorityCases > 0 ? 'Requieren seguimiento prioritario' : 'Sin casos prioritarios pendientes'}
+            </p>
+          </Link>
         </>
       )}
     </div>
