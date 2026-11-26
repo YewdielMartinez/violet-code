@@ -31,6 +31,14 @@ vi.mock('@/infrastructure/supabase/adapters/SupabaseAgresorRepository', () => ({
   },
 }));
 
+vi.mock('./ficha/FichaDetalleResumen', () => ({
+  FichaDetalleResumen: () => <div data-testid="ficha-resumen" />,
+}));
+
+vi.mock('./ficha/FichaGestionAcciones', () => ({
+  FichaGestionAcciones: () => null,
+}));
+
 vi.mock('./DocumentosAdjuntosPanel', () => ({
   DocumentosAdjuntosPanel: () => <div data-testid="documentos-panel" />,
 }));
@@ -140,7 +148,7 @@ describe('ExpedienteDrawer (RBAC y bitácora RF-05 / RF-22)', () => {
     for (const role of ['recepcion', 'umeca'] as const) {
       cleanup();
       renderWithQuery(
-        <ExpedienteDrawer expediente={SAMPLE_EXPEDIENTE} userRole={role} onClose={vi.fn()} />,
+        <ExpedienteDrawer expediente={SAMPLE_EXPEDIENTE} userRole={role} canManage={false} onClose={vi.fn()} />,
       );
 
       expect(screen.getByRole('tab', { name: /Resumen/i })).toBeTruthy();
@@ -151,7 +159,7 @@ describe('ExpedienteDrawer (RBAC y bitácora RF-05 / RF-22)', () => {
 
   it('registra consulta de ficha una sola vez en StrictMode y consulta de agresor al editar', async () => {
     renderWithQuery(
-      <ExpedienteDrawer expediente={SAMPLE_EXPEDIENTE} userRole="trabajo_social" onClose={vi.fn()} />,
+      <ExpedienteDrawer expediente={SAMPLE_EXPEDIENTE} userRole="trabajo_social" canManage={false} onClose={vi.fn()} />,
     );
 
     const tabAgresor = screen.getByRole('tab', { name: /Persona agresora/i });

@@ -28,12 +28,8 @@ import {
   type ExpedienteResumen,
   type PreRegistroMovil,
 } from './api';
-<<<<<<< HEAD
 import { ExpedienteDrawer } from './ExpedienteDrawer';
-=======
-import { FichaDetalleDialog } from './ficha/FichaDetalleDialog';
 import type { FichaSeedContext } from './ficha/useFichaForm';
->>>>>>> dd5b3e80c403c04a8b68aeb7dea5f44a208675fd
 import { VerificarCurpDialog } from './VerificarCurpDialog';
 
 type QuickFilter = 'todos' | 'abierto' | 'en_seguimiento' | 'prioritarios' | 'cerrado';
@@ -300,15 +296,10 @@ export default function ExpedientesPage() {
         />
       ) : null}
 
-<<<<<<< HEAD
       <ExpedienteDrawer
         expediente={selected}
         userRole={user?.role}
-=======
-      <FichaDetalleDialog
-        expediente={selected}
         canManage={canCreateExpediente}
->>>>>>> dd5b3e80c403c04a8b68aeb7dea5f44a208675fd
         onClose={() => setSelected(null)}
       />
     </>
