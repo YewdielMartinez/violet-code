@@ -1,7 +1,6 @@
 import { Icon } from '@/shared/ui/Icon';
 import {
   DROGA_LABELS,
-  TIPO_ARMA_LABELS,
   formatAgresorNombre,
   type Agresor,
 } from '../agresorApi';
@@ -96,7 +95,7 @@ export function AgresorCard({
               <Icon name="warning" className="text-[14px]" />
               <span>
                 Utilizó arma u objeto
-                {agresor.tipoArma ? `: ${TIPO_ARMA_LABELS[agresor.tipoArma]}` : ''}
+                {agresor.especificacionArma ? `: ${agresor.especificacionArma}` : ''}
               </span>
             </span>
           ) : null}

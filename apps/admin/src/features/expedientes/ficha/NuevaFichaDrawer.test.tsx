@@ -130,7 +130,6 @@ function fillStep0() {
   fireEvent.change(screen.getByLabelText(/Nombre\(s\) \*/i), { target: { value: 'Laura' } });
   fireEvent.change(screen.getByLabelText(/Apellido paterno \*/i), { target: { value: 'García' } });
   fireEvent.change(screen.getByLabelText(/Servicios solicitados \*/i), { target: { value: '1' } });
-  fireEvent.click(screen.getByLabelText(/Aviso de Privacidad/i));
 }
 
 beforeEach(() => {

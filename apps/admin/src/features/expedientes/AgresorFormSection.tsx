@@ -4,8 +4,6 @@ import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/skeleton';
 import { Icon } from '@/shared/ui/Icon';
 import {
-  DROGA_LABELS,
-  formatAgresorNombre,
   useAgresores,
   useAsentamientosAhome,
   useOcupaciones,
@@ -192,7 +190,6 @@ export function AgresorFormSection({ fichaId }: Props) {
           <AgresorDialog.Close label="Cerrar" />
         </AgresorDialog.Header>
 
-<<<<<<< HEAD
         {formOpen ? (
           <AgresorForm
             key={editingAgresor?.id ?? 'new'}
@@ -207,67 +204,5 @@ export function AgresorFormSection({ fichaId }: Props) {
         ) : null}
       </AgresorDialog.Content>
     </AgresorDialog.Root>
-=======
-              return (
-                <article
-                  key={agresor.id}
-                  className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h4 className="truncate text-sm font-semibold text-on-surface">
-                        {formatAgresorNombre(agresor)}
-                      </h4>
-                      <p className="mt-0.5 text-xs text-on-surface-variant">
-                        {[parentescoLabel, ocupacionLabel].filter(Boolean).join(' · ') ||
-                          'Sin parentesco ni ocupación registrados'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      className="mk-button mk-button--tonal mk-button--sm shrink-0"
-                      onClick={() => handleEdit(agresor)}
-                    >
-                      <Icon name="edit" />
-                      <span className="ml-1">Editar</span>
-                    </button>
-                  </div>
-
-                  {domicilioResumen ? (
-                    <p className="text-xs text-on-surface-variant">
-                      <span className="font-medium text-on-surface">Domicilio:</span> {domicilioResumen}
-                    </p>
-                  ) : null}
-
-                  <div className="flex flex-wrap gap-1.5">
-                    {agresor.tieneConsumoDroga === true ? (
-                      <span className="rounded-full bg-status-warning-bg px-2.5 py-0.5 text-xs font-medium text-status-warning">
-                        Consumo de drogas
-                        {agresor.drogas?.length
-                          ? `: ${agresor.drogas.map((d) => DROGA_LABELS[d]).join(', ')}`
-                          : ''}
-                      </span>
-                    ) : null}
-                    {agresor.utilizoArmaUObjeto === true ? (
-                      <span className="rounded-full bg-status-danger-bg px-2.5 py-0.5 text-xs font-medium text-status-danger">
-                        Utilizó arma u objeto
-                        {agresor.especificacionArma ? `: ${agresor.especificacionArma}` : ''}
-                      </span>
-                    ) : null}
-                  </div>
-
-                  {agresor.observaciones ? (
-                    <p className="line-clamp-3 text-xs text-on-surface-variant">
-                      {agresor.observaciones}
-                    </p>
-                  ) : null}
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </Skeleton>
-    </div>
->>>>>>> 43cd2976496a6c3218dcfcd4da73443b35379412
   );
 }
