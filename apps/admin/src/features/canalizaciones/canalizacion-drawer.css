@@ -1,0 +1,48 @@
+/* Panel lateral de detalle de una canalización: misma línea visual que el de Expediente. */
+
+.mk-dialog.vc-canalizacion-dialog[data-mk-placement='side'] {
+  width: min(560px, calc(100vw - 16px));
+}
+
+.mk-dialog.vc-canalizacion-dialog [data-mk-part='header'] {
+  display: grid;
+  /* El kit deja justify-content: space-between (pensado para flex); en grid encogería la columna. */
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: stretch;
+  gap: 14px;
+  padding: 20px 24px 12px;
+}
+
+.mk-dialog.vc-canalizacion-dialog [data-mk-part='body'] {
+  padding: 8px 24px 28px;
+}
+
+/* Sin blur del fondo: desenfocar toda la página en cada frame cuesta caro. */
+.mk-dialog.vc-canalizacion-dialog::backdrop {
+  backdrop-filter: none;
+}
+
+/* El ghost del cierre se desenfoca con blur(32px) aunque animateContent sea false: se anula. */
+.vc-canalizacion-dialog[data-mk-ghost] [data-mk-part] {
+  filter: none !important;
+}
+
+@media (max-width: 679px) {
+  .mk-dialog.vc-canalizacion-dialog[data-mk-placement='side'] {
+    inset: 0 0 0 auto;
+    width: min(560px, 94vw);
+    height: 100dvh;
+    border-radius: var(--mk-dialog-radius) 0 0 var(--mk-dialog-radius);
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+}
+
+/* Filas clicables en la tabla de canalizaciones */
+.vc-canalizaciones-table [data-mk-dt-table] tbody tr[data-id]:not([data-mk-dt-loading]) {
+  cursor: pointer;
+}
+
+.vc-canalizaciones-table [data-mk-dt-table] tbody tr[data-id]:not([data-mk-dt-loading]):focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}

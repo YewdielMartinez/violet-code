@@ -2,10 +2,12 @@ import { lazy, Suspense, type ComponentType } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { ALL_PAGES } from './navigation';
 import {
+  AlertasPage,
   CanalizacionesPage,
   DashboardPage,
   DirectoryPage,
   ExpedientesPage,
+  IntervencionesPage,
   LoginPage,
   NuevaFichaPage,
   PendingModulePage,
@@ -43,6 +45,8 @@ const READY: Record<string, ComponentType> = {
   '/directorio': DirectoryPage,
   '/expedientes': ExpedientesPage,
   '/canalizaciones': CanalizacionesPage,
+  '/solicitudes': AlertasPage,
+  '/intervenciones': IntervencionesPage,
 };
 
 // Sin esqueleto: las páginas ya están precargadas; si alguna tarda, no se muestra un parpadeo intermedio.

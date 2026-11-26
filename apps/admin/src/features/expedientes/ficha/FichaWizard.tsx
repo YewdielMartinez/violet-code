@@ -7,6 +7,7 @@ import '@yewdiel21/motion-kit/css/components/steps';
 import type { DomicilioInput } from '@/domain/models/Domicilio';
 import type { EstudioSocioeconomicoInput } from '@/domain/models/EstudioSocioeconomico';
 import type { CatalogosFicha, FichaIdentidadInput } from '@/domain/models/FichaRegistro';
+import type { ExpedienteResumen } from '@/domain/models/Persona';
 import { Icon } from '@/shared/ui/Icon';
 import { FichaDomicilioStep } from './FichaDomicilioStep';
 import { FichaIdentidadStep } from './FichaIdentidadStep';
@@ -44,6 +45,7 @@ interface StepsSectionProps {
   step: number;
   stepError: string | null;
   invalidField: string | null;
+  duplicateExpediente?: ExpedienteResumen | null;
   identidad: FichaIdentidadInput;
   onIdentidadChange: (next: FichaIdentidadInput) => void;
   domicilio: DomicilioInput;
@@ -51,6 +53,9 @@ interface StepsSectionProps {
   estudio: EstudioSocioeconomicoInput;
   onEstudioChange: (next: EstudioSocioeconomicoInput) => void;
   catalogos?: CatalogosFicha;
+  allowPreRegistroLookup?: boolean;
+  onOpenExpediente?: (expediente: ExpedienteResumen) => void;
+  onDuplicateExpedienteChange?: (expediente: ExpedienteResumen | null) => void;
   onNext: () => void;
   onSubmit: () => void;
   onStepAnimated?: (stepIndex: number) => void;
@@ -62,6 +67,7 @@ export function FichaWizardSteps({
   step,
   stepError,
   invalidField,
+  duplicateExpediente,
   identidad,
   onIdentidadChange,
   domicilio,
@@ -69,6 +75,9 @@ export function FichaWizardSteps({
   estudio,
   onEstudioChange,
   catalogos,
+  allowPreRegistroLookup,
+  onOpenExpediente,
+  onDuplicateExpedienteChange,
   onNext,
   onSubmit,
   onStepAnimated,
@@ -98,7 +107,7 @@ export function FichaWizardSteps({
       }}
     >
       <Steps index={step} duration={0.18} onChange={handleStepChange} className="vc-ficha-steps">
-        <div className="mb-4 flex items-center justify-between gap-3 text-xs text-on-surface-variant">
+        <div className="mb-5 flex items-center justify-between gap-3 text-sm text-on-surface-variant">
           <span>
             Paso <Steps.Counter className="font-mono font-semibold text-on-surface" /> de 3
           </span>
@@ -107,16 +116,24 @@ export function FichaWizardSteps({
 
         <Steps.Step>
           <div data-mk-flow-item="" className="w-full">
-            <h3 data-mk-step-title="" className="mb-4 text-base font-semibold text-on-surface">
+            <h3 data-mk-step-title="" className="mb-4 text-lg font-semibold text-on-surface">
               Datos de identidad y servicios solicitados
             </h3>
-            <FichaIdentidadStep value={identidad} onChange={onIdentidadChange} catalogos={catalogos} invalidField={invalidField} />
+            <FichaIdentidadStep
+              value={identidad}
+              onChange={onIdentidadChange}
+              catalogos={catalogos}
+              invalidField={invalidField}
+              allowPreRegistroLookup={allowPreRegistroLookup}
+              onOpenExpediente={onOpenExpediente}
+              onDuplicateExpedienteChange={onDuplicateExpedienteChange}
+            />
           </div>
         </Steps.Step>
 
         <Steps.Step>
           <div data-mk-flow-item="" className="w-full">
-            <h3 data-mk-step-title="" className="mb-4 text-base font-semibold text-on-surface">
+            <h3 data-mk-step-title="" className="mb-4 text-lg font-semibold text-on-surface">
               Domicilio de la usuaria
             </h3>
             <FichaDomicilioStep value={domicilio} onChange={onDomicilioChange} invalidField={invalidField} />
@@ -125,7 +142,7 @@ export function FichaWizardSteps({
 
         <Steps.Step>
           <div data-mk-flow-item="" className="w-full">
-            <h3 data-mk-step-title="" className="mb-4 text-base font-semibold text-on-surface">
+            <h3 data-mk-step-title="" className="mb-4 text-lg font-semibold text-on-surface">
               Estudio socioeconómico y vivienda
             </h3>
             <FichaSocioeconomicoStep value={estudio} onChange={onEstudioChange} catalogos={catalogos} invalidField={invalidField} />
@@ -133,7 +150,7 @@ export function FichaWizardSteps({
         </Steps.Step>
       </Steps>
 
-      {stepError ? (
+      {stepError && !duplicateExpediente ? (
         <p role="alert" className="mt-5 rounded-2xl bg-status-danger-bg px-4 py-3 text-sm text-status-danger">
           {stepError}
         </p>
@@ -147,6 +164,7 @@ interface FooterProps {
   step: number;
   isSubmitting: boolean;
   submitError: boolean;
+  canContinue?: boolean;
   onClearSubmitError?: () => void;
   onBack: () => void;
   onCancel: () => void;
@@ -158,6 +176,7 @@ export function FichaWizardFooter({
   step,
   isSubmitting,
   submitError,
+  canContinue = true,
   onClearSubmitError,
   onBack,
   onCancel,
@@ -171,7 +190,7 @@ export function FichaWizardFooter({
       </button>
 
       {step < 2 ? (
-        <button type="button" className="mk-button mk-button--filled" onClick={onNext}>
+        <button type="button" className="mk-button mk-button--filled" onClick={onNext} disabled={!canContinue}>
           <span>Siguiente</span>
           <Icon name="arrow_forward" />
         </button>
@@ -186,6 +205,7 @@ export function FichaWizardFooter({
             if (next === 'idle') onClearSubmitError?.();
           }}
           className="mk-button mk-button--filled"
+          disabled={!canContinue}
         >
           <Icon name="save" />
           <span className="ml-2">Guardar ficha</span>

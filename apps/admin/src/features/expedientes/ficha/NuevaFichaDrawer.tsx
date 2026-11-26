@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Drawer, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
 import '@yewdiel21/motion-kit/css/components/drawer';
+import type { ExpedienteResumen } from '@/domain/models/Persona';
 import { useCatalogosFicha } from '../api';
 import { focusFichaField } from './fichaValidation';
 import { FichaWizardFooter, FichaWizardStepper, FichaWizardSteps } from './FichaWizard';
@@ -14,13 +15,22 @@ export interface NuevaFichaDrawerProps {
   seed: FichaSeedContext | null;
   onClose: () => void;
   onCreated?: (fichaId: string) => void;
+  onOpenExpediente?: (expediente: ExpedienteResumen) => void;
+  allowPreRegistroLookup?: boolean;
 }
 
 /**
- * Panel lateral derecho escalonado para capturar una Nueva Ficha Única (`RF-01`, `RF-34`, `RNF-04`).
- * Protege contra pérdida accidental de datos mediante confirmación de cambios sin guardar.
+ * Panel lateral derecho escalonado para capturar una Nueva Ficha Única (`RF-01`, `RF-04`, `RF-34`, `RNF-04`).
+ * Incluye verificación inline de CURP y protege contra pérdida accidental de datos sin guardar.
  */
-export function NuevaFichaDrawer({ open, seed, onClose, onCreated }: NuevaFichaDrawerProps) {
+export function NuevaFichaDrawer({
+  open,
+  seed,
+  onClose,
+  onCreated,
+  onOpenExpediente,
+  allowPreRegistroLookup,
+}: NuevaFichaDrawerProps) {
   const formId = useId();
   const hostRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -43,7 +53,18 @@ export function NuevaFichaDrawer({ open, seed, onClose, onCreated }: NuevaFichaD
   }
 
   const form = useFichaForm();
-  const { step, initialize, goToStep, goNext, goBack, submit, isDirty, isSubmitting } = form;
+  const {
+    step,
+    initialize,
+    goToStep,
+    goNext,
+    goBack,
+    submit,
+    isDirty,
+    isSubmitting,
+    duplicateExpediente,
+    setDuplicateExpediente,
+  } = form;
   const { data: catalogos } = useCatalogosFicha(open);
 
   const seedKey = seed
@@ -78,6 +99,9 @@ export function NuevaFichaDrawer({ open, seed, onClose, onCreated }: NuevaFichaD
     function handleNativeClose(event: Event) {
       const target = event.target;
       if (!(target instanceof Element) || !target.hasAttribute('data-mk-drawer')) return;
+      // Cierre ya autorizado (guardado exitoso, descarte confirmado): no bloquear. Tras guardar,
+      // `isSubmittingRef` aún vale true en este punto porque su efecto corre después del cierre.
+      if (bypassCloseGuardRef.current) return;
       if (isSubmittingRef.current) {
         event.preventDefault();
         return;
@@ -92,7 +116,12 @@ export function NuevaFichaDrawer({ open, seed, onClose, onCreated }: NuevaFichaD
   }, []);
 
   function handleDrawerOpenChange(nextOpen: boolean) {
-    if (nextOpen || isSubmittingRef.current) return;
+    if (nextOpen) return;
+    if (bypassCloseGuardRef.current) {
+      onClose();
+      return;
+    }
+    if (isSubmittingRef.current) return;
     if (isDirtyRef.current && !bypassCloseGuardRef.current) {
       setConfirmDiscardOpen(true);
       return;
@@ -113,6 +142,13 @@ export function NuevaFichaDrawer({ open, seed, onClose, onCreated }: NuevaFichaD
   function handleConfirmDiscard() {
     bypassCloseGuardRef.current = true;
     setConfirmDiscardOpen(false);
+    onClose();
+  }
+
+  function handleOpenExistingExpediente(expediente: ExpedienteResumen) {
+    bypassCloseGuardRef.current = true;
+    setConfirmDiscardOpen(false);
+    onOpenExpediente?.(expediente);
     onClose();
   }
 
@@ -146,9 +182,7 @@ export function NuevaFichaDrawer({ open, seed, onClose, onCreated }: NuevaFichaD
 
   const subtitle = seed?.preRegistro
     ? `Datos precargados desde app móvil para ${seed.preRegistro.nombreCompleto}.`
-    : seed?.curp
-      ? `CURP verificada: ${seed.curp}`
-      : 'Captura escalonada de identidad, domicilio SEPOMEX y estudio socioeconómico.';
+    : 'Captura escalonada de identidad, domicilio SEPOMEX y estudio socioeconómico.';
 
   return (
     <>
@@ -176,6 +210,7 @@ export function NuevaFichaDrawer({ open, seed, onClose, onCreated }: NuevaFichaD
                   step={step}
                   stepError={form.stepError}
                   invalidField={form.invalidField}
+                  duplicateExpediente={duplicateExpediente}
                   identidad={form.identidad}
                   onIdentidadChange={form.setIdentidad}
                   domicilio={form.domicilio}
@@ -183,6 +218,9 @@ export function NuevaFichaDrawer({ open, seed, onClose, onCreated }: NuevaFichaD
                   estudio={form.estudio}
                   onEstudioChange={form.setEstudio}
                   catalogos={catalogos}
+                  allowPreRegistroLookup={allowPreRegistroLookup}
+                  onOpenExpediente={onOpenExpediente ? handleOpenExistingExpediente : undefined}
+                  onDuplicateExpedienteChange={setDuplicateExpediente}
                   onNext={handleNext}
                   onSubmit={() => {
                     void handleFinish();
@@ -203,6 +241,7 @@ export function NuevaFichaDrawer({ open, seed, onClose, onCreated }: NuevaFichaD
                 step={step}
                 isSubmitting={isSubmitting}
                 submitError={submitError}
+                canContinue={!duplicateExpediente}
                 onClearSubmitError={() => setSubmitError(false)}
                 onBack={goBack}
                 onCancel={requestClose}

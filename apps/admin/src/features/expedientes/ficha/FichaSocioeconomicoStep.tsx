@@ -64,121 +64,133 @@ export function FichaSocioeconomicoStep({ value, onChange, catalogos, invalidFie
   }
 
   return (
-    <div className="grid gap-4">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="mk-field">
-          <span className="mk-field__label">Ingreso mensual propio (MXN)</span>
-          <input
-            type="number"
-            min={0}
-            step="0.01"
-            placeholder="0.00"
-            data-ficha-field="ingresoMensualPropio"
-            aria-invalid={invalidField === 'ingresoMensualPropio' || undefined}
-            value={value.ingresoMensualPropio}
-            onChange={(e) => update('ingresoMensualPropio', e.target.value)}
-          />
-        </label>
+    <div className="vc-ficha-form grid gap-6">
+      <section className="grid gap-4 rounded-2xl border border-outline-variant bg-surface-container-lowest p-5">
+        <h4 className="text-base font-semibold text-on-surface">Ingresos y dependientes</h4>
 
-        <label className="mk-field">
-          <span className="mk-field__label">Número de dependientes económicos</span>
-          <input
-            type="number"
-            min={0}
-            max={30}
-            data-ficha-field="numeroDependientes"
-            aria-invalid={invalidField === 'numeroDependientes' || undefined}
-            step={1}
-            inputMode="numeric"
-            value={value.numeroDependientes}
-            onChange={(e) => update('numeroDependientes', e.target.value)}
-          />
-        </label>
-      </div>
-
-      <div className="grid gap-3 rounded-2xl bg-surface-container-low p-4">
-        <GlassSwitch
-          checked={value.tieneApoyo}
-          onChange={(checked) => update('tieneApoyo', checked)}
-        >
-          Recibe apoyo económico o programa social
-        </GlassSwitch>
-
-        {value.tieneApoyo ? (
+        <div className="grid gap-4 sm:grid-cols-2">
           <label className="mk-field">
-            <span className="mk-field__label">Especificación del apoyo *</span>
+            <span className="mk-field__label">Ingreso mensual propio (MXN)</span>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              placeholder="0.00"
+              data-ficha-field="ingresoMensualPropio"
+              aria-invalid={invalidField === 'ingresoMensualPropio' || undefined}
+              value={value.ingresoMensualPropio}
+              onChange={(e) => update('ingresoMensualPropio', e.target.value)}
+            />
+          </label>
+
+          <label className="mk-field">
+            <span className="mk-field__label">Número de dependientes económicos</span>
+            <input
+              type="number"
+              min={0}
+              max={30}
+              data-ficha-field="numeroDependientes"
+              aria-invalid={invalidField === 'numeroDependientes' || undefined}
+              step={1}
+              inputMode="numeric"
+              value={value.numeroDependientes}
+              onChange={(e) => update('numeroDependientes', e.target.value)}
+            />
+          </label>
+        </div>
+
+        <div className="grid gap-3 rounded-2xl bg-surface-container-low p-4">
+          <GlassSwitch
+            checked={value.tieneApoyo}
+            onChange={(checked) => update('tieneApoyo', checked)}
+          >
+            Recibe apoyo económico o programa social
+          </GlassSwitch>
+
+          {value.tieneApoyo ? (
+            <label className="mk-field">
+              <span className="mk-field__label">Especificación del apoyo *</span>
+              <input
+                type="text"
+                maxLength={250}
+                placeholder="Ej. Pensión Bienestar, beca escolar, apoyo familiar"
+                data-ficha-field="especificacionApoyo"
+                aria-invalid={invalidField === 'especificacionApoyo' || undefined}
+                value={value.especificacionApoyo}
+                onChange={(e) => update('especificacionApoyo', e.target.value)}
+              />
+            </label>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="grid gap-4 rounded-2xl border border-outline-variant bg-surface-container-lowest p-5">
+        <h4 className="text-base font-semibold text-on-surface">Vivienda, servicios y bienes</h4>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-2">
+            <span className="vc-ficha-label">Tipo de vivienda</span>
+            <Select
+              size="lg"
+              label="Tipo de vivienda"
+              placeholder="Selecciona…"
+              options={VIVIENDA_OPTIONS}
+              value={value.tipoVivienda}
+              onChange={(v) => update('tipoVivienda', v as TipoVivienda)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <span className="vc-ficha-label">Material predominante</span>
+            <Select
+              size="lg"
+              label="Material predominante"
+              placeholder="Selecciona…"
+              options={MATERIAL_OPTIONS}
+              value={value.material}
+              onChange={(v) => update('material', v as MaterialVivienda)}
+            />
+          </div>
+        </div>
+
+        {value.material === 'otro' ? (
+          <label className="mk-field">
+            <span className="mk-field__label">Especificar material de vivienda *</span>
             <input
               type="text"
-              maxLength={250}
-              placeholder="Ej. Pensión Bienestar, beca escolar, apoyo familiar"
-              data-ficha-field="especificacionApoyo"
-              aria-invalid={invalidField === 'especificacionApoyo' || undefined}
-              value={value.especificacionApoyo}
-              onChange={(e) => update('especificacionApoyo', e.target.value)}
+              maxLength={100}
+              data-ficha-field="materialOtro"
+              aria-invalid={invalidField === 'materialOtro' || undefined}
+              value={value.materialOtro}
+              onChange={(e) => update('materialOtro', e.target.value)}
             />
           </label>
         ) : null}
-      </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="grid gap-1.5">
-          <span className="text-xs font-medium text-on-surface-variant">Tipo de vivienda</span>
-          <Select
-            label="Tipo de vivienda"
-            placeholder="Selecciona…"
-            options={VIVIENDA_OPTIONS}
-            value={value.tipoVivienda}
-            onChange={(v) => update('tipoVivienda', v as TipoVivienda)}
-          />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-2">
+            <span className="vc-ficha-label">Servicios con los que cuenta</span>
+            <MultiSelect
+              size="lg"
+              label="Servicios con los que cuenta"
+              placeholder="Selecciona servicios…"
+              options={SERVICIOS_OPTIONS}
+              value={value.servicios}
+              onChange={(vals) => update('servicios', vals)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <span className="vc-ficha-label">Bienes en el hogar</span>
+            <MultiSelect
+              size="lg"
+              label="Bienes en el hogar"
+              placeholder="Selecciona bienes…"
+              options={BIENES_OPTIONS}
+              value={value.bienes}
+              onChange={(vals) => update('bienes', vals)}
+            />
+          </div>
         </div>
-        <div className="grid gap-1.5">
-          <span className="text-xs font-medium text-on-surface-variant">Material predominante</span>
-          <Select
-            label="Material predominante"
-            placeholder="Selecciona…"
-            options={MATERIAL_OPTIONS}
-            value={value.material}
-            onChange={(v) => update('material', v as MaterialVivienda)}
-          />
-        </div>
-      </div>
-
-      {value.material === 'otro' ? (
-        <label className="mk-field">
-          <span className="mk-field__label">Especificar material de vivienda *</span>
-          <input
-            type="text"
-            maxLength={100}
-            data-ficha-field="materialOtro"
-            aria-invalid={invalidField === 'materialOtro' || undefined}
-            value={value.materialOtro}
-            onChange={(e) => update('materialOtro', e.target.value)}
-          />
-        </label>
-      ) : null}
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="grid gap-1.5">
-          <span className="text-xs font-medium text-on-surface-variant">Servicios con los que cuenta</span>
-          <MultiSelect
-            label="Servicios con los que cuenta"
-            placeholder="Selecciona servicios…"
-            options={SERVICIOS_OPTIONS}
-            value={value.servicios}
-            onChange={(vals) => update('servicios', vals)}
-          />
-        </div>
-        <div className="grid gap-1.5">
-          <span className="text-xs font-medium text-on-surface-variant">Bienes en el hogar</span>
-          <MultiSelect
-            label="Bienes en el hogar"
-            placeholder="Selecciona bienes…"
-            options={BIENES_OPTIONS}
-            value={value.bienes}
-            onChange={(vals) => update('bienes', vals)}
-          />
-        </div>
-      </div>
+      </section>
 
       <FichaAportantesSection
         aportantes={value.aportantes}

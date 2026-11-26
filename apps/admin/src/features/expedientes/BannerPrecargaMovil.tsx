@@ -9,27 +9,31 @@ interface Props {
   onDismiss: () => void;
 }
 
+function formatSexoLabel(sexo: PreRegistroMovil['sexo']): string {
+  return sexo === 'H' ? 'Masculino' : 'Femenino';
+}
+
 /**
- * Banner de precarga desde la app móvil (`RF-34`).
- * Muestra los datos provenientes de `buscar_pre_registro_por_curp()` antes de capturar
- * la Ficha Única para confirmar y ligar el expediente sin duplicar a la usuaria.
+ * Tarjeta inline de precarga desde la app móvil (`RF-34`).
+ * Muestra los datos provenientes de `buscar_pre_registro_por_curp()` dentro de Identidad
+ * para aplicarlos en la Ficha Única sin duplicar a la usuaria ni exponer CURP en toasts.
  */
 export function BannerPrecargaMovil({ preRegistro, confirmed, onConfirm, onDismiss }: Props) {
   function handleConfirm() {
     onConfirm(preRegistro);
-    toast('Datos del pre-registro móvil listos para la Ficha Única.');
+    toast('Datos de la app móvil aplicados a la ficha.');
   }
 
   return (
     <section
       aria-live="polite"
-      className={`mt-4 rounded-3xl border p-5 transition-colors ${
+      className={`rounded-2xl border p-4 transition-colors ${
         confirmed
-          ? 'border-status-success/40 bg-status-success-bg/40'
-          : 'border-status-info/40 bg-status-info-bg/40'
+          ? 'border-status-success/40 bg-status-success-bg/35'
+          : 'border-status-info/40 bg-status-info-bg/35'
       }`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <span
             aria-hidden
@@ -42,15 +46,13 @@ export function BannerPrecargaMovil({ preRegistro, confirmed, onConfirm, onDismi
             <Icon name={confirmed ? 'check_circle' : 'smartphone'} />
           </span>
           <div>
-            <p className="text-sm font-medium text-on-surface">
-              {confirmed
-                ? 'Precarga móvil confirmada'
-                : 'Usuaria con pre-registro en la app móvil'}
+            <p className="text-sm font-semibold text-on-surface">
+              {confirmed ? 'Datos de la app aplicados' : 'Datos de la app encontrados'}
             </p>
             <p className="mt-0.5 text-sm text-on-surface-variant">
               {confirmed
-                ? 'Los datos generales quedaron confirmados para iniciar la Ficha Única sin duplicar el registro.'
-                : 'Se encontró un registro activo en móvil para esta CURP. Revisa y confirma para precargar sus datos.'}
+                ? 'Se precargaron nombre, apellidos, fecha de nacimiento, sexo y entidad.'
+                : 'Existe un pre-registro móvil activo para esta CURP. Puedes precargar sus datos.'}
             </p>
           </div>
         </div>
@@ -59,33 +61,33 @@ export function BannerPrecargaMovil({ preRegistro, confirmed, onConfirm, onDismi
           {!confirmed ? (
             <button type="button" className="mk-button mk-button--filled" onClick={handleConfirm}>
               <Icon name="download_done" />
-              <span className="ml-2">Confirmar precarga</span>
+              <span>Usar estos datos</span>
             </button>
           ) : null}
           <button type="button" className="mk-button mk-button--text" onClick={onDismiss}>
-            Limpiar
+            Omitir
           </button>
         </div>
       </div>
 
-      <dl className="mt-4 grid gap-3 rounded-2xl bg-surface-container-lowest/85 p-4 sm:grid-cols-2 lg:grid-cols-4">
+      <dl className="mt-3 grid gap-3 rounded-xl bg-surface-container-lowest/90 p-3.5 text-sm sm:grid-cols-2">
         <div>
           <dt className="text-xs font-medium text-on-surface-variant">Nombre completo</dt>
-          <dd className="mt-0.5 text-sm font-medium text-on-surface">{preRegistro.nombreCompleto}</dd>
+          <dd className="mt-0.5 font-medium text-on-surface">{preRegistro.nombreCompleto}</dd>
         </div>
         <div>
-          <dt className="text-xs font-medium text-on-surface-variant">CURP</dt>
-          <dd className="mt-0.5 font-mono text-sm text-on-surface">{preRegistro.curp}</dd>
+          <dt className="text-xs font-medium text-on-surface-variant">Fecha de nacimiento</dt>
+          <dd className="mt-0.5 font-mono text-on-surface">{preRegistro.fechaNacimiento}</dd>
         </div>
         <div>
-          <dt className="text-xs font-medium text-on-surface-variant">Nacimiento / Sexo</dt>
-          <dd className="mt-0.5 text-sm text-on-surface">
-            {preRegistro.fechaNacimiento} · {preRegistro.entidadNacimiento} · {preRegistro.sexo}
+          <dt className="text-xs font-medium text-on-surface-variant">Sexo / Entidad</dt>
+          <dd className="mt-0.5 text-on-surface">
+            {formatSexoLabel(preRegistro.sexo)} · {preRegistro.entidadNacimiento}
           </dd>
         </div>
         <div>
           <dt className="text-xs font-medium text-on-surface-variant">Teléfono celular</dt>
-          <dd className="mt-0.5 font-mono text-sm text-on-surface">
+          <dd className="mt-0.5 font-mono text-on-surface">
             {preRegistro.celular ?? 'No proporcionado'}
           </dd>
         </div>

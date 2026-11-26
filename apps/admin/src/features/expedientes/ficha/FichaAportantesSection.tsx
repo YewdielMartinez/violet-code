@@ -50,28 +50,28 @@ export function FichaAportantesSection({
   );
 
   return (
-    <div className="rounded-2xl border border-outline-variant p-4">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+    <section className="rounded-2xl border border-outline-variant bg-surface-container-lowest p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h4 className="text-sm font-medium text-on-surface">Otros aportantes del hogar</h4>
-          <p className="text-xs text-on-surface-variant">
+          <h4 className="text-base font-semibold text-on-surface">Otros aportantes del hogar</h4>
+          <p className="text-sm text-on-surface-variant">
             Registra a las personas que contribuyen económicamente en la vivienda.
           </p>
         </div>
-        <button type="button" className="mk-button mk-button--tonal mk-button--sm" onClick={onAdd}>
+        <button type="button" className="mk-button mk-button--tonal" onClick={onAdd}>
           <Icon name="add" />
-          <span className="ml-1">Agregar aportante</span>
+          <span>Agregar aportante</span>
         </button>
       </div>
 
       {aportantes.length === 0 ? (
         <p className="text-sm text-on-surface-variant">Sin aportantes adicionales registrados.</p>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid gap-4">
           {aportantes.map((ap, index) => (
-            <div key={index} className="grid gap-3 rounded-2xl bg-surface-container-low p-3">
+            <div key={index} className="grid gap-4 rounded-2xl bg-surface-container-low p-4">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-medium text-on-surface-variant">
+                <span className="text-sm font-semibold text-on-surface-variant">
                   Aportante #{index + 1}
                 </span>
                 <button
@@ -83,21 +83,23 @@ export function FichaAportantesSection({
                 </button>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <label className="mk-field">
                   <span className="mk-field__label">Nombre *</span>
                   <input
                     type="text"
                     maxLength={100}
+                    placeholder="Nombre completo"
                     data-ficha-field={`aportante-${index}-nombre`}
                     aria-invalid={invalidField === `aportante-${index}-nombre` || undefined}
                     value={ap.nombre}
                     onChange={(e) => onUpdate(index, { nombre: e.target.value })}
                   />
                 </label>
-                <div className="grid gap-1.5">
-                  <span className="text-xs font-medium text-on-surface-variant">Parentesco</span>
+                <div className="grid gap-2">
+                  <span className="vc-ficha-label">Parentesco</span>
                   <Select
+                    size="lg"
                     label="Parentesco"
                     placeholder="Selecciona…"
                     options={parentescoOptions}
@@ -107,10 +109,11 @@ export function FichaAportantesSection({
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="grid gap-1.5">
-                  <span className="text-xs font-medium text-on-surface-variant">Ocupación</span>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <span className="vc-ficha-label">Ocupación</span>
                   <Select
+                    size="lg"
                     label="Ocupación"
                     placeholder="Selecciona…"
                     options={ocupacionOptions}
@@ -118,9 +121,10 @@ export function FichaAportantesSection({
                     onChange={(v) => onUpdate(index, { ocupacionId: v ? Number(v) : null })}
                   />
                 </div>
-                <div className="grid gap-1.5">
-                  <span className="text-xs font-medium text-on-surface-variant">Tipo de trabajo</span>
+                <div className="grid gap-2">
+                  <span className="vc-ficha-label">Tipo de trabajo</span>
                   <Select
+                    size="lg"
                     label="Tipo de trabajo"
                     placeholder="Selecciona…"
                     options={TRABAJO_OPTIONS}
@@ -130,22 +134,24 @@ export function FichaAportantesSection({
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <label className="mk-field">
                   <span className="mk-field__label">Monto (MXN)</span>
                   <input
                     type="number"
                     min={0}
                     step="0.01"
+                    placeholder="0.00"
                     data-ficha-field={`aportante-${index}-monto`}
                     aria-invalid={invalidField === `aportante-${index}-monto` || undefined}
                     value={ap.monto}
                     onChange={(e) => onUpdate(index, { monto: e.target.value })}
                   />
                 </label>
-                <div className="grid gap-1.5">
-                  <span className="text-xs font-medium text-on-surface-variant">Frecuencia</span>
+                <div className="grid gap-2">
+                  <span className="vc-ficha-label">Frecuencia</span>
                   <Select
+                    size="lg"
                     label="Frecuencia"
                     placeholder="Selecciona…"
                     options={FRECUENCIA_OPTIONS}
@@ -158,6 +164,6 @@ export function FichaAportantesSection({
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }

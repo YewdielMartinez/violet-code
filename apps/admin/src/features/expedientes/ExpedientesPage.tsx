@@ -21,15 +21,15 @@ import '@yewdiel21/motion-kit/css/components/select';
 import '@yewdiel21/motion-kit/css/components/skeleton';
 import { puedeAccederAgresor } from '@/domain/models/Agresor';
 import { useAuth } from '@/shared/auth/useAuth';
-import { Icon } from '@/shared/ui/Icon';
 import { PageHeader } from '@/shared/ui/PageHeader';
+import { ToolbarPrimaryButton } from '@/shared/ui/Toolbar';
+import { ToolbarFilterMenu } from '@/shared/ui/ToolbarFilterMenu';
 import {
   ESTADO_FICHA_LABELS,
   canLookupPreRegistro,
   useExpedientes,
   useRegisterConsult,
   type ExpedienteResumen,
-  type PreRegistroMovil,
 } from './api';
 import {
   COLUMNS,
@@ -42,17 +42,13 @@ import {
   type QuickFilter,
 } from './drawer/expedientesTableConfig';
 import { ExpedienteDrawer, preloadExpedienteDrawerTabs } from './ExpedienteDrawer';
-import type { FichaSeedContext } from './ficha/useFichaForm';
 
-// Diálogos del alta en chunks propios: se descargan al mostrar intención (hover/foco en
-// «Nuevo expediente») y se montan la primera vez que se abren.
-const loadVerificarCurpDialog = () => import('./VerificarCurpDialog');
+// Panel lateral del alta en chunk propio: se descarga al mostrar intención (hover/foco en
+// «Nuevo expediente») y se monta la primera vez que se abre.
 const loadNuevaFichaDrawer = () => import('./ficha/NuevaFichaDrawer');
-const VerificarCurpDialog = lazy(() => loadVerificarCurpDialog().then((m) => ({ default: m.VerificarCurpDialog })));
 const NuevaFichaDrawer = lazy(() => loadNuevaFichaDrawer().then((m) => ({ default: m.NuevaFichaDrawer })));
 
 function preloadNuevoExpediente() {
-  void loadVerificarCurpDialog();
   void loadNuevaFichaDrawer();
 }
 
@@ -105,6 +101,7 @@ const ExpedientesTableSection = memo(function ExpedientesTableSection({
  * Pantalla principal de Expedientes (`RF-03`, `RF-04`, `RF-34`, `RF-22`):
  * - La tabla operativa y filtros rápidos ocupan el plano principal desde el primer vistazo.
  * - Al hacer clic en una fila (o usar su acción), el panel lateral crece desde esa fila origen.
+ * - «Nuevo expediente» abre directamente el asistente de Nueva Ficha Única con verificación de CURP inline.
  */
 export default function ExpedientesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -115,9 +112,7 @@ export default function ExpedientesPage() {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   // Se usa ref en vez de useState para el ancla: evita re-render extra y carreras con setSearchParams.
   const originRef = useRef<HTMLElement | null>(null);
-  const [verifyOpen, setVerifyOpen] = useState(false);
-  const [fichaSeed, setFichaSeed] = useState<FichaSeedContext | null>(null);
-  const [preloadedDraft, setPreloadedDraft] = useState<PreRegistroMovil | null>(null);
+  const [nuevaFichaOpen, setNuevaFichaOpen] = useState(false);
 
   const rawFilter = searchParams.get('filtro');
   const quickFilter: QuickFilter = QUICK_FILTERS.some((f) => f.id === rawFilter)
@@ -128,12 +123,10 @@ export default function ExpedientesPage() {
   const canCreateExpediente = user ? canLookupPreRegistro(user.role) : false;
   const canAccessSensitiveTabs = puedeAccederAgresor(user?.role);
 
-  // Los diálogos perezosos se montan la primera vez que se abren y se quedan montados
-  // (para conservar sus animaciones de cierre).
-  const [verifyMounted, setVerifyMounted] = useState(false);
-  if (verifyOpen && !verifyMounted) setVerifyMounted(true);
+  // El panel perezoso se monta la primera vez que se abre y permanece montado
+  // para conservar sus animaciones de cierre.
   const [nuevaFichaMounted, setNuevaFichaMounted] = useState(false);
-  if (fichaSeed && !nuevaFichaMounted) setNuevaFichaMounted(true);
+  if (nuevaFichaOpen && !nuevaFichaMounted) setNuevaFichaMounted(true);
 
   const handleRowIntent = useCallback(() => {
     if (canAccessSensitiveTabs) preloadExpedienteDrawerTabs();
@@ -153,11 +146,6 @@ export default function ExpedientesPage() {
     },
     [setSearchParams],
   );
-
-  const handleStartFicha = useCallback((seed: FichaSeedContext) => {
-    setVerifyOpen(false);
-    setFichaSeed(seed);
-  }, []);
 
   const byId = useMemo(() => {
     const map = new Map<string, ExpedienteResumen>();
@@ -184,6 +172,11 @@ export default function ExpedientesPage() {
     }
     return next;
   }, [data]);
+
+  const filterOptions = useMemo(
+    () => QUICK_FILTERS.map((f) => ({ value: f.id, label: f.label, count: counts[f.id] })),
+    [counts],
+  );
 
   const filteredItems = useMemo(() => {
     const list = data ?? [];
@@ -293,19 +286,20 @@ export default function ExpedientesPage() {
     [byId, openExpediente],
   );
 
-  const handleOpenFromVerify = useCallback(
+  const handleCloseNuevaFicha = useCallback(() => {
+    setNuevaFichaOpen(false);
+  }, []);
+
+  const handleOpenExpedienteFromFicha = useCallback(
     (expediente: ExpedienteResumen) => {
+      setNuevaFichaOpen(false);
       openExpediente(expediente);
     },
     [openExpediente],
   );
 
-  const handleCloseNuevaFicha = useCallback(() => {
-    setFichaSeed(null);
-  }, []);
-
   const emptyDescription = canCreateExpediente
-    ? 'Usa «Nuevo expediente» arriba para verificar una CURP o confirmar un pre-registro móvil.'
+    ? 'Usa «Nuevo expediente» arriba para registrar una nueva Ficha Única.'
     : 'No hay expedientes activos que coincidan con el filtro seleccionado.';
 
   return (
@@ -313,63 +307,28 @@ export default function ExpedientesPage() {
       <PageHeader
         title="Expedientes"
         actions={
-          canCreateExpediente ? (
-            <button
-              type="button"
-              className="mk-button mk-button--primary"
-              onPointerEnter={preloadNuevoExpediente}
-              onFocus={preloadNuevoExpediente}
-              onClick={() => setVerifyOpen(true)}
-            >
-              <Icon name="person_add" />
-              <span>Nuevo expediente</span>
-            </button>
-          ) : null
+          <>
+            <ToolbarFilterMenu
+              label="Estado"
+              icon="filter_list"
+              options={filterOptions}
+              value={quickFilter}
+              defaultValue="todos"
+              onChange={(v) => setQuickFilter(v as QuickFilter)}
+            />
+            {canCreateExpediente ? (
+              <ToolbarPrimaryButton
+                label="Nuevo expediente"
+                icon="person_add"
+                showLabel
+                onPointerEnter={preloadNuevoExpediente}
+                onFocus={preloadNuevoExpediente}
+                onClick={() => setNuevaFichaOpen(true)}
+              />
+            ) : null}
+          </>
         }
       />
-
-      {preloadedDraft ? (
-        <div
-          role="status"
-          className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary-container/35 px-4 py-3 text-sm text-on-surface"
-        >
-          <div className="flex items-center gap-2">
-            <Icon name="assignment_turned_in" className="text-primary" />
-            <span>
-              Precarga móvil confirmada para Ficha Única:{' '}
-              <strong>{preloadedDraft.nombreCompleto}</strong> (
-              <span className="font-mono">{preloadedDraft.curp}</span>)
-            </span>
-          </div>
-          <button
-            type="button"
-            className="mk-button mk-button--text mk-button--sm"
-            onClick={() => setPreloadedDraft(null)}
-          >
-            Limpiar
-          </button>
-        </div>
-      ) : null}
-
-      <div role="group" aria-label="Filtros rápidos de expedientes" className="mb-4 flex flex-wrap gap-2">
-        {QUICK_FILTERS.map((f) => {
-          const active = quickFilter === f.id;
-          return (
-            <button
-              key={f.id}
-              type="button"
-              aria-pressed={active}
-              onClick={() => setQuickFilter(f.id)}
-              className={`mk-chip mk-chip--filter ${
-                active ? 'bg-secondary-container text-on-secondary-container' : ''
-              }`}
-            >
-              <span>{f.label}</span>
-              <span className="ml-1.5 font-mono text-xs opacity-75">{counts[f.id]}</span>
-            </button>
-          );
-        })}
-      </div>
 
       {isError ? (
         <div className="rounded-3xl bg-surface-container-low p-10">
@@ -394,19 +353,6 @@ export default function ExpedientesPage() {
         />
       )}
 
-      {canCreateExpediente && verifyMounted ? (
-        <Suspense fallback={null}>
-          <VerificarCurpDialog
-            open={verifyOpen}
-            onOpenChange={setVerifyOpen}
-            allowPreRegistroLookup={canCreateExpediente}
-            onOpenExpediente={handleOpenFromVerify}
-            onPreloadConfirmed={setPreloadedDraft}
-            onStartFicha={handleStartFicha}
-          />
-        </Suspense>
-      ) : null}
-
       <ExpedienteDrawer
         expediente={selected}
         anchor={originRef}
@@ -416,7 +362,12 @@ export default function ExpedientesPage() {
       />
       {nuevaFichaMounted ? (
         <Suspense fallback={null}>
-          <NuevaFichaDrawer open={Boolean(fichaSeed)} seed={fichaSeed} onClose={handleCloseNuevaFicha} />
+          <NuevaFichaDrawer
+            open={nuevaFichaOpen}
+            seed={null}
+            onClose={handleCloseNuevaFicha}
+            onOpenExpediente={handleOpenExpedienteFromFicha}
+          />
         </Suspense>
       ) : null}
     </>

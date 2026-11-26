@@ -5,6 +5,54 @@ export const THUMBNAIL_FRESH_MS = 45_000;
 
 export type DocumentoGroupKey = 'ine' | 'foto' | 'denuncia' | 'otros';
 
+export type ChecklistSlotKey = 'ine' | 'foto' | 'denuncia' | 'orden_proteccion' | 'otro';
+
+export interface ChecklistSlotMeta {
+  key: ChecklistSlotKey;
+  title: string;
+  catalogClave: string;
+  icon: string;
+  hint: string;
+}
+
+export const DOCUMENTO_CHECKLIST_SLOTS: readonly ChecklistSlotMeta[] = [
+  {
+    key: 'ine',
+    title: 'INE',
+    catalogClave: 'ine',
+    icon: 'badge',
+    hint: 'Identificación oficial vigente de la usuaria.',
+  },
+  {
+    key: 'foto',
+    title: 'Fotografía',
+    catalogClave: 'foto',
+    icon: 'photo_camera',
+    hint: 'Fotografía reciente para identificación en expediente.',
+  },
+  {
+    key: 'denuncia',
+    title: 'Denuncia',
+    catalogClave: 'denuncia',
+    icon: 'gavel',
+    hint: 'Copia de denuncia o carpeta de investigación.',
+  },
+  {
+    key: 'orden_proteccion',
+    title: 'Copia de orden de protección',
+    catalogClave: 'orden_proteccion',
+    icon: 'shield',
+    hint: 'Oficio o copia vinculable a una orden activa.',
+  },
+  {
+    key: 'otro',
+    title: 'Otro',
+    catalogClave: 'otro',
+    icon: 'folder_open',
+    hint: 'Comprobantes, actas, CURP, solicitudes u otros anexos.',
+  },
+];
+
 export interface DocumentoGroup {
   key: DocumentoGroupKey;
   title: string;
@@ -17,6 +65,13 @@ export interface DocumentoResumen {
   hasIne: boolean;
   hasFoto: boolean;
   hasDenuncia: boolean;
+}
+
+export interface ChecklistResumen extends DocumentoResumen {
+  hasOrdenProteccion: boolean;
+  hasOtro: boolean;
+  keyCompleted: number;
+  keyTotal: number;
 }
 
 const GROUP_META: ReadonlyArray<{ key: DocumentoGroupKey; title: string; icon: string }> = [
@@ -40,6 +95,36 @@ export function getDocumentoGroupKey(clave: string): DocumentoGroupKey {
     return clave;
   }
   return 'otros';
+}
+
+export function getChecklistSlotKey(clave: string): ChecklistSlotKey {
+  if (
+    clave === 'ine' ||
+    clave === 'foto' ||
+    clave === 'denuncia' ||
+    clave === 'orden_proteccion'
+  ) {
+    return clave;
+  }
+  return 'otro';
+}
+
+export function partitionDocumentosPorSlot(
+  documentos: DocumentoAdjunto[],
+): Record<ChecklistSlotKey, DocumentoAdjunto[]> {
+  const slots: Record<ChecklistSlotKey, DocumentoAdjunto[]> = {
+    ine: [],
+    foto: [],
+    denuncia: [],
+    orden_proteccion: [],
+    otro: [],
+  };
+
+  for (const doc of documentos) {
+    slots[getChecklistSlotKey(doc.tipoDocumentoClave)].push(doc);
+  }
+
+  return slots;
 }
 
 export function groupDocumentosByTipo(documentos: DocumentoAdjunto[]): DocumentoGroup[] {
@@ -76,6 +161,32 @@ export function summarizeDocumentos(documentos: DocumentoAdjunto[]): DocumentoRe
     hasIne,
     hasFoto,
     hasDenuncia,
+  };
+}
+
+export function summarizeChecklist(documentos: DocumentoAdjunto[]): ChecklistResumen {
+  const base = summarizeDocumentos(documentos);
+  let hasOrdenProteccion = false;
+  let hasOtro = false;
+
+  for (const doc of documentos) {
+    const slot = getChecklistSlotKey(doc.tipoDocumentoClave);
+    if (slot === 'orden_proteccion') hasOrdenProteccion = true;
+    else if (slot === 'otro') hasOtro = true;
+  }
+
+  const keyCompleted =
+    Number(base.hasIne) +
+    Number(base.hasFoto) +
+    Number(base.hasDenuncia) +
+    Number(hasOrdenProteccion);
+
+  return {
+    ...base,
+    hasOrdenProteccion,
+    hasOtro,
+    keyCompleted,
+    keyTotal: 4,
   };
 }
 

@@ -60,10 +60,6 @@ export function FichaDomicilioStep({ value, onChange, invalidField }: Props) {
 
   const fallbackCpMode = hasFullCp && !isLoading && allAsentamientos.length > 0 && cpMatches.length === 0;
 
-  // El caso normal (CP foráneo tecleado con el catálogo ya cargado) se resuelve en handleCpChange
-  // con un solo onChange. Este efecto queda solo como red de seguridad cuando el catálogo termina
-  // de cargar después de teclear el CP (o al restaurar un borrador); si el valor ya es el esperado
-  // no hace nada.
   useEffect(() => {
     if (fallbackCpMode && (value.asentamientoId !== null || value.codigoPostalForaneo !== cpTrimmed)) {
       onChange({ ...value, asentamientoId: null, codigoPostalForaneo: cpTrimmed });
@@ -138,8 +134,6 @@ export function FichaDomicilioStep({ value, onChange, invalidField }: Props) {
         return;
       }
       if (!isLoading && allAsentamientos.length > 0) {
-        // CP sin asentamientos en el catálogo: se registra con el CP de respaldo en este mismo cambio
-        // (antes se limpiaba aquí y un efecto volvía a llamar onChange en el render siguiente).
         if (value.asentamientoId !== null || value.codigoPostalForaneo !== clean) {
           onChange({ ...value, asentamientoId: null, codigoPostalForaneo: clean });
         }
@@ -206,141 +200,163 @@ export function FichaDomicilioStep({ value, onChange, invalidField }: Props) {
     ciudadFilter || (selectedAsentamiento ? selectedAsentamiento.localidad?.trim() || NO_LOCALIDAD : '');
 
   return (
-    <div className="grid gap-4">
-      <div className="grid gap-3 sm:grid-cols-2 sm:items-end" data-ficha-field="ubicacion">
-        <label className="mk-field">
-          <span className="mk-field__label">Código postal (5 dígitos)</span>
-          <input
-            type="text"
-            inputMode="numeric"
-            maxLength={5}
-            placeholder="Ej. 81200"
-            data-ficha-field="codigoPostalForaneo"
-            aria-invalid={locationInvalid || undefined}
-            className="font-mono"
-            value={cpSearch}
-            onChange={(e) => handleCpChange(e.target.value)}
-          />
-        </label>
+    <div className="vc-ficha-form grid gap-6">
+      <section className="grid gap-4 rounded-2xl border border-outline-variant bg-surface-container-lowest p-5">
+        <header>
+          <h4 className="text-base font-semibold text-on-surface">Ubicación geográfica (SEPOMEX)</h4>
+          <p className="text-sm text-on-surface-variant">
+            Captura el código postal o selecciona estado, municipio y colonia del catálogo.
+          </p>
+        </header>
 
-        <div className="grid gap-1.5">
-          <span className="text-xs font-medium text-on-surface-variant">Estado</span>
-          <Select
-            label="Estado"
-            placeholder={isLoading ? 'Cargando…' : 'Selecciona estado…'}
-            options={estadoOptions}
-            value={resolvedEstado}
-            onChange={handleEstadoChange}
-          />
-        </div>
+        <div className="grid gap-4 sm:grid-cols-2 sm:items-end" data-ficha-field="ubicacion">
+          <label className="mk-field">
+            <span className="mk-field__label">Código postal (5 dígitos)</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={5}
+              placeholder="Ej. 81200"
+              data-ficha-field="codigoPostalForaneo"
+              aria-invalid={locationInvalid || undefined}
+              className="font-mono"
+              value={cpSearch}
+              onChange={(e) => handleCpChange(e.target.value)}
+            />
+          </label>
 
-        <div className="grid gap-1.5">
-          <span className="text-xs font-medium text-on-surface-variant">Municipio</span>
-          <Select
-            label="Municipio"
-            placeholder={isLoading ? 'Cargando…' : 'Selecciona municipio…'}
-            options={municipioOptions}
-            value={resolvedMunicipio}
-            onChange={handleMunicipioChange}
-          />
-        </div>
-
-        <div className="grid gap-1.5">
-          <span className="text-xs font-medium text-on-surface-variant">Ciudad / Localidad</span>
-          <Select
-            label="Ciudad / Localidad"
-            placeholder={isLoading ? 'Cargando…' : 'Selecciona ciudad…'}
-            options={ciudadOptions}
-            value={resolvedCiudad}
-            onChange={handleCiudadChange}
-          />
-        </div>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-        {fallbackCpMode ? (
-          <div className="rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
-            CP <span className="font-mono font-medium text-on-surface">{cpTrimmed}</span> sin
-            asentamientos en catálogo local; se registrará con el código postal.
-          </div>
-        ) : (
-          <div className="grid gap-1.5" data-ficha-field="asentamientoId">
-            <span
-              className={`text-xs font-medium ${
-                locationInvalid ? 'text-status-danger' : 'text-on-surface-variant'
-              }`}
-            >
-              Colonia / Asentamiento (SEPOMEX) *
-            </span>
+          <div className="grid gap-2">
+            <span className="vc-ficha-label">Estado</span>
             <Select
-              label="Colonia / Asentamiento (SEPOMEX) *"
-              placeholder={
-                isLoading
-                  ? 'Cargando asentamientos…'
-                  : 'Selecciona colonia o localidad…'
-              }
-              options={asentamientoOptions}
-              value={value.asentamientoId ? String(value.asentamientoId) : ''}
-              onChange={handleAsentamientoChange}
+              size="lg"
+              label="Estado"
+              placeholder={isLoading ? 'Cargando…' : 'Selecciona estado…'}
+              options={estadoOptions}
+              value={resolvedEstado}
+              onChange={handleEstadoChange}
             />
           </div>
-        )}
 
-        <RadioGroup
-          label="Zona"
-          variant="pill"
-          items={ZONA_ITEMS}
-          value={value.zona || 'urbana'}
-          onChange={(v) => onChange({ ...value, zona: (v ?? 'urbana') as ZonaGeografica })}
-        />
-      </div>
+          <div className="grid gap-2">
+            <span className="vc-ficha-label">Municipio</span>
+            <Select
+              size="lg"
+              label="Municipio"
+              placeholder={isLoading ? 'Cargando…' : 'Selecciona municipio…'}
+              options={municipioOptions}
+              value={resolvedMunicipio}
+              onChange={handleMunicipioChange}
+            />
+          </div>
 
-      <label className="mk-field">
-        <span className="mk-field__label">Calle *</span>
-        <input
-          type="text"
-          required
-          maxLength={150}
-          data-ficha-field="calle"
-          aria-invalid={invalidField === 'calle' || undefined}
-          value={value.calle}
-          onChange={(e) => onChange({ ...value, calle: e.target.value })}
-        />
-      </label>
+          <div className="grid gap-2">
+            <span className="vc-ficha-label">Ciudad / Localidad</span>
+            <Select
+              size="lg"
+              label="Ciudad / Localidad"
+              placeholder={isLoading ? 'Cargando…' : 'Selecciona ciudad…'}
+              options={ciudadOptions}
+              value={resolvedCiudad}
+              onChange={handleCiudadChange}
+            />
+          </div>
+        </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          {fallbackCpMode ? (
+            <div className="rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+              CP <span className="font-mono font-medium text-on-surface">{cpTrimmed}</span> sin
+              asentamientos en catálogo local; se registrará con el código postal.
+            </div>
+          ) : (
+            <div
+              className="grid gap-2"
+              data-ficha-field="asentamientoId"
+              data-ficha-invalid={locationInvalid || undefined}
+            >
+              <span className={`vc-ficha-label ${locationInvalid ? 'text-status-danger' : ''}`}>
+                Colonia / Asentamiento (SEPOMEX) *
+              </span>
+              <Select
+                size="lg"
+                label="Colonia / Asentamiento (SEPOMEX) *"
+                placeholder={
+                  isLoading
+                    ? 'Cargando asentamientos…'
+                    : 'Selecciona colonia o localidad…'
+                }
+                options={asentamientoOptions}
+                value={value.asentamientoId ? String(value.asentamientoId) : ''}
+                onChange={handleAsentamientoChange}
+              />
+            </div>
+          )}
+
+          <div className="grid gap-2">
+            <span className="vc-ficha-label">Zona</span>
+            <RadioGroup
+              label="Zona"
+              variant="pill"
+              items={ZONA_ITEMS}
+              value={value.zona || 'urbana'}
+              onChange={(v) => onChange({ ...value, zona: (v ?? 'urbana') as ZonaGeografica })}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-4 rounded-2xl border border-outline-variant bg-surface-container-lowest p-5">
+        <h4 className="text-base font-semibold text-on-surface">Dirección y referencias</h4>
 
         <label className="mk-field">
-          <span className="mk-field__label">Número exterior</span>
+          <span className="mk-field__label">Calle *</span>
           <input
             type="text"
-            maxLength={30}
-            value={value.numeroExterior}
-            onChange={(e) => onChange({ ...value, numeroExterior: e.target.value })}
+            required
+            maxLength={150}
+            placeholder="Nombre de la calle o avenida"
+            data-ficha-field="calle"
+            aria-invalid={invalidField === 'calle' || undefined}
+            value={value.calle}
+            onChange={(e) => onChange({ ...value, calle: e.target.value })}
           />
         </label>
 
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="mk-field">
+            <span className="mk-field__label">Número exterior</span>
+            <input
+              type="text"
+              maxLength={30}
+              placeholder="Ej. 120"
+              value={value.numeroExterior}
+              onChange={(e) => onChange({ ...value, numeroExterior: e.target.value })}
+            />
+          </label>
+
+          <label className="mk-field">
+            <span className="mk-field__label">Número interior</span>
+            <input
+              type="text"
+              maxLength={30}
+              placeholder="Depto., lote o letra"
+              value={value.numeroInterior}
+              onChange={(e) => onChange({ ...value, numeroInterior: e.target.value })}
+            />
+          </label>
+        </div>
+
         <label className="mk-field">
-          <span className="mk-field__label">Número interior</span>
+          <span className="mk-field__label">Referencias del domicilio</span>
           <input
             type="text"
-            maxLength={30}
-            value={value.numeroInterior}
-            onChange={(e) => onChange({ ...value, numeroInterior: e.target.value })}
+            maxLength={250}
+            placeholder="Entre calles, color de fachada o punto cercano"
+            value={value.referencias}
+            onChange={(e) => onChange({ ...value, referencias: e.target.value })}
           />
         </label>
-      </div>
-
-      <label className="mk-field">
-        <span className="mk-field__label">Referencias del domicilio</span>
-        <input
-          type="text"
-          maxLength={250}
-          placeholder="Entre calles, color de fachada o punto cercano"
-          value={value.referencias}
-          onChange={(e) => onChange({ ...value, referencias: e.target.value })}
-        />
-      </label>
+      </section>
     </div>
   );
 }

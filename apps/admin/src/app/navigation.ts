@@ -50,7 +50,7 @@ export const NAVIGATION: NavPage[] = [
     label: 'Solicitudes',
     title: 'Solicitudes y alertas',
     icon: 'notifications_active',
-    ready: false,
+    ready: true,
     mobile: true,
     allowedRoles: ATTENTION_AND_DIRECTION,
   },
@@ -81,7 +81,7 @@ export const NAVIGATION: NavPage[] = [
     path: '/intervenciones',
     label: 'Intervenciones',
     icon: 'clinical_notes',
-    ready: false,
+    ready: true,
     allowedRoles: ATTENTION_AND_DIRECTION,
   },
   {

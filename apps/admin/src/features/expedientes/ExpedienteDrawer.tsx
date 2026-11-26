@@ -31,12 +31,26 @@ import { FichaGestionAcciones } from './ficha/FichaGestionAcciones';
 const loadAgresorFormSection = () => import('./AgresorFormSection');
 const loadDocumentosAdjuntosPanel = () => import('./DocumentosAdjuntosPanel');
 const loadDerivacionesExpedientePanel = () => import('./DerivacionesExpedientePanel');
+const loadOrdenesProteccionPanel = () => import('@/features/solicitudes/OrdenesProteccionPanel');
+const loadExpedienteTimeline = () => import('@/features/intervenciones/ExpedienteTimeline');
+const loadNotasPrivadasPanel = () => import('@/features/intervenciones/NotasPrivadasPanel');
 const AgresorFormSection = lazy(() => loadAgresorFormSection().then((m) => ({ default: m.AgresorFormSection })));
 const DocumentosAdjuntosPanel = lazy(() =>
   loadDocumentosAdjuntosPanel().then((m) => ({ default: m.DocumentosAdjuntosPanel })),
 );
 const DerivacionesExpedientePanel = lazy(() =>
   loadDerivacionesExpedientePanel().then((m) => ({ default: m.DerivacionesExpedientePanel })),
+);
+
+const OrdenesProteccionPanel = lazy(() =>
+  loadOrdenesProteccionPanel().then((m) => ({ default: m.OrdenesProteccionPanel })),
+);
+
+const ExpedienteTimeline = lazy(() =>
+  loadExpedienteTimeline().then((m) => ({ default: m.ExpedienteTimeline })),
+);
+const NotasPrivadasPanel = lazy(() =>
+  loadNotasPrivadasPanel().then((m) => ({ default: m.NotasPrivadasPanel })),
 );
 
 let tabsPreloaded = false;
@@ -48,6 +62,7 @@ export function preloadExpedienteDrawerTabs(): void {
   void loadAgresorFormSection();
   void loadDocumentosAdjuntosPanel();
   void loadDerivacionesExpedientePanel();
+  void loadOrdenesProteccionPanel();
 }
 
 // El morph de apertura de motion-kit dura 0.7 s (TIMING.dialog.open). Montar el detalle a la mitad
@@ -165,7 +180,12 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
 
   const rawTab = searchParams.get('tab');
   const requestedTab: DrawerTab =
-    rawTab === 'agresor' || rawTab === 'documentos' || rawTab === 'canalizaciones'
+    rawTab === 'agresor' ||
+    rawTab === 'documentos' ||
+    rawTab === 'canalizaciones' ||
+    rawTab === 'ordenes' ||
+    rawTab === 'seguimiento' ||
+    rawTab === 'notas'
       ? rawTab
       : 'resumen';
   const activeTab: DrawerTab = canAccessSensitiveTabs ? requestedTab : 'resumen';
@@ -381,6 +401,42 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
                       </Suspense>
                     ) : (
                       <DrawerSectionPlaceholder label="Cargando canalizaciones" />
+                    )}
+                  </div>
+                ) : null}
+
+                {canAccessSensitiveTabs && activeTab === 'seguimiento' ? (
+                  <div role="tabpanel">
+                    {contentReady ? (
+                      <Suspense fallback={<DrawerSectionPlaceholder label="Cargando línea de tiempo" />}>
+                        <ExpedienteTimeline key={activeExpediente.id} fichaId={activeExpediente.id} />
+                      </Suspense>
+                    ) : (
+                      <DrawerSectionPlaceholder label="Cargando línea de tiempo" />
+                    )}
+                  </div>
+                ) : null}
+
+                {canAccessSensitiveTabs && activeTab === 'notas' ? (
+                  <div role="tabpanel">
+                    {contentReady ? (
+                      <Suspense fallback={<DrawerSectionPlaceholder label="Cargando notas privadas" />}>
+                        <NotasPrivadasPanel key={activeExpediente.id} fichaId={activeExpediente.id} />
+                      </Suspense>
+                    ) : (
+                      <DrawerSectionPlaceholder label="Cargando notas privadas" />
+                    )}
+                  </div>
+                ) : null}
+
+                {canAccessSensitiveTabs && activeTab === 'ordenes' ? (
+                  <div role="tabpanel">
+                    {contentReady ? (
+                      <Suspense fallback={<DrawerSectionPlaceholder label="Cargando órdenes de protección" />}>
+                        <OrdenesProteccionPanel key={activeExpediente.id} fichaId={activeExpediente.id} />
+                      </Suspense>
+                    ) : (
+                      <DrawerSectionPlaceholder label="Cargando órdenes de protección" />
                     )}
                   </div>
                 ) : null}

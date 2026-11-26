@@ -16,8 +16,25 @@ export {
   ESTADO_DERIVACION_LABELS,
   ESTADOS_DERIVACION,
   isInternalDestino,
+  validarTransicionDerivacion,
   validateDerivacion,
 } from '@/domain/models/Derivacion';
+
+export function extraerMensajeErrorDerivacion(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as { message: unknown }).message === 'string' &&
+    (error as { message: string }).message.trim()
+  ) {
+    return (error as { message: string }).message;
+  }
+  return fallback;
+}
 
 export function useDerivaciones(estado?: EstadoDerivacion) {
   return useQuery({
@@ -38,6 +55,7 @@ export function useDerivacionesByFicha(fichaId: string | null) {
 export function useCreateDerivacion() {
   const queryClient = useQueryClient();
   return useMutation({
+    retry: false,
     mutationFn: (input: DerivacionCreateInput) => supabaseDerivacionRepository.create(input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['canalizaciones'] });
@@ -48,6 +66,7 @@ export function useCreateDerivacion() {
 export function useUpdateEstadoDerivacion() {
   const queryClient = useQueryClient();
   return useMutation({
+    retry: false,
     mutationFn: ({ id, estado }: { id: string; estado: EstadoDerivacion }) =>
       supabaseDerivacionRepository.updateEstado(id, estado),
     onSuccess: () => {
@@ -59,9 +78,8 @@ export function useUpdateEstadoDerivacion() {
 const CANALIZACION_CATALOGOS_STALE_TIME_MS = 5 * 60_000;
 
 /**
- * Catálogos del diálogo de canalización. Reutiliza las consultas (y la caché) ya existentes:
- * áreas (`['catalogos','area']`), directorio (`['directory','all']`) y listado de expedientes
- * (`['expedientes','list','']`). El listado solo se pide si hay que elegir expediente.
+ * Catálogos para crear canalizaciones. Reutiliza las consultas (y la caché) existentes:
+ * áreas (`['catalogos','area']`), directorio (`['directory','all']`) y listado de expedientes.
  */
 export function useCanalizacionCatalogos({
   enabled = true,

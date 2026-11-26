@@ -1,4 +1,5 @@
 import type { Database } from '@/infrastructure/supabase/database.types';
+import type { HojaSeguimientoCopia } from './HojaSeguimiento';
 
 export type PrioridadNivel = Database['public']['Enums']['prioridad_nivel'];
 
@@ -19,6 +20,8 @@ export interface SeguimientoCreateInput {
   prioridad?: PrioridadNivel | null;
   observaciones?: string | null;
   proximaCitaEn?: string | null;
+  /** Copia histórica de datos generales del día; si se omite, el servidor copia los de la ficha. */
+  copia?: HojaSeguimientoCopia | null;
 }
 
 export interface SeguimientoResult {
@@ -26,6 +29,8 @@ export interface SeguimientoResult {
   citaProximaId: string | null;
   esPrimeraVezArea: boolean;
   tieneHistorialClinico: boolean;
+  /** Solo presente si se envió `copia`: `false` si la hoja quedó registrada pero la copia del día no. */
+  copiaGuardada?: boolean;
 }
 
 export interface LineaTiempoEvento {
