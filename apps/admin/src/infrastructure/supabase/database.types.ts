@@ -1069,6 +1069,11 @@ isOneToOne: false
               "anio": number,"area": string,"area_id": number,"hombres": number,"mes": number,"mujeres": number,"primera_vez_o_seguimiento": string,"tipo_atencion": string,"total_atenciones": number,"total_personas": number
             }[]
                            },
+"get_linea_tiempo":
+{ Args: { "p_ficha_id": string }; Returns: {
+              "area": string,"detalle": string,"fecha": string,"referencia_id": string,"tipo": string,"titulo": string
+            }[]
+                           },
 "get_lista_urgencias":
 { Args: { "p_area_id"?: number }; Returns: {
               "area_ultima_prioridad": string,"celular": string,"fecha_ultima_prioridad": string,"ficha_id": string,"folio": string,"nombre_completo": string,"persona_id": string
