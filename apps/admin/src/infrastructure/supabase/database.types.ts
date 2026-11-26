@@ -1036,6 +1036,11 @@ isOneToOne: false
               "area_clave": string,"area_id": number,"celular": string,"cita_id": string,"estado": Database["public"]['Enums']["estado_cita"],"nombre_completo": string,"origen": Database["public"]['Enums']["origen_cita"],"persona_id": string,"prioridad": Database["public"]['Enums']["prioridad_nivel"],"programada_en": string,"reagendada_de": string,"recomendada_por": string
             }[]
                            },
+"get_bitacora":
+{ Args: { "p_desde"?: string,"p_empleado_id"?: string,"p_hasta"?: string,"p_limite"?: number,"p_tabla"?: string }; Returns: {
+              "accion": Database["public"]['Enums']["accion_bitacora"],"actor_nombre": string,"actor_rol": string,"actor_tipo": string,"creado_en": string,"empleado_id": string,"id": string,"registro_id": string,"tabla_afectada": string,"usuario_externo_id": string
+            }[]
+                           },
 "get_cola_alertas":
 { Args: { "p_estados"?: (Database["public"]['Enums']["estado_alerta"])[],"p_limite"?: number }; Returns: {
               "alerta_id": string,"asentamiento_nombre": string,"atendida_por_nombre": string,"celular": string,"creado_en": string,"estado": Database["public"]['Enums']["estado_alerta"],"ficha_id": string,"folio": string,"nombre_completo": string,"origen": Database["public"]['Enums']["origen_alerta"],"persona_id": string,"prioridad": Database["public"]['Enums']["prioridad_nivel"],"tiene_orden_vigente": boolean,"tomada_en": string
@@ -1044,6 +1049,11 @@ isOneToOne: false
 "get_derivaciones":
 { Args: { "p_estado"?: Database["public"]['Enums']["estado_derivacion"],"p_ficha_id"?: string,"p_limite"?: number }; Returns: {
               "area_destino_id": number,"area_destino_nombre": string,"area_origen_id": number,"area_origen_nombre": string,"creado_en": string,"destino": Database["public"]['Enums']["destino_derivacion"],"estado": Database["public"]['Enums']["estado_derivacion"],"fecha_derivacion": string,"ficha_id": string,"folio": string,"id": string,"institucion_id": number,"institucion_nombre": string,"institucion_otra": string,"motivo": string,"usuaria_nombre": string
+            }[]
+                           },
+"get_informe":
+{ Args: { "p_anio": number,"p_area_id"?: number,"p_mes"?: number }; Returns: {
+              "anio": number,"area": string,"area_id": number,"hombres": number,"mes": number,"mujeres": number,"primera_vez_o_seguimiento": string,"tipo_atencion": string,"total_atenciones": number,"total_personas": number
             }[]
                            },
 "get_lista_urgencias":
