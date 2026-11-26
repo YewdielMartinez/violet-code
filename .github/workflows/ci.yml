@@ -13,7 +13,6 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      core: ${{ steps.f.outputs.core }}
       admin: ${{ steps.f.outputs.admin }}
       mobile: ${{ steps.f.outputs.mobile }}
     steps:
@@ -22,22 +21,8 @@ jobs:
         uses: dorny/paths-filter@v3
         with:
           filters: |
-            core: ['apps/core/**']
             admin: ['apps/admin/**', 'packages/**', 'package.json', 'package-lock.json']
             mobile: ['apps/mobile/**', 'packages/design-tokens/**']
-
-  core:
-    needs: changes
-    if: needs.changes.outputs.core == 'true' || github.event_name == 'push'
-    runs-on: ubuntu-latest
-    defaults: { run: { working-directory: apps/core } }
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with: { global-json-file: apps/core/global.json }
-      - run: dotnet restore
-      - run: dotnet build --no-restore -c Release
-      - run: dotnet test --no-build -c Release
 
   admin:
     needs: changes

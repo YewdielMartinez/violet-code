@@ -3,7 +3,8 @@
 Panel web de SEMUJERES. React 19 + TypeScript + Vite + **Tailwind v4** + **motion-kit**.
 
 ```sh
-npm run dev -w @violet-code/admin     # http://localhost:5173 (API en :5080 vía proxy)
+npm run dev -w @violet-code/admin     # http://localhost:5173 (conectado directo a Supabase)
+npm run lint -w @violet-code/admin
 npm run build -w @violet-code/admin
 ```
 
