@@ -12,6 +12,7 @@ Plataforma que conecta la solicitud de auxilio y orientación de una mujer con l
 | **Violet Code Mobile** — app de la usuaria | Kotlin + Jetpack Compose (MVVM) | [apps/mobile](apps/mobile) | Base: auxilio (911), directorio desde API, salida rápida |
 | **Violet Code Administration** — panel de SEMUJERES | React + TypeScript + Tailwind + motion-kit | [apps/admin](apps/admin) | Base: layout, dashboard, directorio desde API |
 | **Violet Code Core** — API central | ASP.NET Core 9, monolito modular, PostgreSQL | [apps/core](apps/core) | Base: 8 módulos, Catálogos completo, pruebas de arquitectura |
+| **Supabase** — BaaS y base de datos | PostgreSQL + Auth + RLS + Realtime (Supabase CLI) | [supabase](supabase) | Base: inicializado (`config.toml`, `migrations/`, `functions/`) |
 | Design tokens | Tema Material 3 generado con motion-kit | [packages/design-tokens](packages/design-tokens) | Genera CSS (web) y Kotlin (Android) |
 | Infraestructura | Docker Compose | [infra](infra) | PostgreSQL + API |
 
@@ -23,6 +24,7 @@ apps/
 packages/
   design-tokens/
 infra/        docker-compose.yml
+supabase/     configuración, migraciones SQL y Edge Functions (Supabase CLI)
 docs/         discovery, arquitectura, ADRs, registro de reuniones
 ```
 
@@ -30,10 +32,13 @@ Monorepo simple: cada app usa su herramienta nativa; npm workspaces solo para lo
 
 ## Desarrollo local
 
-**Requisitos:** Node 20+, .NET SDK 9, Docker Desktop, Android Studio (JDK 17 + Android SDK 35).
+**Requisitos:** Node 20+, .NET SDK 9, Docker Desktop, Supabase CLI, Android Studio (JDK 17 + Android SDK 35).
 
 ```sh
 npm install                                             # dependencias JS (admin + tokens)
+
+# 0. Supabase local → API :54321 · Studio http://127.0.0.1:54323
+supabase start                                          # resetear BD + seeds: supabase db reset · detener: supabase stop
 
 # 1. Base de datos
 docker compose -f infra/docker-compose.yml up -d db

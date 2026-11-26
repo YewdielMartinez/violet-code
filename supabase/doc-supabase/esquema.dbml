@@ -1,0 +1,777 @@
+// =====================================================================
+// Violet Code / SEMUJERES - Esquema DBML actualizado (PostgreSQL)
+// =====================================================================
+
+// -------------------------------
+// ENUMS DEL DOMINIO
+// -------------------------------
+Enum rol_empleado {
+  titular
+  subdireccion
+  trabajo_social
+  psicologia
+  juridico
+  recepcion
+}
+
+Enum estado_civil {
+  soltero
+  casado
+  union_libre
+  separado
+  divorciado
+  viudo
+}
+
+Enum zona_geografica {
+  urbana
+  rural
+}
+
+Enum prioridad_nivel {
+  alta
+  media
+  baja
+}
+
+Enum tipo_trabajo {
+  fijo
+  temporal
+  negocio_propio
+}
+
+Enum frecuencia_ingreso {
+  diario
+  semanal
+  quincenal
+  mensual
+  variable
+}
+
+Enum escolaridad_nivel {
+  ninguna
+  primaria
+  secundaria
+  preparatoria
+  carrera
+  otros_estudios
+}
+
+Enum tipo_vivienda {
+  propia
+  hipotecada
+  rentada
+  invasion
+  infonavit
+  prestada
+}
+
+Enum material_vivienda {
+  ladrillo
+  lamina
+  block
+  madera
+  carton
+  otro
+}
+
+Enum servicio_medico {
+  ninguno
+  imss
+  issste
+  imss_bienestar
+  particular
+  otro
+}
+
+Enum estado_ficha {
+  abierto
+  en_seguimiento
+  cerrado
+  archivado
+}
+
+Enum estado_cita {
+  agendada
+  confirmada
+  cancelada
+  reagendada
+  asistio
+  no_asistio
+}
+
+Enum origen_cita {
+  regular
+  umeca
+}
+
+Enum origen_alerta {
+  app_movil
+  telefono
+  presencial
+}
+
+Enum estado_alerta {
+  nueva
+  tomada
+  atendida
+}
+
+Enum estado_orden_proteccion {
+  vigente
+  vencida
+  cancelada
+  en_tramite
+}
+
+Enum estado_derivacion {
+  pendiente
+  en_proceso
+  concluida
+  cancelada
+}
+
+Enum destino_derivacion {
+  trabajo_social
+  psicologia
+  juridico
+  fiscalia
+  refugio
+  capacitacion
+  otra_institucion
+}
+
+Enum categoria_institucion {
+  emergencia
+  denuncia
+  orientacion_legal
+  atencion_psicologica
+  trabajo_social
+  refugio
+  salud
+  linea_apoyo
+}
+
+Enum tipo_institucion_actividad {
+  escuela
+  empresa_privada
+  sector_publico
+  comunidad
+  otro
+}
+
+Enum nivel_educativo {
+  primaria
+  secundaria
+  preparatoria
+  universidad
+}
+
+Enum accion_bitacora {
+  ver
+  crear
+  actualizar
+  desactivar
+}
+
+Enum sexo_biologico {
+  H
+  M
+}
+
+Enum tipo_arma {
+  arma_fuego
+  arma_blanca
+  objeto_contundente
+  otro
+}
+
+// -------------------------------
+// AUTH EXTERNO (SUPABASE)
+// -------------------------------
+Table auth.users {
+  id uuid [pk]
+}
+
+// -------------------------------
+// CATÁLOGOS
+// -------------------------------
+Table cat_area {
+  id smallint [pk, increment]
+  clave text [not null, unique]
+  nombre text [not null]
+}
+
+Table cat_asentamiento {
+  id integer [pk, increment]
+  codigo_postal text [not null]
+  nombre text [not null]
+  tipo_asentamiento text [not null]
+  municipio text [not null]
+  estado text [not null]
+  localidad text
+  latitud numeric(9,6)
+  longitud numeric(9,6)
+
+  Indexes {
+    (codigo_postal, nombre, tipo_asentamiento, municipio, estado) [unique]
+  }
+}
+
+Table cat_discapacidad {
+  id smallint [pk, increment]
+  clave text [not null, unique]
+  nombre text [not null]
+}
+
+Table cat_grupo_etnico {
+  id smallint [pk, increment]
+  clave text [not null, unique]
+  nombre text [not null]
+}
+
+Table cat_religion {
+  id smallint [pk, increment]
+  clave text [not null, unique]
+  nombre text [not null]
+}
+
+Table cat_tipo_atencion {
+  id smallint [pk, increment]
+  area_id smallint [not null]
+  clave text [not null, unique]
+  nombre text [not null]
+
+  Indexes {
+    (id, area_id) [unique]
+  }
+}
+
+Table cat_ocupacion {
+  id smallint [pk, increment]
+  clave text [not null, unique]
+  nombre text [not null]
+}
+
+Table cat_tipo_actividad {
+  id smallint [pk, increment]
+  clave text [not null, unique]
+  nombre text [not null]
+}
+
+Table cat_parentesco {
+  id smallint [pk, increment]
+  clave text [not null, unique]
+  nombre text [not null]
+}
+
+Table cat_tipo_documento {
+  id smallint [pk, increment]
+  clave text [not null, unique]
+  nombre text [not null]
+}
+
+// -------------------------------
+// CUENTAS Y PERSONAS (01_base)
+// -------------------------------
+Table empleado {
+  id uuid [pk]
+  nombre text [not null]
+  rol rol_empleado [not null]
+  area_id smallint
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+Table usuario_externo {
+  id uuid [pk]
+  nombre text [not null]
+  dependencia text [not null, default: 'umeca']
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+Table persona {
+  id uuid [pk, default: `gen_random_uuid()`]
+  curp text [not null, unique]
+  nombres text [not null]
+  apellido_paterno text [not null]
+  apellido_materno text
+  sexo text [not null, note: 'GENERATED desde CURP']
+  fecha_nacimiento date [not null, note: 'GENERATED desde CURP']
+  entidad_nacimiento text [not null, note: 'GENERATED desde CURP']
+  celular text
+  escolaridad escolaridad_nivel
+  discapacidad_id smallint
+  discapacidad_otra text
+  religion_id smallint
+  religion_otra text
+  grupo_etnico_id smallint
+  grupo_etnico_otro text
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+Table domicilio {
+  id uuid [pk, default: `gen_random_uuid()`]
+  persona_id uuid [not null]
+  asentamiento_id integer
+  calle text
+  numero_exterior text
+  numero_interior text
+  referencias text
+  codigo_postal text [note: 'Respaldo solo si asentamiento_id IS NULL']
+  zona zona_geografica
+  es_actual boolean [not null, default: true]
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+// -------------------------------
+// ATENCIÓN Y CITAS (02_atencion)
+// -------------------------------
+Table ficha_registro {
+  id uuid [pk, default: `gen_random_uuid()`]
+  folio text [not null, unique]
+  persona_id uuid [not null, unique]
+  registrada_en timestamptz [not null, default: `now()`]
+  estado estado_ficha [not null, default: 'abierto']
+  aviso_privacidad_aceptado_en timestamptz [not null]
+  es_victima_delito boolean
+  estado_civil estado_civil
+  ocupacion_id smallint
+  ocupacion_otra text
+  tiene_trabajo boolean
+  servicio_medico servicio_medico
+  servicio_medico_otro text
+  numero_hijas smallint
+  numero_hijos_hombres smallint
+  tiene_embarazo boolean
+  tiene_denuncia boolean
+  tiene_consumo_droga boolean
+  drogas "text[]"
+  especificacion_droga text
+  tiene_consumo_alcohol boolean
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+Table ficha_servicio_solicitado {
+  ficha_id uuid [not null]
+  area_id smallint [not null]
+  creado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+
+  Indexes {
+    (ficha_id, area_id) [pk]
+  }
+}
+
+Table pre_registro {
+  id uuid [pk, default: `gen_random_uuid()`]
+  auth_user_id uuid [not null, unique]
+  curp text [not null]
+  nombres text [not null]
+  apellido_paterno text [not null]
+  apellido_materno text
+  celular text
+  aviso_privacidad_aceptado_en timestamptz [not null]
+  estado text [not null, default: 'solo_app']
+  persona_id uuid
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table cita {
+  id uuid [pk, default: `gen_random_uuid()`]
+  persona_id uuid [not null]
+  reagendada_de uuid [unique]
+  area_id smallint [not null]
+  programada_en timestamptz [not null]
+  recomendada_por text
+  estado estado_cita [not null, default: 'agendada']
+  confirmada_en timestamptz
+  motivo_cancelacion text
+  origen origen_cita [not null, default: 'regular']
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+Table atencion {
+  id uuid [pk, default: `gen_random_uuid()`]
+  ficha_id uuid [not null]
+  cita_id uuid [unique]
+  area_id smallint [not null]
+  tipo_atencion_id smallint [not null]
+  atendida_por uuid
+  atendida_en timestamptz [not null, default: `now()`]
+  estado_civil estado_civil
+  ocupacion_id smallint
+  ocupacion_otra text
+  celular text
+  domicilio_id uuid
+  acciones_realizadas text
+  proxima_accion text
+  observaciones text
+  prioridad prioridad_nivel
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+Table alerta {
+  id uuid [pk, default: `gen_random_uuid()`]
+  persona_id uuid
+  pre_registro_id uuid
+  origen origen_alerta [not null]
+  asentamiento_id integer
+  prioridad prioridad_nivel [not null, default: 'media']
+  estado estado_alerta [not null, default: 'nueva']
+  tomada_en timestamptz
+  atendida_en timestamptz
+  atendida_por uuid
+  observaciones text
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+// -------------------------------
+// COMPLEMENTO (03_complemento)
+// -------------------------------
+Table historial_clinico {
+  id uuid [pk, default: `gen_random_uuid()`]
+  ficha_id uuid [not null, unique]
+  antecedentes_familiares text
+  antecedentes_personales text
+  motivo_consulta text
+  observaciones_iniciales text
+  tiene_atencion_psicologica_previa boolean
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+Table directorio_institucion {
+  id smallint [pk, increment]
+  nombre text [not null]
+  categoria categoria_institucion [not null]
+  telefono text [not null]
+  horario text
+  es_24_horas boolean [not null, default: false]
+  asentamiento_id integer [note: 'Prohibido si categoria = refugio']
+  codigo_postal text [note: 'Respaldo solo si asentamiento_id IS NULL; prohibido en refugio']
+  calle text
+  numero_exterior text
+  numero_interior text
+  referencias text
+  orden smallint [not null, default: 0]
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+Table actividad_preventiva {
+  id uuid [pk, default: `gen_random_uuid()`]
+  titulo text [not null]
+  tipo_actividad_id smallint [not null]
+  tipo_institucion tipo_institucion_actividad [not null]
+  nivel_educativo nivel_educativo
+  sede text [not null]
+  direccion text
+  referencias text
+  asentamiento_id integer
+  programada_en timestamptz [not null]
+  numero_asistentes smallint
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+Table actividad_empleado {
+  id uuid [pk, default: `gen_random_uuid()`]
+  actividad_preventiva_id uuid [not null]
+  empleado_id uuid [not null]
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+
+  Indexes {
+    (actividad_preventiva_id, empleado_id) [unique]
+  }
+}
+
+Table bitacora_acceso {
+  id uuid [pk, default: `gen_random_uuid()`]
+  empleado_id uuid
+  usuario_externo_id uuid
+  accion accion_bitacora [not null]
+  tabla_afectada text [not null]
+  registro_id text
+  creado_en timestamptz [not null, default: `now()`]
+}
+
+// -------------------------------
+// EXPEDIENTE DETALLADO (04_ficha)
+// -------------------------------
+Table estudio_socioeconomico {
+  id uuid [pk, default: `gen_random_uuid()`]
+  ficha_id uuid [not null]
+  fecha_estudio date [not null, default: `current_date`]
+  es_actual boolean [not null, default: true]
+  ingreso_mensual_propio numeric(10,2)
+  numero_dependientes smallint
+  tiene_apoyo boolean [not null, default: false]
+  especificacion_apoyo text
+  tipo_vivienda tipo_vivienda
+  material material_vivienda
+  material_otro text
+  servicios "text[]"
+  bienes "text[]"
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+Table aportante_hogar {
+  id uuid [pk, default: `gen_random_uuid()`]
+  estudio_socioeconomico_id uuid [not null]
+  nombre text [not null]
+  parentesco_id smallint
+  parentesco_otro text
+  ocupacion_id smallint
+  ocupacion_otra text
+  tipo_trabajo tipo_trabajo
+  monto numeric(10,2)
+  frecuencia frecuencia_ingreso
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+Table agresor {
+  id uuid [pk, default: `gen_random_uuid()`]
+  ficha_id uuid [not null]
+  nombres text [not null]
+  apellido_paterno text
+  apellido_materno text
+  edad smallint
+  fecha_nacimiento date
+  entidad_nacimiento text
+  sexo sexo_biologico
+  estado_civil estado_civil
+  curp text
+  parentesco_id smallint
+  parentesco_otro text
+  asentamiento_id integer
+  codigo_postal text [note: 'Respaldo solo si asentamiento_id IS NULL']
+  calle text
+  numero_exterior text
+  numero_interior text
+  referencias text
+  zona zona_geografica
+  ocupacion_id smallint
+  ocupacion_otra text
+  tipo_trabajo tipo_trabajo
+  tiene_consumo_droga boolean
+  drogas "text[]"
+  especificacion_droga text
+  tiene_consumo_alcohol boolean
+  utilizo_arma_u_objeto boolean
+  tipo_arma tipo_arma
+  especificacion_arma text
+  observaciones text
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+
+  Indexes {
+    (id, ficha_id) [unique]
+  }
+}
+
+Table orden_proteccion {
+  id uuid [pk, default: `gen_random_uuid()`]
+  ficha_id uuid [not null]
+  agresor_id uuid
+  numero_oficio text
+  autoridad_emisora text
+  fecha_emision date [not null]
+  fecha_vigencia date
+  estado estado_orden_proteccion [not null, default: 'vigente']
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+
+  Indexes {
+    (id, ficha_id) [unique]
+  }
+}
+
+Table nota_area {
+  id uuid [pk, default: `gen_random_uuid()`]
+  ficha_id uuid [not null]
+  area_id smallint [not null]
+  contenido text [not null]
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+Table derivacion {
+  id uuid [pk, default: `gen_random_uuid()`]
+  ficha_id uuid [not null]
+  area_origen_id smallint
+  area_destino_id smallint
+  institucion_id smallint
+  destino destino_derivacion [not null]
+  institucion_otra text
+  motivo text
+  fecha_derivacion date [not null, default: `current_date`]
+  estado estado_derivacion [not null, default: 'pendiente']
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+Table documento {
+  id uuid [pk, default: `gen_random_uuid()`]
+  ficha_id uuid [not null]
+  tipo_documento_id smallint [not null]
+  orden_proteccion_id uuid
+  descripcion text
+  ruta_storage text [not null, unique]
+  nombre_archivo text [not null]
+  activo boolean [not null, default: true]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+  creado_por uuid
+}
+
+// -------------------------------
+// RELACIONES (FOREIGN KEYS)
+// -------------------------------
+Ref: empleado.id - auth.users.id
+Ref: empleado.area_id > cat_area.id
+Ref: empleado.creado_por > empleado.id
+
+Ref: usuario_externo.id - auth.users.id
+Ref: usuario_externo.creado_por > empleado.id
+
+Ref: cat_tipo_atencion.area_id > cat_area.id
+
+Ref: persona.discapacidad_id > cat_discapacidad.id
+Ref: persona.religion_id > cat_religion.id
+Ref: persona.grupo_etnico_id > cat_grupo_etnico.id
+Ref: persona.creado_por > empleado.id
+
+Ref: domicilio.persona_id > persona.id
+Ref: domicilio.asentamiento_id > cat_asentamiento.id
+Ref: domicilio.creado_por > empleado.id
+
+Ref: ficha_registro.persona_id - persona.id
+Ref: ficha_registro.ocupacion_id > cat_ocupacion.id
+Ref: ficha_registro.creado_por > empleado.id
+
+Ref: ficha_servicio_solicitado.ficha_id > ficha_registro.id
+Ref: ficha_servicio_solicitado.area_id > cat_area.id
+Ref: ficha_servicio_solicitado.creado_por > empleado.id
+
+Ref: pre_registro.auth_user_id - auth.users.id
+Ref: pre_registro.persona_id > persona.id
+
+Ref: cita.persona_id > persona.id
+Ref: cita.reagendada_de - cita.id
+Ref: cita.area_id > cat_area.id
+Ref: cita.creado_por > empleado.id
+
+Ref: atencion.ficha_id > ficha_registro.id
+Ref: atencion.cita_id - cita.id
+Ref: atencion.area_id > cat_area.id
+Ref: atencion.tipo_atencion_id > cat_tipo_atencion.id
+Ref: atencion.(tipo_atencion_id, area_id) > cat_tipo_atencion.(id, area_id)
+Ref: atencion.atendida_por > empleado.id
+Ref: atencion.ocupacion_id > cat_ocupacion.id
+Ref: atencion.domicilio_id > domicilio.id
+Ref: atencion.creado_por > empleado.id
+
+Ref: alerta.persona_id > persona.id
+Ref: alerta.pre_registro_id > pre_registro.id
+Ref: alerta.asentamiento_id > cat_asentamiento.id
+Ref: alerta.atendida_por > empleado.id
+Ref: alerta.creado_por > empleado.id
+
+Ref: historial_clinico.ficha_id - ficha_registro.id
+Ref: historial_clinico.creado_por > empleado.id
+
+Ref: directorio_institucion.asentamiento_id > cat_asentamiento.id
+Ref: directorio_institucion.creado_por > empleado.id
+
+Ref: actividad_preventiva.tipo_actividad_id > cat_tipo_actividad.id
+Ref: actividad_preventiva.asentamiento_id > cat_asentamiento.id
+Ref: actividad_preventiva.creado_por > empleado.id
+
+Ref: actividad_empleado.actividad_preventiva_id > actividad_preventiva.id
+Ref: actividad_empleado.empleado_id > empleado.id
+Ref: actividad_empleado.creado_por > empleado.id
+
+Ref: bitacora_acceso.empleado_id > empleado.id
+Ref: bitacora_acceso.usuario_externo_id > usuario_externo.id
+
+Ref: estudio_socioeconomico.ficha_id > ficha_registro.id
+Ref: estudio_socioeconomico.creado_por > empleado.id
+
+Ref: aportante_hogar.estudio_socioeconomico_id > estudio_socioeconomico.id
+Ref: aportante_hogar.parentesco_id > cat_parentesco.id
+Ref: aportante_hogar.ocupacion_id > cat_ocupacion.id
+Ref: aportante_hogar.creado_por > empleado.id
+
+Ref: agresor.ficha_id > ficha_registro.id
+Ref: agresor.parentesco_id > cat_parentesco.id
+Ref: agresor.asentamiento_id > cat_asentamiento.id
+Ref: agresor.ocupacion_id > cat_ocupacion.id
+Ref: agresor.creado_por > empleado.id
+
+Ref: orden_proteccion.ficha_id > ficha_registro.id
+Ref: orden_proteccion.(agresor_id, ficha_id) > agresor.(id, ficha_id)
+Ref: orden_proteccion.creado_por > empleado.id
+
+Ref: nota_area.ficha_id > ficha_registro.id
+Ref: nota_area.area_id > cat_area.id
+Ref: nota_area.creado_por > empleado.id
+
+Ref: derivacion.ficha_id > ficha_registro.id
+Ref: derivacion.area_origen_id > cat_area.id
+Ref: derivacion.area_destino_id > cat_area.id
+Ref: derivacion.institucion_id > directorio_institucion.id
+Ref: derivacion.creado_por > empleado.id
+
+Ref: documento.ficha_id > ficha_registro.id
+Ref: documento.tipo_documento_id > cat_tipo_documento.id
+Ref: documento.(orden_proteccion_id, ficha_id) > orden_proteccion.(id, ficha_id)
+Ref: documento.creado_por > empleado.id
