@@ -1110,6 +1110,11 @@ isOneToOne: false
 "registrar_consulta":
 { Args: { "p_registro_id": string,"p_tabla": string }; Returns: undefined
                            },
+"registrar_seguimiento":
+{ Args: { "p_acciones_realizadas"?: string,"p_cita_id"?: string,"p_ficha_id": string,"p_observaciones"?: string,"p_prioridad"?: Database["public"]['Enums']["prioridad_nivel"],"p_proxima_accion"?: string,"p_proxima_cita_en"?: string,"p_tipo_atencion_id"?: number }; Returns: {
+              "atencion_id": string,"cita_proxima_id": string,"es_primera_vez_area": boolean,"tiene_historial_clinico": boolean
+            }[]
+                           },
 "tiene_orden_vigente":
 { Args: { "p_persona_id": string }; Returns: boolean
                            },
