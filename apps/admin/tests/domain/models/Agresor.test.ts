@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { StaffRole } from "./Auth";
+import type { StaffRole } from "@/domain/models/Auth";
 import {
   formatAgresorNombre,
   puedeAccederAgresor,
   validarAgresor,
   type AgresorInput,
   type TipoDroga,
-} from "./Agresor";
+} from "@/domain/models/Agresor";
 
 function baseInput(overrides: Partial<AgresorInput> = {}): AgresorInput {
   return {

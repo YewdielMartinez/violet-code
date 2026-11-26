@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { isInternalDestino, validateDerivacion } from '@/domain/models/Derivacion';
+import {
+  isInternalDestino,
+  validarTransicionDerivacion,
+  validateDerivacion,
+} from '@/domain/models/Derivacion';
 
 describe('Derivacion (reglas RF-08 / CHECK)', () => {
   it('distingue destinos internos de externos', () => {
@@ -85,5 +89,18 @@ describe('Derivacion (reglas RF-08 / CHECK)', () => {
         motivo: 'Acompañamiento para denuncia',
       }),
     ).toBeNull();
+  });
+
+  it('valida transiciones permitidas e inválidas de estado_derivacion', () => {
+    expect(validarTransicionDerivacion('pendiente', 'en_proceso')).toBeNull();
+    expect(validarTransicionDerivacion('pendiente', 'cancelada')).toBeNull();
+    expect(validarTransicionDerivacion('en_proceso', 'concluida')).toBeNull();
+    expect(validarTransicionDerivacion('en_proceso', 'cancelada')).toBeNull();
+
+    // Camino no feliz / edge cases
+    expect(validarTransicionDerivacion('pendiente', 'concluida')).toMatch(/no permitida/i);
+    expect(validarTransicionDerivacion('pendiente', 'pendiente')).toMatch(/ya se encuentra/i);
+    expect(validarTransicionDerivacion('concluida', 'en_proceso')).toMatch(/no permitida/i);
+    expect(validarTransicionDerivacion('cancelada', 'pendiente')).toMatch(/no permitida/i);
   });
 });

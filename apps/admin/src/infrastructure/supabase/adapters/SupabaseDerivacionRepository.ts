@@ -1,74 +1,27 @@
 import { supabase } from '../client';
+import type { Database } from '../database.types';
 import {
   isInternalDestino,
   type DerivacionCreateInput,
   type DerivacionItem,
   type EstadoDerivacion,
 } from '@/domain/models/Derivacion';
-import { formatFullName } from '@/domain/models/Persona';
 import type { DerivacionRepository } from '@/domain/ports/DerivacionRepository';
 
-function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
-  if (Array.isArray(value)) return value[0] ?? null;
-  return value ?? null;
-}
+type RpcDerivacionRow = Database['public']['Functions']['get_derivaciones']['Returns'][number];
 
-const DERIVACION_SELECT =
-  'id, ficha_id, area_origen_id, area_destino_id, institucion_id, destino, institucion_otra, motivo, fecha_derivacion, estado, creado_en, ficha_registro!inner(folio, persona!inner(nombres, apellido_paterno, apellido_materno)), area_origen:cat_area!derivacion_area_origen_id_fkey(nombre), area_destino:cat_area!derivacion_area_destino_id_fkey(nombre), directorio_institucion(nombre)';
-
-type RawRow = {
-  id: string;
-  ficha_id: string;
-  area_origen_id: number | null;
-  area_destino_id: number | null;
-  institucion_id: number | null;
-  destino: DerivacionItem['destino'];
-  institucion_otra: string | null;
-  motivo: string | null;
-  fecha_derivacion: string;
-  estado: EstadoDerivacion;
-  creado_en: string;
-  ficha_registro:
-    | {
-        folio: string;
-        persona:
-          | { nombres: string; apellido_paterno: string; apellido_materno: string | null }
-          | { nombres: string; apellido_paterno: string; apellido_materno: string | null }[]
-          | null;
-      }
-    | {
-        folio: string;
-        persona:
-          | { nombres: string; apellido_paterno: string; apellido_materno: string | null }
-          | { nombres: string; apellido_paterno: string; apellido_materno: string | null }[]
-          | null;
-      }[]
-    | null;
-  area_origen: { nombre: string } | { nombre: string }[] | null;
-  area_destino: { nombre: string } | { nombre: string }[] | null;
-  directorio_institucion: { nombre: string } | { nombre: string }[] | null;
-};
-
-function mapRow(row: RawRow): DerivacionItem {
-  const ficha = unwrapOne(row.ficha_registro);
-  const persona = ficha ? unwrapOne(ficha.persona) : null;
-  const areaOrigen = unwrapOne(row.area_origen);
-  const areaDestino = unwrapOne(row.area_destino);
-  const institucion = unwrapOne(row.directorio_institucion);
-
+function mapRpcRow(row: RpcDerivacionRow): DerivacionItem {
   return {
     id: row.id,
     fichaId: row.ficha_id,
-    folio: ficha?.folio ?? '—',
-    usuariaNombre: persona
-      ? formatFullName(persona.nombres, persona.apellido_paterno, persona.apellido_materno)
-      : '—',
+    folio: row.folio ?? '—',
+    usuariaNombre: row.usuaria_nombre?.trim() || '—',
     areaOrigenId: row.area_origen_id,
-    areaOrigenNombre: areaOrigen?.nombre ?? null,
+    areaOrigenNombre: row.area_origen_nombre,
     areaDestinoId: row.area_destino_id,
-    areaDestinoNombre: areaDestino?.nombre ?? null,
+    areaDestinoNombre: row.area_destino_nombre,
     institucionId: row.institucion_id,
-    institucionNombre: institucion?.nombre ?? null,
+    institucionNombre: row.institucion_nombre,
     institucionOtra: row.institucion_otra,
     destino: row.destino,
     motivo: row.motivo,
@@ -80,32 +33,23 @@ function mapRow(row: RawRow): DerivacionItem {
 
 export const supabaseDerivacionRepository: DerivacionRepository = {
   async list(estado?: EstadoDerivacion): Promise<DerivacionItem[]> {
-    let query = supabase
-      .from('derivacion')
-      .select(DERIVACION_SELECT)
-      .eq('activo', true)
-      .order('creado_en', { ascending: false })
-      .limit(200);
+    const { data, error } = await supabase.rpc('get_derivaciones', {
+      p_estado: estado ?? undefined,
+      p_limite: 200,
+    });
 
-    if (estado) {
-      query = query.eq('estado', estado);
-    }
-
-    const { data, error } = await query;
     if (error) throw error;
-    return ((data ?? []) as unknown as RawRow[]).map(mapRow);
+    return (data ?? []).map(mapRpcRow);
   },
 
   async listByFicha(fichaId: string): Promise<DerivacionItem[]> {
-    const { data, error } = await supabase
-      .from('derivacion')
-      .select(DERIVACION_SELECT)
-      .eq('activo', true)
-      .eq('ficha_id', fichaId)
-      .order('creado_en', { ascending: false });
+    const { data, error } = await supabase.rpc('get_derivaciones', {
+      p_ficha_id: fichaId,
+      p_limite: 200,
+    });
 
     if (error) throw error;
-    return ((data ?? []) as unknown as RawRow[]).map(mapRow);
+    return (data ?? []).map(mapRpcRow);
   },
 
   async create(input: DerivacionCreateInput): Promise<{ id: string }> {
@@ -131,10 +75,10 @@ export const supabaseDerivacionRepository: DerivacionRepository = {
   },
 
   async updateEstado(id: string, estado: EstadoDerivacion): Promise<void> {
-    const { error } = await supabase
-      .from('derivacion')
-      .update({ estado })
-      .eq('id', id);
+    const { error } = await supabase.rpc('cambiar_estado_derivacion', {
+      p_derivacion_id: id,
+      p_estado: estado,
+    });
     if (error) throw error;
   },
 };
