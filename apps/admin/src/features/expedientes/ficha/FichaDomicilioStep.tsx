@@ -91,10 +91,16 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
     const clean = raw.replace(/\D/g, '').slice(0, 5);
     setCpSearch(clean);
     if (clean.length === 5) {
-      const firstMatch = allAsentamientos.find((a) => a.codigoPostal === clean);
-      if (firstMatch) {
-        setEstadoFilter(firstMatch.estado);
-        setMunicipioFilter(firstMatch.municipio);
+      const matches = allAsentamientos.filter((a) => a.codigoPostal === clean);
+      if (matches.length > 0) {
+        setEstadoFilter(matches[0].estado);
+        setMunicipioFilter(matches[0].municipio);
+        onChange({
+          ...value,
+          asentamientoId: matches.length === 1 ? matches[0].id : null,
+          codigoPostalForaneo: '',
+        });
+        return;
       }
     }
     if (value.codigoPostalForaneo || value.asentamientoId !== null) {
@@ -146,7 +152,20 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
 
   return (
     <div className="grid gap-4">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-[12rem_minmax(0,1fr)_minmax(0,1fr)] sm:items-end">
+        <label className="mk-field">
+          <span className="mk-field__label">Código postal (5 dígitos)</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={5}
+            placeholder="Ej. 81200"
+            className="font-mono"
+            value={cpSearch}
+            onChange={(e) => handleCpChange(e.target.value)}
+          />
+        </label>
+
         <div className="grid gap-1.5">
           <span className="text-xs font-medium text-on-surface-variant">Estado</span>
           <Select
@@ -168,19 +187,6 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
             onChange={handleMunicipioChange}
           />
         </div>
-
-        <label className="mk-field">
-          <span className="mk-field__label">Código postal (5 dígitos)</span>
-          <input
-            type="text"
-            inputMode="numeric"
-            maxLength={5}
-            placeholder="Ej. 81200"
-            className="font-mono"
-            value={cpSearch}
-            onChange={(e) => handleCpChange(e.target.value)}
-          />
-        </label>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
