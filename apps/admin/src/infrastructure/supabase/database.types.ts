@@ -972,6 +972,11 @@ isOneToOne: false
             "area_id_por_clave":
 { Args: { "p_clave": string }; Returns: number
                            },
+"atender_alerta":
+{ Args: { "p_alerta_id": string,"p_observaciones"?: string }; Returns: {
+              "alerta_id": string,"atendida_en": string,"atendida_por": string,"estado": Database["public"]['Enums']["estado_alerta"],"tomada_en": string
+            }[]
+                           },
 "auth_area_id":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
@@ -1021,6 +1026,11 @@ isOneToOne: false
               "area_clave": string,"area_id": number,"celular": string,"cita_id": string,"estado": Database["public"]['Enums']["estado_cita"],"nombre_completo": string,"origen": Database["public"]['Enums']["origen_cita"],"persona_id": string,"prioridad": Database["public"]['Enums']["prioridad_nivel"],"programada_en": string,"reagendada_de": string,"recomendada_por": string
             }[]
                            },
+"get_cola_alertas":
+{ Args: { "p_estados"?: (Database["public"]['Enums']["estado_alerta"])[],"p_limite"?: number }; Returns: {
+              "alerta_id": string,"asentamiento_nombre": string,"atendida_por_nombre": string,"celular": string,"creado_en": string,"estado": Database["public"]['Enums']["estado_alerta"],"ficha_id": string,"folio": string,"nombre_completo": string,"origen": Database["public"]['Enums']["origen_alerta"],"persona_id": string,"prioridad": Database["public"]['Enums']["prioridad_nivel"],"tiene_orden_vigente": boolean,"tomada_en": string
+            }[]
+                           },
 "get_derivaciones":
 { Args: { "p_estado"?: Database["public"]['Enums']["estado_derivacion"],"p_ficha_id"?: string,"p_limite"?: number }; Returns: {
               "area_destino_id": number,"area_destino_nombre": string,"area_origen_id": number,"area_origen_nombre": string,"creado_en": string,"destino": Database["public"]['Enums']["destino_derivacion"],"estado": Database["public"]['Enums']["estado_derivacion"],"fecha_derivacion": string,"ficha_id": string,"folio": string,"id": string,"institucion_id": number,"institucion_nombre": string,"institucion_otra": string,"motivo": string,"usuaria_nombre": string
@@ -1054,6 +1064,11 @@ isOneToOne: false
                            },
 "tiene_permiso":
 { Args: { "p_permiso": string }; Returns: boolean
+                           },
+"tomar_alerta":
+{ Args: { "p_alerta_id": string }; Returns: {
+              "alerta_id": string,"atendida_en": string,"atendida_por": string,"estado": Database["public"]['Enums']["estado_alerta"],"tomada_en": string
+            }[]
                            }
           }
           Enums: {
