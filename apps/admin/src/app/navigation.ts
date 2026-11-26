@@ -63,21 +63,6 @@ export const NAVIGATION: NavPage[] = [
     allowedRoles: ATTENTION_AND_DIRECTION,
   },
   {
-    path: '/casos',
-    label: 'Casos',
-    title: 'Gestión de casos',
-    icon: 'account_tree',
-    ready: false,
-    allowedRoles: ATTENTION_AND_DIRECTION,
-  },
-  {
-    path: '/profesionales',
-    label: 'Profesionales',
-    icon: 'groups',
-    ready: false,
-    allowedRoles: DIRECTION_ONLY,
-  },
-  {
     path: '/intervenciones',
     label: 'Intervenciones',
     icon: 'clinical_notes',

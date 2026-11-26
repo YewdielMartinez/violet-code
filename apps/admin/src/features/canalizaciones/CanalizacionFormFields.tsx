@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import { Select } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/select';
 import { Icon } from '@/shared/ui/Icon';
@@ -6,6 +6,7 @@ import { DESTINO_LABELS, type DestinoDerivacion } from './api';
 import type { CanalizacionFormState } from './useCanalizacionForm';
 
 const MOTIVO_MAX_LENGTH = 1000;
+const MAX_RESULTS = 25;
 const INTERNAS = 'Áreas internas';
 const EXTERNAS = 'Instituciones externas';
 
@@ -37,21 +38,81 @@ interface Props {
 /** Campos del formulario de nueva canalización: una sola pantalla, sin pasos. */
 export function CanalizacionFormFields({ form, fixedFolio }: Props) {
   const { catalogos, values, errors, internal } = form;
-  const ids = { exp: useId(), motivo: useId(), inst: useId(), destino: useId(), otra: useId() };
+  const ids = { exp: useId(), expList: useId(), motivo: useId(), inst: useId(), destino: useId(), otra: useId() };
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
+  const [listOpen, setListOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
 
-  const expedienteOptions = useMemo(() => {
+  const selectedExpediente = useMemo(
+    () => (catalogos.expedientes ?? []).find((e) => e.id === values.fichaId) ?? null,
+    [catalogos.expedientes, values.fichaId],
+  );
+
+  const matches = useMemo(() => {
+    const list = catalogos.expedientes ?? [];
     const q = query.trim().toLowerCase();
-    return (catalogos.expedientes ?? [])
-      .filter(
-        (e) =>
-          e.id === values.fichaId ||
-          !q ||
-          e.folio.toLowerCase().includes(q) ||
-          e.persona.nombreCompleto.toLowerCase().includes(q),
-      )
-      .map((e) => ({ value: e.id, label: `${e.folio} · ${e.persona.nombreCompleto}` }));
-  }, [catalogos.expedientes, query, values.fichaId]);
+    if (!q) return list;
+    return list.filter(
+      (e) =>
+        e.folio.toLowerCase().includes(q) ||
+        e.persona.nombreCompleto.toLowerCase().includes(q) ||
+        (e.persona.curp ?? '').toLowerCase().includes(q),
+    );
+  }, [catalogos.expedientes, query]);
+
+  const visibleExpedientes = useMemo(() => matches.slice(0, MAX_RESULTS), [matches]);
+  const clampedActiveIndex = visibleExpedientes.length > 0 ? Math.min(activeIndex, visibleExpedientes.length - 1) : -1;
+
+  function selectExpediente(id: string) {
+    form.setFichaId(id);
+    setQuery('');
+    setListOpen(false);
+    setActiveIndex(0);
+  }
+
+  function handleClearExpediente() {
+    form.setFichaId('');
+    setQuery('');
+    setActiveIndex(0);
+    setListOpen(true);
+    requestAnimationFrame(() => searchInputRef.current?.focus());
+  }
+
+  function handleExpedienteKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (!listOpen) {
+        setListOpen(true);
+        setActiveIndex(0);
+        return;
+      }
+      if (visibleExpedientes.length > 0) {
+        setActiveIndex((prev) => (prev + 1) % visibleExpedientes.length);
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!listOpen) {
+        setListOpen(true);
+        setActiveIndex(Math.max(0, visibleExpedientes.length - 1));
+        return;
+      }
+      if (visibleExpedientes.length > 0) {
+        setActiveIndex((prev) => (prev - 1 + visibleExpedientes.length) % visibleExpedientes.length);
+      }
+    } else if (e.key === 'Enter') {
+      if (listOpen && clampedActiveIndex >= 0 && visibleExpedientes[clampedActiveIndex]) {
+        e.preventDefault();
+        selectExpediente(visibleExpedientes[clampedActiveIndex].id);
+      }
+    } else if (e.key === 'Escape') {
+      if (listOpen) {
+        e.preventDefault();
+        e.stopPropagation();
+        setListOpen(false);
+      }
+    }
+  }
 
   const institucionOptions = useMemo(
     () => [
@@ -75,23 +136,101 @@ export function CanalizacionFormFields({ form, fixedFolio }: Props) {
           <label htmlFor={ids.exp} className="text-sm font-medium text-on-surface">
             Expediente *
           </label>
-          <label className="mk-field w-full">
-            <input
-              id={ids.exp}
-              type="search"
-              placeholder="Buscar por folio o nombre…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              autoComplete="off"
-            />
-          </label>
-          <Select
-            label="Expediente"
-            placeholder="Selecciona expediente…"
-            options={expedienteOptions}
-            value={values.fichaId}
-            onChange={form.setFichaId}
-          />
+          {selectedExpediente ? (
+            <div className="rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-mono text-sm font-semibold text-on-surface">{selectedExpediente.folio}</p>
+                <p className="truncate text-base font-semibold text-on-surface">
+                  {selectedExpediente.persona.nombreCompleto}
+                </p>
+                <p className="font-mono text-xs text-on-surface-variant">{selectedExpediente.persona.curp}</p>
+              </div>
+              <button
+                type="button"
+                className="mk-button mk-button--tonal mk-button--sm shrink-0"
+                onClick={handleClearExpediente}
+              >
+                Cambiar
+              </button>
+            </div>
+          ) : (
+            <>
+              <label className="mk-field w-full">
+                <input
+                  id={ids.exp}
+                  ref={searchInputRef}
+                  type="search"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-label="Expediente"
+                  aria-expanded={listOpen}
+                  aria-controls={ids.expList}
+                  aria-activedescendant={
+                    listOpen && clampedActiveIndex >= 0 && visibleExpedientes[clampedActiveIndex]
+                      ? `${ids.expList}-opt-${visibleExpedientes[clampedActiveIndex].id}`
+                      : undefined
+                  }
+                  aria-invalid={errors.expediente ? true : undefined}
+                  aria-describedby={errors.expediente ? `${ids.exp}-err` : undefined}
+                  placeholder="Buscar por folio, nombre o CURP…"
+                  value={query}
+                  onFocus={() => setListOpen(true)}
+                  onBlur={() => setListOpen(false)}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setListOpen(true);
+                    setActiveIndex(0);
+                  }}
+                  onKeyDown={handleExpedienteKeyDown}
+                  autoComplete="off"
+                />
+              </label>
+              {listOpen ? (
+                <div
+                  id={ids.expList}
+                  role="listbox"
+                  aria-label="Expedientes"
+                  className="max-h-64 overflow-y-auto rounded-2xl border border-outline-variant bg-surface-container-lowest p-1.5 shadow-lg"
+                >
+                  {visibleExpedientes.length === 0 ? (
+                    <p className="px-3 py-4 text-center text-sm text-on-surface-variant">
+                      Sin expedientes que coincidan
+                    </p>
+                  ) : (
+                    <>
+                      {visibleExpedientes.map((e, idx) => {
+                        const isActive = idx === clampedActiveIndex;
+                        return (
+                          <button
+                            key={e.id}
+                            id={`${ids.expList}-opt-${e.id}`}
+                            type="button"
+                            role="option"
+                            aria-selected={isActive}
+                            onMouseDown={(ev) => ev.preventDefault()}
+                            onMouseEnter={() => setActiveIndex(idx)}
+                            onClick={() => selectExpediente(e.id)}
+                            className={`flex w-full flex-col items-start gap-0.5 rounded-xl px-3 py-2.5 text-left transition-colors ${
+                              isActive ? 'bg-surface-container-high text-on-surface' : 'hover:bg-surface-container'
+                            }`}
+                          >
+                            <span className="font-mono text-sm font-semibold text-on-surface">{e.folio}</span>
+                            <span className="text-base font-medium text-on-surface">{e.persona.nombreCompleto}</span>
+                            <span className="font-mono text-xs text-on-surface-variant">{e.persona.curp}</span>
+                          </button>
+                        );
+                      })}
+                      {matches.length > MAX_RESULTS ? (
+                        <p className="border-t border-outline-variant px-3 py-2 text-xs text-on-surface-variant">
+                          Mostrando {MAX_RESULTS} de {matches.length} expedientes — escribe más para afinar
+                        </p>
+                      ) : null}
+                    </>
+                  )}
+                </div>
+              ) : null}
+            </>
+          )}
           <FieldError id={`${ids.exp}-err`} message={errors.expediente} />
         </div>
       )}
@@ -99,6 +238,7 @@ export function CanalizacionFormFields({ form, fixedFolio }: Props) {
       <div className="grid gap-1.5">
         <span className="text-sm font-medium text-on-surface">Destino *</span>
         <Select
+          size="lg"
           label="Destino"
           options={DESTINO_OPTIONS}
           value={values.destino}
@@ -111,6 +251,7 @@ export function CanalizacionFormFields({ form, fixedFolio }: Props) {
         <div className="grid gap-1.5">
           <span className="text-sm font-medium text-on-surface">Institución</span>
           <Select
+            size="lg"
             label="Institución del directorio"
             options={institucionOptions}
             value={values.institucionId ? String(values.institucionId) : ''}

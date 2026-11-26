@@ -7,7 +7,7 @@
   transition: width 320ms var(--mk-ease-signature);
 }
 
-.mk-dialog.vc-expediente-dialog [data-mk-part='header'] {
+.mk-dialog.vc-expediente-dialog > [data-mk-part='header'] {
   display: grid;
   /* El kit deja justify-content: space-between (pensado para flex); en grid encogería la columna. */
   grid-template-columns: minmax(0, 1fr);
@@ -16,7 +16,7 @@
   padding: 16px 24px 12px;
 }
 
-.mk-dialog.vc-expediente-dialog [data-mk-part='body'] {
+.mk-dialog.vc-expediente-dialog > [data-mk-part='body'] {
   padding: 8px 24px 28px;
 }
 

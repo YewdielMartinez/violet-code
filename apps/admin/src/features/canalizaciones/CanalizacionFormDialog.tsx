@@ -104,14 +104,9 @@ export function CanalizacionFormDialog({ open, onOpenChange, fixedFichaId, fixed
         onOpenChange={handleOpenChange}
       >
         <Dialog.Content dividers className="vc-canalizacion-form-dialog">
-          <Dialog.Header>
-            <div className="min-w-0">
-              <Dialog.Title>Nueva canalización</Dialog.Title>
-              <Dialog.Description>
-                Derivaciones internas entre áreas y canalizaciones a instituciones externas.
-              </Dialog.Description>
-            </div>
+          <Dialog.Header className="justify-start items-center gap-3">
             <Dialog.Close label="Cerrar" />
+            <Dialog.Title className="truncate">Nueva canalización</Dialog.Title>
           </Dialog.Header>
           {formKey > 0 ? (
             <CanalizacionFormBody

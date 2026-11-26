@@ -195,9 +195,6 @@ async function openCreateDialog(trigger: HTMLElement) {
   await waitFor(() => expect(getDialog()?.hasAttribute('open')).toBe(true));
   const dialog = getDialog()!;
   expect(dialog.getAttribute('data-mk-placement')).toBe('side');
-  expect(
-    within(dialog).getByText('Derivaciones internas entre áreas y canalizaciones a instituciones externas.'),
-  ).toBeTruthy();
   return dialog;
 }
 
@@ -299,8 +296,9 @@ describe('Canalizaciones: diálogo de alta, detalle lateral y filtros', () => {
     expect(within(dialog).getByText('Describe el motivo de la canalización.')).toBeTruthy();
     expect(createDerivacionMock).not.toHaveBeenCalled();
 
-    await waitFor(() => expect(within(dialog).getByRole('option', { name: /SEM-2026-0010/ })).toBeTruthy());
-    fireEvent.change(within(dialog).getByRole('combobox', { name: 'Expediente' }), { target: { value: 'ficha-1' } });
+    fireEvent.focus(within(dialog).getByRole('combobox', { name: 'Expediente' }));
+    const expedienteOption = await within(dialog).findByRole('option', { name: /SEM-2026-0010/ });
+    fireEvent.click(expedienteOption);
     fireEvent.change(within(dialog).getByRole('combobox', { name: 'Destino' }), { target: { value: 'psicologia' } });
     expect(await within(dialog).findByText(/mayores de 18 años \(RN-01\)/)).toBeTruthy();
 

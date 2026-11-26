@@ -190,7 +190,6 @@ export default function CanalizacionesPage() {
     <div className="grid gap-4">
       <PageHeader
         title="Canalizaciones"
-        subtitle="Derivaciones internas entre áreas y canalizaciones a instituciones externas."
         actions={
           <>
             <CanalizacionEstadoMenu value={estadoFilter} counts={counts} onChange={setEstadoFilter} />

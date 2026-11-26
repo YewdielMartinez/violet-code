@@ -277,9 +277,11 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
       if (!(target instanceof Element)) return;
       const closestDialog = target.closest('dialog');
       const outerDialog = hostRef.current?.querySelector('dialog.vc-expediente-dialog');
-      if (closestDialog && closestDialog !== outerDialog) {
-        event.stopPropagation();
+      if (!closestDialog || closestDialog === outerDialog) return;
+      if (event.type === 'click' && !target.closest('[data-mk-part="close"], [data-mk-close]')) {
+        return;
       }
+      event.stopPropagation();
     }
     const EVENTS = ['click', 'cancel', 'close', 'mk:close', 'mk:closed'] as const;
     for (const type of EVENTS) body.addEventListener(type, stopNestedDialogEvents);

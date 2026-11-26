@@ -4,16 +4,16 @@
   width: min(560px, calc(100vw - 16px));
 }
 
-.mk-dialog.vc-canalizacion-dialog [data-mk-part='header'] {
+.mk-dialog.vc-canalizacion-dialog > [data-mk-part='header'] {
   display: grid;
   /* El kit deja justify-content: space-between (pensado para flex); en grid encogería la columna. */
   grid-template-columns: minmax(0, 1fr);
   justify-content: stretch;
   gap: 14px;
-  padding: 20px 24px 12px;
+  padding: 16px 24px 12px;
 }
 
-.mk-dialog.vc-canalizacion-dialog [data-mk-part='body'] {
+.mk-dialog.vc-canalizacion-dialog > [data-mk-part='body'] {
   padding: 8px 24px 28px;
 }
 
@@ -50,18 +50,18 @@
   filter: none !important;
 }
 
-.mk-dialog.vc-canalizacion-form-dialog[data-mk-placement='side'] [data-mk-part='header'] {
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 20px 24px 16px;
+.mk-dialog.vc-canalizacion-form-dialog[data-mk-placement='side'] > [data-mk-part='header'] {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 24px 14px;
 }
 
-.mk-dialog.vc-canalizacion-form-dialog[data-mk-placement='side'] [data-mk-part='body'] {
+.mk-dialog.vc-canalizacion-form-dialog[data-mk-placement='side'] > [data-mk-part='body'] {
   padding: 20px 24px 28px;
 }
 
-.mk-dialog.vc-canalizacion-form-dialog[data-mk-placement='side'] [data-mk-part='footer'] {
+.mk-dialog.vc-canalizacion-form-dialog[data-mk-placement='side'] > [data-mk-part='footer'] {
   padding: 16px 24px;
 }
 

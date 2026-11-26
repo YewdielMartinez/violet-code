@@ -32,7 +32,7 @@ describe('navigation permissions by role', () => {
 
   it('permite todas las rutas del panel a titular y subdirección', () => {
     for (const role of ['titular', 'subdireccion'] as const) {
-      expect(getNavigationForRole(role)).toHaveLength(12);
+      expect(getNavigationForRole(role)).toHaveLength(10);
       expect(canAccessPath(role, '/auditoria')).toBe(true);
       expect(canAccessPath(role, '/estadisticas')).toBe(true);
       expect(canAccessPath(role, '/usuarios')).toBe(true);
