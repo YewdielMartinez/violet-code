@@ -974,6 +974,11 @@ isOneToOne: false
               "actualizado_en": string,"apellido_materno": string,"apellido_paterno": string,"celular": string,"curp": string,"id": string,"nombres": string
             }[]
                            },
+"archivar_ficha":
+{ Args: { "p_ficha_id": string,"p_motivo"?: string }; Returns: {
+              "actualizado_en": string,"estado": Database["public"]['Enums']["estado_ficha"],"ficha_id": string
+            }[]
+                           },
 "area_id_por_clave":
 { Args: { "p_clave": string }; Returns: number
                            },
@@ -1055,6 +1060,9 @@ isOneToOne: false
 { Args: { "p_estado"?: Database["public"]['Enums']["estado_derivacion"],"p_ficha_id"?: string,"p_limite"?: number }; Returns: {
               "area_destino_id": number,"area_destino_nombre": string,"area_origen_id": number,"area_origen_nombre": string,"creado_en": string,"destino": Database["public"]['Enums']["destino_derivacion"],"estado": Database["public"]['Enums']["estado_derivacion"],"fecha_derivacion": string,"ficha_id": string,"folio": string,"id": string,"institucion_id": number,"institucion_nombre": string,"institucion_otra": string,"motivo": string,"usuaria_nombre": string
             }[]
+                           },
+"get_expediente_detalle":
+{ Args: { "p_ficha_id": string,"p_incluir_agresores"?: boolean }; Returns: Json
                            },
 "get_informe":
 { Args: { "p_anio": number,"p_area_id"?: number,"p_mes"?: number }; Returns: {

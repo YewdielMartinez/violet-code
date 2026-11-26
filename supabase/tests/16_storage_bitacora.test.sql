@@ -127,6 +127,7 @@ select lives_ok(
 
 -- 7) Storage DELETE bajo RLS (rol authenticated)
 --    Recepción (sin expediente.ver) no puede borrar el objeto
+select set_config('storage.allow_delete_query', 'true', true);
 set local role authenticated;
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111106'::uuid);
 
