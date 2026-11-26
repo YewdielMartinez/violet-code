@@ -438,6 +438,41 @@ describe('ExpedienteDrawer (RBAC, rediseño y bitácora RF-05 / RF-22)', () => {
       );
       expect(screen.getByTestId('ficha-resumen')).toBeTruthy();
       expect(screen.getByTestId('ficha-gestion')).toBeTruthy();
+      const dialog = document.querySelector<HTMLDialogElement>('dialog.vc-expediente-dialog');
+      expect(dialog?.style.transform ?? '').toBe('');
+      expect(dialog?.style.translate ?? '').toBe('');
+    } finally {
+      window.matchMedia = originalMatchMedia;
+    }
+  });
+
+  it('monta el detalle de inmediato en deep-link (sin fromUserInteraction) aun sin reduced motion', () => {
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    try {
+      renderWithQuery(
+        <ExpedienteDrawer
+          expediente={SAMPLE_EXPEDIENTE}
+          userRole="trabajo_social"
+          canManage={true}
+          onClose={vi.fn()}
+        />,
+      );
+      expect(screen.getByTestId('ficha-resumen')).toBeTruthy();
+      expect(screen.getByTestId('ficha-gestion')).toBeTruthy();
+      const dialog = document.querySelector<HTMLDialogElement>('dialog.vc-expediente-dialog');
+      expect(dialog?.style.transform ?? '').toBe('');
+      expect(dialog?.style.translate ?? '').toBe('');
     } finally {
       window.matchMedia = originalMatchMedia;
     }

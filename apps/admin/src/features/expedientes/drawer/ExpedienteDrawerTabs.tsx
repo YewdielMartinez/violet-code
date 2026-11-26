@@ -26,6 +26,7 @@ interface Props {
   activeTab: DrawerTab;
   canAccessSensitiveTabs: boolean;
   onChange: (next: DrawerTab) => void;
+  onTabIntent?: (tab: DrawerTab) => void;
 }
 
 /** Pestañas tipo pill chip con indicador deslizante animado mediante `useTabs` de motion-kit. */
@@ -33,6 +34,7 @@ export const ExpedienteDrawerTabs = memo(function ExpedienteDrawerTabs({
   activeTab,
   canAccessSensitiveTabs,
   onChange,
+  onTabIntent,
 }: Props) {
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -86,6 +88,8 @@ export const ExpedienteDrawerTabs = memo(function ExpedienteDrawerTabs({
             role="tab"
             data-mk-tab=""
             aria-selected={selected}
+            onPointerEnter={() => onTabIntent?.(tab.id)}
+            onFocus={() => onTabIntent?.(tab.id)}
             onClick={() => onChange(tab.id)}
             className="vc-drawer-tabs__tab"
           >

@@ -5,6 +5,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -12,6 +13,7 @@ import {
   type RefObject,
 } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import gsap from 'gsap';
 import { Dialog } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
 import type { StaffRole } from '@/domain/models/Auth';
@@ -52,21 +54,47 @@ const NotasPrivadasPanel = lazy(() =>
   loadNotasPrivadasPanel().then((m) => ({ default: m.NotasPrivadasPanel })),
 );
 
+const TAB_LOADERS: Partial<Record<DrawerTab, () => Promise<unknown>>> = {
+  agresor: loadAgresorFormSection,
+  documentos: loadDocumentosAdjuntosPanel,
+  canalizaciones: loadDerivacionesExpedientePanel,
+  ordenes: loadOrdenesProteccionPanel,
+  seguimiento: loadExpedienteTimeline,
+  notas: loadNotasPrivadasPanel,
+};
+
+const preloadedTabs = new Set<DrawerTab>();
+
+/** Precarga únicamente el chunk de la pestaña solicitada (hover/focus en la pestaña). */
+export function preloadExpedienteDrawerTab(tab: DrawerTab): void {
+  if (preloadedTabs.has(tab)) return;
+  const load = TAB_LOADERS[tab];
+  if (!load) return;
+  preloadedTabs.add(tab);
+  void load();
+}
+
 let tabsPreloaded = false;
 
-/** Precarga las pestañas sensibles (p. ej. al pasar el cursor por una fila o al abrir el panel). */
+/** Precarga las pestañas sensibles principales cuando el llamador lo solicita explícitamente. */
 export function preloadExpedienteDrawerTabs(): void {
   if (tabsPreloaded) return;
   tabsPreloaded = true;
-  void loadAgresorFormSection();
-  void loadDocumentosAdjuntosPanel();
-  void loadDerivacionesExpedientePanel();
-  void loadOrdenesProteccionPanel();
+  preloadExpedienteDrawerTab('agresor');
+  preloadExpedienteDrawerTab('documentos');
+  preloadExpedienteDrawerTab('canalizaciones');
+  preloadExpedienteDrawerTab('ordenes');
 }
 
 // El morph de apertura de motion-kit dura 0.7 s (TIMING.dialog.open). Montar el detalle a la mitad
 // provocaba un tirón; se monta al terminar y mientras tanto se ve el placeholder ligero.
 const DEFERRED_CONTENT_DELAY_MS = 700;
+
+function settleDeepLinkDialog(dialog: HTMLDialogElement) {
+  gsap.killTweensOf(dialog);
+  gsap.set(dialog, { clearProps: 'transform,translate,rotate,scale,opacity,clipPath,borderRadius' });
+  dialog.querySelectorAll('.mk-morph-face').forEach((el) => el.remove());
+}
 
 const DrawerSectionPlaceholder = memo(function DrawerSectionPlaceholder({
   label,
@@ -78,7 +106,7 @@ const DrawerSectionPlaceholder = memo(function DrawerSectionPlaceholder({
       role="status"
       aria-busy="true"
       aria-label={label}
-      className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest p-4"
+      className="grid min-h-[320px] content-start gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest p-4"
     >
       <div className="h-3.5 w-32 rounded-full bg-surface-container-high animate-pulse motion-reduce:animate-none" />
       <div className="grid gap-2.5 sm:grid-cols-2">
@@ -122,6 +150,7 @@ interface Props {
   expediente: ExpedienteResumen | null;
   anchor?: RefObject<HTMLElement | null> | HTMLElement | null;
   originElement?: HTMLElement | null;
+  fromUserInteraction?: boolean;
   userRole: StaffRole | undefined;
   canManage: boolean;
   onClose: () => void;
@@ -129,14 +158,15 @@ interface Props {
 
 /**
  * Panel lateral derecho de expediente (`RF-05`, `RF-22`).
- * Usa `Dialog` (motion-kit 0.20.3) con `placement="side"`, `variant="morph"` y `anchor` nativo
- * para crecer desde la fila origen.
+ * Usa `Dialog` (motion-kit 0.20.3) con `placement="side"`, `variant="morph"` al abrir desde una fila
+ * (y `variant="fade"` en deep-link para montar de inmediato sin esperar el morph).
  * Mantiene ocultas «Persona agresora», «Documentos» y «Canalizaciones» para `recepcion` y `umeca`.
  */
 export const ExpedienteDrawer = memo(function ExpedienteDrawer({
   expediente,
   anchor = null,
   originElement = null,
+  fromUserInteraction = false,
   userRole,
   canManage,
   onClose,
@@ -158,8 +188,15 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
 
   const isOpen = Boolean(expediente);
   const expedienteRef = useRef(expediente);
-  expedienteRef.current = expediente;
-  const [contentReady, setContentReady] = useState(() => isOpen && prefersReducedMotion());
+  const fromUserInteractionRef = useRef(fromUserInteraction);
+  useLayoutEffect(() => {
+    expedienteRef.current = expediente;
+    fromUserInteractionRef.current = fromUserInteraction;
+  }, [expediente, fromUserInteraction]);
+
+  const shouldDeferContent = fromUserInteraction && !prefersReducedMotion();
+  const [deferredReady, setDeferredReady] = useState(false);
+  const contentReady = (isOpen && !shouldDeferContent) || deferredReady;
 
   const rawTab = searchParams.get('tab');
   const requestedTab: DrawerTab =
@@ -186,17 +223,32 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     return () => host.removeEventListener('close', ignoreStaleClose, true);
   }, []);
 
-  // Difiere el montaje de consultas/secciones pesadas (FichaDetalleResumen, FuseButton, Agresor,
-  // Documentos, Canalizaciones) hasta pasar los primeros frames del morphOpen.
-  // Aprovecha el morph de apertura (~0.7 s) para traer las pestañas antes de que hagan falta.
-  useEffect(() => {
-    if (isOpen && canAccessSensitiveTabs) preloadExpedienteDrawerTabs();
-  }, [isOpen, canAccessSensitiveTabs]);
+  useLayoutEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    const onMkOpen = (event: Event) => {
+      if (fromUserInteractionRef.current) return;
+      const target = event.target;
+      if (target instanceof HTMLDialogElement && target.classList.contains('vc-expediente-dialog')) {
+        settleDeepLinkDialog(target);
+      }
+    };
+    host.addEventListener('mk:open', onMkOpen);
+    return () => host.removeEventListener('mk:open', onMkOpen);
+  }, []);
 
+  useLayoutEffect(() => {
+    if (!isOpen || fromUserInteraction) return;
+    const dialog = hostRef.current?.querySelector<HTMLDialogElement>('dialog.vc-expediente-dialog');
+    if (dialog) settleDeepLinkDialog(dialog);
+  }, [isOpen, fromUserInteraction]);
+
+  // Cuando se abre por interacción con morph, difiere el montaje de secciones pesadas hasta pasar
+  // los primeros frames del morphOpen; en deep-link o movimiento reducido monta de inmediato.
   useEffect(() => {
     if (!isOpen) return;
-    if (prefersReducedMotion()) {
-      setContentReady(true);
+    if (!shouldDeferContent) {
+      setDeferredReady(true);
       return;
     }
 
@@ -204,7 +256,7 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     const rafId = window.requestAnimationFrame(() => {
       timerId = window.setTimeout(() => {
         startTransition(() => {
-          setContentReady(true);
+          setDeferredReady(true);
         });
       }, DEFERRED_CONTENT_DELAY_MS);
     });
@@ -213,7 +265,14 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
       window.cancelAnimationFrame(rafId);
       window.clearTimeout(timerId);
     };
-  }, [isOpen]);
+  }, [isOpen, shouldDeferContent]);
+
+  const handleTabIntent = useCallback(
+    (tab: DrawerTab) => {
+      if (canAccessSensitiveTabs) preloadExpedienteDrawerTab(tab);
+    },
+    [canAccessSensitiveTabs],
+  );
 
   const selectTab = useCallback(
     (next: DrawerTab) => {
@@ -244,7 +303,7 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     if (expedienteRef.current) return;
     setDisplayed(null);
     setExpanded(false);
-    setContentReady(false);
+    setDeferredReady(false);
   }, []);
 
   /** Cierre pedido por la app (botón del pie, archivar): mismo camino que la X del kit. */
@@ -319,6 +378,7 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
                   activeTab={activeTab}
                   canAccessSensitiveTabs={canAccessSensitiveTabs}
                   onChange={selectTab}
+                  onTabIntent={handleTabIntent}
                 />
 
                 {activeTab === 'resumen' ? (

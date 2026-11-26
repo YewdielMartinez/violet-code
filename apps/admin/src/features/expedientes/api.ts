@@ -94,10 +94,16 @@ export function useAsentamientosSepomex(codigoPostal?: string, enabled = true) {
   });
 }
 
+export function fichaDetailQueryOptions(fichaId: string) {
+  return queryOptions({
+    queryKey: ['expedientes', 'detail', fichaId],
+    queryFn: () => supabaseFichaRepository.getDetail(fichaId),
+  });
+}
+
 export function useFichaDetail(fichaId: string | null) {
   return useQuery({
-    queryKey: ['expedientes', 'detail', fichaId ?? ''],
-    queryFn: () => (fichaId ? supabaseFichaRepository.getDetail(fichaId) : Promise.resolve(null)),
+    ...fichaDetailQueryOptions(fichaId ?? ''),
     enabled: Boolean(fichaId),
   });
 }

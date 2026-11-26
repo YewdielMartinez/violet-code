@@ -18,6 +18,7 @@
 
 .mk-dialog.vc-expediente-dialog > [data-mk-part='body'] {
   padding: 8px 24px 28px;
+  scrollbar-gutter: stable;
 }
 
 /* Sin blur del fondo: desenfocar toda la página en cada frame cuesta caro en un panel grande.
