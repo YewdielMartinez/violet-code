@@ -76,7 +76,7 @@ export default function NuevaFichaPage() {
   }
 
   function handleOpenExpediente(expediente: ExpedienteResumen) {
-    navigate(`/expedientes?expediente=${encodeURIComponent(expediente.id)}`, { replace: true });
+    navigate(`/expedientes/${encodeURIComponent(expediente.id)}`, { replace: true });
   }
 
   async function handleFinish() {

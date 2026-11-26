@@ -128,6 +128,9 @@ export function canAccessPath(role: StaffRole | undefined, pathname: string): bo
   if (pathname === '/expedientes/nuevo') {
     return role === 'titular' || role === 'subdireccion' || role === 'trabajo_social';
   }
+  if (pathname.startsWith('/expedientes/')) {
+    return ATTENTION_AND_DIRECTION.includes(role);
+  }
   const page = NAVIGATION.find((item) => item.path === pathname);
   if (!page) return role !== 'umeca';
   return page.allowedRoles.includes(role);

@@ -7,6 +7,7 @@ import {
   CanalizacionesPage,
   DashboardPage,
   DirectoryPage,
+  ExpedienteDetailPage,
   ExpedientesPage,
   IntervencionesPage,
   LoginPage,
@@ -68,7 +69,25 @@ function warmStart() {
   void loadAppLayout();
   preloadPage(path);
 
-  if (path === '/expedientes') {
+  const detailMatch = /^\/expedientes\/([^/]+)$/.exec(path);
+  const detailId =
+    detailMatch && detailMatch[1] !== 'nuevo' ? decodeURIComponent(detailMatch[1]) : null;
+
+  if (detailId) {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (isPreloadableDrawerTab(tab)) {
+      void import('@/features/expedientes/ExpedienteDrawer').then((m) =>
+        m.preloadExpedienteDrawerTab(tab),
+      );
+    }
+    if (hasStoredSupabaseSession()) {
+      void import('@/features/expedientes/api').then((api) => {
+        void queryClient.prefetchQuery(api.expedienteByIdQueryOptions(detailId));
+        void queryClient.prefetchQuery(api.fichaDetailQueryOptions(detailId));
+      });
+    }
+  } else if (path === '/expedientes') {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
     if (isPreloadableDrawerTab(tab)) {
@@ -135,6 +154,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={pageFallback}>
             <NuevaFichaPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/expedientes/:id',
+        element: (
+          <Suspense fallback={pageFallback}>
+            <ExpedienteDetailPage />
           </Suspense>
         ),
       },

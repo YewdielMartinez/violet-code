@@ -1,16 +1,12 @@
 import {
   memo,
   useCallback,
-  useEffect,
   useMemo,
-  useRef,
-  useState,
   type KeyboardEvent,
   type MouseEvent,
-  type RefObject,
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { DataTable, EmptyState, Skeleton } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/data-table';
 import '@yewdiel21/motion-kit/css/components/empty-state';
@@ -27,9 +23,9 @@ import { ToolbarFilterMenu } from '@/shared/ui/ToolbarFilterMenu';
 import {
   ESTADO_FICHA_LABELS,
   canLookupPreRegistro,
+  expedienteByIdQueryOptions,
   fichaDetailQueryOptions,
   useExpedientes,
-  useRegisterConsult,
   type ExpedienteResumen,
 } from './api';
 import {
@@ -42,10 +38,8 @@ import {
   type ExpedienteRow,
   type QuickFilter,
 } from './drawer/expedientesTableConfig';
-import { ExpedienteDrawer } from './ExpedienteDrawer';
 
 interface TableSectionProps {
-  tableContainerRef: RefObject<HTMLDivElement | null>;
   isLoading: boolean;
   rows: ExpedienteRow[];
   emptyDescription: string;
@@ -54,9 +48,8 @@ interface TableSectionProps {
   onTableKeyDown: (event: KeyboardEvent<HTMLDivElement>) => void;
 }
 
-/** Aísla la tabla operativa para que abrir/cerrar el panel o cambiar de pestaña no re-renderice DataTable. */
+/** Aísla la tabla operativa para que los filtros o acciones no re-rendericen DataTable innecesariamente. */
 const ExpedientesTableSection = memo(function ExpedientesTableSection({
-  tableContainerRef,
   isLoading,
   rows,
   emptyDescription,
@@ -65,7 +58,7 @@ const ExpedientesTableSection = memo(function ExpedientesTableSection({
   onTableKeyDown,
 }: TableSectionProps) {
   return (
-    <div ref={tableContainerRef}>
+    <div onPointerOver={() => preloadPage('/expedientes/preview')}>
       <Skeleton loading={isLoading} shape="card" lines={6} label="Cargando expedientes">
         <DataTable<ExpedienteRow>
           className="vc-expediente-table"
@@ -90,7 +83,7 @@ const ExpedientesTableSection = memo(function ExpedientesTableSection({
 /**
  * Pantalla principal de Expedientes (`RF-03`, `RF-04`, `RF-34`, `RF-22`):
  * - La tabla operativa y filtros rápidos ocupan el plano principal desde el primer vistazo.
- * - Al hacer clic en una fila (o usar su acción), el panel lateral crece desde esa fila origen.
+ * - Al hacer clic en una fila (o usar su acción), navega a la vista dedicada `/expedientes/:id`.
  * - «Nuevo expediente» abre directamente el asistente de Nueva Ficha Única con verificación de CURP inline.
  */
 export default function ExpedientesPage() {
@@ -99,12 +92,6 @@ export default function ExpedientesPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data, isLoading, isError, refetch } = useExpedientes();
-  const { mutate: registerConsult } = useRegisterConsult();
-
-  const tableContainerRef = useRef<HTMLDivElement>(null);
-  // Se usa ref en vez de useState para el ancla: evita re-render extra y carreras con setSearchParams.
-  const originRef = useRef<HTMLElement | null>(null);
-  const [openedByInteraction, setOpenedByInteraction] = useState(false);
 
   const rawFilter = searchParams.get('filtro');
   const quickFilter: QuickFilter = QUICK_FILTERS.some((f) => f.id === rawFilter)
@@ -113,11 +100,6 @@ export default function ExpedientesPage() {
   const selectedId = searchParams.get('expediente');
 
   const canCreateExpediente = user ? canLookupPreRegistro(user.role) : false;
-
-  useEffect(() => {
-    if (!selectedId) return;
-    void queryClient.prefetchQuery(fichaDetailQueryOptions(selectedId));
-  }, [selectedId, queryClient]);
 
   const setQuickFilter = useCallback(
     (next: QuickFilter) => {
@@ -139,8 +121,6 @@ export default function ExpedientesPage() {
     for (const item of data ?? []) map.set(item.id, item);
     return map;
   }, [data]);
-
-  const selected = selectedId ? (byId.get(selectedId) ?? null) : null;
 
   const counts = useMemo<Record<QuickFilter, number>>(() => {
     const list = data ?? [];
@@ -187,52 +167,21 @@ export default function ExpedientesPage() {
   );
 
   const openExpediente = useCallback(
-    (expediente: ExpedienteResumen, origin: HTMLElement | null = null) => {
-      originRef.current = origin;
-      setOpenedByInteraction(true);
+    (expediente: ExpedienteResumen) => {
+      const target = `/expedientes/${encodeURIComponent(expediente.id)}`;
+      preloadPage(target);
+      void queryClient.prefetchQuery(expedienteByIdQueryOptions(expediente.id));
       void queryClient.prefetchQuery(fichaDetailQueryOptions(expediente.id));
-      setSearchParams(
-        (prev) => {
-          const params = new URLSearchParams(prev);
-          params.set('expediente', expediente.id);
-          params.delete('tab');
-          return params;
-        },
-        { replace: true },
-      );
-      registerConsult(expediente.id);
+      navigate(target);
     },
-    [queryClient, registerConsult, setSearchParams],
+    [navigate, queryClient],
   );
-
-  const closeExpediente = useCallback(() => {
-    originRef.current = null;
-    setOpenedByInteraction(false);
-    setSearchParams(
-      (prev) => {
-        if (!prev.has('expediente') && !prev.has('tab')) return prev;
-        const params = new URLSearchParams(prev);
-        params.delete('expediente');
-        params.delete('tab');
-        return params;
-      },
-      { replace: true },
-    );
-  }, [setSearchParams]);
 
   const handleRowAction = useCallback(
     (action: string, row: ExpedienteRow) => {
       if (action !== 'open') return;
       const match = byId.get(row.id);
-      if (!match) return;
-
-      const escapedId = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(row.id) : row.id;
-      const rowEl =
-        tableContainerRef.current?.querySelector<HTMLTableRowElement>(
-          `tbody tr[data-id="${escapedId}"]`,
-        ) ?? null;
-
-      openExpediente(match, rowEl);
+      if (match) openExpediente(match);
     },
     [byId, openExpediente],
   );
@@ -251,7 +200,7 @@ export default function ExpedientesPage() {
 
       const rowId = rowEl.dataset.id;
       const match = rowId ? byId.get(rowId) : undefined;
-      if (match) openExpediente(match, rowEl);
+      if (match) openExpediente(match);
     },
     [byId, openExpediente],
   );
@@ -271,10 +220,18 @@ export default function ExpedientesPage() {
       event.preventDefault();
       const rowId = target.dataset.id;
       const match = rowId ? byId.get(rowId) : undefined;
-      if (match) openExpediente(match, target);
+      if (match) openExpediente(match);
     },
     [byId, openExpediente],
   );
+
+  if (selectedId) {
+    const tab = searchParams.get('tab');
+    const target = tab
+      ? `/expedientes/${encodeURIComponent(selectedId)}?tab=${encodeURIComponent(tab)}`
+      : `/expedientes/${encodeURIComponent(selectedId)}`;
+    return <Navigate to={target} replace />;
+  }
 
   const emptyDescription = canCreateExpediente
     ? 'Usa «Nuevo expediente» arriba para registrar una nueva Ficha Única.'
@@ -320,7 +277,6 @@ export default function ExpedientesPage() {
         </div>
       ) : (
         <ExpedientesTableSection
-          tableContainerRef={tableContainerRef}
           isLoading={isLoading}
           rows={rows}
           emptyDescription={emptyDescription}
@@ -329,15 +285,6 @@ export default function ExpedientesPage() {
           onTableKeyDown={handleTableKeyDown}
         />
       )}
-
-      <ExpedienteDrawer
-        expediente={selected}
-        anchor={originRef}
-        fromUserInteraction={openedByInteraction}
-        userRole={user?.role}
-        canManage={canCreateExpediente}
-        onClose={closeExpediente}
-      />
     </>
   );
 }

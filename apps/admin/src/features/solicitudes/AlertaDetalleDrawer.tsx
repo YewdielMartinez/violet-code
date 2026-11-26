@@ -222,7 +222,7 @@ export function AlertaDetalleDrawer({
                 {alerta.fichaId ? (
                   <div className="pt-1">
                     <Link
-                      to={`/expedientes?expediente=${encodeURIComponent(alerta.fichaId)}`}
+                      to={`/expedientes/${encodeURIComponent(alerta.fichaId)}`}
                       className="mk-button mk-button--tonal inline-flex items-center gap-1.5"
                     >
                       <Icon name="folder_shared" />

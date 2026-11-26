@@ -182,7 +182,7 @@ export default function CanalizacionesPage() {
   }, []);
 
   const openExpediente = useCallback(
-    (fichaId: string) => navigate(`/expedientes?expediente=${encodeURIComponent(fichaId)}`),
+    (fichaId: string) => navigate(`/expedientes/${encodeURIComponent(fichaId)}`),
     [navigate],
   );
 

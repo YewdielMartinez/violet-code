@@ -129,7 +129,7 @@ export function AppLayout() {
         navStyle={navStyle}
         // Sin `accent`: el activo es neutro (en el riel, el acento morado se encimaba entre botones).
         items={navItems}
-        active={pathname}
+        active={pathname.startsWith('/expedientes') ? '/expedientes' : pathname}
         onPointerOver={preloadFromEvent}
         onFocus={preloadFromEvent}
         onSelect={(path, event) => {

@@ -181,6 +181,36 @@ export const supabaseExpedienteRepository: ExpedienteRepository = {
     return trimmed ? items.filter((item) => matchesSearch(item, trimmed)) : items;
   },
 
+  async getById(fichaId: string): Promise<ExpedienteResumen | null> {
+    const [fichaRes, urgenciaRes] = await Promise.all([
+      supabase
+        .from('ficha_registro')
+        .select(
+          'id, folio, estado, creado_en, actualizado_en, persona!inner(id, curp, nombres, apellido_paterno, apellido_materno, sexo, fecha_nacimiento, entidad_nacimiento, celular)',
+        )
+        .eq('id', fichaId)
+        .eq('activo', true)
+        .maybeSingle(),
+      supabase.from('vista_lista_urgencias').select('ficha_id').eq('ficha_id', fichaId).maybeSingle(),
+    ]);
+
+    if (fichaRes.error) throw fichaRes.error;
+    if (!fichaRes.data) return null;
+
+    const personaRow = unwrapOne(fichaRes.data.persona);
+    if (!personaRow) return null;
+
+    return {
+      id: fichaRes.data.id,
+      folio: fichaRes.data.folio,
+      estado: fichaRes.data.estado,
+      creadoEn: fichaRes.data.creado_en,
+      actualizadoEn: fichaRes.data.actualizado_en,
+      enListaUrgencias: Boolean(urgenciaRes.data?.ficha_id),
+      persona: mapPersona(personaRow),
+    };
+  },
+
   async verifyByCurp(rawCurp: string, allowPreRegistroLookup: boolean): Promise<VerificacionCurpResult> {
     const curp = normalizeCurp(rawCurp);
 

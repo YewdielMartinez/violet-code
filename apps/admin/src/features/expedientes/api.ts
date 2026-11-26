@@ -7,6 +7,7 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query';
 import type { CatalogoItem, CatalogosFicha, FichaCreateInput } from '@/domain/models/FichaRegistro';
+import type { ExpedienteResumen } from '@/domain/models/Persona';
 import type { CatalogoNombre } from '@/domain/ports/SepomexRepository';
 import { supabaseExpedienteRepository } from '@/infrastructure/supabase/adapters/SupabaseExpedienteRepository';
 import { supabaseFichaRepository } from '@/infrastructure/supabase/adapters/SupabaseFichaRepository';
@@ -33,6 +34,28 @@ export function expedientesListQueryOptions(query?: string) {
 
 export function useExpedientes(query?: string) {
   return useQuery(expedientesListQueryOptions(query));
+}
+
+export function expedienteByIdQueryOptions(fichaId: string) {
+  return queryOptions({
+    queryKey: ['expedientes', 'byId', fichaId],
+    queryFn: () => supabaseExpedienteRepository.getById(fichaId),
+  });
+}
+
+export function useExpedienteById(fichaId: string | null) {
+  const queryClient = useQueryClient();
+  return useQuery({
+    queryKey: ['expedientes', 'byId', fichaId ?? ''],
+    queryFn: () =>
+      fichaId ? supabaseExpedienteRepository.getById(fichaId) : Promise.resolve(null),
+    enabled: Boolean(fichaId),
+    initialData: () => {
+      if (!fichaId) return undefined;
+      const list = queryClient.getQueryData<ExpedienteResumen[]>(['expedientes', 'list', '']);
+      return list?.find((item) => item.id === fichaId);
+    },
+  });
 }
 
 export function useVerifyCurp() {
