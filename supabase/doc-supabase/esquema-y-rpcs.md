@@ -1,6 +1,6 @@
 # Arquitectura de Base de Datos, Esquema y RPCs
 
-Referencia técnica del modelo relacional, reglas de integridad, auditoría y contratos de vistas/RPCs en PostgreSQL (`supabase/migrations/`). Diagrama DBML completo en [esquema.dbml](./esquema.dbml).
+Referencia técnica del modelo relacional, reglas de integridad, auditoría y contratos de vistas/RPCs en PostgreSQL (`supabase/migrations/`). Diagrama DBML completo en [esquema.dbml](./esquema.dbml) y modelo de autorización en [roles-y-permisos.md](./roles-y-permisos.md).
 
 ---
 
@@ -14,13 +14,18 @@ Referencia técnica del modelo relacional, reglas de integridad, auditoría y co
 | [20261125000300_03_complemento.sql](../migrations/20261125000300_03_complemento.sql) | `historial_clinico`, `directorio_institucion`, `cat_tipo_actividad`, `actividad_preventiva`, `actividad_empleado` y `bitacora_acceso`. |
 | [20261125000400_04_ficha.sql](../migrations/20261125000400_04_ficha.sql) | `cat_parentesco`, `estudio_socioeconomico`, `aportante_hogar`, `agresor`, `orden_proteccion`, `nota_area`, `derivacion`, `cat_tipo_documento`, `documento` y bucket `documentos`. |
 | [20261125000500_05_vistas.sql](../migrations/20261125000500_05_vistas.sql) | Vistas analíticas/operativas y funciones RPC (`get_umeca_citas`, `get_mapa_calor_asentamiento`). |
+| [20261125000600_06_reglas_negocio.sql](../migrations/20261125000600_06_reglas_negocio.sql) | Folio automático (`ficha_folio_seq`, formato `SEM-AAAA-NNNN`), mayoría de edad `>= 18` en Psicología/Jurídico, columnas generadas de CURP en `pre_registro` y `buscar_pre_registro_por_curp()`. |
+| [20261125000700_07_rls.sql](../migrations/20261125000700_07_rls.sql) | Helpers RBAC + ABAC (`tiene_permiso()`, roles y áreas) y políticas RLS en las 32 tablas públicas + bucket `documentos`. |
 
 ---
 
 ## 2. Reglas de integridad y seguridad implementadas
 
 - **Tipos `ENUM` del dominio (`01_base.sql`):** las listas cerradas (`rol_empleado`, `estado_civil`, `zona_geografica`, `prioridad_nivel`, `tipo_trabajo`, `frecuencia_ingreso`, `escolaridad_nivel`, `tipo_vivienda`, `material_vivienda`, `servicio_medico`, `estado_ficha`, `estado_cita`, `origen_cita`, `origen_alerta`, `estado_alerta`, `estado_orden_proteccion`, `estado_derivacion`, `destino_derivacion`, `categoria_institucion`, `tipo_institucion_actividad`, `nivel_educativo`, `accion_bitacora`, `sexo_biologico`, `tipo_arma`) usan `ENUM` nativos de PostgreSQL para garantizar una sola fuente de verdad y generar uniones estrictas en `supabase gen types`.
-- **Columnas calculadas desde CURP (`persona`):** `sexo`, `fecha_nacimiento` y `entidad_nacimiento` son columnas `GENERATED ALWAYS AS ... STORED`, evitando inconsistencias manuales; `agresor.entidad_nacimiento` usa las mismas claves oficiales de 2 letras.
+- **Columnas calculadas desde CURP (`persona` y `pre_registro`):** `sexo`, `fecha_nacimiento` y `entidad_nacimiento` son columnas `GENERATED ALWAYS AS ... STORED`, evitando inconsistencias manuales; `agresor.entidad_nacimiento` usa las mismas claves oficiales de 2 letras.
+- **Reglas operativas automatizadas (`06_reglas_negocio.sql`):**
+  - `ficha_registro.folio`: genera automáticamente `SEM-<AAAA>-<NNNN>` mediante `ficha_folio_seq` si se omite o llega vacío, permitiendo folio explícito en importaciones.
+  - `cita` y `atencion`: trigger `validar_mayoria_edad_area()` bloquea registros en Psicología y Jurídico para menores de 18 años (`fecha_nacimiento` desde CURP), permitiendo Trabajo Social.
 - **Límites de texto y rangos numéricos (`CHECK`):** todos los campos `text` cuentan con cotas máximas (`<= 30` en números exteriores/interiores, `<= 50` en claves, `<= 100..150` en nombres/calles/catálogos, `<= 250` en referencias/especificaciones, `<= 500..5000` en notas/narrativas) y los obligatorios validan `char_length(btrim(...)) between 1 and N`. Los campos numéricos validan rangos reales (`latitud` `-90..90`, `longitud` `-180..180`, `numero_hijas`/`numero_hijos_hombres`/`numero_dependientes` `0..30`, `edad` `0..120`, `numero_asistentes` `0..10000`, montos `0..9999999.99`).
 - **Normalización de consumos, armas, servicios solicitados, domicilios y vivienda:** `ficha_registro` y `agresor` usan `drogas text[]` controlado + `especificacion_droga`; `agresor` incluye `tipo_arma` (`ENUM`) y separa el nombre en `nombres`, `apellido_paterno` y `apellido_materno`. La tabla puente `ficha_servicio_solicitado` normaliza los servicios solicitados como relación N:M entre `ficha_registro` y `cat_area`, y `ficha_registro` exige que `servicio_medico_otro` solo se capture cuando `servicio_medico = 'otro'`. `domicilio`, `agresor` y `directorio_institucion` usan domicilio estructurado (`calle`, `numero_exterior`, `numero_interior`, `referencias`, `asentamiento_id` hacia `cat_asentamiento` y `codigo_postal` de 5 dígitos solo como respaldo cuando `asentamiento_id` es nulo: `check (asentamiento_id is null or codigo_postal is null)`); en `directorio_institucion`, una regla `CHECK` prohíbe guardar cualquier campo de dirección cuando `categoria = 'refugio'`. En `actividad_preventiva`, `sede` identifica el recinto/plantel separado de `direccion`, `referencias` y `asentamiento_id`. Los indicadores de vivienda (`tipo_vivienda`, `material`, `material_otro`, `servicios`, `bienes`) residen en `estudio_socioeconomico`, y los aportantes del hogar en `aportante_hogar` (1:N ligada a `cat_parentesco` y `cat_ocupacion`).
 - **Validaciones de formato y negocio (`CHECK`):**
@@ -55,4 +60,5 @@ Referencia técnica del modelo relacional, reglas de integridad, auditoría y co
 | `vista_informe_anual` | Vista (`security_invoker = true`) | Autenticado (RLS) | Mismo desglose agregado anual (sin PII). |
 | `get_umeca_citas()` | RPC (`SECURITY DEFINER`) | `authenticated` (solo UMECA activo) | Devuelve citas de origen `'umeca'` (`cita_id`, nombre, `programada_en`, `estado`) y registra automáticamente `'ver'` en `bitacora_acceso`. |
 | `get_mapa_calor_asentamiento(p_umbral_minimo int default 3)` | RPC (`SECURITY DEFINER`) | `authenticated` (roles internos) | Agrega expedientes activos, alertas y actividades preventivas por `cat_asentamiento`, aplicando umbral mínimo de privacidad (`>= p_umbral_minimo`) y sin PII. |
+| `buscar_pre_registro_por_curp(p_curp text)` | RPC (`SECURITY DEFINER`) | `authenticated` (`titular`, `subdireccion`, `trabajo_social`) | Precarga datos de un `pre_registro` móvil activo por CURP exacta al capturar la Ficha Única. |
 | `registrar_consulta(p_tabla text, p_registro_id text)` | RPC (`SECURITY DEFINER`) | `authenticated` (personal/UMECA activo) | Registra en `bitacora_acceso` la apertura de un expediente o datos de agresor. |
