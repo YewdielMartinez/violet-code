@@ -265,27 +265,28 @@ export function OrdenProteccionForm({
   const isBusy = submitState === 'loading';
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} noValidate>
+    <form onSubmit={(e) => void handleSubmit(e)} className="contents" noValidate>
       <Dialog.Body className="grid gap-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor={oficioId} className="mb-1.5 block text-sm font-medium text-on-surface">
               Número de oficio *
             </label>
-            <input
-              id={oficioId}
-              type="text"
-              maxLength={NUMERO_OFICIO_MAX_LENGTH}
-              required
-              disabled={isBusy}
-              value={numeroOficio}
-              onChange={(e) => setNumeroOficio(e.target.value)}
-              placeholder="Ej. JUZ-FAM-2026-0148"
-              aria-invalid={Boolean(fieldErrors.numeroOficio)}
-              className="w-full rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface focus:border-primary focus:outline-none"
-            />
+            <label className="mk-field w-full">
+              <input
+                id={oficioId}
+                type="text"
+                maxLength={NUMERO_OFICIO_MAX_LENGTH}
+                required
+                disabled={isBusy}
+                value={numeroOficio}
+                onChange={(e) => setNumeroOficio(e.target.value)}
+                placeholder="Ej. JUZ-FAM-2026-0148"
+                aria-invalid={Boolean(fieldErrors.numeroOficio)}
+              />
+            </label>
             {fieldErrors.numeroOficio ? (
-              <p className="mt-1 text-xs text-status-danger">{fieldErrors.numeroOficio}</p>
+              <p className="mt-1 text-sm text-status-danger">{fieldErrors.numeroOficio}</p>
             ) : null}
           </div>
 
@@ -293,20 +294,21 @@ export function OrdenProteccionForm({
             <label htmlFor={autoridadId} className="mb-1.5 block text-sm font-medium text-on-surface">
               Autoridad emisora *
             </label>
-            <input
-              id={autoridadId}
-              type="text"
-              maxLength={AUTORIDAD_EMISORA_MAX_LENGTH}
-              required
-              disabled={isBusy}
-              value={autoridadEmisora}
-              onChange={(e) => setAutoridadEmisora(e.target.value)}
-              placeholder="Ej. Juzgado Primero Familiar / MP"
-              aria-invalid={Boolean(fieldErrors.autoridadEmisora)}
-              className="w-full rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface focus:border-primary focus:outline-none"
-            />
+            <label className="mk-field w-full">
+              <input
+                id={autoridadId}
+                type="text"
+                maxLength={AUTORIDAD_EMISORA_MAX_LENGTH}
+                required
+                disabled={isBusy}
+                value={autoridadEmisora}
+                onChange={(e) => setAutoridadEmisora(e.target.value)}
+                placeholder="Ej. Juzgado Primero Familiar / MP"
+                aria-invalid={Boolean(fieldErrors.autoridadEmisora)}
+              />
+            </label>
             {fieldErrors.autoridadEmisora ? (
-              <p className="mt-1 text-xs text-status-danger">{fieldErrors.autoridadEmisora}</p>
+              <p className="mt-1 text-sm text-status-danger">{fieldErrors.autoridadEmisora}</p>
             ) : null}
           </div>
         </div>
@@ -316,18 +318,19 @@ export function OrdenProteccionForm({
             <label htmlFor={emisionId} className="mb-1.5 block text-sm font-medium text-on-surface">
               Fecha de emisión *
             </label>
-            <input
-              id={emisionId}
-              type="date"
-              required
-              disabled={isBusy}
-              value={fechaEmision}
-              onChange={(e) => setFechaEmision(e.target.value)}
-              aria-invalid={Boolean(fieldErrors.fechaEmision)}
-              className="w-full rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface focus:border-primary focus:outline-none"
-            />
+            <label className="mk-field w-full">
+              <input
+                id={emisionId}
+                type="date"
+                required
+                disabled={isBusy}
+                value={fechaEmision}
+                onChange={(e) => setFechaEmision(e.target.value)}
+                aria-invalid={Boolean(fieldErrors.fechaEmision)}
+              />
+            </label>
             {fieldErrors.fechaEmision ? (
-              <p className="mt-1 text-xs text-status-danger">{fieldErrors.fechaEmision}</p>
+              <p className="mt-1 text-sm text-status-danger">{fieldErrors.fechaEmision}</p>
             ) : null}
           </div>
 
@@ -335,43 +338,52 @@ export function OrdenProteccionForm({
             <label htmlFor={vigenciaId} className="mb-1.5 block text-sm font-medium text-on-surface">
               Fecha de vigencia
             </label>
-            <input
-              id={vigenciaId}
-              type="date"
-              min={fechaEmision || undefined}
-              disabled={isBusy}
-              value={fechaVigencia}
-              onChange={(e) => setFechaVigencia(e.target.value)}
-              aria-invalid={Boolean(fieldErrors.fechaVigencia)}
-              className="w-full rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface focus:border-primary focus:outline-none"
-            />
+            <label className="mk-field w-full">
+              <input
+                id={vigenciaId}
+                type="date"
+                min={fechaEmision || undefined}
+                disabled={isBusy}
+                value={fechaVigencia}
+                onChange={(e) => setFechaVigencia(e.target.value)}
+                aria-invalid={Boolean(fieldErrors.fechaVigencia)}
+              />
+            </label>
             {fieldErrors.fechaVigencia ? (
-              <p className="mt-1 text-xs text-status-danger">{fieldErrors.fechaVigencia}</p>
+              <p className="mt-1 text-sm text-status-danger">{fieldErrors.fechaVigencia}</p>
             ) : (
-              <p className="mt-1 text-xs text-on-surface-variant">Opcional; vacío = sin vencimiento</p>
+              <p className="mt-1 text-sm text-on-surface-variant">Opcional; vacío = sin vencimiento</p>
             )}
           </div>
 
           <div>
+            <span className="mb-1.5 block text-sm font-medium text-on-surface">Estado *</span>
             <Select
+              size="lg"
               label="Estado *"
               options={ESTADO_OPTIONS}
               value={estado}
               disabled={isBusy}
+              className="w-full"
               onChange={(next) => setEstado(next as EstadoOrdenProteccion)}
             />
             {fieldErrors.estado ? (
-              <p className="mt-1 text-xs text-status-danger">{fieldErrors.estado}</p>
+              <p className="mt-1 text-sm text-status-danger">{fieldErrors.estado}</p>
             ) : null}
           </div>
         </div>
 
         <div>
+          <span className="mb-1.5 block text-sm font-medium text-on-surface">
+            Persona agresora vinculada (opcional)
+          </span>
           <Select
+            size="lg"
             label="Persona agresora vinculada (opcional)"
             options={agresorOptions}
             value={agresorId}
             disabled={isBusy}
+            className="w-full"
             onChange={(next) => setAgresorId(next)}
           />
         </div>
@@ -398,7 +410,7 @@ export function OrdenProteccionForm({
             }}
             onReject={handleReject}
           />
-          {fileError ? <p className="text-xs text-status-danger">{fileError}</p> : null}
+          {fileError ? <p className="text-sm text-status-danger">{fileError}</p> : null}
         </div>
       </Dialog.Body>
 

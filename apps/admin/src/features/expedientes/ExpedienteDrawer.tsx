@@ -143,6 +143,7 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
 }: Props) {
   const canAccessSensitiveTabs = puedeAccederAgresor(userRole);
   const hostRef = useRef<HTMLDivElement>(null);
+  const bodyInnerRef = useRef<HTMLDivElement>(null);
 
   const [expanded, setExpanded] = useState(false);
   // Conserva el último expediente durante el cierre para que el ghost de morphCloseWithGhost
@@ -266,6 +267,27 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
   const dialogAnchor = anchor ?? originElement ?? null;
   const activeExpediente = expediente ?? displayed;
 
+  // Evita que cerrar o interactuar con un diálogo anidado (Agresor, Órdenes, Canalizaciones)
+  // burbujee eventos de cierre/clic hasta el <dialog> exterior de ExpedienteDrawer.
+  useEffect(() => {
+    const body = bodyInnerRef.current;
+    if (!body) return;
+    function stopNestedDialogEvents(event: Event) {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const closestDialog = target.closest('dialog');
+      const outerDialog = hostRef.current?.querySelector('dialog.vc-expediente-dialog');
+      if (closestDialog && closestDialog !== outerDialog) {
+        event.stopPropagation();
+      }
+    }
+    const EVENTS = ['click', 'cancel', 'close', 'mk:close', 'mk:closed'] as const;
+    for (const type of EVENTS) body.addEventListener(type, stopNestedDialogEvents);
+    return () => {
+      for (const type of EVENTS) body.removeEventListener(type, stopNestedDialogEvents);
+    };
+  }, [activeExpediente]);
+
   return (
     <div ref={hostRef}>
       <Dialog.Root
@@ -288,7 +310,7 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
 
           <Dialog.Body>
             {activeExpediente ? (
-              <div className="grid gap-5">
+              <div ref={bodyInnerRef} className="grid gap-5">
                 <ExpedienteHeroCard expediente={activeExpediente} />
 
                 <ExpedienteDrawerTabs

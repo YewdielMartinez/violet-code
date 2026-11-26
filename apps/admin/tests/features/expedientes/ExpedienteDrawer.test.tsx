@@ -442,6 +442,40 @@ describe('ExpedienteDrawer (RBAC, rediseño y bitácora RF-05 / RF-22)', () => {
       window.matchMedia = originalMatchMedia;
     }
   });
+
+  it('aisla eventos de cierre y clic de un diálogo anidado para no cerrar ExpedienteDrawer', async () => {
+    const onClose = vi.fn();
+    renderWithQuery(
+      <ExpedienteDrawer
+        expediente={SAMPLE_EXPEDIENTE}
+        userRole="trabajo_social"
+        canManage={false}
+        onClose={onClose}
+      />,
+    );
+
+    const outerDialog = document.querySelector<HTMLDialogElement>('dialog.vc-expediente-dialog');
+    expect(outerDialog).not.toBeNull();
+    expect(outerDialog!.hasAttribute('open')).toBe(true);
+
+    const bodyInner = outerDialog!.querySelector('.grid.gap-5');
+    expect(bodyInner).not.toBeNull();
+
+    const nestedDialog = document.createElement('dialog');
+    nestedDialog.setAttribute('open', '');
+    const nestedCloseBtn = document.createElement('button');
+    nestedCloseBtn.setAttribute('data-mk-part', 'close');
+    nestedCloseBtn.type = 'button';
+    nestedCloseBtn.textContent = 'Cerrar anidado';
+    nestedDialog.appendChild(nestedCloseBtn);
+    bodyInner!.appendChild(nestedDialog);
+
+    fireEvent.click(nestedCloseBtn);
+    fireEvent(nestedDialog, new Event('cancel', { bubbles: true, cancelable: true }));
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(outerDialog!.hasAttribute('open')).toBe(true);
+  });
 });
 
 describe('drawer formatters y tabla', () => {

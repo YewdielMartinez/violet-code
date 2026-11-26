@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { FadeContent, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/fade-content';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
@@ -92,9 +92,9 @@ export default function NuevaFichaPage() {
     } catch (err) {
       const msg =
         typeof err === 'object' &&
-        err !== null &&
-        'message' in err &&
-        typeof (err as { message: unknown }).message === 'string'
+          err !== null &&
+          'message' in err &&
+          typeof (err as { message: unknown }).message === 'string'
           ? (err as { message: string }).message
           : 'No se pudo guardar el expediente. Verifica los datos e intenta de nuevo.';
       setSubmitError(true);
@@ -106,21 +106,26 @@ export default function NuevaFichaPage() {
     <>
       <PageHeader
         title="Nueva Ficha Única"
+        leading={
+          <button
+            type="button"
+            onClick={() => navigate('/expedientes')}
+            aria-label="Volver a Expedientes"
+            title="Volver a Expedientes"
+            className="grid size-9 shrink-0 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <Icon name="arrow_back" />
+          </button>
+        }
         subtitle={
           seed?.preRegistro
             ? `Datos precargados desde app móvil para ${seed.preRegistro.nombreCompleto}.`
             : 'Captura inicial del expediente, domicilio SEPOMEX y estudio socioeconómico.'
         }
-        actions={
-          <Link to="/expedientes" className="mk-button mk-button--tonal">
-            <Icon name="arrow_back" />
-            <span className="ml-2">Volver a Expedientes</span>
-          </Link>
-        }
       />
 
       <FadeContent rise={10} duration={0.28} trigger="load" once>
-        <div className="mx-auto max-w-4xl rounded-3xl border border-outline-variant bg-surface-container-lowest p-6">
+        <div className="w-full rounded-3xl border border-outline-variant bg-surface-container-lowest p-6">
           <div className="mb-6 border-b border-outline-variant pb-5">
             <FichaWizardStepper step={step} onSelectStep={handleStepSelect} />
           </div>

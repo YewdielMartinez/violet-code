@@ -49,18 +49,17 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
   }
 
   return (
-    <fieldset className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-4 sm:grid-cols-2">
-      <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+    <fieldset className="grid gap-4 rounded-2xl border border-outline-variant bg-surface-container-low p-5 sm:grid-cols-2">
+      <legend className="px-1 text-sm font-semibold uppercase tracking-wide text-on-surface-variant">
         Domicilio
       </legend>
 
       <div className="flex flex-wrap items-center justify-between gap-2 sm:col-span-2">
         <AgresorGlassSwitch
-          size="sm"
           checked={modoCpManual}
           label="Domicilio fuera de Ahome"
           onChange={handleToggleCpManual}
-          className="text-xs font-medium text-on-surface"
+          className="text-sm font-medium text-on-surface"
         >
           Domicilio fuera de Ahome (capturar CP manual)
         </AgresorGlassSwitch>
@@ -68,10 +67,11 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
 
       <AnimatedReveal show={!modoCpManual} className="sm:col-span-2">
         <div className="grid gap-1">
-          <span className="text-xs font-medium text-on-surface-variant">
+          <span className="text-sm font-medium text-on-surface-variant">
             Colonia / Asentamiento (Ahome)
           </span>
           <Select
+            size="lg"
             label="Colonia o asentamiento"
             options={asentamientoOptions}
             value={values.asentamientoId ? String(values.asentamientoId) : ''}
@@ -81,7 +81,7 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
             }}
           />
           {selectedAsentamiento ? (
-            <p className="text-xs text-on-surface-variant">
+            <p className="text-sm text-on-surface-variant">
               CP del catálogo: <span className="font-mono">{selectedAsentamiento.codigoPostal}</span>
             </p>
           ) : null}
@@ -90,7 +90,7 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
 
       <AnimatedReveal show={modoCpManual} className="sm:col-span-2">
         <div className="grid gap-1">
-          <label className="text-xs font-medium text-on-surface-variant">
+          <label className="text-sm font-medium text-on-surface-variant">
             Código postal manual (5 dígitos, fuera de catálogo)
           </label>
           <label className="mk-field">
@@ -107,7 +107,7 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
             />
           </label>
           {errores.codigoPostal ? (
-            <p role="alert" className="text-xs text-status-danger">
+            <p role="alert" className="text-sm text-status-danger">
               {errores.codigoPostal}
             </p>
           ) : null}
@@ -115,7 +115,7 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
       </AnimatedReveal>
 
       <div className="grid gap-1 sm:col-span-2">
-        <label className="text-xs font-medium text-on-surface-variant">Calle</label>
+        <label className="text-sm font-medium text-on-surface-variant">Calle</label>
         <label className="mk-field">
           <input
             type="text"
@@ -127,7 +127,7 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
       </div>
 
       <div className="grid gap-1">
-        <label className="text-xs font-medium text-on-surface-variant">Número exterior</label>
+        <label className="text-sm font-medium text-on-surface-variant">Número exterior</label>
         <label className="mk-field">
           <input
             type="text"
@@ -139,7 +139,7 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
       </div>
 
       <div className="grid gap-1">
-        <label className="text-xs font-medium text-on-surface-variant">Número interior</label>
+        <label className="text-sm font-medium text-on-surface-variant">Número interior</label>
         <label className="mk-field">
           <input
             type="text"
@@ -151,7 +151,7 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
       </div>
 
       <div className="grid gap-1 sm:col-span-2">
-        <label className="text-xs font-medium text-on-surface-variant">Referencias</label>
+        <label className="text-sm font-medium text-on-surface-variant">Referencias</label>
         <label className="mk-field">
           <input
             type="text"

@@ -111,20 +111,22 @@ export function AgresorFormSection({ fichaId }: Props) {
       open={formOpen}
       onOpenChange={handleDialogOpenChange}
       closeOnBackdrop={false}
+      drag={false}
+      autoResize={false}
     >
       <div className="grid gap-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <p className="text-sm font-medium text-on-surface">
+            <p className="text-base font-semibold text-on-surface">
               Personas agresoras registradas ({agresores?.length ?? 0})
             </p>
-            <p className="text-xs text-on-surface-variant">
+            <p className="text-sm text-on-surface-variant">
               Acceso auditado en bitácora (RF-05 / RF-22)
             </p>
           </div>
 
           <AgresorDialog.Trigger
-            className="mk-button mk-button--primary mk-button--sm"
+            className="mk-button mk-button--primary"
             onClick={handleStartCreate}
           >
             <Icon name="person_add" />
@@ -182,12 +184,12 @@ export function AgresorFormSection({ fichaId }: Props) {
         </Skeleton>
       </div>
 
-      <AgresorDialog.Content size="lg">
-        <AgresorDialog.Header>
-          <AgresorDialog.Title>
+      <AgresorDialog.Content size="lg" dividers>
+        <AgresorDialog.Header className="justify-start gap-3">
+          <AgresorDialog.Close label="Cerrar" />
+          <AgresorDialog.Title className="truncate">
             {editingAgresor ? 'Editar persona agresora' : 'Agregar persona agresora'}
           </AgresorDialog.Title>
-          <AgresorDialog.Close label="Cerrar" />
         </AgresorDialog.Header>
 
         {formOpen ? (

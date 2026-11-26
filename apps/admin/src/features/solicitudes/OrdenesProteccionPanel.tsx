@@ -137,7 +137,7 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
     <section aria-label="Órdenes de protección" className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm text-on-surface-variant">
+          <p className="text-sm sm:text-base text-on-surface-variant">
             Órdenes de protección del expediente. Si existe al menos una vigente, las alertas de la persona escalan a prioridad alta (RN-17).
           </p>
         </div>
@@ -145,7 +145,7 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
         {canWrite ? (
           <button
             type="button"
-            className="mk-button mk-button--filled mk-button--sm"
+            className="mk-button mk-button--filled"
             onClick={() => {
               setEditingOrden(null);
               setFormOpen(true);
@@ -196,26 +196,26 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
                 return (
                   <li
                     key={orden.id}
-                    className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-4"
+                    className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-5"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium text-on-surface">
+                          <span className="text-base font-semibold text-on-surface">
                             Oficio {orden.numeroOficio ?? 'sin número'}
                           </span>
                           <span
-                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${ESTADO_CHIP[orden.estado]}`}
+                            className={`rounded-full px-3 py-1 text-sm font-medium ${ESTADO_CHIP[orden.estado]}`}
                           >
                             {ESTADO_ORDEN_LABELS[orden.estado]}
                           </span>
                           {orden.vigente ? (
-                            <span className="rounded-full bg-status-danger-bg px-2.5 py-0.5 text-xs font-medium text-status-danger">
+                            <span className="rounded-full bg-status-danger-bg px-3 py-1 text-sm font-medium text-status-danger">
                               Vigente hoy
                             </span>
                           ) : null}
                         </div>
-                        <p className="mt-1 text-sm text-on-surface-variant">
+                        <p className="mt-1 text-sm sm:text-[0.95rem] text-on-surface-variant">
                           {orden.autoridadEmisora ?? 'Autoridad no especificada'}
                         </p>
                       </div>
@@ -224,7 +224,7 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
                         <div className="flex flex-wrap items-center gap-2">
                           <button
                             type="button"
-                            className="mk-button mk-button--tonal mk-button--sm"
+                            className="mk-button mk-button--tonal"
                             onClick={() => {
                               setEditingOrden(orden);
                               setFormOpen(true);
@@ -248,7 +248,7 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
                       ) : null}
                     </div>
 
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-on-surface-variant">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm sm:text-[0.95rem] text-on-surface-variant">
                       <span>Emisión: {orden.fechaEmision}</span>
                       <span>
                         Vigencia: {orden.fechaVigencia ?? 'Sin fecha de vencimiento'}
@@ -258,7 +258,7 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
 
                     {copias.length > 0 ? (
                       <div className="grid gap-1.5 border-t border-outline-variant pt-2.5">
-                        <span className="text-xs font-medium text-on-surface-variant">
+                        <span className="text-sm font-medium text-on-surface-variant">
                           Copias adjuntas
                         </span>
                         <div className="flex flex-wrap gap-2">
@@ -294,10 +294,13 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
           if (!nextOpen) setEditingOrden(null);
         }}
         closeOnBackdrop={false}
+        drag={false}
+        autoResize={false}
       >
         <Dialog.Content size="lg" dividers>
-          <Dialog.Header>
-            <div>
+          <Dialog.Header className="justify-start items-start gap-3">
+            <Dialog.Close label="Cerrar formulario" />
+            <div className="min-w-0">
               <Dialog.Title>
                 {editingOrden ? 'Editar orden de protección' : 'Registrar orden de protección'}
               </Dialog.Title>
@@ -305,7 +308,6 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
                 Datos del oficio, vigencia y copia oficial vinculada al expediente.
               </Dialog.Description>
             </div>
-            <Dialog.Close label="Cerrar formulario" />
           </Dialog.Header>
 
           {formOpen ? (

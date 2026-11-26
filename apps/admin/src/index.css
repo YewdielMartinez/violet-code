@@ -288,3 +288,77 @@ body {
 html.vc-icons-loading .mk-icon {
   color: transparent;
 }
+
+/* Tablas operativas: letra más grande y cómoda para personas mayores */
+.vc-expediente-table,
+.vc-canalizaciones-table {
+  --mk-dt-font-size: 1rem;
+  --mk-dt-head-size: 0.875rem;
+  --mk-dt-cell-padding-x: 1.125rem;
+}
+
+:is(.vc-expediente-table, .vc-canalizaciones-table) [data-mk-dt-table] tbody td {
+  padding-block: 0.875rem;
+  line-height: 1.45;
+}
+
+:is(.vc-expediente-table, .vc-canalizaciones-table) [data-mk-dt-table] thead th {
+  padding-block: 0.75rem;
+  font-weight: 600;
+}
+
+:is(.vc-expediente-table, .vc-canalizaciones-table) [data-mk-dt-table] td[data-key='folio'] {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+:is(.vc-expediente-table, .vc-canalizaciones-table) [data-mk-dt-table] td:is([data-key='nombreCompleto'], [data-key='usuariaNombre']) {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Cápsulas visuales de estado y prioridad en DataTable */
+.vc-dt-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.vc-dt-pill__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: currentColor;
+  flex: none;
+}
+
+.vc-dt-pill--success {
+  background: var(--vc-status-success-bg);
+  color: var(--vc-status-success);
+}
+
+.vc-dt-pill--warning {
+  background: var(--vc-status-warning-bg);
+  color: var(--vc-status-warning);
+}
+
+.vc-dt-pill--info {
+  background: var(--vc-status-info-bg);
+  color: var(--vc-status-info);
+}
+
+.vc-dt-pill--danger {
+  background: var(--vc-status-danger-bg);
+  color: var(--vc-status-danger);
+}
+
+.vc-dt-pill--neutral {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+}

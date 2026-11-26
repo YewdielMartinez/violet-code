@@ -40,53 +40,54 @@ export const ExpedienteTopBar = memo(function ExpedienteTopBar({
 
   return (
     <Dialog.Header>
-      <div className="flex items-center justify-between gap-3">
-        <Dialog.Close label="Cerrar" />
-
-        <button
-          type="button"
-          aria-pressed={expanded}
-          onClick={onToggleExpand}
-          className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant bg-surface-container-lowest px-4 py-1.5 text-sm font-medium text-on-surface transition-colors hover:bg-surface-container"
-        >
-          <Icon name={expanded ? 'chevron_right' : 'chevron_left'} className="text-[18px]" />
-          <span>{expanded ? 'Contraer' : 'Expandir'}</span>
-        </button>
-      </div>
-
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Dialog.Title className="text-2xl font-normal tracking-tight text-on-surface">
-          Expediente
-        </Dialog.Title>
+        <div className="flex min-w-0 items-center gap-3">
+          <Dialog.Close label="Cerrar" />
+          <Dialog.Title className="truncate text-2xl font-medium tracking-tight text-on-surface">
+            Expediente
+          </Dialog.Title>
+        </div>
 
-        {expediente ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              className="mk-button mk-button--tonal"
-              onClick={() => void handleCopyFolio()}
-            >
-              <Icon name="content_copy" />
-              <span>Copiar folio</span>
-            </button>
-
-            {phone ? (
-              <a href={`tel:${phone}`} className="mk-button mk-button--primary">
-                <Icon name="call" />
-                <span>Llamar</span>
-              </a>
-            ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          {expediente ? (
+            <>
               <button
                 type="button"
-                className="mk-button mk-button--primary"
-                onClick={() => void handleCopyCurp()}
+                className="mk-button mk-button--tonal"
+                onClick={() => void handleCopyFolio()}
               >
-                <Icon name="badge" />
-                <span>Copiar CURP</span>
+                <Icon name="content_copy" />
+                <span>Copiar folio</span>
               </button>
-            )}
-          </div>
-        ) : null}
+
+              {phone ? (
+                <a href={`tel:${phone}`} className="mk-button mk-button--primary">
+                  <Icon name="call" />
+                  <span>Llamar</span>
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  className="mk-button mk-button--primary"
+                  onClick={() => void handleCopyCurp()}
+                >
+                  <Icon name="badge" />
+                  <span>Copiar CURP</span>
+                </button>
+              )}
+            </>
+          ) : null}
+
+          <button
+            type="button"
+            aria-pressed={expanded}
+            onClick={onToggleExpand}
+            className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant bg-surface-container-lowest px-4 py-1.5 text-sm font-medium text-on-surface transition-colors hover:bg-surface-container"
+          >
+            <Icon name={expanded ? 'chevron_right' : 'chevron_left'} className="text-[18px]" />
+            <span>{expanded ? 'Contraer' : 'Expandir'}</span>
+          </button>
+        </div>
       </div>
     </Dialog.Header>
   );
