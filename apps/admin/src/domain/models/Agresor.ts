@@ -2,17 +2,16 @@ import type { Database } from '@/infrastructure/supabase/database.types';
 import { isAttentionRole, isSupervisor, type StaffRole } from './Auth';
 
 export type TipoArma = Database['public']['Enums']['tipo_arma'];
+export type TipoDroga = Database['public']['Enums']['tipo_droga'];
 
-export const TIPOS_DROGA = [
+export const TIPOS_DROGA: readonly TipoDroga[] = [
   'marihuana',
   'cristal',
   'cocaina',
   'inhalantes',
   'medicamento_controlado',
   'otra',
-] as const;
-
-export type TipoDroga = (typeof TIPOS_DROGA)[number];
+];
 
 export const DROGA_LABELS: Record<TipoDroga, string> = {
   marihuana: 'Marihuana',

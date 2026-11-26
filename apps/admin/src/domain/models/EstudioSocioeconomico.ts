@@ -4,6 +4,8 @@ export type TipoVivienda = Database['public']['Enums']['tipo_vivienda'];
 export type MaterialVivienda = Database['public']['Enums']['material_vivienda'];
 export type TipoTrabajo = Database['public']['Enums']['tipo_trabajo'];
 export type FrecuenciaIngreso = Database['public']['Enums']['frecuencia_ingreso'];
+export type ServicioVivienda = Database['public']['Enums']['servicio_vivienda'];
+export type BienVivienda = Database['public']['Enums']['bien_vivienda'];
 
 export const TIPO_VIVIENDA_LABELS: Record<TipoVivienda, string> = {
   propia: 'Propia',
@@ -37,7 +39,7 @@ export const FRECUENCIA_INGRESO_LABELS: Record<FrecuenciaIngreso, string> = {
   variable: 'Variable',
 };
 
-export const SERVICIOS_VIVIENDA: readonly { value: string; label: string }[] = [
+export const SERVICIOS_VIVIENDA: readonly { value: ServicioVivienda; label: string }[] = [
   { value: 'agua', label: 'Agua potable' },
   { value: 'drenaje', label: 'Drenaje' },
   { value: 'luz', label: 'Energía eléctrica (luz)' },
@@ -46,7 +48,7 @@ export const SERVICIOS_VIVIENDA: readonly { value: string; label: string }[] = [
   { value: 'internet', label: 'Internet' },
 ];
 
-export const BIENES_VIVIENDA: readonly { value: string; label: string }[] = [
+export const BIENES_VIVIENDA: readonly { value: BienVivienda; label: string }[] = [
   { value: 'estufa', label: 'Estufa' },
   { value: 'refrigerador', label: 'Refrigerador' },
   { value: 'lavadora', label: 'Lavadora' },
