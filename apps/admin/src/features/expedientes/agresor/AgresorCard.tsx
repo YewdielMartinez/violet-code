@@ -76,7 +76,7 @@ export function AgresorCard({
         </p>
       ) : null}
 
-      {agresor.tieneConsumoDroga === true || agresor.utilizoArmaUObjeto === true ? (
+      {agresor.tieneConsumoDroga === true || Boolean(agresor.especificacionArma) ? (
         <div className="flex flex-wrap gap-1.5">
           {agresor.tieneConsumoDroga === true ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-status-warning-bg px-2.5 py-0.5 text-xs font-medium text-status-warning">
@@ -90,13 +90,10 @@ export function AgresorCard({
             </span>
           ) : null}
 
-          {agresor.utilizoArmaUObjeto === true ? (
+          {agresor.especificacionArma ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-status-danger-bg px-2.5 py-0.5 text-xs font-medium text-status-danger">
               <Icon name="warning" className="text-[14px]" />
-              <span>
-                Utilizó arma u objeto
-                {agresor.especificacionArma ? `: ${agresor.especificacionArma}` : ''}
-              </span>
+              <span>Arma u objeto: {agresor.especificacionArma}</span>
             </span>
           ) : null}
         </div>

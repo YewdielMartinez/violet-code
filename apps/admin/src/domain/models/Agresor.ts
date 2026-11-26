@@ -54,7 +54,6 @@ export interface Agresor {
   tieneConsumoDroga: boolean | null;
   drogas: TipoDroga[] | null;
   especificacionDroga: string | null;
-  utilizoArmaUObjeto: boolean | null;
   especificacionArma: string | null;
   observaciones: string | null;
   activo: boolean;
@@ -79,7 +78,6 @@ export interface AgresorInput {
   tieneConsumoDroga?: boolean | null;
   drogas?: TipoDroga[] | null;
   especificacionDroga?: string | null;
-  utilizoArmaUObjeto?: boolean | null;
   especificacionArma?: string | null;
   observaciones?: string | null;
   /** Marca temporal leída al abrir el registro para bloqueo optimista en actualizaciones. */
@@ -197,12 +195,7 @@ export function validarAgresor(input: AgresorInput): ValidacionAgresorResult {
     errores.especificacionDroga = 'La especificación de droga no puede exceder 250 caracteres.';
   }
 
-  const especificacionArma = trimmedText(input.especificacionArma);
-  const usoArmaActivo = input.utilizoArmaUObjeto === true;
-
-  if (!usoArmaActivo && especificacionArma.length > 0) {
-    errores.especificacionArma = 'Solo puedes indicar especificación de arma si utilizó arma u objeto.';
-  } else if ((input.especificacionArma?.length ?? 0) > 250) {
+  if ((input.especificacionArma?.length ?? 0) > 250) {
     errores.especificacionArma = 'La especificación de arma no puede exceder 250 caracteres.';
   }
 

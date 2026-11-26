@@ -286,16 +286,16 @@ begin
     id, ficha_id, nombres, apellido_paterno, apellido_materno, edad,
     sexo, estado_civil, parentesco_id, asentamiento_id, calle, numero_exterior,
     zona, ocupacion_id, tipo_trabajo, tiene_consumo_droga, drogas,
-    tiene_consumo_alcohol, utilizo_arma_u_objeto, observaciones, creado_por
+    tiene_consumo_alcohol, observaciones, creado_por
   ) values
     (v_agr_1, v_ficha_1, 'Roberto', 'Salazar', 'Pineda', 36,
       'H', 'separado', v_par_expareja, v_asent_2, 'Calle Allende', '305',
       'urbana', v_oc_empleada, 'temporal', true, array['marihuana'],
-      true, false, 'Antecedentes de hostigamiento telefónico.', v_uid_ts),
+      true, 'Antecedentes de hostigamiento telefónico.', v_uid_ts),
     (v_agr_2, v_ficha_2, 'Héctor', 'Montoya', 'Castro', 39,
       'H', 'casado', v_par_pareja, v_asent_2, 'Calle Santos Degollado', '205',
       'urbana', v_oc_comerc, 'negocio_propio', false, null,
-      true, false, 'Evaluación en curso.', v_uid_ts);
+      true, 'Evaluación en curso.', v_uid_ts);
 
   insert into public.orden_proteccion (
     id, ficha_id, agresor_id, numero_oficio, autoridad_emisora,

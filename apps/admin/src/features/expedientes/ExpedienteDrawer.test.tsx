@@ -179,7 +179,6 @@ const SAMPLE_AGRESOR: Agresor = {
   tieneConsumoDroga: true,
   drogas: ['marihuana'],
   especificacionDroga: null,
-  utilizoArmaUObjeto: false,
   especificacionArma: null,
   observaciones: 'Antecedentes registrados.',
   activo: true,

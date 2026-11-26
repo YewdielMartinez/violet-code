@@ -205,7 +205,6 @@ export type Database = {
           tiene_consumo_alcohol: boolean | null
           tiene_consumo_droga: boolean | null
           tipo_trabajo: Database["public"]["Enums"]["tipo_trabajo"] | null
-          utilizo_arma_u_objeto: boolean | null
           zona: Database["public"]["Enums"]["zona_geografica"] | null
         }
         Insert: {
@@ -241,7 +240,6 @@ export type Database = {
           tiene_consumo_alcohol?: boolean | null
           tiene_consumo_droga?: boolean | null
           tipo_trabajo?: Database["public"]["Enums"]["tipo_trabajo"] | null
-          utilizo_arma_u_objeto?: boolean | null
           zona?: Database["public"]["Enums"]["zona_geografica"] | null
         }
         Update: {
@@ -277,7 +275,6 @@ export type Database = {
           tiene_consumo_alcohol?: boolean | null
           tiene_consumo_droga?: boolean | null
           tipo_trabajo?: Database["public"]["Enums"]["tipo_trabajo"] | null
-          utilizo_arma_u_objeto?: boolean | null
           zona?: Database["public"]["Enums"]["zona_geografica"] | null
         }
         Relationships: [

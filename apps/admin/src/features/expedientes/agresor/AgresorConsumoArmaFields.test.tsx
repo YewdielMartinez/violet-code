@@ -10,7 +10,6 @@ const INITIAL_VALUES: ConsumoArmaValues = {
   tieneConsumoDroga: null,
   drogas: [],
   especificacionDroga: '',
-  utilizoArmaUObjeto: null,
   especificacionArma: '',
   observaciones: '',
 };
@@ -51,23 +50,11 @@ describe('AgresorConsumoArmaFields', () => {
     );
   });
 
-  it('muestra la especificación del arma cuando utilizó arma y la limpia al cambiar a No se sabe', () => {
+  it('permite capturar la especificación del arma u objeto directamente', () => {
     render(<Harness />);
-
-    const armaGroup = screen.getByRole('radiogroup', {
-      name: /¿Utilizó arma u objeto en la agresión\?/i,
-    });
-    fireEvent.click(within(armaGroup).getByLabelText('Sí'));
 
     const input = screen.getByPlaceholderText(/Describe brevemente el objeto o arma/i) as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'Cuchillo' } });
     expect(input.value).toBe('Cuchillo');
-
-    fireEvent.click(within(armaGroup).getByLabelText('No se sabe'));
-    fireEvent.click(within(armaGroup).getByLabelText('Sí'));
-
-    expect(
-      (screen.getByPlaceholderText(/Describe brevemente el objeto o arma/i) as HTMLInputElement).value,
-    ).toBe('');
   });
 });
