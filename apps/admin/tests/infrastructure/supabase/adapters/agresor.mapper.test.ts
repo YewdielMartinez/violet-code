@@ -6,7 +6,7 @@ import {
   toAgresorInsert,
   toAgresorUpdate,
   type AgresorRow,
-} from './agresor.mapper';
+} from '@/infrastructure/supabase/adapters/agresor.mapper';
 
 const SAMPLE_ROW: AgresorRow = {
   id: '77777777-7777-4777-8777-777777777701',

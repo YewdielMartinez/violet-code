@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canAccessPath, getNavigationForRole } from './navigation';
+import { canAccessPath, getNavigationForRole } from '@/app/navigation';
 
 describe('navigation permissions by role', () => {
   it('restringe a UMECA únicamente a la ruta raíz /', () => {

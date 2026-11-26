@@ -4,13 +4,13 @@ const { fromMock } = vi.hoisted(() => ({
   fromMock: vi.fn(),
 }));
 
-vi.mock('../client', () => ({
+vi.mock('@/infrastructure/supabase/client', () => ({
   supabase: {
     from: fromMock,
   },
 }));
 
-import { supabaseDerivacionRepository } from './SupabaseDerivacionRepository';
+import { supabaseDerivacionRepository } from '@/infrastructure/supabase/adapters/SupabaseDerivacionRepository';
 
 function createChain(result: { data: unknown; error: unknown }) {
   const chain = {

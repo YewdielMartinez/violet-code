@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { DocumentoAdjunto } from '../documentosApi';
+import type { DocumentoAdjunto } from '@/features/expedientes/documentosApi';
 import {
   formatFechaDocumento,
   groupDocumentosByTipo,
   summarizeDocumentos,
-} from './documentoGrouping';
+} from '@/features/expedientes/documentos/documentoGrouping';
 
 function makeDoc(overrides: Partial<DocumentoAdjunto> = {}): DocumentoAdjunto {
   return {

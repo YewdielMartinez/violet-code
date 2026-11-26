@@ -15,7 +15,7 @@ vi.mock('@/shared/auth/session', () => ({
   refreshSession: refreshSessionMock,
 }));
 
-import { RequireAuth } from './RequireAuth';
+import { RequireAuth } from '@/app/RequireAuth';
 
 beforeAll(() => {
   Object.defineProperty(window, 'matchMedia', {

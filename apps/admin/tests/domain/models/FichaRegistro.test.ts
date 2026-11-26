@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { INITIAL_DOMICILIO_INPUT, validateDomicilio } from './Domicilio';
+import { INITIAL_DOMICILIO_INPUT, validateDomicilio } from '@/domain/models/Domicilio';
 import {
   EMPTY_APORTANTE,
   INITIAL_ESTUDIO_INPUT,
   validateEstudioSocioeconomico,
-} from './EstudioSocioeconomico';
+} from '@/domain/models/EstudioSocioeconomico';
 import {
   INITIAL_FICHA_IDENTIDAD,
   createIdentidadFromPreRegistro,
   validateFichaIdentidad,
-} from './FichaRegistro';
+} from '@/domain/models/FichaRegistro';
 
 describe('FichaRegistro (validaciones RNF-04 y precarga móvil)', () => {
   it('exige aceptación del Aviso de Privacidad y al menos un servicio solicitado', () => {

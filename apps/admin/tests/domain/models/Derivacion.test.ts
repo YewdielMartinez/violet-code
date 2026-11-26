@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isInternalDestino, validateDerivacion } from './Derivacion';
+import { isInternalDestino, validateDerivacion } from '@/domain/models/Derivacion';
 
 describe('Derivacion (reglas RF-08 / CHECK)', () => {
   it('distingue destinos internos de externos', () => {

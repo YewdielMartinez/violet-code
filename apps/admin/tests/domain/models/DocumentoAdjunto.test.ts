@@ -10,7 +10,7 @@ import {
   sanitizarNombreArchivo,
   validarArchivo,
   validarDocumento,
-} from './DocumentoAdjunto';
+} from '@/domain/models/DocumentoAdjunto';
 
 describe('DocumentoAdjunto (reglas de dominio)', () => {
   it('expone constantes alineadas con el bucket privado documentos', () => {
