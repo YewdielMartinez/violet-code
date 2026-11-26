@@ -1026,6 +1026,11 @@ isOneToOne: false
               "area_destino_id": number,"area_destino_nombre": string,"area_origen_id": number,"area_origen_nombre": string,"creado_en": string,"destino": Database["public"]['Enums']["destino_derivacion"],"estado": Database["public"]['Enums']["estado_derivacion"],"fecha_derivacion": string,"ficha_id": string,"folio": string,"id": string,"institucion_id": number,"institucion_nombre": string,"institucion_otra": string,"motivo": string,"usuaria_nombre": string
             }[]
                            },
+"get_lista_urgencias":
+{ Args: { "p_area_id"?: number }; Returns: {
+              "area_ultima_prioridad": string,"celular": string,"fecha_ultima_prioridad": string,"ficha_id": string,"folio": string,"nombre_completo": string,"persona_id": string
+            }[]
+                           },
 "get_mapa_calor_asentamiento":
 { Args: { "p_umbral_minimo"?: number }; Returns: {
               "asentamiento_id": number,"codigo_postal": string,"estado": string,"latitud": number,"longitud": number,"municipio": string,"nombre": string,"tipo_asentamiento": string,"total_actividades": number,"total_alertas": number,"total_expedientes": number
@@ -1034,6 +1039,11 @@ isOneToOne: false
 "get_umeca_citas":
 { Args: Record<PropertyKey, never>; Returns: {
               "apellido_materno": string,"apellido_paterno": string,"cita_id": string,"estado": string,"nombres": string,"programada_en": string
+            }[]
+                           },
+"reagendar_cita":
+{ Args: { "p_cita_id": string,"p_motivo"?: string,"p_nueva_fecha": string,"p_prioridad"?: Database["public"]['Enums']["prioridad_nivel"] }; Returns: {
+              "cita_anterior_id": string,"cita_nueva_id": string,"estado": Database["public"]['Enums']["estado_cita"],"programada_en": string
             }[]
                            },
 "registrar_consulta":

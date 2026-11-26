@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { validarTransicionCita, validateCitaCreate } from '@/domain/models/Cita';
+import {
+  validarTransicionCita,
+  validateCitaCreate,
+  validateReagendarCita,
+} from '@/domain/models/Cita';
 
 describe('Cita (reglas RF-06 / RN-04 / RN-06)', () => {
   it('valida campos obligatorios y formato al agendar una cita', () => {
@@ -61,5 +65,38 @@ describe('Cita (reglas RF-06 / RN-04 / RN-06)', () => {
     expect(validarTransicionCita('asistio', 'cancelada')).toMatch(/no permitida/i);
     expect(validarTransicionCita('reagendada', 'confirmada')).toMatch(/no permitida/i);
     expect(validarTransicionCita('agendada', 'cancelada', 'x'.repeat(501))).toMatch(/500 caracteres/i);
+  });
+
+  it('valida datos obligatorios y fecha futura al reagendar una cita', () => {
+    expect(
+      validateReagendarCita({
+        citaId: '',
+        nuevaFecha: '2099-07-10T10:00:00-07:00',
+      }),
+    ).toMatch(/cita a reagendar/i);
+
+    expect(
+      validateReagendarCita({
+        citaId: 'cita-1',
+        nuevaFecha: '2020-01-01T10:00:00-07:00',
+      }),
+    ).toMatch(/futuro/i);
+
+    expect(
+      validateReagendarCita({
+        citaId: 'cita-1',
+        nuevaFecha: '2099-07-10T10:00:00-07:00',
+        motivo: 'x'.repeat(501),
+      }),
+    ).toMatch(/500 caracteres/i);
+
+    expect(
+      validateReagendarCita({
+        citaId: 'cita-1',
+        nuevaFecha: '2099-07-10T10:00:00-07:00',
+        motivo: 'Cambio solicitado por la usuaria',
+        prioridad: 'alta',
+      }),
+    ).toBeNull();
   });
 });
