@@ -66,6 +66,7 @@ Criterios mínimos verificables para considerar una tarjeta del Kanban como **Li
 - [ ] **Cero datos reales** de usuarias (nombres, CURP, teléfonos, domicilios, casos clínicos o jurídicos) en código, migraciones, seeds, pruebas, capturas o demos.
 - [ ] **Cero secretos** (`.env`, `service_role` keys, tokens, contraseñas reales) en el repositorio; nuevas variables documentadas únicamente en `.env.example`.
 - [ ] **Cero PII en logs** (consola del navegador, backend `.NET`, Edge/Postgres logs o Logcat).
+- [ ] **Resiliencia, concurrencia y sesiones:** cumple [`docs/resiliencia-concurrencia-sesiones.md`](./resiliencia-concurrencia-sesiones.md) (`retry: false` en mutaciones, CAS/bloqueo optimista en actualizaciones concurrentes, sin PII en `localStorage`/`sessionStorage`, fechas en `America/Mazatlan` y manejo estándar de errores `23505`/`42501`/`P0001`).
 
 ---
 

@@ -53,7 +53,7 @@ Cambiar color: `VIOLET_SEED="#5B2A86" npm run tokens`.
 ## Documentación
 
 - [Flujo Operativo MVP](docs/flujo-operativo-mvp.md), [Requerimientos y Reglas](docs/requerimientos-y-reglas.md), [Alcance MVP](docs/alcance-mvp.md) y [Trazabilidad BD](docs/trazabilidad-requerimientos-db.md).
-- [Estándar Frontend y Arquitectura Hexagonal](docs/estandar-frontend-arquitectura.md), [Guía de `@yewdiel21/motion-kit`](docs/guia-motion-kit-frontend.md) y [Definition of Done (DoD)](docs/definition-of-done.md).
+- [Estándar Frontend y Arquitectura Hexagonal](docs/estandar-frontend-arquitectura.md), [Guía de `@yewdiel21/motion-kit`](docs/guia-motion-kit-frontend.md), [Resiliencia, Concurrencia y Sesiones](docs/resiliencia-concurrencia-sesiones.md) y [Definition of Done (DoD)](docs/definition-of-done.md).
 - Documentación de base de datos, roles y privacidad: [supabase/doc-supabase/](supabase/doc-supabase/).
 
 Cómo colaborar: [CONTRIBUTING.md](CONTRIBUTING.md).
