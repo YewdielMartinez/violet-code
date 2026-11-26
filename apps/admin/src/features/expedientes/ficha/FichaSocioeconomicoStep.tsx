@@ -1,30 +1,28 @@
-import { useMemo } from 'react';
 import { GlassSwitch, MultiSelect, Select } from '@yewdiel21/motion-kit/react';
+import '@yewdiel21/motion-kit/css/components/dialog';
 import '@yewdiel21/motion-kit/css/components/glass-switch';
+import '@yewdiel21/motion-kit/css/components/menu';
 import '@yewdiel21/motion-kit/css/components/multi-select';
 import '@yewdiel21/motion-kit/css/components/select';
 import {
   BIENES_VIVIENDA,
   EMPTY_APORTANTE,
-  FRECUENCIA_INGRESO_LABELS,
   MATERIAL_VIVIENDA_LABELS,
   SERVICIOS_VIVIENDA,
-  TIPO_TRABAJO_LABELS,
   TIPO_VIVIENDA_LABELS,
   type AportanteHogarInput,
   type EstudioSocioeconomicoInput,
-  type FrecuenciaIngreso,
   type MaterialVivienda,
-  type TipoTrabajo,
   type TipoVivienda,
 } from '@/domain/models/EstudioSocioeconomico';
 import type { CatalogosFicha } from '@/domain/models/FichaRegistro';
-import { Icon } from '@/shared/ui/Icon';
+import { FichaAportantesSection } from './FichaAportantesSection';
 
 interface Props {
   value: EstudioSocioeconomicoInput;
   onChange: (next: EstudioSocioeconomicoInput) => void;
   catalogos?: CatalogosFicha;
+  invalidField?: string | null;
 }
 
 const VIVIENDA_OPTIONS = Object.entries(TIPO_VIVIENDA_LABELS).map(([value, label]) => ({
@@ -35,28 +33,11 @@ const MATERIAL_OPTIONS = Object.entries(MATERIAL_VIVIENDA_LABELS).map(([value, l
   value,
   label,
 }));
-const TRABAJO_OPTIONS = Object.entries(TIPO_TRABAJO_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}));
-const FRECUENCIA_OPTIONS = Object.entries(FRECUENCIA_INGRESO_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}));
 const SERVICIOS_OPTIONS = SERVICIOS_VIVIENDA.map((s) => ({ value: s, label: s }));
 const BIENES_OPTIONS = BIENES_VIVIENDA.map((b) => ({ value: b, label: b }));
 
 /** Paso 3 de la Ficha Única: estudio socioeconómico, vivienda y aportantes del hogar. */
-export function FichaSocioeconomicoStep({ value, onChange, catalogos }: Props) {
-  const parentescoOptions = useMemo(
-    () => (catalogos?.parentescos ?? []).map((p) => ({ value: String(p.id), label: p.nombre })),
-    [catalogos?.parentescos],
-  );
-  const ocupacionOptions = useMemo(
-    () => (catalogos?.ocupaciones ?? []).map((o) => ({ value: String(o.id), label: o.nombre })),
-    [catalogos?.ocupaciones],
-  );
-
+export function FichaSocioeconomicoStep({ value, onChange, catalogos, invalidField }: Props) {
   function update<K extends keyof EstudioSocioeconomicoInput>(
     key: K,
     fieldVal: EstudioSocioeconomicoInput[K],
@@ -92,6 +73,8 @@ export function FichaSocioeconomicoStep({ value, onChange, catalogos }: Props) {
             min={0}
             step="0.01"
             placeholder="0.00"
+            data-ficha-field="ingresoMensualPropio"
+            aria-invalid={invalidField === 'ingresoMensualPropio' || undefined}
             value={value.ingresoMensualPropio}
             onChange={(e) => update('ingresoMensualPropio', e.target.value)}
           />
@@ -103,6 +86,8 @@ export function FichaSocioeconomicoStep({ value, onChange, catalogos }: Props) {
             type="number"
             min={0}
             max={30}
+            data-ficha-field="numeroDependientes"
+            aria-invalid={invalidField === 'numeroDependientes' || undefined}
             value={value.numeroDependientes}
             onChange={(e) => update('numeroDependientes', e.target.value)}
           />
@@ -124,6 +109,8 @@ export function FichaSocioeconomicoStep({ value, onChange, catalogos }: Props) {
               type="text"
               maxLength={250}
               placeholder="Ej. Pensión Bienestar, beca escolar, apoyo familiar"
+              data-ficha-field="especificacionApoyo"
+              aria-invalid={invalidField === 'especificacionApoyo' || undefined}
               value={value.especificacionApoyo}
               onChange={(e) => update('especificacionApoyo', e.target.value)}
             />
@@ -160,6 +147,8 @@ export function FichaSocioeconomicoStep({ value, onChange, catalogos }: Props) {
           <input
             type="text"
             maxLength={100}
+            data-ficha-field="materialOtro"
+            aria-invalid={invalidField === 'materialOtro' || undefined}
             value={value.materialOtro}
             onChange={(e) => update('materialOtro', e.target.value)}
           />
@@ -189,96 +178,14 @@ export function FichaSocioeconomicoStep({ value, onChange, catalogos }: Props) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-outline-variant p-4">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-medium text-on-surface">Otros aportantes del hogar</h3>
-            <p className="text-xs text-on-surface-variant">
-              Registra a las personas que contribuyen económicamente en la vivienda.
-            </p>
-          </div>
-          <button type="button" className="mk-button mk-button--tonal mk-button--sm" onClick={addAportante}>
-            <Icon name="add" />
-            <span className="ml-1">Agregar aportante</span>
-          </button>
-        </div>
-
-        {value.aportantes.length === 0 ? (
-          <p className="text-sm text-on-surface-variant">Sin aportantes adicionales registrados.</p>
-        ) : (
-          <div className="grid gap-3">
-            {value.aportantes.map((ap, index) => (
-              <div key={index} className="grid gap-3 rounded-2xl bg-surface-container-low p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium text-on-surface-variant">
-                    Aportante #{index + 1}
-                  </span>
-                  <button
-                    type="button"
-                    className="mk-button mk-button--text mk-button--sm text-status-danger"
-                    onClick={() => removeAportante(index)}
-                  >
-                    Quitar
-                  </button>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <label className="mk-field">
-                    <span className="mk-field__label">Nombre *</span>
-                    <input
-                      type="text"
-                      maxLength={100}
-                      value={ap.nombre}
-                      onChange={(e) => updateAportante(index, { nombre: e.target.value })}
-                    />
-                  </label>
-                  <Select
-                    label="Parentesco"
-                    placeholder="Selecciona…"
-                    options={parentescoOptions}
-                    value={ap.parentescoId ? String(ap.parentescoId) : ''}
-                    onChange={(v) => updateAportante(index, { parentescoId: v ? Number(v) : null })}
-                  />
-                  <Select
-                    label="Ocupación"
-                    placeholder="Selecciona…"
-                    options={ocupacionOptions}
-                    value={ap.ocupacionId ? String(ap.ocupacionId) : ''}
-                    onChange={(v) => updateAportante(index, { ocupacionId: v ? Number(v) : null })}
-                  />
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <Select
-                    label="Tipo de trabajo"
-                    placeholder="Selecciona…"
-                    options={TRABAJO_OPTIONS}
-                    value={ap.tipoTrabajo}
-                    onChange={(v) => updateAportante(index, { tipoTrabajo: v as TipoTrabajo })}
-                  />
-                  <label className="mk-field">
-                    <span className="mk-field__label">Monto (MXN)</span>
-                    <input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={ap.monto}
-                      onChange={(e) => updateAportante(index, { monto: e.target.value })}
-                    />
-                  </label>
-                  <Select
-                    label="Frecuencia"
-                    placeholder="Selecciona…"
-                    options={FRECUENCIA_OPTIONS}
-                    value={ap.frecuencia}
-                    onChange={(v) => updateAportante(index, { frecuencia: v as FrecuenciaIngreso })}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <FichaAportantesSection
+        aportantes={value.aportantes}
+        catalogos={catalogos}
+        invalidField={invalidField}
+        onAdd={addAportante}
+        onRemove={removeAportante}
+        onUpdate={updateAportante}
+      />
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { RadioGroup, Select } from '@yewdiel21/motion-kit/react';
+import '@yewdiel21/motion-kit/css/components/dialog';
+import '@yewdiel21/motion-kit/css/components/menu';
 import '@yewdiel21/motion-kit/css/components/radio-group';
 import '@yewdiel21/motion-kit/css/components/select';
 import type { DomicilioInput, ZonaGeografica } from '@/domain/models/Domicilio';
@@ -8,6 +10,7 @@ import { useAsentamientosSepomex } from '../api';
 interface Props {
   value: DomicilioInput;
   onChange: (next: DomicilioInput) => void;
+  invalidField?: string | null;
 }
 
 const ORIGIN_ITEMS = [
@@ -25,7 +28,7 @@ const ZONA_ITEMS = [
  * Prioriza flujo CP-first sobre el catálogo SEPOMEX de Ahome (451 asentamientos) y ofrece
  * respaldo de código postal de 5 dígitos para personas foráneas sin mezclar ambos campos.
  */
-export function FichaDomicilioStep({ value, onChange }: Props) {
+export function FichaDomicilioStep({ value, onChange, invalidField }: Props) {
   const [cpSearch, setCpSearch] = useState('');
   const [isForanea, setIsForanea] = useState(
     value.asentamientoId === null && value.codigoPostalForaneo.length > 0,
@@ -42,6 +45,11 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
       })),
     [asentamientos],
   );
+
+  const locationInvalid =
+    invalidField === 'asentamientoId' ||
+    invalidField === 'codigoPostalForaneo' ||
+    invalidField === 'ubicacion';
 
   function switchOrigin(mode: string) {
     const foranea = mode === 'foranea';
@@ -74,7 +82,7 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
       </div>
 
       {!isForanea ? (
-        <div className="grid gap-3 sm:grid-cols-[12rem_minmax(0,1fr)]">
+        <div className="grid gap-3 sm:grid-cols-[11rem_minmax(0,1fr)]">
           <label className="mk-field">
             <span className="mk-field__label">Filtrar por CP (5 dígitos)</span>
             <input
@@ -88,8 +96,12 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
             />
           </label>
 
-          <div className="grid gap-1.5">
-            <span className="text-xs font-medium text-on-surface-variant">
+          <div className="grid gap-1.5" data-ficha-field="asentamientoId">
+            <span
+              className={`text-xs font-medium ${
+                locationInvalid ? 'text-status-danger' : 'text-on-surface-variant'
+              }`}
+            >
               Colonia / Ejido / Sindicatura (SEPOMEX Ahome) *
             </span>
             <Select
@@ -115,6 +127,8 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
             inputMode="numeric"
             maxLength={5}
             placeholder="Ej. 80000"
+            data-ficha-field="codigoPostalForaneo"
+            aria-invalid={locationInvalid || undefined}
             className="font-mono"
             value={value.codigoPostalForaneo}
             onChange={(e) =>
@@ -128,18 +142,20 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
         </label>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="mk-field sm:col-span-1">
-          <span className="mk-field__label">Calle *</span>
-          <input
-            type="text"
-            required
-            maxLength={150}
-            value={value.calle}
-            onChange={(e) => onChange({ ...value, calle: e.target.value })}
-          />
-        </label>
+      <label className="mk-field">
+        <span className="mk-field__label">Calle *</span>
+        <input
+          type="text"
+          required
+          maxLength={150}
+          data-ficha-field="calle"
+          aria-invalid={invalidField === 'calle' || undefined}
+          value={value.calle}
+          onChange={(e) => onChange({ ...value, calle: e.target.value })}
+        />
+      </label>
 
+      <div className="grid gap-3 sm:grid-cols-2">
         <label className="mk-field">
           <span className="mk-field__label">Número exterior</span>
           <input

@@ -1,42 +1,93 @@
-import { useState, type CSSProperties } from 'react';
-import { Drawer } from '@yewdiel21/motion-kit/react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { Dialog, useDialog } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
-import '@yewdiel21/motion-kit/css/components/drawer';
 import type { StaffRole } from '@/domain/models/Auth';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
-import { Icon } from '@/shared/ui/Icon';
 import { puedeAccederAgresor } from './agresorApi';
 import { AgresorFormSection } from './AgresorFormSection';
 import { DocumentosAdjuntosPanel } from './DocumentosAdjuntosPanel';
+import { ExpedienteContactoSection } from './drawer/ExpedienteContactoSection';
+import { ExpedienteDrawerTabs, type DrawerTab } from './drawer/ExpedienteDrawerTabs';
+import { ExpedienteHeroCard } from './drawer/ExpedienteHeroCard';
+import { ExpedienteTopBar } from './drawer/ExpedienteTopBar';
+import './drawer/expediente-drawer.css';
 import { FichaDetalleResumen } from './ficha/FichaDetalleResumen';
 import { FichaGestionAcciones } from './ficha/FichaGestionAcciones';
 
-type DrawerTab = 'resumen' | 'agresor' | 'documentos';
+type DialogInstanceRef = ReturnType<typeof useDialog>['instance'];
 
-const DRAWER_WIDTH_STYLE = { '--mk-drawer-width': '680px' } as CSSProperties;
+interface OriginBridgeProps {
+  open: boolean;
+  originElement: HTMLElement | null;
+  instanceRef: DialogInstanceRef;
+}
+
+/**
+ * Conecta el `origin` dinámico (fila de tabla) con `DialogInstance.open(origin)` antes de que
+ * `Dialog.Content` ejecute su apertura genérica sin origen.
+ */
+function DialogOriginBridge({ open, originElement, instanceRef }: OriginBridgeProps) {
+  const { instance } = useDialog();
+
+  useLayoutEffect(() => {
+    instanceRef.current = instance.current;
+    if (open && instance.current && !instance.current.isOpen) {
+      instance.current.open(originElement ?? undefined);
+    }
+  }, [open, originElement, instance, instanceRef]);
+
+  useEffect(() => {
+    instanceRef.current = instance.current;
+  }, [open, instance, instanceRef]);
+
+  return null;
+}
 
 interface Props {
   expediente: ExpedienteResumen | null;
+  originElement?: HTMLElement | null;
   userRole: StaffRole | undefined;
   canManage: boolean;
   onClose: () => void;
 }
 
 /**
- * Panel lateral derecho de detalle de expediente (`RF-05`, `RF-22`).
- * Las pestañas «Persona agresora» y «Documentos» no se renderizan para roles sin acceso
- * (`recepcion`, `umeca`).
+ * Panel lateral derecho de expediente (`RF-05`, `RF-22`).
+ * Usa `Dialog` con `placement="side"` y `variant="morph"` para crecer desde la fila origen y
+ * animar los elementos compartidos (`data-mk-shared`). Mantiene ocultas «Persona agresora» y
+ * «Documentos» para `recepcion` y `umeca`.
  */
-export function ExpedienteDrawer({ expediente, userRole, canManage, onClose }: Props) {
+export function ExpedienteDrawer({
+  expediente,
+  originElement = null,
+  userRole,
+  canManage,
+  onClose,
+}: Props) {
   const canAccessSensitiveTabs = puedeAccederAgresor(userRole);
+  const dialogInstanceRef = useRef<DialogInstanceRef['current']>(null);
+
+  const [expanded, setExpanded] = useState(false);
   const [tabState, setTabState] = useState<{ fichaId: string | null; tab: DrawerTab }>({
     fichaId: null,
     tab: 'resumen',
   });
 
+  const isOpen = Boolean(expediente);
   const requestedTab: DrawerTab =
     expediente && tabState.fichaId === expediente.id ? tabState.tab : 'resumen';
   const activeTab: DrawerTab = canAccessSensitiveTabs ? requestedTab : 'resumen';
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const root = document.documentElement;
+    const previousOverflow = root.style.overflow;
+    root.style.overflow = 'hidden';
+    return () => {
+      root.style.overflow = previousOverflow;
+      if (root.getAttribute('style') === '') root.removeAttribute('style');
+    };
+  }, [isOpen]);
 
   function selectTab(next: DrawerTab) {
     if (!expediente) return;
@@ -45,80 +96,66 @@ export function ExpedienteDrawer({ expediente, userRole, canManage, onClose }: P
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
+      setExpanded(false);
       setTabState({ fichaId: null, tab: 'resumen' });
       onClose();
     }
   }
 
+  function requestClose() {
+    if (dialogInstanceRef.current?.isOpen) {
+      dialogInstanceRef.current.close();
+      return;
+    }
+    handleOpenChange(false);
+  }
+
+  const widthStyle = {
+    '--vc-drawer-width': expanded ? '960px' : '680px',
+  } as CSSProperties;
+
   return (
-    <Drawer.Root side="right" open={Boolean(expediente)} onOpenChange={handleOpenChange}>
-      <Drawer.Content style={DRAWER_WIDTH_STYLE}>
-        <Drawer.Header>
-          <Drawer.Title>
-            {expediente ? `Expediente ${expediente.folio}` : 'Detalle del expediente'}
-          </Drawer.Title>
-          <Drawer.Close label="Cerrar" />
-        </Drawer.Header>
+    <Dialog.Root
+      placement="side"
+      variant="morph"
+      sharedSplit="words"
+      autoResize={false}
+      drag={false}
+      open={isOpen}
+      onOpenChange={handleOpenChange}
+    >
+      <Dialog.Content className="vc-expediente-dialog" style={widthStyle}>
+        <DialogOriginBridge
+          open={isOpen}
+          originElement={originElement}
+          instanceRef={dialogInstanceRef}
+        />
 
-        <Drawer.Body>
+        <ExpedienteTopBar
+          expediente={expediente}
+          expanded={expanded}
+          onToggleExpand={() => setExpanded((prev) => !prev)}
+        />
+
+        <Dialog.Body>
           {expediente ? (
-            <div className="grid gap-4">
-              <div
-                role="tablist"
-                aria-label="Secciones del expediente"
-                className="flex flex-wrap gap-1.5 border-b border-outline-variant pb-3"
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === 'resumen'}
-                  onClick={() => selectTab('resumen')}
-                  className={`mk-chip mk-chip--filter ${
-                    activeTab === 'resumen' ? 'bg-secondary-container text-on-secondary-container' : ''
-                  }`}
-                >
-                  <Icon name="badge" className="mr-1.5 text-[18px]" />
-                  <span>Resumen</span>
-                </button>
+            <div className="grid gap-5">
+              <ExpedienteHeroCard expediente={expediente} />
 
-                {canAccessSensitiveTabs ? (
-                  <>
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={activeTab === 'agresor'}
-                      onClick={() => selectTab('agresor')}
-                      className={`mk-chip mk-chip--filter ${
-                        activeTab === 'agresor'
-                          ? 'bg-secondary-container text-on-secondary-container'
-                          : ''
-                      }`}
-                    >
-                      <Icon name="shield_person" className="mr-1.5 text-[18px]" />
-                      <span>Persona agresora</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={activeTab === 'documentos'}
-                      onClick={() => selectTab('documentos')}
-                      className={`mk-chip mk-chip--filter ${
-                        activeTab === 'documentos'
-                          ? 'bg-secondary-container text-on-secondary-container'
-                          : ''
-                      }`}
-                    >
-                      <Icon name="folder_open" className="mr-1.5 text-[18px]" />
-                      <span>Documentos</span>
-                    </button>
-                  </>
-                ) : null}
-              </div>
+              <ExpedienteDrawerTabs
+                activeTab={activeTab}
+                canAccessSensitiveTabs={canAccessSensitiveTabs}
+                expedienteId={expediente.id}
+                onChange={selectTab}
+              />
 
               {activeTab === 'resumen' ? (
-                <div role="tabpanel">
+                <div role="tabpanel" className="grid gap-6">
+                  <ExpedienteContactoSection expediente={expediente} />
                   <FichaDetalleResumen expediente={expediente} />
+                  {canManage ? (
+                    <FichaGestionAcciones expediente={expediente} onDone={requestClose} />
+                  ) : null}
                 </div>
               ) : null}
 
@@ -135,21 +172,8 @@ export function ExpedienteDrawer({ expediente, userRole, canManage, onClose }: P
               ) : null}
             </div>
           ) : null}
-        </Drawer.Body>
-
-        <Drawer.Footer>
-          {canManage && expediente ? (
-            <FichaGestionAcciones expediente={expediente} onDone={() => handleOpenChange(false)} />
-          ) : null}
-          <button
-            type="button"
-            className="mk-button mk-button--filled"
-            onClick={() => handleOpenChange(false)}
-          >
-            Cerrar
-          </button>
-        </Drawer.Footer>
-      </Drawer.Content>
-    </Drawer.Root>
+        </Dialog.Body>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }

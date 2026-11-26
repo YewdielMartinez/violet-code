@@ -81,6 +81,21 @@ async function resolveStaffUser(userId: string, email: string): Promise<StaffUse
   throw new AuthError(403, 'Esta cuenta no tiene acceso al panel administrativo.');
 }
 
+// Al cargar, getSession() y onAuthStateChange (INITIAL_SESSION / SIGNED_IN) piden el mismo perfil
+// casi a la vez: se comparte la consulta en vuelo para no repetir la petición a `empleado`.
+const STAFF_DEDUPE_MS = 5_000;
+const staffInFlight = new Map<string, Promise<StaffUser>>();
+
+function resolveStaffUserShared(userId: string, email: string): Promise<StaffUser> {
+  const cached = staffInFlight.get(userId);
+  if (cached) return cached;
+  const pending = resolveStaffUser(userId, email);
+  staffInFlight.set(userId, pending);
+  const release = () => setTimeout(() => staffInFlight.delete(userId), STAFF_DEDUPE_MS);
+  pending.then(release, () => staffInFlight.delete(userId));
+  return pending;
+}
+
 function toAuthSession(accessToken: string, expiresAtSeconds: number | undefined, user: StaffUser): AuthSession {
   const expiresAt = expiresAtSeconds
     ? new Date(expiresAtSeconds * 1000).toISOString()
@@ -94,7 +109,7 @@ export const supabaseAuthRepository: AuthRepository = {
     if (error || !data.session || !data.user) {
       throw new AuthError(error?.status ?? 401, mapAuthErrorMessage(error?.status, error?.message ?? ''));
     }
-    const staffUser = await resolveStaffUser(data.user.id, data.user.email ?? email);
+    const staffUser = await resolveStaffUserShared(data.user.id, data.user.email ?? email);
     return toAuthSession(data.session.access_token, data.session.expires_at, staffUser);
   },
 
@@ -107,7 +122,7 @@ export const supabaseAuthRepository: AuthRepository = {
     const { data, error } = await supabase.auth.getSession();
     if (error || !data.session?.user) return null;
     try {
-      const staffUser = await resolveStaffUser(data.session.user.id, data.session.user.email ?? '');
+      const staffUser = await resolveStaffUserShared(data.session.user.id, data.session.user.email ?? '');
       return toAuthSession(data.session.access_token, data.session.expires_at, staffUser);
     } catch {
       return null;
@@ -122,7 +137,7 @@ export const supabaseAuthRepository: AuthRepository = {
       }
       // Evita consultar tablas de forma directa dentro del callback síncrono de GoTrue.
       setTimeout(() => {
-        void resolveStaffUser(session.user.id, session.user.email ?? '')
+        void resolveStaffUserShared(session.user.id, session.user.email ?? '')
           .then((staffUser) => listener(toAuthSession(session.access_token, session.expires_at, staffUser)))
           .catch(() => listener(null));
       }, 0);

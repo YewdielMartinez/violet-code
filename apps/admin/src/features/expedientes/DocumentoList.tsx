@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
   EmptyState,
+  FlipGroup,
   ImagePreview,
   Skeleton,
+  useCascade,
   type ImagePreviewProps,
   type PreviewImage,
 } from '@yewdiel21/motion-kit/react';
@@ -10,28 +12,33 @@ import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/skeleton';
 import '@yewdiel21/motion-kit/css/components/image-preview';
 import { Icon } from '@/shared/ui/Icon';
-import {
-  esImagen,
-  inferirMimeDesdeNombre,
-  type DocumentoAdjunto,
-} from './documentosApi';
+import type { DocumentoAdjunto } from './documentosApi';
+import { DocumentoCard } from './documentos/DocumentoCard';
+import { groupDocumentosByTipo } from './documentos/documentoGrouping';
 
 interface DocumentoListProps {
   documentos: DocumentoAdjunto[];
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
+  onRequestUpload: () => void;
   ordenesLabelById: Map<string, string>;
   activeDocId: string | null;
   archivingDocId: string | null;
+  thumbnailsById: Record<string, string>;
+  loadingThumbIds: Record<string, boolean>;
+  onLoadThumbnail: (doc: DocumentoAdjunto) => void;
+  onThumbnailError: (docId: string) => void;
   onVer: (doc: DocumentoAdjunto) => void;
   onDescargar: (doc: DocumentoAdjunto) => void;
-  onArchivar: (doc: DocumentoAdjunto) => void;
+  onRequestArchivar: (doc: DocumentoAdjunto) => void;
   previewImage: PreviewImage | null;
   onClosePreview: () => void;
 }
 
 const RETRY_ACTIONS = [{ id: 'retry', label: 'Reintentar' }];
+const EMPTY_UPLOAD_ACTIONS = [{ id: 'upload', label: 'Adjuntar documento' }];
+const CASCADE_OPTIONS = { trigger: 'load', duration: 0.42, step: 0.05, once: true } as const;
 
 const IMAGE_PREVIEW_LABELS: NonNullable<ImagePreviewProps['labels']> = {
   close: 'Cerrar vista previa',
@@ -42,36 +49,39 @@ const IMAGE_PREVIEW_LABELS: NonNullable<ImagePreviewProps['labels']> = {
   picture: 'Documento adjunto',
 };
 
-const DATE_TIME_FMT = new Intl.DateTimeFormat('es-MX', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  timeZone: 'America/Mazatlan',
-});
-
-function formatFechaDocumento(iso: string): string {
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : DATE_TIME_FMT.format(date);
-}
-
 export function DocumentoList({
   documentos,
   isLoading,
   isError,
   onRetry,
+  onRequestUpload,
   ordenesLabelById,
   activeDocId,
   archivingDocId,
+  thumbnailsById,
+  loadingThumbIds,
+  onLoadThumbnail,
+  onThumbnailError,
   onVer,
   onDescargar,
-  onArchivar,
+  onRequestArchivar,
   previewImage,
   onClosePreview,
 }: DocumentoListProps) {
-  const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);
   const previewRef: NonNullable<ImagePreviewProps['instanceRef']> = useRef(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const grupos = useMemo(() => groupDocumentosByTipo(documentos), [documentos]);
+  const hasDocs = documentos.length > 0;
+  useCascade(listRef, CASCADE_OPTIONS, [hasDocs]);
+
+  const flipSignature = useMemo(
+    () =>
+      documentos
+        .map((doc) => `${doc.id}:${doc.ordenProteccionId ?? ''}:${doc.descripcion ?? ''}`)
+        .join('|'),
+    [documentos],
+  );
 
   useEffect(() => {
     if (previewImage) {
@@ -95,143 +105,65 @@ export function DocumentoList({
 
   return (
     <div className="grid gap-3">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-on-surface">Documentos del expediente</h3>
-        {!isLoading ? (
-          <span className="font-mono text-xs text-on-surface-variant">
-            {documentos.length} {documentos.length === 1 ? 'archivo' : 'archivos'}
-          </span>
-        ) : null}
-      </div>
-
       <Skeleton loading={isLoading} shape="card" lines={4} label="Cargando documentos adjuntos">
         {documentos.length === 0 ? (
           <div className="rounded-2xl border border-outline-variant bg-surface-container-low p-6">
             <EmptyState
               illustration="folder"
               title="Sin documentos adjuntos"
-              description="Sube identificaciones, fotografías, denuncias u oficios en el formulario superior."
+              description="Adjunta identificaciones, fotografías, denuncias u oficios para integrar el expediente."
+              actions={EMPTY_UPLOAD_ACTIONS}
+              onAction={onRequestUpload}
             />
           </div>
         ) : (
-          <ul className="grid gap-2.5" aria-label="Listado de documentos adjuntos">
-            {documentos.map((doc) => {
-              const imagen = esImagen(inferirMimeDesdeNombre(doc.nombreArchivo));
-              const busy = activeDocId === doc.id || archivingDocId === doc.id;
-              const ordenLabel = doc.ordenProteccionId
-                ? ordenesLabelById.get(doc.ordenProteccionId)
-                : null;
-              const confirmando = confirmArchiveId === doc.id;
-
-              return (
-                <li
-                  key={doc.id}
-                  className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-3.5"
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
-                        imagen
-                          ? 'bg-primary-container text-on-primary-container'
-                          : 'bg-secondary-container text-on-secondary-container'
-                      }`}
-                    >
-                      <Icon name={imagen ? 'image' : 'picture_as_pdf'} />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className="truncate text-sm font-medium text-on-surface"
-                        title={doc.nombreArchivo}
-                      >
-                        {doc.nombreArchivo}
-                      </p>
-
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                        <span className="rounded-full bg-secondary-container px-2.5 py-0.5 text-xs font-medium text-on-secondary-container">
-                          {doc.tipoDocumentoNombre}
-                        </span>
-                        {ordenLabel ? (
-                          <span className="rounded-full bg-status-info-bg px-2.5 py-0.5 text-xs font-medium text-status-info">
-                            {ordenLabel}
-                          </span>
-                        ) : null}
-                      </div>
-
-                      {doc.descripcion ? (
-                        <p className="mt-1.5 text-xs text-on-surface-variant">{doc.descripcion}</p>
-                      ) : null}
-
-                      <p className="mt-1.5 text-xs text-on-surface-variant">
-                        Adjuntado el {formatFechaDocumento(doc.creadoEn)}
-                      </p>
-                    </div>
+          <FlipGroup root={listRef} signature={flipSignature}>
+            <div ref={listRef} className="grid gap-5">
+              {grupos.map((group) => (
+                <section key={group.key} aria-label={group.title} className="grid gap-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+                      <Icon name={group.icon} className="text-[16px] text-primary" />
+                      <span>{group.title}</span>
+                    </h3>
+                    <span className="rounded-full bg-surface-container px-2 py-0.5 font-mono text-[11px] text-on-surface-variant">
+                      {group.items.length}
+                    </span>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-end gap-2 border-t border-outline-variant/60 pt-2.5">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      className="mk-button mk-button--tonal mk-button--sm"
-                      onClick={() => onVer(doc)}
-                    >
-                      <Icon name={imagen ? 'visibility' : 'open_in_new'} />
-                      <span className="ml-1.5">Ver</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={busy}
-                      className="mk-button mk-button--outlined mk-button--sm"
-                      onClick={() => onDescargar(doc)}
-                    >
-                      <Icon name="download" />
-                      <span className="ml-1.5">Descargar</span>
-                    </button>
-
-                    {confirmando ? (
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          disabled={busy}
-                          className="mk-button mk-button--sm bg-error-container text-on-error-container"
-                          onClick={() => {
-                            setConfirmArchiveId(null);
-                            onArchivar(doc);
-                          }}
-                        >
-                          Confirmar
-                        </button>
-                        <button
-                          type="button"
-                          disabled={busy}
-                          className="mk-button mk-button--text mk-button--sm"
-                          onClick={() => setConfirmArchiveId(null)}
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={busy}
-                        className="mk-button mk-button--text mk-button--sm text-status-danger"
-                        onClick={() => setConfirmArchiveId(doc.id)}
-                      >
-                        <Icon name="archive" />
-                        <span className="ml-1">Archivar</span>
-                      </button>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                  <ul
+                    className="grid gap-3 sm:grid-cols-2"
+                    aria-label={`Documentos de ${group.title}`}
+                  >
+                    {group.items.map((doc) => (
+                      <DocumentoCard
+                        key={doc.id}
+                        doc={doc}
+                        ordenLabel={
+                          doc.ordenProteccionId
+                            ? (ordenesLabelById.get(doc.ordenProteccionId) ?? null)
+                            : null
+                        }
+                        thumbnailUrl={thumbnailsById[doc.id] ?? null}
+                        loadingThumbnail={Boolean(loadingThumbIds[doc.id])}
+                        busy={activeDocId === doc.id || archivingDocId === doc.id}
+                        onLoadThumbnail={() => onLoadThumbnail(doc)}
+                        onThumbnailError={() => onThumbnailError(doc.id)}
+                        onVer={() => onVer(doc)}
+                        onDescargar={() => onDescargar(doc)}
+                        onRequestArchivar={() => onRequestArchivar(doc)}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          </FlipGroup>
         )}
       </Skeleton>
 
       {previewImage ? (
-        <div className="sr-only" aria-hidden="true">
+        <div className="h-0 overflow-hidden [&_[data-mk-image]]:hidden" aria-hidden="true">
           <ImagePreview
             key={previewImage.src}
             images={[previewImage]}

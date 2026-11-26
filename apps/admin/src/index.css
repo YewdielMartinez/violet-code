@@ -220,24 +220,6 @@ body {
   font-size: var(--mk-nav-icon-size, 24px);
 }
 
-/* Dock centrado: el kit usa sticky + left:50% + translate, que no centra en un shell en columna (#15).
-   Riel: el kit no deja espacio entre botones (gap: 0) y el activo se encima con el vecino (#17). */
-@media only screen and (min-width: 680px) {
-  .mk-shell:has(> .mk-nav--dock) > .mk-nav--dock {
-    align-self: center;
-    left: auto;
-    transform: none;
-  }
-
-  .mk-nav--rail .mk-nav__buttons {
-    gap: 8px;
-  }
-
-  .mk-nav--rail .mk-nav__button.mk-nav__button--first {
-    margin-bottom: 16px;
-  }
-}
-
 /* Menús de la app: más aire que el menú compacto por defecto. */
 .mk-menu.vc-menu {
   min-width: 288px;

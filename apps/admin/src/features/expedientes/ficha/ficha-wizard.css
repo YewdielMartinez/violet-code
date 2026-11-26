@@ -1,0 +1,52 @@
+/* Estilos locales para el panel lateral escalonado de Nueva Ficha Única.
+   Se importan desde TSX después de los CSS de motion-kit para ajustar ancho,
+   pantalla completa en móvil y alineación de Steps sin conflictos de especificidad. */
+
+.mk-dialog.vc-ficha-drawer[data-mk-drawer='right'] {
+  --mk-drawer-width: 720px;
+}
+
+@media (max-width: 679px) {
+  .mk-dialog.vc-ficha-drawer[data-mk-drawer='right']:not([data-mk-placement='anchor']) {
+    inset: 0;
+    width: 100vw;
+    max-width: 100vw;
+    border-radius: 0;
+  }
+}
+
+.mk-dialog.vc-ficha-drawer [data-mk-part='header'].vc-ficha-drawer__header {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.vc-ficha-drawer__header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+
+.mk-dialog.vc-ficha-drawer [data-mk-part='footer'].vc-ficha-drawer__footer {
+  justify-content: space-between;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--mk-dialog-bg);
+}
+
+/* Steps de motion-kit centra sus pasos por defecto para onboarding; aquí usamos el ancho completo. */
+.mk-steps.vc-ficha-steps {
+  display: block;
+  width: 100%;
+  overflow-x: clip;
+}
+
+.mk-steps.vc-ficha-steps > [data-mk-step] {
+  display: block;
+  width: 100%;
+  align-items: stretch;
+  justify-content: flex-start;
+}

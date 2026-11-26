@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { GlassSwitch, MultiSelect, Select } from '@yewdiel21/motion-kit/react';
+import '@yewdiel21/motion-kit/css/components/dialog';
 import '@yewdiel21/motion-kit/css/components/glass-switch';
+import '@yewdiel21/motion-kit/css/components/menu';
 import '@yewdiel21/motion-kit/css/components/multi-select';
 import '@yewdiel21/motion-kit/css/components/select';
 import {
@@ -19,23 +21,22 @@ interface Props {
   value: FichaIdentidadInput;
   onChange: (next: FichaIdentidadInput) => void;
   catalogos?: CatalogosFicha;
+  invalidField?: string | null;
 }
 
-const ESTADO_CIVIL_OPTIONS = Object.entries(ESTADO_CIVIL_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}));
-const ESCOLARIDAD_OPTIONS = Object.entries(ESCOLARIDAD_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}));
-const SERVICIO_MEDICO_OPTIONS = Object.entries(SERVICIO_MEDICO_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}));
+const ESTADO_CIVIL_OPTIONS = Object.entries(ESTADO_CIVIL_LABELS).map(([value, label]) => ({ value, label }));
+const ESCOLARIDAD_OPTIONS = Object.entries(ESCOLARIDAD_LABELS).map(([value, label]) => ({ value, label }));
+const SERVICIO_MEDICO_OPTIONS = Object.entries(SERVICIO_MEDICO_LABELS).map(([value, label]) => ({ value, label }));
+
+const IDENTITY_FLAGS: { key: 'tieneTrabajo' | 'tieneEmbarazo' | 'tieneDenuncia' | 'esVictimaDelito'; label: string }[] = [
+  { key: 'tieneTrabajo', label: 'Cuenta con trabajo remunerado' },
+  { key: 'tieneEmbarazo', label: 'Embarazo actual' },
+  { key: 'tieneDenuncia', label: 'Cuenta con denuncia previa' },
+  { key: 'esVictimaDelito', label: 'Víctima de delito' },
+];
 
 /** Paso 1 de la Ficha Única: datos generales, servicios solicitados y Aviso de Privacidad (`RNF-04`). */
-export function FichaIdentidadStep({ value, onChange, catalogos }: Props) {
+export function FichaIdentidadStep({ value, onChange, catalogos, invalidField }: Props) {
   const areaOptions = useMemo(
     () => (catalogos?.areas ?? []).map((a) => ({ value: String(a.id), label: a.nombre })),
     [catalogos?.areas],
@@ -58,12 +59,13 @@ export function FichaIdentidadStep({ value, onChange, catalogos }: Props) {
             type="text"
             maxLength={18}
             required
+            data-ficha-field="curp"
+            aria-invalid={invalidField === 'curp' || undefined}
             className="font-mono uppercase"
             value={value.curp}
             onChange={(e) => update('curp', normalizeCurp(e.target.value))}
           />
         </label>
-
         <label className="mk-field">
           <span className="mk-field__label">Teléfono celular (10 dígitos)</span>
           <input
@@ -71,109 +73,66 @@ export function FichaIdentidadStep({ value, onChange, catalogos }: Props) {
             inputMode="numeric"
             maxLength={10}
             placeholder="6680000000"
+            data-ficha-field="celular"
+            aria-invalid={invalidField === 'celular' || undefined}
             value={value.celular}
             onChange={(e) => update('celular', e.target.value.replace(/\D/g, '').slice(0, 10))}
           />
         </label>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="mk-field">
-          <span className="mk-field__label">Nombre(s) *</span>
-          <input
-            type="text"
-            required
-            maxLength={100}
-            value={value.nombres}
-            onChange={(e) => update('nombres', e.target.value)}
-          />
-        </label>
+      <label className="mk-field">
+        <span className="mk-field__label">Nombre(s) *</span>
+        <input
+          type="text"
+          required
+          maxLength={100}
+          data-ficha-field="nombres"
+          aria-invalid={invalidField === 'nombres' || undefined}
+          value={value.nombres}
+          onChange={(e) => update('nombres', e.target.value)}
+        />
+      </label>
 
+      <div className="grid gap-3 sm:grid-cols-2">
         <label className="mk-field">
           <span className="mk-field__label">Apellido paterno *</span>
           <input
             type="text"
             required
             maxLength={100}
+            data-ficha-field="apellidoPaterno"
+            aria-invalid={invalidField === 'apellidoPaterno' || undefined}
             value={value.apellidoPaterno}
             onChange={(e) => update('apellidoPaterno', e.target.value)}
           />
         </label>
-
         <label className="mk-field">
           <span className="mk-field__label">Apellido materno</span>
-          <input
-            type="text"
-            maxLength={100}
-            value={value.apellidoMaterno}
-            onChange={(e) => update('apellidoMaterno', e.target.value)}
-          />
+          <input type="text" maxLength={100} value={value.apellidoMaterno} onChange={(e) => update('apellidoMaterno', e.target.value)} />
         </label>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <div className="grid gap-1.5">
           <span className="text-xs font-medium text-on-surface-variant">Estado civil</span>
-          <Select
-            label="Estado civil"
-            placeholder="Selecciona…"
-            options={ESTADO_CIVIL_OPTIONS}
-            value={value.estadoCivil}
-            onChange={(v) => update('estadoCivil', v as EstadoCivil)}
-          />
+          <Select label="Estado civil" placeholder="Selecciona…" options={ESTADO_CIVIL_OPTIONS} value={value.estadoCivil} onChange={(v) => update('estadoCivil', v as EstadoCivil)} />
         </div>
         <div className="grid gap-1.5">
           <span className="text-xs font-medium text-on-surface-variant">Escolaridad</span>
-          <Select
-            label="Escolaridad"
-            placeholder="Selecciona…"
-            options={ESCOLARIDAD_OPTIONS}
-            value={value.escolaridad}
-            onChange={(v) => update('escolaridad', v as EscolaridadNivel)}
-          />
-        </div>
-        <div className="grid gap-1.5">
-          <span className="text-xs font-medium text-on-surface-variant">Ocupación</span>
-          <Select
-            label="Ocupación"
-            placeholder="Selecciona…"
-            options={ocupacionOptions}
-            value={value.ocupacionId ? String(value.ocupacionId) : ''}
-            onChange={(v) => update('ocupacionId', v ? Number(v) : null)}
-          />
+          <Select label="Escolaridad" placeholder="Selecciona…" options={ESCOLARIDAD_OPTIONS} value={value.escolaridad} onChange={(v) => update('escolaridad', v as EscolaridadNivel)} />
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-1.5">
+          <span className="text-xs font-medium text-on-surface-variant">Ocupación</span>
+          <Select label="Ocupación" placeholder="Selecciona…" options={ocupacionOptions} value={value.ocupacionId ? String(value.ocupacionId) : ''} onChange={(v) => update('ocupacionId', v ? Number(v) : null)} />
+        </div>
         <div className="grid gap-1.5">
           <span className="text-xs font-medium text-on-surface-variant">Servicio médico</span>
-          <Select
-            label="Servicio médico"
-            options={SERVICIO_MEDICO_OPTIONS}
-            value={value.servicioMedico}
-            onChange={(v) => update('servicioMedico', v as ServicioMedico)}
-          />
+          <Select label="Servicio médico" options={SERVICIO_MEDICO_OPTIONS} value={value.servicioMedico} onChange={(v) => update('servicioMedico', v as ServicioMedico)} />
         </div>
-        <label className="mk-field">
-          <span className="mk-field__label">Número de hijas</span>
-          <input
-            type="number"
-            min={0}
-            max={30}
-            value={value.numeroHijas}
-            onChange={(e) => update('numeroHijas', e.target.value)}
-          />
-        </label>
-        <label className="mk-field">
-          <span className="mk-field__label">Número de hijos</span>
-          <input
-            type="number"
-            min={0}
-            max={30}
-            value={value.numeroHijosHombres}
-            onChange={(e) => update('numeroHijosHombres', e.target.value)}
-          />
-        </label>
       </div>
 
       {value.servicioMedico === 'otro' ? (
@@ -182,14 +141,29 @@ export function FichaIdentidadStep({ value, onChange, catalogos }: Props) {
           <input
             type="text"
             maxLength={100}
+            data-ficha-field="servicioMedicoOtro"
+            aria-invalid={invalidField === 'servicioMedicoOtro' || undefined}
             value={value.servicioMedicoOtro}
             onChange={(e) => update('servicioMedicoOtro', e.target.value)}
           />
         </label>
       ) : null}
 
-      <div className="grid gap-1.5">
-        <span className="text-xs font-medium text-on-surface-variant">Servicios solicitados *</span>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="mk-field">
+          <span className="mk-field__label">Número de hijas</span>
+          <input type="number" min={0} max={30} value={value.numeroHijas} onChange={(e) => update('numeroHijas', e.target.value)} />
+        </label>
+        <label className="mk-field">
+          <span className="mk-field__label">Número de hijos</span>
+          <input type="number" min={0} max={30} value={value.numeroHijosHombres} onChange={(e) => update('numeroHijosHombres', e.target.value)} />
+        </label>
+      </div>
+
+      <div className="grid gap-1.5" data-ficha-field="serviciosSolicitadosAreaIds">
+        <span className={`text-xs font-medium ${invalidField === 'serviciosSolicitadosAreaIds' ? 'text-status-danger' : 'text-on-surface-variant'}`}>
+          Servicios solicitados *
+        </span>
         <MultiSelect
           label="Servicios solicitados *"
           placeholder="Selecciona una o más áreas…"
@@ -200,40 +174,21 @@ export function FichaIdentidadStep({ value, onChange, catalogos }: Props) {
       </div>
 
       <div className="grid gap-2 rounded-2xl bg-surface-container-low p-4 sm:grid-cols-2">
-        <GlassSwitch
-          checked={value.tieneTrabajo}
-          onChange={(checked) => update('tieneTrabajo', checked)}
-        >
-          Cuenta con trabajo remunerado
-        </GlassSwitch>
-        <GlassSwitch
-          checked={value.tieneEmbarazo}
-          onChange={(checked) => update('tieneEmbarazo', checked)}
-        >
-          Embarazo actual
-        </GlassSwitch>
-        <GlassSwitch
-          checked={value.tieneDenuncia}
-          onChange={(checked) => update('tieneDenuncia', checked)}
-        >
-          Cuenta con denuncia previa
-        </GlassSwitch>
-        <GlassSwitch
-          checked={value.esVictimaDelito}
-          onChange={(checked) => update('esVictimaDelito', checked)}
-        >
-          Víctima de delito
-        </GlassSwitch>
+        {IDENTITY_FLAGS.map((flag) => (
+          <GlassSwitch key={flag.key} checked={value[flag.key]} onChange={(checked) => update(flag.key, checked)}>
+            {flag.label}
+          </GlassSwitch>
+        ))}
       </div>
 
-      <div className="rounded-2xl border border-primary/30 bg-primary-container/25 p-4">
-        <GlassSwitch
-          checked={value.avisoPrivacidadAceptado}
-          onChange={(checked) => update('avisoPrivacidadAceptado', checked)}
-        >
-          <span className="font-medium text-on-surface">
-            La usuaria aceptó el Aviso de Privacidad Simplificado (RNF-04) *
-          </span>
+      <div
+        data-ficha-field="avisoPrivacidadAceptado"
+        className={`rounded-2xl border p-4 transition-colors ${
+          invalidField === 'avisoPrivacidadAceptado' ? 'border-status-danger bg-status-danger-bg/35' : 'border-primary/30 bg-primary-container/25'
+        }`}
+      >
+        <GlassSwitch checked={value.avisoPrivacidadAceptado} onChange={(checked) => update('avisoPrivacidadAceptado', checked)}>
+          <span className="font-medium text-on-surface">La usuaria aceptó el Aviso de Privacidad Simplificado (RNF-04) *</span>
         </GlassSwitch>
       </div>
     </div>

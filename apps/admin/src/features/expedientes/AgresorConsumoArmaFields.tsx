@@ -1,5 +1,4 @@
-import { Select } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/select';
+import { Icon } from '@/shared/ui/Icon';
 import {
   DROGA_LABELS,
   TIPO_ARMA_LABELS,
@@ -9,17 +8,31 @@ import {
   type TipoArma,
   type TipoDroga,
 } from './agresorApi';
+import { AnimatedReveal } from './agresor/AnimatedReveal';
+import { AgresorRadioGroup } from './agresor/motionCompat';
 
-const TRI_STATE_OPTIONS: { label: string; value: boolean | null }[] = [
-  { label: 'No se sabe', value: null },
-  { label: 'No', value: false },
-  { label: 'Sí', value: true },
+const TRI_STATE_ITEMS = [
+  { value: 'desconocido', label: 'No se sabe' },
+  { value: 'no', label: 'No' },
+  { value: 'si', label: 'Sí' },
 ];
 
-const TIPO_ARMA_OPTIONS = [
+const TIPO_ARMA_ITEMS = [
   { value: '', label: 'Sin especificar' },
   ...TIPOS_ARMA.map((value) => ({ value, label: TIPO_ARMA_LABELS[value] })),
 ];
+
+function boolToTriState(value: boolean | null): 'si' | 'no' | 'desconocido' {
+  if (value === true) return 'si';
+  if (value === false) return 'no';
+  return 'desconocido';
+}
+
+function triStateToBool(value: string | null): boolean | null {
+  if (value === 'si') return true;
+  if (value === 'no') return false;
+  return null;
+}
 
 export interface ConsumoArmaValues {
   tieneConsumoDroga: boolean | null;
@@ -61,6 +74,9 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
     );
   }
 
+  const consumoActivo = values.tieneConsumoDroga === true;
+  const armaActiva = values.utilizoArmaUObjeto === true;
+
   return (
     <div className="grid gap-4">
       <fieldset className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-4">
@@ -68,54 +84,42 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
           Consumo de sustancias
         </legend>
 
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="text-sm font-medium text-on-surface">¿Presenta consumo de drogas?</span>
-          <div className="flex gap-1.5" role="group" aria-label="Consumo de drogas">
-            {TRI_STATE_OPTIONS.map((opt) => {
-              const active = values.tieneConsumoDroga === opt.value;
-              return (
-                <button
-                  key={opt.label}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => handleConsumo(opt.value)}
-                  className={`mk-chip mk-chip--filter ${
-                    active ? 'bg-secondary-container text-on-secondary-container' : ''
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
+          <AgresorRadioGroup
+            variant="pill"
+            label="¿Presenta consumo de drogas?"
+            items={TRI_STATE_ITEMS}
+            value={boolToTriState(values.tieneConsumoDroga)}
+            onChange={(val) => handleConsumo(triStateToBool(val))}
+          />
         </div>
 
-        {values.tieneConsumoDroga === true ? (
+        <AnimatedReveal show={consumoActivo}>
           <div className="grid gap-3 pt-1">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <span className="text-xs font-medium text-on-surface-variant">
+              Sustancias detectadas (selecciona una o más)
+            </span>
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Tipos de drogas">
               {TIPOS_DROGA.map((droga) => {
                 const checked = values.drogas.includes(droga);
                 return (
-                  <label
+                  <button
                     key={droga}
-                    className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors ${
-                      checked
-                        ? 'border-primary bg-primary-container/35 text-on-surface'
-                        : 'border-outline-variant bg-surface text-on-surface-variant'
-                    }`}
+                    type="button"
+                    aria-pressed={checked}
+                    onClick={() => handleToggleDroga(droga)}
+                    className="mk-chip mk-chip--filter transition-transform duration-150 active:scale-95 motion-reduce:transition-none"
                   >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => handleToggleDroga(droga)}
-                      className="accent-primary"
-                    />
+                    <Icon name={checked ? 'check' : 'add'} className="text-[16px]" />
                     <span>{DROGA_LABELS[droga]}</span>
-                  </label>
+                  </button>
                 );
               })}
             </div>
-            {errores.drogas ? <p role="alert" className="text-xs text-status-danger">{errores.drogas}</p> : null}
+            {errores.drogas ? (
+              <p role="alert" className="text-xs text-status-danger">{errores.drogas}</p>
+            ) : null}
 
             <div className="grid gap-1">
               <label className="text-xs font-medium text-on-surface-variant">
@@ -131,11 +135,13 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
                 />
               </label>
               {errores.especificacionDroga ? (
-                <p role="alert" className="text-xs text-status-danger">{errores.especificacionDroga}</p>
+                <p role="alert" className="text-xs text-status-danger">
+                  {errores.especificacionDroga}
+                </p>
               ) : null}
             </div>
           </div>
-        ) : null}
+        </AnimatedReveal>
       </fieldset>
 
       <fieldset className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-4">
@@ -143,42 +149,35 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
           Uso de arma u objeto
         </legend>
 
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="text-sm font-medium text-on-surface">
             ¿Utilizó arma u objeto en la agresión?
           </span>
-          <div className="flex gap-1.5" role="group" aria-label="Uso de arma u objeto">
-            {TRI_STATE_OPTIONS.map((opt) => {
-              const active = values.utilizoArmaUObjeto === opt.value;
-              return (
-                <button
-                  key={opt.label}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => handleArma(opt.value)}
-                  className={`mk-chip mk-chip--filter ${
-                    active ? 'bg-secondary-container text-on-secondary-container' : ''
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
+          <AgresorRadioGroup
+            variant="pill"
+            label="¿Utilizó arma u objeto en la agresión?"
+            items={TRI_STATE_ITEMS}
+            value={boolToTriState(values.utilizoArmaUObjeto)}
+            onChange={(val) => handleArma(triStateToBool(val))}
+          />
         </div>
 
-        {values.utilizoArmaUObjeto === true ? (
-          <div className="grid gap-3 pt-1 sm:grid-cols-2">
-            <div className="grid gap-1">
-              <span className="text-xs font-medium text-on-surface-variant">Tipo de arma u objeto</span>
-              <Select
+        <AnimatedReveal show={armaActiva}>
+          <div className="grid gap-3 pt-1">
+            <div className="grid gap-1.5">
+              <span className="text-xs font-medium text-on-surface-variant">
+                Tipo de arma u objeto
+              </span>
+              <AgresorRadioGroup
+                variant="pill"
                 label="Tipo de arma u objeto"
-                options={TIPO_ARMA_OPTIONS}
+                items={TIPO_ARMA_ITEMS}
                 value={values.tipoArma ?? ''}
-                placeholder="Selecciona una opción…"
                 onChange={(val) => onPatch({ tipoArma: val ? (val as TipoArma) : null })}
               />
-              {errores.tipoArma ? <p role="alert" className="text-xs text-status-danger">{errores.tipoArma}</p> : null}
+              {errores.tipoArma ? (
+                <p role="alert" className="text-xs text-status-danger">{errores.tipoArma}</p>
+              ) : null}
             </div>
 
             <div className="grid gap-1">
@@ -195,26 +194,32 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
                 />
               </label>
               {errores.especificacionArma ? (
-                <p role="alert" className="text-xs text-status-danger">{errores.especificacionArma}</p>
+                <p role="alert" className="text-xs text-status-danger">
+                  {errores.especificacionArma}
+                </p>
               ) : null}
             </div>
           </div>
-        ) : null}
+        </AnimatedReveal>
       </fieldset>
 
       <div className="grid gap-1">
         <div className="flex items-center justify-between">
           <label className="text-xs font-medium text-on-surface-variant">Observaciones</label>
-          <span className="font-mono text-xs text-on-surface-variant">{values.observaciones.length}/5000</span>
+          <span className="font-mono text-xs text-on-surface-variant">
+            {values.observaciones.length}/5000
+          </span>
         </div>
-        <textarea
-          rows={3}
-          maxLength={5000}
-          value={values.observaciones}
-          onChange={(e) => onPatch({ observaciones: e.target.value })}
-          placeholder="Notas relevantes sobre contexto, antecedentes o señas particulares…"
-          className="w-full rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface outline-none focus:border-primary"
-        />
+        <label className="mk-field w-full">
+          <textarea
+            rows={3}
+            maxLength={5000}
+            value={values.observaciones}
+            onChange={(e) => onPatch({ observaciones: e.target.value })}
+            placeholder="Notas relevantes sobre contexto, antecedentes o señas particulares…"
+            className="w-full"
+          />
+        </label>
         {errores.observaciones ? (
           <p role="alert" className="text-xs text-status-danger">{errores.observaciones}</p>
         ) : null}

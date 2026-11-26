@@ -6,7 +6,6 @@ import { OptionsMenu } from '@/features/settings/OptionsMenu';
 import { useAuth } from '@/shared/auth/useAuth';
 import { BrandMark } from '@/shared/ui/BrandMark';
 import { Icon } from '@/shared/ui/Icon';
-import { ThemeToggleButton } from '@/shared/ui/ThemeToggleButton';
 import { getNavigationForRole } from './navigation';
 import { useNavStyle } from './preferences';
 import { preloadPages } from './pages';
@@ -52,17 +51,12 @@ export function AppLayout() {
             onClick={() => navigate('/')}
             aria-label="Violet Code, ir al inicio"
           >
-            {/* Sin .mk-nav__icon: el estilo `rail` lo oculta en el botón --first (ver MOTION-KIT-ISSUES #13). */}
+            {/* Marca propia en lugar de .mk-nav__icon: el logo SVG no es un glifo de Material Symbols. */}
             <BrandMark size={36} className="shrink-0" />
             <span className="mk-nav__name">Violet Code</span>
           </button>
         }
-        actions={
-          <>
-            <ThemeToggleButton variant="nav" />
-            <OptionsMenu />
-          </>
-        }
+        actions={<OptionsMenu />}
       />
 
       <main className="mk-shell__view">

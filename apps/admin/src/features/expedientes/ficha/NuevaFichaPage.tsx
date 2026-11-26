@@ -1,40 +1,38 @@
-import { useEffect, useId } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { LoadingButton, Stepper, toast } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/loading-button';
-import '@yewdiel21/motion-kit/css/components/stepper';
+import { toast } from '@yewdiel21/motion-kit/react';
 import { useAuth } from '@/shared/auth/useAuth';
 import { Icon } from '@/shared/ui/Icon';
 import { PageHeader } from '@/shared/ui/PageHeader';
-import { canLookupPreRegistro } from '../api';
-import { FichaDomicilioStep } from './FichaDomicilioStep';
-import { FichaIdentidadStep } from './FichaIdentidadStep';
-import { FichaSocioeconomicoStep } from './FichaSocioeconomicoStep';
+import { canLookupPreRegistro, useCatalogosFicha } from '../api';
+import { focusFichaField } from './fichaValidation';
+import {
+  FichaWizardFooter,
+  FichaWizardStepper,
+  FichaWizardSteps,
+} from './FichaWizard';
 import { useFichaForm, type FichaSeedContext } from './useFichaForm';
 
-const STEP_ITEMS = [
-  { label: 'Ficha Única', description: 'Identidad, servicios y aviso' },
-  { label: 'Domicilio', description: 'SEPOMEX Ahome o foráneo' },
-  { label: 'Estudio Socioeconómico', description: 'Vivienda y aportantes' },
-];
-
 /**
- * Vista dedicada para la captura completa de la Ficha Única (`/expedientes/nuevo`).
- * Sustituye al modal para dar amplitud operativa en monitores de escritorio.
+ * Vista de respaldo en ruta dedicada (`/expedientes/nuevo`).
+ * Reutiliza el mismo asistente escalonado del panel lateral `NuevaFichaDrawer`.
  */
 export default function NuevaFichaPage() {
   const formId = useId();
+  const formRef = useRef<HTMLFormElement>(null);
+  const pendingFocusFieldRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
   const seed = (location.state as FichaSeedContext | null) ?? null;
+  const [submitError, setSubmitError] = useState(false);
 
   const canCreate = user ? canLookupPreRegistro(user.role) : false;
 
   const {
     step,
-    setStep,
     stepError,
+    invalidField,
     identidad,
     setIdentidad,
     domicilio,
@@ -42,14 +40,14 @@ export default function NuevaFichaPage() {
     estudio,
     setEstudio,
     initialize,
+    goToStep,
     goNext,
     goBack,
     submit,
     isSubmitting,
   } = useFichaForm();
 
-  // Carga los catálogos solo si el usuario tiene permiso de captura.
-  const { data: catalogos } = useCatalogosFichaSafe(canCreate);
+  const { data: catalogos } = useCatalogosFicha(canCreate);
 
   useEffect(() => {
     initialize(seed ?? undefined);
@@ -59,16 +57,28 @@ export default function NuevaFichaPage() {
     return <Navigate to="/expedientes" replace />;
   }
 
+  function handleNext() {
+    goNext((field) => focusFichaField(formRef.current, field));
+  }
+
+  function handleStepSelect(nextStep: number) {
+    if (nextStep < step) goToStep(nextStep);
+    else if (nextStep === step + 1) handleNext();
+  }
+
   async function handleFinish() {
+    setSubmitError(false);
     try {
-      const created = await submit();
+      const created = await submit((field, invalidStep) => {
+        if (invalidStep === step) focusFichaField(formRef.current, field);
+        else pendingFocusFieldRef.current = field;
+      });
       if (!created) return;
-      toast(`Expediente ${created.folio} registrado correctamente.`);
+      toast(`Expediente ${created.folio} registrado.`);
       navigate('/expedientes', { replace: true });
     } catch {
-      toast('No se pudo guardar el expediente. Verifica los datos e intenta de nuevo.', {
-        tone: 'error',
-      });
+      setSubmitError(true);
+      toast('No se pudo guardar la ficha. Verifica los datos.', { tone: 'error' });
     }
   }
 
@@ -76,7 +86,7 @@ export default function NuevaFichaPage() {
     <>
       <PageHeader
         eyebrow="Secretaría de las Mujeres · Ahome · Trabajo Social"
-        title="Nueva Ficha Única de Registro"
+        title="Nueva Ficha Única"
         subtitle={
           seed?.preRegistro
             ? `Datos precargados desde app móvil para ${seed.preRegistro.nombreCompleto}.`
@@ -92,76 +102,47 @@ export default function NuevaFichaPage() {
 
       <div className="rounded-3xl border border-outline-variant bg-surface-container-lowest p-6">
         <div className="mb-6 border-b border-outline-variant pb-5">
-          <Stepper
-            items={STEP_ITEMS}
-            value={step}
-            variant="horizontal"
-            linear
-            onChange={(nextStep) => {
-              if (nextStep < step) setStep(nextStep);
-            }}
-          />
+          <FichaWizardStepper step={step} onSelectStep={handleStepSelect} />
         </div>
 
-        <form
-          id={formId}
-          onSubmit={(e) => {
-            e.preventDefault();
+        <FichaWizardSteps
+          formId={formId}
+          formRef={formRef}
+          step={step}
+          stepError={stepError}
+          invalidField={invalidField}
+          identidad={identidad}
+          onIdentidadChange={setIdentidad}
+          domicilio={domicilio}
+          onDomicilioChange={setDomicilio}
+          estudio={estudio}
+          onEstudioChange={setEstudio}
+          catalogos={catalogos}
+          onNext={handleNext}
+          onSubmit={() => {
             void handleFinish();
           }}
-          noValidate
-        >
-          {step === 0 ? (
-            <FichaIdentidadStep value={identidad} onChange={setIdentidad} catalogos={catalogos} />
-          ) : step === 1 ? (
-            <FichaDomicilioStep value={domicilio} onChange={setDomicilio} />
-          ) : (
-            <FichaSocioeconomicoStep value={estudio} onChange={setEstudio} catalogos={catalogos} />
-          )}
-        </form>
-
-        {stepError ? (
-          <p
-            role="alert"
-            className="mt-5 rounded-2xl bg-status-danger-bg px-4 py-3 text-sm text-status-danger"
-          >
-            {stepError}
-          </p>
-        ) : null}
+          onStepAnimated={() => {
+            if (!pendingFocusFieldRef.current) return;
+            const target = pendingFocusFieldRef.current;
+            pendingFocusFieldRef.current = null;
+            focusFichaField(formRef.current, target);
+          }}
+        />
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant pt-5">
-          <button
-            type="button"
-            className="mk-button mk-button--text"
-            onClick={() => (step === 0 ? navigate('/expedientes') : goBack())}
-          >
-            {step === 0 ? 'Cancelar' : 'Anterior'}
-          </button>
-
-          {step < 2 ? (
-            <button type="button" className="mk-button mk-button--filled" onClick={goNext}>
-              <span>Siguiente</span>
-              <Icon name="arrow_forward" />
-            </button>
-          ) : (
-            <LoadingButton
-              type="submit"
-              form={formId}
-              state={isSubmitting ? 'loading' : 'idle'}
-              className="mk-button mk-button--filled"
-            >
-              <Icon name="save" />
-              <span className="ml-2">Guardar expediente</span>
-            </LoadingButton>
-          )}
+          <FichaWizardFooter
+            formId={formId}
+            step={step}
+            isSubmitting={isSubmitting}
+            submitError={submitError}
+            onClearSubmitError={() => setSubmitError(false)}
+            onBack={goBack}
+            onCancel={() => navigate('/expedientes')}
+            onNext={handleNext}
+          />
         </div>
       </div>
     </>
   );
-}
-
-import { useCatalogosFicha } from '../api';
-
-function useCatalogosFichaSafe(enabled: boolean) {
-  return useCatalogosFicha(enabled);
 }

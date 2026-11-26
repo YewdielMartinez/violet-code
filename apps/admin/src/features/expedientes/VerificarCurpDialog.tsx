@@ -84,7 +84,7 @@ export function VerificarCurpDialog({
 
   return (
     <Dialog.Root open={open} onOpenChange={handleClose}>
-      <Dialog.Content size="md">
+      <Dialog.Content size="xl">
         <Dialog.Header>
           <Dialog.Title>Nuevo expediente · Verificar CURP</Dialog.Title>
           <Dialog.Close label="Cerrar" />
@@ -115,7 +115,7 @@ export function VerificarCurpDialog({
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <label className="mk-field min-w-60 flex-1">
+              <label className="mk-field min-w-[24ch] flex-1">
                 <input
                   id={inputId}
                   type="text"
@@ -132,18 +132,18 @@ export function VerificarCurpDialog({
                   }}
                   aria-invalid={validationError ? true : undefined}
                   aria-describedby={validationError ? hintId : undefined}
-                  className="font-mono uppercase"
+                  className="font-mono tracking-wider uppercase"
                 />
               </label>
 
               <LoadingButton
                 type="submit"
                 state={verifyMutation.isPending ? 'loading' : 'idle'}
-                className="mk-button mk-button--filled"
+                className="mk-button mk-button--primary"
                 disabled={!curpComplete}
               >
                 <Icon name="person_search" />
-                <span className="ml-2">Verificar</span>
+                <span>Verificar</span>
               </LoadingButton>
             </div>
           </form>
@@ -169,10 +169,16 @@ export function VerificarCurpDialog({
                 </div>
               </div>
 
-              <dl className="mt-3 grid gap-2 rounded-xl bg-surface-container-lowest/90 p-3 text-sm sm:grid-cols-2">
+              <dl className="mt-3 grid gap-3 rounded-xl bg-surface-container-lowest/90 p-3.5 text-sm sm:grid-cols-3">
                 <div>
                   <dt className="text-xs text-on-surface-variant">Folio</dt>
                   <dd className="font-mono font-medium text-on-surface">{result.expediente.folio}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-on-surface-variant">CURP</dt>
+                  <dd className="break-all font-mono font-medium text-on-surface">
+                    {result.expediente.persona.curp}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-xs text-on-surface-variant">Estado</dt>
@@ -180,16 +186,18 @@ export function VerificarCurpDialog({
                     {ESTADO_FICHA_LABELS[result.expediente.estado]}
                   </dd>
                 </div>
-                <div className="sm:col-span-2">
+                <div className="sm:col-span-3">
                   <dt className="text-xs text-on-surface-variant">Nombre completo</dt>
-                  <dd className="font-medium text-on-surface">{result.expediente.persona.nombreCompleto}</dd>
+                  <dd className="font-medium text-on-surface">
+                    {result.expediente.persona.nombreCompleto}
+                  </dd>
                 </div>
               </dl>
 
               <div className="mt-3 flex justify-end">
                 <button
                   type="button"
-                  className="mk-button mk-button--filled"
+                  className="mk-button mk-button--primary"
                   onClick={() => {
                     const existing = result.expediente;
                     onOpenChange(false);
@@ -208,13 +216,15 @@ export function VerificarCurpDialog({
               className="mt-5 grid gap-3 rounded-2xl border border-status-info/40 bg-status-info-bg/40 p-4 text-sm text-on-surface"
             >
               <p>
-                La CURP <strong className="font-mono">{result.persona.curp}</strong> ya pertenece a{' '}
-                <strong>{result.persona.nombreCompleto}</strong> en el padrón (sin Ficha Única activa).
+                La CURP{' '}
+                <strong className="break-all font-mono tracking-wide">{result.persona.curp}</strong>{' '}
+                ya pertenece a <strong>{result.persona.nombreCompleto}</strong> en el padrón (sin
+                Ficha Única activa).
               </p>
               <div className="flex justify-end">
                 <button
                   type="button"
-                  className="mk-button mk-button--filled"
+                  className="mk-button mk-button--primary"
                   onClick={() => {
                     const p = result.persona;
                     onOpenChange(false);
@@ -256,13 +266,13 @@ export function VerificarCurpDialog({
               <div className="flex items-center gap-3">
                 <Icon name="verified_user" className="text-status-success" />
                 <span>
-                  CURP <strong className="font-mono">{result.curp}</strong> disponible sin duplicados ni
-                  pre-registro previo.
+                  CURP <strong className="break-all font-mono tracking-wide">{result.curp}</strong>{' '}
+                  disponible sin duplicados ni pre-registro previo.
                 </span>
               </div>
               <button
                 type="button"
-                className="mk-button mk-button--filled"
+                className="mk-button mk-button--primary"
                 onClick={() => {
                   const curp = result.curp;
                   onOpenChange(false);

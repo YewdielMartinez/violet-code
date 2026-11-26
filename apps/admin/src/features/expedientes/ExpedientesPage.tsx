@@ -1,15 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  CommandSearch,
-  DataTable,
-  EmptyState,
-  Skeleton,
-  type CommandItem,
-  type DataAction,
-  type DataTableProps,
-} from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/command-search';
+import { useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { DataTable, EmptyState, Skeleton } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/data-table';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/filter-builder';
@@ -28,93 +18,44 @@ import {
   type ExpedienteResumen,
   type PreRegistroMovil,
 } from './api';
+import {
+  COLUMNS,
+  QUICK_FILTERS,
+  RETRY_ACTION,
+  ROW_ACTIONS,
+  decorateExpedienteRows,
+  formatTableDate,
+  type ExpedienteRow,
+  type QuickFilter,
+} from './drawer/expedientesTableConfig';
 import { ExpedienteDrawer } from './ExpedienteDrawer';
+import { NuevaFichaDrawer } from './ficha/NuevaFichaDrawer';
 import type { FichaSeedContext } from './ficha/useFichaForm';
 import { VerificarCurpDialog } from './VerificarCurpDialog';
-
-type QuickFilter = 'todos' | 'abierto' | 'en_seguimiento' | 'prioritarios' | 'cerrado';
-
-interface ExpedienteRow extends Record<string, unknown> {
-  id: string;
-  folio: string;
-  nombreCompleto: string;
-  curp: string;
-  estado: string;
-  urgencia: string;
-  actualizadoLabel: string;
-}
-
-const ESTADO_OPTIONS = Object.entries(ESTADO_FICHA_LABELS).map(([value, label]) => ({ value, label }));
-const URGENCIA_OPTIONS = [
-  { value: 'Prioritario', label: 'Prioritario' },
-  { value: 'Normal', label: 'Normal' },
-];
-
-// Configuraciones estáticas fuera del componente para preservar referencias en motion-kit.
-const COLUMNS: DataTableProps<ExpedienteRow>['columns'] = [
-  { key: 'folio', label: 'Folio', sortable: true, searchable: true },
-  { key: 'nombreCompleto', label: 'Usuaria', sortable: true, searchable: true },
-  { key: 'curp', label: 'CURP', sortable: true, searchable: true },
-  {
-    key: 'estado',
-    label: 'Estado',
-    type: 'select',
-    filterable: true,
-    options: ESTADO_OPTIONS,
-  },
-  {
-    key: 'urgencia',
-    label: 'Prioridad',
-    type: 'select',
-    filterable: true,
-    options: URGENCIA_OPTIONS,
-  },
-  { key: 'actualizadoLabel', label: 'Actualizado', sortable: true },
-];
-
-const ROW_ACTIONS: DataAction[] = [{ id: 'open', label: 'Abrir expediente' }];
-const RETRY_ACTION = [{ id: 'retry', label: 'Reintentar' }];
-
-const QUICK_FILTERS: { id: QuickFilter; label: string }[] = [
-  { id: 'todos', label: 'Todos' },
-  { id: 'abierto', label: 'Abiertos' },
-  { id: 'en_seguimiento', label: 'En seguimiento' },
-  { id: 'prioritarios', label: 'Prioritarios' },
-  { id: 'cerrado', label: 'Cerrados' },
-];
-
-const DATE_FMT = new Intl.DateTimeFormat('es-MX', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-});
-
-function formatDate(iso: string): string {
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : DATE_FMT.format(date);
-}
 
 /**
  * Pantalla principal de Expedientes (`RF-03`, `RF-04`, `RF-34`, `RF-22`):
  * - La tabla operativa y filtros rápidos ocupan el plano principal desde el primer vistazo.
- * - La verificación previa por CURP (duplicados y precarga móvil) vive en un diálogo
- *   accionado desde `+ Nuevo expediente` para roles autorizados.
+ * - Al hacer clic en una fila (o usar su acción), el panel lateral crece desde esa fila origen.
  */
 export default function ExpedientesPage() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { data, isLoading, isError, refetch } = useExpedientes();
   const { mutate: registerConsult } = useRegisterConsult();
 
+  const tableContainerRef = useRef<HTMLDivElement>(null);
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('todos');
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [selected, setSelected] = useState<ExpedienteResumen | null>(null);
+  const [originElement, setOriginElement] = useState<HTMLElement | null>(null);
+  const [fichaSeed, setFichaSeed] = useState<FichaSeedContext | null>(null);
   const [preloadedDraft, setPreloadedDraft] = useState<PreRegistroMovil | null>(null);
 
   const canCreateExpediente = user ? canLookupPreRegistro(user.role) : false;
 
   function handleStartFicha(seed: FichaSeedContext) {
-    navigate('/expedientes/nuevo', { state: seed });
+    setVerifyOpen(false);
+    setFichaSeed(seed);
   }
 
   const byId = useMemo(() => {
@@ -150,65 +91,79 @@ export default function ExpedientesPage() {
         curp: item.persona.curp,
         estado: ESTADO_FICHA_LABELS[item.estado],
         urgencia: item.enListaUrgencias ? 'Prioritario' : 'Normal',
-        actualizadoLabel: formatDate(item.actualizadoEn),
+        actualizadoLabel: formatTableDate(item.actualizadoEn),
       })),
     [filteredItems],
   );
 
-  const commandItems: CommandItem[] = useMemo(
-    () =>
-      (data ?? []).map((item) => ({
-        id: item.id,
-        label: `${item.folio} · ${item.persona.nombreCompleto}`,
-        group: ESTADO_FICHA_LABELS[item.estado],
-        hint: item.persona.curp,
-        keywords: [item.folio, item.persona.curp, item.persona.nombreCompleto],
-      })),
-    [data],
-  );
-
-  function openExpediente(expediente: ExpedienteResumen) {
+  function openExpediente(expediente: ExpedienteResumen, origin: HTMLElement | null = null) {
+    setOriginElement(origin);
     setSelected(expediente);
     registerConsult(expediente.id);
-  }
-
-  function handleCommandSelect(item: CommandItem) {
-    const match = byId.get(item.id);
-    if (match) openExpediente(match);
   }
 
   function handleRowAction(action: string, row: ExpedienteRow) {
     if (action !== 'open') return;
     const match = byId.get(row.id);
-    if (match) openExpediente(match);
+    if (!match) return;
+
+    const escapedId = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(row.id) : row.id;
+    const rowEl =
+      tableContainerRef.current?.querySelector<HTMLTableRowElement>(
+        `tbody tr[data-id="${escapedId}"]`,
+      ) ?? null;
+
+    openExpediente(match, rowEl);
+  }
+
+  function handleTableClick(event: MouseEvent<HTMLDivElement>) {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest('button, a, input, label, [data-mk-dt-actions], [data-mk-dt-row-menu]')) {
+      return;
+    }
+    if (window.getSelection()?.toString()) return;
+
+    const rowEl = target.closest<HTMLTableRowElement>('tbody tr[data-id]');
+    if (!rowEl || rowEl.hasAttribute('data-mk-dt-loading')) return;
+
+    const rowId = rowEl.dataset.id;
+    const match = rowId ? byId.get(rowId) : undefined;
+    if (match) openExpediente(match, rowEl);
+  }
+
+  function handleTableKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const target = event.target;
+    if (
+      !(target instanceof HTMLTableRowElement) ||
+      !target.matches('tbody tr[data-id]') ||
+      target.hasAttribute('data-mk-dt-loading')
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    const rowId = target.dataset.id;
+    const match = rowId ? byId.get(rowId) : undefined;
+    if (match) openExpediente(match, target);
   }
 
   return (
     <>
       <PageHeader
-        eyebrow="Secretaría de las Mujeres · Ahome · Expedientes"
         title="Expedientes"
-        subtitle="Historial activo por folio, CURP o nombre completo."
         actions={
-          <>
-            <CommandSearch
-              items={commandItems}
-              label="Salto rápido a expediente"
-              placeholder="Ir a expediente (folio, CURP o nombre)…"
-              emptyLabel="Sin expedientes coincidentes."
-              onSelect={handleCommandSelect}
-            />
-            {canCreateExpediente ? (
-              <button
-                type="button"
-                className="mk-button mk-button--filled"
-                onClick={() => setVerifyOpen(true)}
-              >
-                <Icon name="person_add" />
-                <span className="ml-2">Nuevo expediente</span>
-              </button>
-            ) : null}
-          </>
+          canCreateExpediente ? (
+            <button
+              type="button"
+              className="mk-button mk-button--primary"
+              onClick={() => setVerifyOpen(true)}
+            >
+              <Icon name="person_add" />
+              <span>Nuevo expediente</span>
+            </button>
+          ) : null
         }
       />
 
@@ -266,23 +221,29 @@ export default function ExpedientesPage() {
           />
         </div>
       ) : (
-        <Skeleton loading={isLoading} shape="card" lines={6} label="Cargando expedientes">
-          <DataTable<ExpedienteRow>
-            caption="Listado de expedientes activos"
-            rows={rows}
-            columns={COLUMNS}
-            actions={ROW_ACTIONS}
-            onAction={handleRowAction}
-            pageSize={10}
-            search="Buscar por folio, CURP o nombre…"
-            emptyTitle="Sin expedientes en esta vista"
-            emptyDescription={
-              canCreateExpediente
-                ? 'Usa «Nuevo expediente» arriba para verificar una CURP o confirmar un pre-registro móvil.'
-                : 'No hay expedientes activos que coincidan con el filtro seleccionado.'
-            }
-          />
-        </Skeleton>
+        <div ref={tableContainerRef}>
+          <Skeleton loading={isLoading} shape="card" lines={6} label="Cargando expedientes">
+            <DataTable<ExpedienteRow>
+              className="vc-expediente-table"
+              caption="Listado de expedientes activos"
+              rows={rows}
+              columns={COLUMNS}
+              actions={ROW_ACTIONS}
+              onAction={handleRowAction}
+              onClick={handleTableClick}
+              onKeyDown={handleTableKeyDown}
+              onRender={decorateExpedienteRows}
+              pageSize={10}
+              search="Buscar por folio, CURP o nombre…"
+              emptyTitle="Sin expedientes en esta vista"
+              emptyDescription={
+                canCreateExpediente
+                  ? 'Usa «Nuevo expediente» arriba para verificar una CURP o confirmar un pre-registro móvil.'
+                  : 'No hay expedientes activos que coincidan con el filtro seleccionado.'
+              }
+            />
+          </Skeleton>
+        </div>
       )}
 
       {canCreateExpediente ? (
@@ -290,7 +251,7 @@ export default function ExpedientesPage() {
           open={verifyOpen}
           onOpenChange={setVerifyOpen}
           allowPreRegistroLookup={canCreateExpediente}
-          onOpenExpediente={openExpediente}
+          onOpenExpediente={(expediente) => openExpediente(expediente)}
           onPreloadConfirmed={setPreloadedDraft}
           onStartFicha={handleStartFicha}
         />
@@ -298,10 +259,15 @@ export default function ExpedientesPage() {
 
       <ExpedienteDrawer
         expediente={selected}
+        originElement={originElement}
         userRole={user?.role}
         canManage={canCreateExpediente}
-        onClose={() => setSelected(null)}
+        onClose={() => {
+          setSelected(null);
+          setOriginElement(null);
+        }}
       />
+      <NuevaFichaDrawer open={Boolean(fichaSeed)} seed={fichaSeed} onClose={() => setFichaSeed(null)} />
     </>
   );
 }

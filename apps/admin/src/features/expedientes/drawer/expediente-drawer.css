@@ -1,0 +1,106 @@
+/* Estilos específicos del panel lateral de Expediente y sus pestañas.
+   Viven fuera de index.css para mantener aislado el módulo de expedientes. */
+
+.mk-dialog.vc-expediente-dialog[data-mk-placement='side'] {
+  width: min(var(--vc-drawer-width, 680px), calc(100vw - 16px));
+  transition: width 320ms var(--mk-ease-signature);
+}
+
+.mk-dialog.vc-expediente-dialog [data-mk-part='header'] {
+  display: grid;
+  gap: 14px;
+  padding: 20px 24px 12px;
+}
+
+.mk-dialog.vc-expediente-dialog [data-mk-part='body'] {
+  padding: 8px 24px 28px;
+}
+
+@media (max-width: 679px) {
+  .mk-dialog.vc-expediente-dialog[data-mk-placement='side'] {
+    inset: 0 0 0 auto;
+    width: min(var(--vc-drawer-width, 680px), 94vw);
+    height: 100dvh;
+    border-radius: var(--mk-dialog-radius) 0 0 var(--mk-dialog-radius);
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+}
+
+/* Pestañas tipo pill chip con indicador animado de useTabs */
+.vc-drawer-tabs {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  isolation: isolate;
+}
+
+.vc-drawer-tabs__tab {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 999px;
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    border-color 200ms ease,
+    background-color 200ms ease;
+}
+
+.vc-drawer-tabs__tab:hover:not([aria-selected='true']) {
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+}
+
+.vc-drawer-tabs__tab[aria-selected='true'] {
+  border-color: transparent;
+  background: transparent;
+  color: var(--md-sys-color-on-primary);
+}
+
+.vc-drawer-tabs:not([data-mk-ready]) .vc-drawer-tabs__tab[aria-selected='true'] {
+  background: var(--md-sys-color-primary);
+}
+
+.vc-drawer-tabs__tab:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.vc-drawer-tabs__indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: 999px;
+  background: var(--md-sys-color-primary);
+  pointer-events: none;
+}
+
+/* Filas clicables en la tabla de expedientes */
+.vc-expediente-table [data-mk-dt-table] tbody tr[data-id]:not([data-mk-dt-loading]) {
+  cursor: pointer;
+}
+
+.vc-expediente-table [data-mk-dt-table] tbody tr[data-id]:not([data-mk-dt-loading]):focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-dialog.vc-expediente-dialog[data-mk-placement='side'],
+  .vc-drawer-tabs__tab {
+    transition: none;
+  }
+}
