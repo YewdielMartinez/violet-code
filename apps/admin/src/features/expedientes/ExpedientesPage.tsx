@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   CommandSearch,
   DataTable,
@@ -102,16 +102,33 @@ function formatDate(iso: string): string {
  */
 export default function ExpedientesPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { data, isLoading, isError, refetch } = useExpedientes();
   const { mutate: registerConsult } = useRegisterConsult();
 
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>('todos');
   const [verifyOpen, setVerifyOpen] = useState(false);
-  const [selected, setSelected] = useState<ExpedienteResumen | null>(null);
   const [preloadedDraft, setPreloadedDraft] = useState<PreRegistroMovil | null>(null);
 
+  const rawFilter = searchParams.get('filtro');
+  const quickFilter: QuickFilter = QUICK_FILTERS.some((f) => f.id === rawFilter)
+    ? (rawFilter as QuickFilter)
+    : 'todos';
+  const selectedId = searchParams.get('expediente');
+
   const canCreateExpediente = user ? canLookupPreRegistro(user.role) : false;
+
+  function setQuickFilter(next: QuickFilter) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next === 'todos') params.delete('filtro');
+        else params.set('filtro', next);
+        return params;
+      },
+      { replace: true },
+    );
+  }
 
   function handleStartFicha(seed: FichaSeedContext) {
     navigate('/expedientes/nuevo', { state: seed });
@@ -122,6 +139,8 @@ export default function ExpedientesPage() {
     for (const item of data ?? []) map.set(item.id, item);
     return map;
   }, [data]);
+
+  const selected = selectedId ? (byId.get(selectedId) ?? null) : null;
 
   const counts = useMemo<Record<QuickFilter, number>>(() => {
     const list = data ?? [];
@@ -168,8 +187,28 @@ export default function ExpedientesPage() {
   );
 
   function openExpediente(expediente: ExpedienteResumen) {
-    setSelected(expediente);
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.set('expediente', expediente.id);
+        params.delete('tab');
+        return params;
+      },
+      { replace: true },
+    );
     registerConsult(expediente.id);
+  }
+
+  function closeExpediente() {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete('expediente');
+        params.delete('tab');
+        return params;
+      },
+      { replace: true },
+    );
   }
 
   function handleCommandSelect(item: CommandItem) {
@@ -300,7 +339,7 @@ export default function ExpedientesPage() {
         expediente={selected}
         userRole={user?.role}
         canManage={canCreateExpediente}
-        onClose={() => setSelected(null)}
+        onClose={closeExpediente}
       />
     </>
   );

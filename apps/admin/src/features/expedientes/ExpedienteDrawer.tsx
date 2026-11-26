@@ -1,4 +1,5 @@
-import { useState, type CSSProperties } from 'react';
+import { type CSSProperties } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Drawer } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
 import '@yewdiel21/motion-kit/css/components/drawer';
@@ -29,23 +30,28 @@ interface Props {
  */
 export function ExpedienteDrawer({ expediente, userRole, canManage, onClose }: Props) {
   const canAccessSensitiveTabs = puedeAccederAgresor(userRole);
-  const [tabState, setTabState] = useState<{ fichaId: string | null; tab: DrawerTab }>({
-    fichaId: null,
-    tab: 'resumen',
-  });
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  const rawTab = searchParams.get('tab');
   const requestedTab: DrawerTab =
-    expediente && tabState.fichaId === expediente.id ? tabState.tab : 'resumen';
+    rawTab === 'agresor' || rawTab === 'documentos' ? rawTab : 'resumen';
   const activeTab: DrawerTab = canAccessSensitiveTabs ? requestedTab : 'resumen';
 
   function selectTab(next: DrawerTab) {
     if (!expediente) return;
-    setTabState({ fichaId: expediente.id, tab: next });
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next === 'resumen') params.delete('tab');
+        else params.set('tab', next);
+        return params;
+      },
+      { replace: true },
+    );
   }
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
-      setTabState({ fichaId: null, tab: 'resumen' });
       onClose();
     }
   }

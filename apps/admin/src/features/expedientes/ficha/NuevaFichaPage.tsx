@@ -4,8 +4,10 @@ import { LoadingButton, Stepper, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/loading-button';
 import '@yewdiel21/motion-kit/css/components/stepper';
 import { useAuth } from '@/shared/auth/useAuth';
+import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard';
 import { Icon } from '@/shared/ui/Icon';
 import { PageHeader } from '@/shared/ui/PageHeader';
+import { UnsavedChangesDialog } from '@/shared/ui/UnsavedChangesDialog';
 import { canLookupPreRegistro } from '../api';
 import { FichaDomicilioStep } from './FichaDomicilioStep';
 import { FichaIdentidadStep } from './FichaIdentidadStep';
@@ -35,6 +37,7 @@ export default function NuevaFichaPage() {
     step,
     setStep,
     stepError,
+    isDirty,
     identidad,
     setIdentidad,
     domicilio,
@@ -47,6 +50,8 @@ export default function NuevaFichaPage() {
     submit,
     isSubmitting,
   } = useFichaForm();
+
+  const blocker = useUnsavedChangesGuard(canCreate && isDirty);
 
   // Carga los catálogos solo si el usuario tiene permiso de captura.
   const { data: catalogos } = useCatalogosFichaSafe(canCreate);
@@ -156,6 +161,7 @@ export default function NuevaFichaPage() {
           )}
         </div>
       </div>
+      <UnsavedChangesDialog blocker={blocker} />
     </>
   );
 }

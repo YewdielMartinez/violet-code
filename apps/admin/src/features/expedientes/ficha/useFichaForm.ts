@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   INITIAL_DOMICILIO_INPUT,
   validateDomicilio,
@@ -26,6 +26,16 @@ export interface FichaSeedContext {
 export function useFichaForm() {
   const [step, setStep] = useState(0);
   const [stepError, setStepError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [baseline, setBaseline] = useState<{
+    identidad: FichaIdentidadInput;
+    domicilio: DomicilioInput;
+    estudio: EstudioSocioeconomicoInput;
+  }>(() => ({
+    identidad: createIdentidadFromPreRegistro(null),
+    domicilio: INITIAL_DOMICILIO_INPUT,
+    estudio: INITIAL_ESTUDIO_INPUT,
+  }));
   const [identidad, setIdentidad] = useState<FichaIdentidadInput>(() =>
     createIdentidadFromPreRegistro(null),
   );
@@ -39,12 +49,27 @@ export function useFichaForm() {
     if (seed?.existingPersonaId) {
       base.existingPersonaId = seed.existingPersonaId;
     }
+    setBaseline({
+      identidad: base,
+      domicilio: INITIAL_DOMICILIO_INPUT,
+      estudio: INITIAL_ESTUDIO_INPUT,
+    });
     setIdentidad(base);
     setDomicilio(INITIAL_DOMICILIO_INPUT);
     setEstudio(INITIAL_ESTUDIO_INPUT);
+    setSaved(false);
     setStep(0);
     setStepError(null);
   }, []);
+
+  const isDirty = useMemo(() => {
+    if (saved) return false;
+    return (
+      JSON.stringify(identidad) !== JSON.stringify(baseline.identidad) ||
+      JSON.stringify(domicilio) !== JSON.stringify(baseline.domicilio) ||
+      JSON.stringify(estudio) !== JSON.stringify(baseline.estudio)
+    );
+  }, [saved, identidad, domicilio, estudio, baseline]);
 
   function goNext(): boolean {
     if (step === 0) {
@@ -91,7 +116,9 @@ export function useFichaForm() {
     }
 
     setStepError(null);
-    return createMutation.mutateAsync({ identidad, domicilio, estudio });
+    const created = await createMutation.mutateAsync({ identidad, domicilio, estudio });
+    setSaved(true);
+    return created;
   }
 
   return {
@@ -99,6 +126,7 @@ export function useFichaForm() {
     setStep,
     stepError,
     setStepError,
+    isDirty,
     identidad,
     setIdentidad,
     domicilio,

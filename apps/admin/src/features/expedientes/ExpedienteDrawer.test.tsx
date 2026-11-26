@@ -1,4 +1,5 @@
 import { StrictMode, type ReactNode } from 'react';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -44,6 +45,16 @@ vi.mock('./DocumentosAdjuntosPanel', () => ({
 }));
 
 vi.mock('@yewdiel21/motion-kit/react', () => ({
+  Dialog: {
+    Root: ({ open, children }: { open?: boolean; children?: ReactNode }) =>
+      open ? <div>{children}</div> : null,
+    Content: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+    Header: ({ children }: { children?: ReactNode }) => <header>{children}</header>,
+    Title: ({ children }: { children?: ReactNode }) => <h2>{children}</h2>,
+    Close: ({ label }: { label?: string }) => <button type="button">{label ?? 'Cerrar'}</button>,
+    Body: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+    Footer: ({ children }: { children?: ReactNode }) => <footer>{children}</footer>,
+  },
   Drawer: {
     Root: ({ open, children }: { open?: boolean; children?: ReactNode }) =>
       open ? <div data-testid="drawer-root">{children}</div> : null,
@@ -124,9 +135,12 @@ function renderWithQuery(ui: ReactNode) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
+  const router = createMemoryRouter([{ path: '*', element: ui }]);
   return render(
     <StrictMode>
-      <QueryClientProvider client={client}>{ui}</QueryClientProvider>
+      <QueryClientProvider client={client}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     </StrictMode>,
   );
 }
