@@ -988,6 +988,11 @@ isOneToOne: false
 "auth_rol":
 { Args: Record<PropertyKey, never>; Returns: Database["public"]['Enums']["rol_empleado"]
                            },
+"buscar_expedientes":
+{ Args: { "p_incluir_archivados"?: boolean,"p_limite"?: number,"p_termino": string }; Returns: {
+              "coincidencia": string,"curp": string,"en_lista_urgencias": boolean,"estado": Database["public"]['Enums']["estado_ficha"],"fecha_nacimiento": string,"ficha_id": string,"folio": string,"nombre_completo": string,"persona_id": string,"sexo": string,"similitud": number
+            }[]
+                           },
 "buscar_pre_registro_por_curp":
 { Args: { "p_curp": string }; Returns: {
               "apellido_materno": string,"apellido_paterno": string,"celular": string,"curp": string,"entidad_nacimiento": string,"fecha_nacimiento": string,"nombres": string,"persona_id": string,"pre_registro_id": string,"sexo": string
@@ -1101,6 +1106,11 @@ isOneToOne: false
 "tomar_alerta":
 { Args: { "p_alerta_id": string }; Returns: {
               "alerta_id": string,"atendida_en": string,"atendida_por": string,"estado": Database["public"]['Enums']["estado_alerta"],"tomada_en": string
+            }[]
+                           },
+"verificar_curp":
+{ Args: { "p_curp": string }; Returns: {
+              "estado": Database["public"]['Enums']["estado_ficha"],"ficha_id": string,"folio": string,"nombre_completo": string,"persona_id": string,"pre_registro_id": string,"resultado": string
             }[]
                            }
           }
