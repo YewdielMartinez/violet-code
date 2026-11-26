@@ -190,11 +190,13 @@ function getDialog(selector = 'dialog.vc-canalizacion-form-dialog') {
   return document.querySelector<HTMLDialogElement>(selector);
 }
 
-async function openCreateDialog(trigger: HTMLElement) {
+async function openCreateDialog(trigger: HTMLElement, expectedPlacement: 'side' | 'center' = 'side') {
   fireEvent.click(trigger);
   await waitFor(() => expect(getDialog()?.hasAttribute('open')).toBe(true));
   const dialog = getDialog()!;
-  expect(dialog.getAttribute('data-mk-placement')).toBe('side');
+  expect(dialog.getAttribute('data-mk-placement')).toBe(
+    expectedPlacement === 'center' ? null : expectedPlacement,
+  );
   return dialog;
 }
 
@@ -205,7 +207,7 @@ describe('Canalizaciones: diálogo de alta, detalle lateral y filtros', () => {
     expect(await screen.findByText('Contención emocional inicial por crisis reciente.')).toBeTruthy();
     expect(screen.queryByRole('region', { name: /Registrar nueva canalización/i })).toBeNull();
 
-    const dialog = await openCreateDialog(screen.getByRole('button', { name: /Canalizar/i }));
+    const dialog = await openCreateDialog(screen.getByRole('button', { name: /Canalizar/i }), 'center');
     await waitFor(() => expect(listCatalogoMock).toHaveBeenCalledWith('area'));
 
     // Expediente fijo: no hay selector de expediente.

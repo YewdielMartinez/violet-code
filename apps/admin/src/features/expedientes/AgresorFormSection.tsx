@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { EmptyState, Skeleton } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/skeleton';
@@ -38,9 +38,15 @@ export function AgresorFormSection({ fichaId }: Props) {
   const { mutate: registrarConsulta } = useRegistrarConsultaAgresor();
 
   const [formOpen, setFormOpen] = useState(false);
+  const [formMounted, setFormMounted] = useState(false);
   const [editingAgresor, setEditingAgresor] = useState<Agresor | null>(null);
   const consultedAgresorRef = useRef<string | null>(null);
+  const formOpenRef = useRef(false);
   const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    formOpenRef.current = formOpen;
+  }, [formOpen]);
 
   const hasAgresores = Boolean(agresores && agresores.length > 0);
   useAgresorCascade(listRef, CASCADE_OPTIONS, [hasAgresores]);
@@ -69,10 +75,12 @@ export function AgresorFormSection({ fichaId }: Props) {
   function handleStartCreate() {
     consultedAgresorRef.current = null;
     setEditingAgresor(null);
+    setFormMounted(true);
   }
 
   function handleOpenCreateFromEmpty() {
     handleStartCreate();
+    formOpenRef.current = true;
     setFormOpen(true);
   }
 
@@ -82,15 +90,21 @@ export function AgresorFormSection({ fichaId }: Props) {
       registrarConsulta({ tabla: 'agresor', registroId: agresor.id });
     }
     setEditingAgresor(agresor);
+    setFormMounted(true);
   }
 
-  function handleDialogOpenChange(nextOpen: boolean) {
-    if (!nextOpen) {
-      consultedAgresorRef.current = null;
-      setEditingAgresor(null);
-    }
+  const handleDialogOpenChange = useCallback((nextOpen: boolean) => {
+    formOpenRef.current = nextOpen;
+    if (nextOpen) setFormMounted(true);
     setFormOpen(nextOpen);
-  }
+  }, []);
+
+  const handleAfterClose = useCallback(() => {
+    if (formOpenRef.current) return;
+    consultedAgresorRef.current = null;
+    setEditingAgresor(null);
+    setFormMounted(false);
+  }, []);
 
   if (isError) {
     return (
@@ -110,6 +124,7 @@ export function AgresorFormSection({ fichaId }: Props) {
     <AgresorDialog.Root
       open={formOpen}
       onOpenChange={handleDialogOpenChange}
+      onAfterClose={handleAfterClose}
       closeOnBackdrop={false}
       drag={false}
       autoResize={false}
@@ -185,14 +200,16 @@ export function AgresorFormSection({ fichaId }: Props) {
       </div>
 
       <AgresorDialog.Content size="lg" dividers>
-        <AgresorDialog.Header className="justify-start gap-3">
-          <AgresorDialog.Close label="Cerrar" />
-          <AgresorDialog.Title className="truncate">
-            {editingAgresor ? 'Editar persona agresora' : 'Agregar persona agresora'}
-          </AgresorDialog.Title>
+        <AgresorDialog.Header>
+          <div className="flex min-w-0 items-center gap-3">
+            <AgresorDialog.Close label="Cerrar" />
+            <AgresorDialog.Title className="truncate">
+              {editingAgresor ? 'Editar persona agresora' : 'Agregar persona agresora'}
+            </AgresorDialog.Title>
+          </div>
         </AgresorDialog.Header>
 
-        {formOpen ? (
+        {formMounted ? (
           <AgresorForm
             key={editingAgresor?.id ?? 'new'}
             fichaId={fichaId}

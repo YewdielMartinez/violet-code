@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dialog,
   EmptyState,
@@ -51,8 +51,34 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
   const canWrite = puedeEscribirOrdenesProteccion(user?.role);
 
   const [formOpen, setFormOpen] = useState(false);
+  const [formMounted, setFormMounted] = useState(false);
   const [editingOrden, setEditingOrden] = useState<OrdenProteccion | null>(null);
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
+  const anchorRef = useRef<HTMLElement | null>(null);
+  const formOpenRef = useRef(false);
+
+  useEffect(() => {
+    formOpenRef.current = formOpen;
+  }, [formOpen]);
+
+  const openForm = useCallback((orden: OrdenProteccion | null, origin: HTMLElement | null) => {
+    anchorRef.current = origin;
+    setEditingOrden(orden);
+    formOpenRef.current = true;
+    setFormMounted(true);
+    setFormOpen(true);
+  }, []);
+
+  const closeForm = useCallback(() => {
+    formOpenRef.current = false;
+    setFormOpen(false);
+  }, []);
+
+  const handleAfterClose = useCallback(() => {
+    if (formOpenRef.current) return;
+    setEditingOrden(null);
+    setFormMounted(false);
+  }, []);
 
   const ordenesQuery = useOrdenesProteccion(fichaId, canView);
   const agresoresQuery = useAgresoresParaOrden(fichaId, canView);
@@ -146,10 +172,7 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
           <button
             type="button"
             className="mk-button mk-button--filled"
-            onClick={() => {
-              setEditingOrden(null);
-              setFormOpen(true);
-            }}
+            onClick={(e) => openForm(null, e.currentTarget)}
           >
             <Icon name="gavel" />
             <span className="ml-1.5">Nueva orden</span>
@@ -225,10 +248,7 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
                           <button
                             type="button"
                             className="mk-button mk-button--tonal"
-                            onClick={() => {
-                              setEditingOrden(orden);
-                              setFormOpen(true);
-                            }}
+                            onClick={(e) => openForm(orden, e.currentTarget)}
                           >
                             Editar
                           </button>
@@ -289,41 +309,35 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
 
       <Dialog.Root
         open={formOpen}
+        anchor={anchorRef}
         onOpenChange={(nextOpen) => {
+          formOpenRef.current = nextOpen;
           setFormOpen(nextOpen);
-          if (!nextOpen) setEditingOrden(null);
+          if (nextOpen) setFormMounted(true);
         }}
+        onAfterClose={handleAfterClose}
         closeOnBackdrop={false}
         drag={false}
         autoResize={false}
       >
         <Dialog.Content size="lg" dividers>
-          <Dialog.Header className="justify-start items-start gap-3">
-            <Dialog.Close label="Cerrar formulario" />
-            <div className="min-w-0">
-              <Dialog.Title>
+          <Dialog.Header>
+            <div className="flex min-w-0 items-center gap-3">
+              <Dialog.Close label="Cerrar formulario" />
+              <Dialog.Title className="truncate">
                 {editingOrden ? 'Editar orden de protección' : 'Registrar orden de protección'}
               </Dialog.Title>
-              <Dialog.Description>
-                Datos del oficio, vigencia y copia oficial vinculada al expediente.
-              </Dialog.Description>
             </div>
           </Dialog.Header>
 
-          {formOpen ? (
+          {formMounted ? (
             <OrdenProteccionForm
               key={editingOrden?.id ?? 'new'}
               fichaId={fichaId}
               orden={editingOrden}
               agresores={agresoresQuery.data ?? []}
-              onCancel={() => {
-                setFormOpen(false);
-                setEditingOrden(null);
-              }}
-              onSuccess={() => {
-                setFormOpen(false);
-                setEditingOrden(null);
-              }}
+              onCancel={closeForm}
+              onSuccess={closeForm}
             />
           ) : null}
         </Dialog.Content>
