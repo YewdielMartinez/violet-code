@@ -399,6 +399,7 @@ Table cita {
   reagendada_de uuid [unique]
   area_id smallint [not null]
   programada_en timestamptz [not null]
+  prioridad prioridad_nivel
   recomendada_por text
   estado estado_cita [not null, default: 'agendada']
   confirmada_en timestamptz
