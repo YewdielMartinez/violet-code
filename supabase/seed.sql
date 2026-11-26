@@ -267,11 +267,11 @@ begin
     tipo_vivienda, material, servicios, bienes, creado_por
   ) values
     (v_est_1, v_ficha_1, current_date - 7, true, 6800.00, 2, false, null,
-      'rentada', 'block', array['agua', 'drenaje', 'luz', 'internet'],
-      array['estufa', 'refrigerador', 'lavadora'], v_uid_ts),
+      'rentada', 'block', array['agua', 'drenaje', 'luz', 'internet']::public.servicio_vivienda[],
+      array['estufa', 'refrigerador', 'lavadora']::public.bien_vivienda[], v_uid_ts),
     (v_est_2, v_ficha_2, current_date - 2, true, 9200.00, 2, true, 'Beca escolar municipal',
-      'infonavit', 'ladrillo', array['agua', 'drenaje', 'luz', 'pavimento'],
-      array['estufa', 'refrigerador', 'tv', 'aire_acondicionado'], v_uid_ts);
+      'infonavit', 'ladrillo', array['agua', 'drenaje', 'luz', 'pavimento']::public.servicio_vivienda[],
+      array['estufa', 'refrigerador', 'tv', 'aire_acondicionado']::public.bien_vivienda[], v_uid_ts);
 
   insert into public.aportante_hogar (
     estudio_socioeconomico_id, nombre, parentesco_id, ocupacion_id,
@@ -290,7 +290,7 @@ begin
   ) values
     (v_agr_1, v_ficha_1, 'Roberto', 'Salazar', 'Pineda', 36,
       'H', 'separado', v_par_expareja, v_asent_2, 'Calle Allende', '305',
-      'urbana', v_oc_empleada, 'temporal', true, array['marihuana'],
+      'urbana', v_oc_empleada, 'temporal', true, array['marihuana']::public.tipo_droga[],
       true, 'Antecedentes de hostigamiento telefónico.', v_uid_ts),
     (v_agr_2, v_ficha_2, 'Héctor', 'Montoya', 'Castro', 39,
       'H', 'casado', v_par_pareja, v_asent_2, 'Calle Santos Degollado', '205',
