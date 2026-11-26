@@ -222,7 +222,7 @@ export function FichaSocioeconomicoStep({ value, onChange, catalogos }: Props) {
                   </button>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
                   <label className="mk-field">
                     <span className="mk-field__label">Nombre *</span>
                     <input
@@ -232,30 +232,39 @@ export function FichaSocioeconomicoStep({ value, onChange, catalogos }: Props) {
                       onChange={(e) => updateAportante(index, { nombre: e.target.value })}
                     />
                   </label>
-                  <Select
-                    label="Parentesco"
-                    placeholder="Selecciona…"
-                    options={parentescoOptions}
-                    value={ap.parentescoId ? String(ap.parentescoId) : ''}
-                    onChange={(v) => updateAportante(index, { parentescoId: v ? Number(v) : null })}
-                  />
-                  <Select
-                    label="Ocupación"
-                    placeholder="Selecciona…"
-                    options={ocupacionOptions}
-                    value={ap.ocupacionId ? String(ap.ocupacionId) : ''}
-                    onChange={(v) => updateAportante(index, { ocupacionId: v ? Number(v) : null })}
-                  />
+                  <div className="grid gap-1.5">
+                    <span className="text-xs font-medium text-on-surface-variant">Parentesco</span>
+                    <Select
+                      label="Parentesco"
+                      placeholder="Selecciona…"
+                      options={parentescoOptions}
+                      value={ap.parentescoId ? String(ap.parentescoId) : ''}
+                      onChange={(v) => updateAportante(index, { parentescoId: v ? Number(v) : null })}
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <span className="text-xs font-medium text-on-surface-variant">Ocupación</span>
+                    <Select
+                      label="Ocupación"
+                      placeholder="Selecciona…"
+                      options={ocupacionOptions}
+                      value={ap.ocupacionId ? String(ap.ocupacionId) : ''}
+                      onChange={(v) => updateAportante(index, { ocupacionId: v ? Number(v) : null })}
+                    />
+                  </div>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <Select
-                    label="Tipo de trabajo"
-                    placeholder="Selecciona…"
-                    options={TRABAJO_OPTIONS}
-                    value={ap.tipoTrabajo}
-                    onChange={(v) => updateAportante(index, { tipoTrabajo: v as TipoTrabajo })}
-                  />
+                <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
+                  <div className="grid gap-1.5">
+                    <span className="text-xs font-medium text-on-surface-variant">Tipo de trabajo</span>
+                    <Select
+                      label="Tipo de trabajo"
+                      placeholder="Selecciona…"
+                      options={TRABAJO_OPTIONS}
+                      value={ap.tipoTrabajo}
+                      onChange={(v) => updateAportante(index, { tipoTrabajo: v as TipoTrabajo })}
+                    />
+                  </div>
                   <label className="mk-field">
                     <span className="mk-field__label">Monto (MXN)</span>
                     <input
@@ -266,13 +275,16 @@ export function FichaSocioeconomicoStep({ value, onChange, catalogos }: Props) {
                       onChange={(e) => updateAportante(index, { monto: e.target.value })}
                     />
                   </label>
-                  <Select
-                    label="Frecuencia"
-                    placeholder="Selecciona…"
-                    options={FRECUENCIA_OPTIONS}
-                    value={ap.frecuencia}
-                    onChange={(v) => updateAportante(index, { frecuencia: v as FrecuenciaIngreso })}
-                  />
+                  <div className="grid gap-1.5">
+                    <span className="text-xs font-medium text-on-surface-variant">Frecuencia</span>
+                    <Select
+                      label="Frecuencia"
+                      placeholder="Selecciona…"
+                      options={FRECUENCIA_OPTIONS}
+                      value={ap.frecuencia}
+                      onChange={(v) => updateAportante(index, { frecuencia: v as FrecuenciaIngreso })}
+                    />
+                  </div>
                 </div>
               </div>
             ))}
