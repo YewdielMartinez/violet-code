@@ -16,6 +16,7 @@ Referencia técnica del modelo relacional, reglas de integridad, auditoría y co
 | [20261125000500_05_vistas.sql](../migrations/20261125000500_05_vistas.sql)                 | Vistas analíticas/operativas y funciones RPC (`get_umeca_citas`, `get_mapa_calor_asentamiento`).                                                                                                |
 | [20261125000600_06_reglas_negocio.sql](../migrations/20261125000600_06_reglas_negocio.sql) | Folio automático (`ficha_folio_seq`, formato `SEM-AAAA-NNNN`), mayoría de edad `>= 18` en Psicología/Jurídico, columnas generadas de CURP en `pre_registro` y `buscar_pre_registro_por_curp()`. |
 | [20261125000700_07_rls.sql](../migrations/20261125000700_07_rls.sql)                       | Helpers RBAC + ABAC (`tiene_permiso()`, roles y áreas) y políticas RLS en las 32 tablas públicas + bucket `documentos`.                                                                         |
+| [20261125000800_08_cita_prioridad.sql](../migrations/20261125000800_08_cita_prioridad.sql) | Columna operativa opcional `prioridad` (`prioridad_nivel`) en `cita` para agendado en Recepción.                                                                                              |
 
 ---
 
