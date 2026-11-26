@@ -58,7 +58,7 @@ export const NAVIGATION: NavPage[] = [
     path: '/expedientes',
     label: 'Expedientes',
     icon: 'folder_shared',
-    ready: false,
+    ready: true,
     mobile: true,
     allowedRoles: ATTENTION_AND_DIRECTION,
   },
