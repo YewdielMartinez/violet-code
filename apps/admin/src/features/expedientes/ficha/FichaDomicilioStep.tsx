@@ -15,10 +15,12 @@ const ZONA_ITEMS = [
   { value: 'rural', label: 'Rural' },
 ];
 
+const NO_LOCALIDAD = 'Sin localidad';
+
 /**
  * Paso 2 de la Ficha Única: captura estructurada de domicilio (`RN-12.1`).
- * Combina flujo CP-first y cascada `Estado → Municipio → Colonia / Asentamiento`
- * sobre `cat_asentamiento` (SEPOMEX) por si la usuaria no conoce su código postal.
+ * Orden operativo: `Código postal → Estado → Municipio → Ciudad/Localidad → Colonia/Asentamiento`
+ * con sincronización bidireccional sobre `cat_asentamiento` (SEPOMEX).
  */
 export function FichaDomicilioStep({ value, onChange }: Props) {
   const { data: allAsentamientos = [], isLoading } = useAsentamientosSepomex(undefined, true);
@@ -34,6 +36,9 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
   const [estadoFilter, setEstadoFilter] = useState(() => selectedAsentamiento?.estado ?? '');
   const [municipioFilter, setMunicipioFilter] = useState(
     () => selectedAsentamiento?.municipio ?? '',
+  );
+  const [ciudadFilter, setCiudadFilter] = useState(
+    () => selectedAsentamiento?.localidad ?? '',
   );
 
   const cpTrimmed = cpSearch.trim();
@@ -69,14 +74,30 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
     return unique.map((mun) => ({ value: mun, label: mun }));
   }, [allAsentamientos, estadoFilter]);
 
+  const ciudadOptions = useMemo(() => {
+    const source = allAsentamientos.filter((a) => {
+      if (estadoFilter && a.estado !== estadoFilter) return false;
+      if (municipioFilter && a.municipio !== municipioFilter) return false;
+      return true;
+    });
+    const unique = Array.from(
+      new Set(source.map((a) => a.localidad?.trim() || NO_LOCALIDAD)),
+    ).sort((a, b) => a.localeCompare(b, 'es-MX'));
+    return unique.map((ciudad) => ({ value: ciudad, label: ciudad }));
+  }, [allAsentamientos, estadoFilter, municipioFilter]);
+
   const filteredAsentamientos = useMemo(() => {
     if (hasFullCp && cpMatches.length > 0) return cpMatches;
     return allAsentamientos.filter((a) => {
       if (estadoFilter && a.estado !== estadoFilter) return false;
       if (municipioFilter && a.municipio !== municipioFilter) return false;
+      if (ciudadFilter) {
+        const loc = a.localidad?.trim() || NO_LOCALIDAD;
+        if (loc !== ciudadFilter) return false;
+      }
       return true;
     });
-  }, [allAsentamientos, hasFullCp, cpMatches, estadoFilter, municipioFilter]);
+  }, [allAsentamientos, hasFullCp, cpMatches, estadoFilter, municipioFilter, ciudadFilter]);
 
   const asentamientoOptions = useMemo(
     () =>
@@ -95,6 +116,7 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
       if (matches.length > 0) {
         setEstadoFilter(matches[0].estado);
         setMunicipioFilter(matches[0].municipio);
+        setCiudadFilter(matches[0].localidad?.trim() || NO_LOCALIDAD);
         onChange({
           ...value,
           asentamientoId: matches.length === 1 ? matches[0].id : null,
@@ -117,7 +139,9 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
           .map((a) => a.municipio),
       ),
     );
-    setMunicipioFilter(munList.length === 1 ? munList[0] : '');
+    const nextMun = munList.length === 1 ? munList[0] : '';
+    setMunicipioFilter(nextMun);
+    setCiudadFilter('');
     setCpSearch('');
     onChange({ ...value, asentamientoId: null, codigoPostalForaneo: '' });
   }
@@ -128,6 +152,13 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
       const match = allAsentamientos.find((a) => a.municipio === nextMunicipio);
       if (match) setEstadoFilter(match.estado);
     }
+    setCiudadFilter('');
+    setCpSearch('');
+    onChange({ ...value, asentamientoId: null, codigoPostalForaneo: '' });
+  }
+
+  function handleCiudadChange(nextCiudad: string) {
+    setCiudadFilter(nextCiudad);
     setCpSearch('');
     onChange({ ...value, asentamientoId: null, codigoPostalForaneo: '' });
   }
@@ -138,6 +169,7 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
     if (match) {
       setEstadoFilter(match.estado);
       setMunicipioFilter(match.municipio);
+      setCiudadFilter(match.localidad?.trim() || NO_LOCALIDAD);
       setCpSearch(match.codigoPostal);
     }
     onChange({
@@ -149,10 +181,12 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
 
   const resolvedEstado = estadoFilter || selectedAsentamiento?.estado || '';
   const resolvedMunicipio = municipioFilter || selectedAsentamiento?.municipio || '';
+  const resolvedCiudad =
+    ciudadFilter || (selectedAsentamiento ? selectedAsentamiento.localidad?.trim() || NO_LOCALIDAD : '');
 
   return (
     <div className="grid gap-4">
-      <div className="grid gap-3 sm:grid-cols-[12rem_minmax(0,1fr)_minmax(0,1fr)] sm:items-end">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[11rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] lg:items-end">
         <label className="mk-field">
           <span className="mk-field__label">Código postal (5 dígitos)</span>
           <input
@@ -185,6 +219,17 @@ export function FichaDomicilioStep({ value, onChange }: Props) {
             options={municipioOptions}
             value={resolvedMunicipio}
             onChange={handleMunicipioChange}
+          />
+        </div>
+
+        <div className="grid gap-1.5">
+          <span className="text-xs font-medium text-on-surface-variant">Ciudad / Localidad</span>
+          <Select
+            label="Ciudad / Localidad"
+            placeholder={isLoading ? 'Cargando…' : 'Selecciona ciudad…'}
+            options={ciudadOptions}
+            value={resolvedCiudad}
+            onChange={handleCiudadChange}
           />
         </div>
       </div>
