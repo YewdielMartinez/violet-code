@@ -140,6 +140,9 @@ export function getNavigationForRole(role: StaffRole | undefined): NavPage[] {
 
 export function canAccessPath(role: StaffRole | undefined, pathname: string): boolean {
   if (!role) return false;
+  if (pathname === '/expedientes/nuevo') {
+    return role === 'titular' || role === 'subdireccion' || role === 'trabajo_social';
+  }
   const page = NAVIGATION.find((item) => item.path === pathname);
   if (!page) return role !== 'umeca';
   return page.allowedRoles.includes(role);

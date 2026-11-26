@@ -2,7 +2,7 @@ import { Suspense, type ComponentType } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { ALL_PAGES } from './navigation';
-import { DashboardPage, DirectoryPage, ExpedientesPage, LoginPage, PendingModulePage } from './pages';
+import { DashboardPage, DirectoryPage, ExpedientesPage, LoginPage, NuevaFichaPage, PendingModulePage } from './pages';
 import { RequireAuth } from './RequireAuth';
 
 // Páginas implementadas. Al terminar un módulo: agregarlo aquí y marcar `ready: true` en navigation.ts.
@@ -38,6 +38,14 @@ export const router = createBrowserRouter([
           element: <Suspense fallback={pageFallback}>{Page ? <Page /> : <PendingModulePage title={title ?? label} />}</Suspense>,
         };
       }),
+      {
+        path: '/expedientes/nuevo',
+        element: (
+          <Suspense fallback={pageFallback}>
+            <NuevaFichaPage />
+          </Suspense>
+        ),
+      },
       {
         path: '*',
         element: (

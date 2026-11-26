@@ -5,12 +5,14 @@ const loadLogin = () => import('@/features/auth/LoginPage');
 const loadDashboard = () => import('@/features/dashboard/DashboardPage');
 const loadDirectory = () => import('@/features/directory/DirectoryPage');
 const loadExpedientes = () => import('@/features/expedientes/ExpedientesPage');
+const loadNuevaFicha = () => import('@/features/expedientes/ficha/NuevaFichaPage');
 const loadPending = () => import('@/shared/ui/PendingModulePage');
 
 export const LoginPage = lazy(loadLogin);
 export const DashboardPage = lazy(loadDashboard);
 export const DirectoryPage = lazy(loadDirectory);
 export const ExpedientesPage = lazy(loadExpedientes);
+export const NuevaFichaPage = lazy(loadNuevaFicha);
 export const PendingModulePage = lazy(loadPending);
 
 /**
@@ -21,5 +23,6 @@ export function preloadPages() {
   void loadDashboard();
   void loadDirectory();
   void loadExpedientes();
+  void loadNuevaFicha();
   void loadPending();
 }

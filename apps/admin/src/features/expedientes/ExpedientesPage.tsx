@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   CommandSearch,
   DataTable,
@@ -27,7 +28,12 @@ import {
   type ExpedienteResumen,
   type PreRegistroMovil,
 } from './api';
+<<<<<<< HEAD
 import { ExpedienteDrawer } from './ExpedienteDrawer';
+=======
+import { FichaDetalleDialog } from './ficha/FichaDetalleDialog';
+import type { FichaSeedContext } from './ficha/useFichaForm';
+>>>>>>> dd5b3e80c403c04a8b68aeb7dea5f44a208675fd
 import { VerificarCurpDialog } from './VerificarCurpDialog';
 
 type QuickFilter = 'todos' | 'abierto' | 'en_seguimiento' | 'prioritarios' | 'cerrado';
@@ -99,6 +105,7 @@ function formatDate(iso: string): string {
  *   accionado desde `+ Nuevo expediente` para roles autorizados.
  */
 export default function ExpedientesPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { data, isLoading, isError, refetch } = useExpedientes();
   const { mutate: registerConsult } = useRegisterConsult();
@@ -109,6 +116,10 @@ export default function ExpedientesPage() {
   const [preloadedDraft, setPreloadedDraft] = useState<PreRegistroMovil | null>(null);
 
   const canCreateExpediente = user ? canLookupPreRegistro(user.role) : false;
+
+  function handleStartFicha(seed: FichaSeedContext) {
+    navigate('/expedientes/nuevo', { state: seed });
+  }
 
   const byId = useMemo(() => {
     const map = new Map<string, ExpedienteResumen>();
@@ -285,12 +296,19 @@ export default function ExpedientesPage() {
           allowPreRegistroLookup={canCreateExpediente}
           onOpenExpediente={openExpediente}
           onPreloadConfirmed={setPreloadedDraft}
+          onStartFicha={handleStartFicha}
         />
       ) : null}
 
+<<<<<<< HEAD
       <ExpedienteDrawer
         expediente={selected}
         userRole={user?.role}
+=======
+      <FichaDetalleDialog
+        expediente={selected}
+        canManage={canCreateExpediente}
+>>>>>>> dd5b3e80c403c04a8b68aeb7dea5f44a208675fd
         onClose={() => setSelected(null)}
       />
     </>
