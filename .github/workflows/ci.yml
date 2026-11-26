@@ -34,6 +34,7 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run lint -w @violet-code/admin
+      - run: npm run test -w @violet-code/admin
       - run: npm run build -w @violet-code/admin
 
   mobile:
