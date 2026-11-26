@@ -1021,6 +1021,11 @@ isOneToOne: false
 "generar_folio_ficha":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"get_actividades_preventivas":
+{ Args: { "p_desde"?: string,"p_hasta"?: string,"p_limite"?: number }; Returns: {
+              "asentamiento_id": number,"asentamiento_nombre": string,"codigo_postal": string,"creado_en": string,"creado_por": string,"creado_por_nombre": string,"direccion": string,"id": string,"municipio": string,"nivel_educativo": Database["public"]['Enums']["nivel_educativo"],"numero_asistentes": number,"participantes": Json,"programada_en": string,"referencias": string,"sede": string,"tipo_actividad_clave": string,"tipo_actividad_id": number,"tipo_actividad_nombre": string,"tipo_institucion": Database["public"]['Enums']["tipo_institucion_actividad"],"titulo": string
+            }[]
+                           },
 "get_agenda":
 { Args: { "p_area_id"?: number,"p_desde": string,"p_estados"?: (Database["public"]['Enums']["estado_cita"])[],"p_hasta": string,"p_limite"?: number }; Returns: {
               "area_clave": string,"area_id": number,"celular": string,"cita_id": string,"estado": Database["public"]['Enums']["estado_cita"],"nombre_completo": string,"origen": Database["public"]['Enums']["origen_cita"],"persona_id": string,"prioridad": Database["public"]['Enums']["prioridad_nivel"],"programada_en": string,"reagendada_de": string,"recomendada_por": string
@@ -1054,6 +1059,11 @@ isOneToOne: false
 "reagendar_cita":
 { Args: { "p_cita_id": string,"p_motivo"?: string,"p_nueva_fecha": string,"p_prioridad"?: Database["public"]['Enums']["prioridad_nivel"] }; Returns: {
               "cita_anterior_id": string,"cita_nueva_id": string,"estado": Database["public"]['Enums']["estado_cita"],"programada_en": string
+            }[]
+                           },
+"registrar_actividad_preventiva":
+{ Args: { "p_payload": Json }; Returns: {
+              "actividad_id": string,"total_participantes": number
             }[]
                            },
 "registrar_consulta":
