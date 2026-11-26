@@ -35,7 +35,7 @@ export default function NuevaFichaPage() {
 
   const {
     step,
-    setStep,
+    goToStep,
     stepError,
     isDirty,
     identidad,
@@ -70,8 +70,15 @@ export default function NuevaFichaPage() {
       if (!created) return;
       toast(`Expediente ${created.folio} registrado correctamente.`);
       navigate('/expedientes', { replace: true });
-    } catch {
-      toast('No se pudo guardar el expediente. Verifica los datos e intenta de nuevo.', {
+    } catch (err) {
+      const msg =
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message: unknown }).message === 'string'
+          ? (err as { message: string }).message
+          : 'No se pudo guardar el expediente. Verifica los datos e intenta de nuevo.';
+      toast(msg, {
         tone: 'error',
       });
     }
@@ -103,7 +110,7 @@ export default function NuevaFichaPage() {
             variant="horizontal"
             linear
             onChange={(nextStep) => {
-              if (nextStep < step) setStep(nextStep);
+              if (nextStep < step) goToStep(nextStep);
             }}
           />
         </div>
@@ -112,6 +119,10 @@ export default function NuevaFichaPage() {
           id={formId}
           onSubmit={(e) => {
             e.preventDefault();
+            if (step < 2) {
+              goNext();
+              return;
+            }
             void handleFinish();
           }}
           noValidate

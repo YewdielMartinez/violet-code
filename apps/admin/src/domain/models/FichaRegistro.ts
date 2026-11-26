@@ -128,7 +128,7 @@ export const INITIAL_FICHA_IDENTIDAD: FichaIdentidadInput = {
   tieneDenuncia: false,
   esVictimaDelito: false,
   serviciosSolicitadosAreaIds: [],
-  avisoPrivacidadAceptado: false,
+  avisoPrivacidadAceptado: true,
 };
 
 export function createIdentidadFromPreRegistro(
@@ -143,6 +143,9 @@ export function createIdentidadFromPreRegistro(
   }
   return {
     ...INITIAL_FICHA_IDENTIDAD,
+    esVictimaDelito: false,
+    serviciosSolicitadosAreaIds: [],
+    avisoPrivacidadAceptado: true,
     existingPersonaId: pre.personaId,
     curp: pre.curp,
     nombres: pre.nombres,

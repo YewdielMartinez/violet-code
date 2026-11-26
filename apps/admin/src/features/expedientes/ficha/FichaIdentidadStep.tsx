@@ -3,6 +3,7 @@ import { GlassSwitch, MultiSelect, Select } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/glass-switch';
 import '@yewdiel21/motion-kit/css/components/multi-select';
 import '@yewdiel21/motion-kit/css/components/select';
+import { PrivacyNoticeDialog } from '@/features/auth/PrivacyNoticeDialog';
 import {
   ESCOLARIDAD_LABELS,
   ESTADO_CIVIL_LABELS,
@@ -226,15 +227,9 @@ export function FichaIdentidadStep({ value, onChange, catalogos }: Props) {
         </GlassSwitch>
       </div>
 
-      <div className="rounded-2xl border border-primary/30 bg-primary-container/25 p-4">
-        <GlassSwitch
-          checked={value.avisoPrivacidadAceptado}
-          onChange={(checked) => update('avisoPrivacidadAceptado', checked)}
-        >
-          <span className="font-medium text-on-surface">
-            La usuaria aceptó el Aviso de Privacidad Simplificado (RNF-04) *
-          </span>
-        </GlassSwitch>
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+        <span>Al guardar el expediente se registra la aceptación del Aviso de Privacidad Simplificado.</span>
+        <PrivacyNoticeDialog />
       </div>
     </div>
   );

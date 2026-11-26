@@ -8,11 +8,12 @@ import type { ExpedienteResumen } from '@/domain/models/Persona';
 import { Icon } from '@/shared/ui/Icon';
 import { puedeAccederAgresor } from './agresorApi';
 import { AgresorFormSection } from './AgresorFormSection';
+import { DerivacionesExpedientePanel } from './DerivacionesExpedientePanel';
 import { DocumentosAdjuntosPanel } from './DocumentosAdjuntosPanel';
 import { FichaDetalleResumen } from './ficha/FichaDetalleResumen';
 import { FichaGestionAcciones } from './ficha/FichaGestionAcciones';
 
-type DrawerTab = 'resumen' | 'agresor' | 'documentos';
+type DrawerTab = 'resumen' | 'agresor' | 'documentos' | 'canalizaciones';
 
 const DRAWER_WIDTH_STYLE = { '--mk-drawer-width': '680px' } as CSSProperties;
 
@@ -34,7 +35,9 @@ export function ExpedienteDrawer({ expediente, userRole, canManage, onClose }: P
 
   const rawTab = searchParams.get('tab');
   const requestedTab: DrawerTab =
-    rawTab === 'agresor' || rawTab === 'documentos' ? rawTab : 'resumen';
+    rawTab === 'agresor' || rawTab === 'documentos' || rawTab === 'canalizaciones'
+      ? rawTab
+      : 'resumen';
   const activeTab: DrawerTab = canAccessSensitiveTabs ? requestedTab : 'resumen';
 
   function selectTab(next: DrawerTab) {
@@ -118,6 +121,21 @@ export function ExpedienteDrawer({ expediente, userRole, canManage, onClose }: P
                       <Icon name="folder_open" className="mr-1.5 text-[18px]" />
                       <span>Documentos</span>
                     </button>
+
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === 'canalizaciones'}
+                      onClick={() => selectTab('canalizaciones')}
+                      className={`mk-chip mk-chip--filter ${
+                        activeTab === 'canalizaciones'
+                          ? 'bg-secondary-container text-on-secondary-container'
+                          : ''
+                      }`}
+                    >
+                      <Icon name="alt_route" className="mr-1.5 text-[18px]" />
+                      <span>Canalizaciones</span>
+                    </button>
                   </>
                 ) : null}
               </div>
@@ -137,6 +155,16 @@ export function ExpedienteDrawer({ expediente, userRole, canManage, onClose }: P
               {canAccessSensitiveTabs && activeTab === 'documentos' ? (
                 <div role="tabpanel">
                   <DocumentosAdjuntosPanel key={expediente.id} fichaId={expediente.id} />
+                </div>
+              ) : null}
+
+              {canAccessSensitiveTabs && activeTab === 'canalizaciones' ? (
+                <div role="tabpanel">
+                  <DerivacionesExpedientePanel
+                    key={expediente.id}
+                    fichaId={expediente.id}
+                    folio={expediente.folio}
+                  />
                 </div>
               ) : null}
             </div>

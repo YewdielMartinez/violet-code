@@ -57,7 +57,7 @@ describe('FichaRegistro (validaciones RNF-04 y precarga móvil)', () => {
     expect(pre.curp).toBe('PERL021120MSLNRC09');
     expect(pre.nombres).toBe('Sofía');
     expect(pre.celular).toBe('6680000001');
-    expect(pre.avisoPrivacidadAceptado).toBe(false);
+    expect(pre.avisoPrivacidadAceptado).toBe(true);
   });
 });
 
