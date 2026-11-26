@@ -29,10 +29,34 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // Librerías en chunks propios: cambian poco, así el navegador las reutiliza entre deploys.
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
-          'vendor-motion': ['@yewdiel21/motion-kit/react', 'gsap'],
+        // Librerías base en chunks propios para reutilizar caché entre deploys.
+        // Se usa función (no objeto) para incluir react-dom/client y scheduler en vendor-react.
+        // @yewdiel21/motion-kit queda fuera a propósito para que Rollup lo divida por ruta en cuanto
+        // publique módulos ESM por componente (en 0.20.2 su dist/react/index.js sigue siendo monolítico).
+        manualChunks(id) {
+          const normalized = id.replace(/\\/g, '/');
+          if (!normalized.includes('/node_modules/')) return undefined;
+          if (
+            normalized.includes('/node_modules/react/') ||
+            normalized.includes('/node_modules/react-dom/') ||
+            normalized.includes('/node_modules/scheduler/') ||
+            normalized.includes('/node_modules/react-router/') ||
+            normalized.includes('/node_modules/react-router-dom/') ||
+            normalized.includes('/node_modules/@tanstack/')
+          ) {
+            return 'vendor-react';
+          }
+          if (
+            normalized.includes('/node_modules/@supabase/') ||
+            normalized.includes('/node_modules/iceberg-js/') ||
+            normalized.includes('/node_modules/tslib/')
+          ) {
+            return 'vendor-supabase';
+          }
+          if (normalized.includes('/node_modules/gsap/')) {
+            return 'vendor-gsap';
+          }
+          return undefined;
         },
       },
     },

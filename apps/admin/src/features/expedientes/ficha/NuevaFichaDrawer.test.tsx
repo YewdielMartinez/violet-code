@@ -141,7 +141,18 @@ beforeEach(() => {
     discapacidades: [], gruposEtnicos: [], religiones: [],
     parentescos: [{ id: 3, clave: 'hermana', nombre: 'Hermana' }],
   });
-  listAsentamientosMock.mockReset().mockResolvedValue([]);
+  // Un asentamiento de Ahome: un CP fuera del catálogo entra en modo "solo código postal".
+  listAsentamientosMock.mockReset().mockResolvedValue([
+    {
+      id: 1,
+      nombre: 'Centro',
+      tipoAsentamiento: 'Colonia',
+      codigoPostal: '81200',
+      municipio: 'Ahome',
+      estado: 'Sinaloa',
+      localidad: 'Los Mochis',
+    },
+  ]);
   toastMock.mockReset();
 });
 
@@ -171,8 +182,9 @@ describe('NuevaFichaDrawer (validación por paso, navegación y cambios sin guar
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     expect(screen.getByRole('alert').textContent).toMatch(/asentamiento|código postal/i);
 
-    fireEvent.click(screen.getByLabelText(/Foránea/i));
-    fireEvent.change(screen.getByLabelText(/Código postal foráneo/i), { target: { value: '80000' } });
+    await waitFor(() => expect(listAsentamientosMock).toHaveBeenCalled());
+    fireEvent.change(screen.getByLabelText(/Código postal/i), { target: { value: '80000' } });
+    await screen.findByText(/sin\s+asentamientos en catálogo local/i);
     fireEvent.change(screen.getByLabelText(/Calle \*/i), { target: { value: 'Av. Hidalgo 120' } });
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     expect(screen.getByText(/Estudio socioeconómico y vivienda/i)).toBeTruthy();
@@ -210,8 +222,9 @@ describe('NuevaFichaDrawer (validación por paso, navegación y cambios sin guar
 
     fillStep0();
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
-    fireEvent.click(screen.getByLabelText(/Foránea/i));
-    fireEvent.change(screen.getByLabelText(/Código postal foráneo/i), { target: { value: '80000' } });
+    await waitFor(() => expect(listAsentamientosMock).toHaveBeenCalled());
+    fireEvent.change(screen.getByLabelText(/Código postal/i), { target: { value: '80000' } });
+    await screen.findByText(/sin\s+asentamientos en catálogo local/i);
     fireEvent.change(screen.getByLabelText(/Calle \*/i), { target: { value: 'Calle 10' } });
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     fireEvent.click(screen.getByRole('button', { name: /Guardar ficha/i }));

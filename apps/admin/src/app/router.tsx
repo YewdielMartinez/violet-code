@@ -1,9 +1,10 @@
-import { Suspense, type ComponentType } from 'react';
+import { lazy, Suspense, type ComponentType } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
-import { AppLayout } from './AppLayout';
 import { ALL_PAGES } from './navigation';
 import { DashboardPage, DirectoryPage, ExpedientesPage, LoginPage, NuevaFichaPage, PendingModulePage } from './pages';
-import { RequireAuth } from './RequireAuth';
+
+const AppLayout = lazy(() => import('./AppLayout').then((m) => ({ default: m.AppLayout })));
+const RequireAuth = lazy(() => import('./RequireAuth').then((m) => ({ default: m.RequireAuth })));
 
 // Páginas implementadas. Al terminar un módulo: agregarlo aquí y marcar `ready: true` en navigation.ts.
 const READY: Record<string, ComponentType> = {
@@ -26,9 +27,13 @@ export const router = createBrowserRouter([
   },
   {
     element: (
-      <RequireAuth>
-        <AppLayout />
-      </RequireAuth>
+      <Suspense fallback={null}>
+        <RequireAuth>
+          <Suspense fallback={null}>
+            <AppLayout />
+          </Suspense>
+        </RequireAuth>
+      </Suspense>
     ),
     children: [
       ...ALL_PAGES.map(({ path, label, title }) => {

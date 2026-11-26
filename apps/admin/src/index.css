@@ -263,3 +263,14 @@ body {
   background: var(--md-sys-color-primary);
   translate: -50% 0;
 }
+
+/* Evita CLS y texto de ligadura visible mientras Material Symbols Rounded carga de forma asíncrona. */
+.mk-icon {
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+}
+
+html.vc-icons-loading .mk-icon {
+  color: transparent;
+}

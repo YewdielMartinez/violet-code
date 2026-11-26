@@ -15,14 +15,60 @@ export const ExpedientesPage = lazy(loadExpedientes);
 export const NuevaFichaPage = lazy(loadNuevaFicha);
 export const PendingModulePage = lazy(loadPending);
 
+const started = new WeakSet<() => Promise<unknown>>();
+
+function loadOnce(loader: () => Promise<unknown>) {
+  if (started.has(loader)) return;
+  started.add(loader);
+  void loader();
+}
+
+const ROUTE_LOADERS: Record<string, () => Promise<unknown>> = {
+  '/': loadDashboard,
+  '/directorio': loadDirectory,
+  '/expedientes': loadExpedientes,
+  '/expedientes/nuevo': loadNuevaFicha,
+};
+
+/** Precarga el chunk de una ruta al pasar el cursor o enfocar un enlace de navegación. */
+export function preloadPage(path: string): void {
+  loadOnce(ROUTE_LOADERS[path] ?? loadPending);
+}
+
+const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadDirectory, loadNuevaFicha, loadPending];
+
+function scheduleIdle(cb: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  if (typeof window.requestIdleCallback === 'function') {
+    const id = window.requestIdleCallback(cb, { timeout: 4000 });
+    return () => window.cancelIdleCallback(id);
+  }
+  const id = window.setTimeout(cb, 1500);
+  return () => window.clearTimeout(id);
+}
+
 /**
- * Descarga las páginas del panel en segundo plano después de iniciar sesión.
- * Así, al navegar no aparece primero un esqueleto y luego la página ("carga doble").
+ * Descarga las páginas del panel una a una en momentos de inactividad después de iniciar sesión,
+ * sin competir con la ruta actual (y respetando ahorro de datos).
  */
-export function preloadPages() {
-  void loadDashboard();
-  void loadDirectory();
-  void loadExpedientes();
-  void loadNuevaFicha();
-  void loadPending();
+export function preloadPages(): () => void {
+  const nav = typeof navigator !== 'undefined' ? (navigator as Navigator & { connection?: { saveData?: boolean } }) : null;
+  if (nav?.connection?.saveData) return () => {};
+
+  let index = 0;
+  let cancel: (() => void) | null = null;
+  let cancelled = false;
+
+  const step = () => {
+    while (index < PANEL_LOADERS.length && started.has(PANEL_LOADERS[index])) index++;
+    if (cancelled || index >= PANEL_LOADERS.length) return;
+    loadOnce(PANEL_LOADERS[index++]);
+    if (index < PANEL_LOADERS.length) cancel = scheduleIdle(step);
+  };
+
+  cancel = scheduleIdle(step);
+  return () => {
+    cancelled = true;
+    cancel?.();
+  };
 }
