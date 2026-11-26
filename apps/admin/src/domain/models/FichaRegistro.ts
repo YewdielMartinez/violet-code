@@ -12,12 +12,12 @@ export type EscolaridadNivel = Database['public']['Enums']['escolaridad_nivel'];
 export type ServicioMedico = Database['public']['Enums']['servicio_medico'];
 
 export const ESTADO_CIVIL_LABELS: Record<EstadoCivil, string> = {
-  soltero: 'Soltera / Soltero',
-  casado: 'Casada / Casado',
+  soltero: 'Soltera(o)',
+  casado: 'Casada(o)',
   union_libre: 'Unión libre',
-  separado: 'Separada / Separado',
-  divorciado: 'Divorciada / Divorciado',
-  viudo: 'Viuda / Viudo',
+  separado: 'Separada(o)',
+  divorciado: 'Divorciada(o)',
+  viudo: 'Viuda(o)',
 };
 
 export const ESCOLARIDAD_LABELS: Record<EscolaridadNivel, string> = {
