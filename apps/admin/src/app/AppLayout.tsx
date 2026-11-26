@@ -1,27 +1,32 @@
-import { useEffect, ViewTransition } from 'react';
+import { useEffect, useMemo, ViewTransition } from 'react';
 import { useLocation, useNavigate, useOutlet } from 'react-router-dom';
 import { Nav } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/nav';
 import { OptionsMenu } from '@/features/settings/OptionsMenu';
+import { useAuth } from '@/shared/auth/useAuth';
 import { BrandMark } from '@/shared/ui/BrandMark';
 import { Icon } from '@/shared/ui/Icon';
-import { NAVIGATION } from './navigation';
+import { getNavigationForRole } from './navigation';
 import { useNavStyle } from './preferences';
 import { preloadPages } from './pages';
-
-// Estático: Nav envuelve el ícono en su propio .mk-nav__icon. En el teléfono se vuelve barra inferior.
-const NAV_ITEMS = NAVIGATION.map((page) => ({
-  value: page.path,
-  label: page.label,
-  icon: <Icon name={page.icon} />,
-  hideOnMobile: !page.mobile,
-}));
 
 export function AppLayout() {
   const outlet = useOutlet();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const navStyle = useNavStyle();
+  const { user } = useAuth();
+
+  const navItems = useMemo(
+    () =>
+      getNavigationForRole(user?.role).map((page) => ({
+        value: page.path,
+        label: page.label,
+        icon: <Icon name={page.icon} />,
+        hideOnMobile: !page.mobile,
+      })),
+    [user?.role],
+  );
 
   useEffect(() => preloadPages(), []);
 
@@ -33,7 +38,7 @@ export function AppLayout() {
         style={{ viewTransitionName: 'app-nav' }}
         navStyle={navStyle}
         // Sin `accent`: el activo es neutro (en el riel, el acento morado se encimaba entre botones).
-        items={NAV_ITEMS}
+        items={navItems}
         active={pathname}
         onSelect={(path, event) => {
           event.preventDefault();

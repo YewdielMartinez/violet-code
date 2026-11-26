@@ -13,9 +13,17 @@ import { PrivacyNoticeDialog } from './PrivacyNoticeDialog';
 
 type LoadingState = 'idle' | 'loading' | 'success' | 'error';
 
-// Solo en desarrollo: cuentas sintéticas sembradas por el backend (Identity:DemoPassword).
+// Solo en desarrollo: cuentas sintéticas sembradas en supabase/seed.sql (Demo1234!).
 const DEMO_ACCOUNTS = import.meta.env.DEV
-  ? ['admin@violetcode.demo', 'coordinacion@violetcode.demo', 'psicologia@violetcode.demo']
+  ? [
+      'titular@demo.violetcode.local',
+      'subdireccion@demo.violetcode.local',
+      'trabajo.social@demo.violetcode.local',
+      'psicologia@demo.violetcode.local',
+      'juridico@demo.violetcode.local',
+      'recepcion@demo.violetcode.local',
+      'umeca@demo.violetcode.local',
+    ]
   : [];
 
 function LoginForm({ formId }: { formId: string }) {

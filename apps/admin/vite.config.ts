@@ -39,11 +39,5 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    // En desarrollo, /api y /health se reenvían a Violet Code Core (dotnet run → :5080).
-    // Mismo origen para el navegador: la cookie de sesión (SameSite=Strict) funciona.
-    proxy: {
-      '/api': 'http://localhost:5080',
-      '/health': 'http://localhost:5080',
-    },
   },
 });

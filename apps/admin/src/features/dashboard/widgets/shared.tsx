@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { EmptyState } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
-import type { Priority } from '../api';
+import type { PrioridadNivel } from '../api';
 
 /** Contenedor común de un widget: título, acción opcional y contenido. */
 export function WidgetCard({
@@ -46,22 +46,26 @@ export function WidgetEmpty({ error, title }: { error?: boolean; title: string }
     <EmptyState
       illustration={error ? 'error' : 'inbox'}
       title={error ? 'No se pudo cargar' : title}
-      description={error ? 'Verifica la conexión con el servidor.' : undefined}
+      description={error ? 'Verifica tu conexión con Supabase.' : undefined}
       loop={false}
     />
   );
 }
 
-const PRIORITY: Record<Priority, { label: string; className: string }> = {
-  High: { label: 'Alta', className: 'bg-error-container text-on-error-container' },
-  Medium: { label: 'Media', className: 'bg-tertiary-container text-on-tertiary-container' },
-  Low: { label: 'Baja', className: 'bg-surface-container-high text-on-surface-variant' },
+const PRIORITY: Record<PrioridadNivel, { label: string; className: string }> = {
+  alta: { label: 'Alta', className: 'bg-error-container text-on-error-container' },
+  media: { label: 'Media', className: 'bg-tertiary-container text-on-tertiary-container' },
+  baja: { label: 'Baja', className: 'bg-surface-container-high text-on-surface-variant' },
 };
 
-const RISK: Record<Priority, string> = { High: 'Riesgo alto', Medium: 'Riesgo medio', Low: 'Riesgo bajo' };
+const RISK: Record<PrioridadNivel, string> = {
+  alta: 'Riesgo alto',
+  media: 'Riesgo medio',
+  baja: 'Riesgo bajo',
+};
 
-/** Prioridad de una alerta ("Alta") o, con `risk`, nivel de riesgo de un caso ("Riesgo medio"). */
-export function PriorityBadge({ value, risk = false }: { value: Priority; risk?: boolean }) {
+/** Prioridad de una alerta ("Alta") o, con `risk`, nivel de riesgo ("Riesgo alto"). */
+export function PriorityBadge({ value, risk = false }: { value: PrioridadNivel; risk?: boolean }) {
   const p = PRIORITY[value];
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${p.className}`}>

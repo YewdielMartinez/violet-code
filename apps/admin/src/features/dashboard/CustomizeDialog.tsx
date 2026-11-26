@@ -1,6 +1,6 @@
 import { Dialog } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
-import type { StaffRole } from '@/shared/auth/session';
+import type { StaffRole } from '@/domain/models/Auth';
 import { availableWidgets, setVisibleWidgets, WIDGETS, type WidgetId } from './layout';
 
 interface Props {

@@ -1,25 +1,33 @@
 import { useRef, useState } from 'react';
 import { FlipGroup } from '@yewdiel21/motion-kit/react';
 import { Icon } from '@/shared/ui/Icon';
-import { useAlerts, type AlertStatus } from '../api';
+import { useAlerts, type EstadoAlerta, type OrigenAlerta } from '../api';
 import { relativeTime } from './format';
 import { PriorityBadge, WidgetCard, WidgetEmpty, WidgetLoading } from './shared';
 
-const FILTERS: { value: AlertStatus | undefined; label: string }[] = [
+const FILTERS: { value: EstadoAlerta | undefined; label: string }[] = [
   { value: undefined, label: 'Activas' },
-  { value: 'New', label: 'Nuevas' },
-  { value: 'InProgress', label: 'En atención' },
+  { value: 'nueva', label: 'Nuevas' },
+  { value: 'tomada', label: 'Tomadas' },
 ];
 
-const CHANNEL: Record<string, string> = { App: 'App móvil', Phone: 'Teléfono', WalkIn: 'Presencial' };
+const CHANNEL_LABEL: Record<OrigenAlerta, string> = {
+  app_movil: 'App móvil',
+  telefono: 'Teléfono',
+  presencial: 'Presencial',
+};
 
-/** Bandeja de alertas: lo más urgente arriba (prioridad, luego antigüedad). */
+const CHANNEL_ICON: Record<OrigenAlerta, string> = {
+  app_movil: 'sos',
+  telefono: 'call',
+  presencial: 'directions_walk',
+};
+
+/** Bandeja de alertas: prioridad alta arriba, ordenadas por antigüedad reciente. */
 export function AlertsWidget() {
-  const [status, setStatus] = useState<AlertStatus | undefined>(undefined);
-  const { data, isLoading, isError } = useAlerts(status);
+  const [estado, setEstado] = useState<EstadoAlerta | undefined>(undefined);
+  const { data, isLoading, isError } = useAlerts(estado);
   const listRef = useRef<HTMLUListElement>(null);
-  // Cambia cuando cambia lo que se ve: FlipGroup (motion-kit) lleva cada fila a su nuevo lugar
-  // y hace aparecer las nuevas.
   const signature = data?.map((a) => a.id).join(',') ?? '';
 
   return (
@@ -29,9 +37,9 @@ export function AlertsWidget() {
           <button
             key={f.label}
             type="button"
-            aria-pressed={status === f.value}
-            onClick={() => setStatus(f.value)}
-            className={`mk-chip mk-chip--filter ${status === f.value ? 'bg-secondary-container text-on-secondary-container' : ''}`}
+            aria-pressed={estado === f.value}
+            onClick={() => setEstado(f.value)}
+            className={`mk-chip mk-chip--filter ${estado === f.value ? 'bg-secondary-container text-on-secondary-container' : ''}`}
           >
             {f.label}
           </button>
@@ -44,31 +52,37 @@ export function AlertsWidget() {
         <WidgetEmpty error={isError} title="Sin alertas pendientes" />
       ) : (
         <FlipGroup root={listRef} signature={signature}>
-        <ul ref={listRef} className="grid gap-2">
-          {data.map((a) => (
-            <li key={a.id} data-flip-id={a.id} className="flex items-center gap-4 rounded-2xl bg-surface-container-low px-4 py-3">
-              <span
-                aria-hidden
-                className={`grid size-10 shrink-0 place-items-center rounded-full ${
-                  a.priority === 'High' ? 'bg-error-container text-on-error-container' : 'bg-surface-container-high text-on-surface-variant'
-                }`}
+          <ul ref={listRef} className="grid gap-2">
+            {data.map((a) => (
+              <li
+                key={a.id}
+                data-flip-id={a.id}
+                className="flex items-center gap-4 rounded-2xl bg-surface-container-low px-4 py-3"
               >
-                <Icon name={a.channel === 'App' ? 'sos' : a.channel === 'Phone' ? 'call' : 'directions_walk'} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="flex flex-wrap items-center gap-2 font-medium text-on-surface">
-                  {a.folio}
-                  <PriorityBadge value={a.priority} />
-                </p>
-                <p className="truncate text-sm text-on-surface-variant">
-                  {a.colonia} · {CHANNEL[a.channel] ?? a.channel}
-                  {a.assignedToName ? ` · ${a.assignedToName}` : ' · Sin asignar'}
-                </p>
-              </div>
-              <span className="shrink-0 text-xs text-on-surface-variant">{relativeTime(a.createdAt)}</span>
-            </li>
-          ))}
-        </ul>
+                <span
+                  aria-hidden
+                  className={`grid size-10 shrink-0 place-items-center rounded-full ${
+                    a.prioridad === 'alta'
+                      ? 'bg-error-container text-on-error-container'
+                      : 'bg-surface-container-high text-on-surface-variant'
+                  }`}
+                >
+                  <Icon name={CHANNEL_ICON[a.origen]} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="flex flex-wrap items-center gap-2 font-medium text-on-surface">
+                    {a.usuariaNombre ?? 'Alerta registrada'}
+                    <PriorityBadge value={a.prioridad} />
+                  </p>
+                  <p className="truncate text-sm text-on-surface-variant">
+                    {a.asentamiento ?? 'Ubicación reservada'} · {CHANNEL_LABEL[a.origen]}
+                    {a.atendidaPorNombre ? ` · ${a.atendidaPorNombre}` : ' · Sin asignar'}
+                  </p>
+                </div>
+                <span className="shrink-0 text-xs text-on-surface-variant">{relativeTime(a.creadoEn)}</span>
+              </li>
+            ))}
+          </ul>
         </FlipGroup>
       )}
     </WidgetCard>

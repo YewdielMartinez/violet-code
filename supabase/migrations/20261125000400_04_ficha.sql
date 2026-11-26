@@ -449,8 +449,8 @@ create unique index estudio_socioeconomico_ficha_actual_uidx on estudio_socioeco
 create index aportante_hogar_estudio_id_idx on aportante_hogar (estudio_socioeconomico_id);
 create index agresor_ficha_id_idx          on agresor (ficha_id);
 create index agresor_asentamiento_id_idx   on agresor (asentamiento_id);
-create index agresor_nombres_trgm_idx      on agresor using gin (nombres gin_trgm_ops);
-create index agresor_apellido_paterno_trgm_idx on agresor using gin (apellido_paterno gin_trgm_ops);
+create index agresor_nombres_trgm_idx      on agresor using gin (nombres extensions.gin_trgm_ops);
+create index agresor_apellido_paterno_trgm_idx on agresor using gin (apellido_paterno extensions.gin_trgm_ops);
 create index orden_proteccion_ficha_id_idx on orden_proteccion (ficha_id);
 create index nota_area_ficha_area_idx      on nota_area (ficha_id, area_id);
 create index derivacion_ficha_id_idx       on derivacion (ficha_id);

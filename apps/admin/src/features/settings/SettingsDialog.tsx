@@ -12,12 +12,6 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'security', label: 'Seguridad', icon: 'shield_lock' },
 ];
 
-const AREA_LABELS: Record<string, string> = {
-  psicologia: 'Psicología',
-  juridico: 'Jurídico',
-  'trabajo-social': 'Trabajo social',
-};
-
 /** Tarjeta de sección, con aire (como el resto de paneles de motion-kit). */
 function Card({ icon, title, children }: { icon: string; title: string; children: ReactNode }) {
   return (
@@ -32,7 +26,7 @@ function Card({ icon, title, children }: { icon: string; title: string; children
 function AccountPanel() {
   const { user } = useAuth();
   if (!user) return null;
-  const area = user.area ? (AREA_LABELS[user.area] ?? user.area) : 'Todas las áreas';
+  const area = user.areaNombre ?? 'Todas las áreas';
 
   return (
     <div className="grid gap-4">
@@ -65,8 +59,7 @@ function SecurityPanel() {
   return (
     <div className="grid gap-4">
       <Card icon="verified_user" title="Sesión protegida">
-        Tu sesión usa un token de 15 minutos que se renueva automáticamente mientras trabajas. Al cerrar el navegador
-        o cerrar sesión, se invalida.
+        Tu sesión usa Supabase Auth con renovación automática y cierre tras 30 minutos de inactividad en equipos compartidos.
       </Card>
       <Card icon="policy" title="Actividad auditada">
         Cada acceso y cada consulta de expedientes queda registrada en la bitácora de auditoría.
