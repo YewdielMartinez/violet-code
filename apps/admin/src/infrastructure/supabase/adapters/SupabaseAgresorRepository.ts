@@ -1,0 +1,128 @@
+import type {
+  Agresor,
+  AgresorInput,
+  AsentamientoOpcion,
+  CatalogoOpcion,
+} from '@/domain/models/Agresor';
+import type {
+  AgresorRepository,
+  TablaConsultaAgresor,
+} from '@/domain/ports/AgresorRepository';
+import { supabase } from '../client';
+import {
+  mapAgresorRow,
+  mapAsentamientoRow,
+  mapCatalogoRow,
+  toAgresorInsert,
+  toAgresorUpdate,
+} from './agresor.mapper';
+
+const AGRESOR_SELECT =
+  'id, ficha_id, nombres, apellido_paterno, apellido_materno, parentesco_id, parentesco_otro, asentamiento_id, codigo_postal, calle, numero_exterior, numero_interior, referencias, ocupacion_id, ocupacion_otra, tiene_consumo_droga, drogas, especificacion_droga, utilizo_arma_u_objeto, tipo_arma, especificacion_arma, observaciones, activo, actualizado_en';
+
+interface PostgrestLikeError {
+  code?: string;
+  message?: string;
+}
+
+function mapSupabaseError(error: PostgrestLikeError): Error {
+  switch (error.code) {
+    case '42501':
+      return new Error('No tienes permisos para acceder o modificar datos de la persona agresora.');
+    case '23503':
+      return new Error('Referencia inválida o catálogo no disponible. Recarga e intenta de nuevo.');
+    case '23505':
+      return new Error('Este registro ya existe.');
+    case 'P0001':
+      return new Error(error.message || 'La operación no cumple las reglas de negocio.');
+    default:
+      return new Error('No se pudo completar la operación en el servidor. Intenta de nuevo.');
+  }
+}
+
+export const supabaseAgresorRepository: AgresorRepository = {
+  async listarPorFicha(fichaId: string): Promise<Agresor[]> {
+    const { data, error } = await supabase
+      .from('agresor')
+      .select(AGRESOR_SELECT)
+      .eq('ficha_id', fichaId)
+      .eq('activo', true)
+      .order('creado_en', { ascending: true });
+
+    if (error) throw mapSupabaseError(error);
+    return (data ?? []).map(mapAgresorRow);
+  },
+
+  async crear(input: AgresorInput): Promise<Agresor> {
+    const { data, error } = await supabase
+      .from('agresor')
+      .insert(toAgresorInsert(input))
+      .select(AGRESOR_SELECT)
+      .single();
+
+    if (error) throw mapSupabaseError(error);
+    return mapAgresorRow(data);
+  },
+
+  async actualizar(id: string, input: AgresorInput): Promise<Agresor> {
+    let query = supabase
+      .from('agresor')
+      .update(toAgresorUpdate(input))
+      .eq('id', id)
+      .eq('activo', true);
+
+    if (input.actualizadoEnEsperado) {
+      query = query.eq('actualizado_en', input.actualizadoEnEsperado);
+    }
+
+    const { data, error } = await query.select(AGRESOR_SELECT).maybeSingle();
+
+    if (error) throw mapSupabaseError(error);
+    if (!data) {
+      throw new Error(
+        'Este registro fue modificado por otra compañera. Recarga los datos antes de guardar.',
+      );
+    }
+    return mapAgresorRow(data);
+  },
+
+  async registrarConsulta(tabla: TablaConsultaAgresor, registroId: string): Promise<void> {
+    const { error } = await supabase.rpc('registrar_consulta', {
+      p_tabla: tabla,
+      p_registro_id: registroId,
+    });
+    if (error) throw mapSupabaseError(error);
+  },
+
+  async listarParentescos(): Promise<CatalogoOpcion[]> {
+    const { data, error } = await supabase
+      .from('cat_parentesco')
+      .select('id, clave, nombre')
+      .order('id', { ascending: true });
+
+    if (error) throw mapSupabaseError(error);
+    return (data ?? []).map(mapCatalogoRow);
+  },
+
+  async listarOcupaciones(): Promise<CatalogoOpcion[]> {
+    const { data, error } = await supabase
+      .from('cat_ocupacion')
+      .select('id, clave, nombre')
+      .order('id', { ascending: true });
+
+    if (error) throw mapSupabaseError(error);
+    return (data ?? []).map(mapCatalogoRow);
+  },
+
+  async listarAsentamientosAhome(): Promise<AsentamientoOpcion[]> {
+    const { data, error } = await supabase
+      .from('cat_asentamiento')
+      .select('id, nombre, tipo_asentamiento, codigo_postal, localidad')
+      .eq('municipio', 'Ahome')
+      .order('nombre', { ascending: true })
+      .limit(1000);
+
+    if (error) throw mapSupabaseError(error);
+    return (data ?? []).map(mapAsentamientoRow);
+  },
+};
