@@ -983,6 +983,11 @@ isOneToOne: false
               "apellido_materno": string,"apellido_paterno": string,"celular": string,"curp": string,"entidad_nacimiento": string,"fecha_nacimiento": string,"nombres": string,"persona_id": string,"pre_registro_id": string,"sexo": string
             }[]
                            },
+"cambiar_estado_cita":
+{ Args: { "p_cita_id": string,"p_estado": Database["public"]['Enums']["estado_cita"],"p_motivo"?: string }; Returns: {
+              "cita_id": string,"confirmada_en": string,"estado": Database["public"]['Enums']["estado_cita"]
+            }[]
+                           },
 "cambiar_estado_derivacion":
 { Args: { "p_derivacion_id": string,"p_estado": Database["public"]['Enums']["estado_derivacion"] }; Returns: {
               "actualizado_en": string,"derivacion_id": string,"estado": Database["public"]['Enums']["estado_derivacion"]
@@ -1010,6 +1015,11 @@ isOneToOne: false
                            },
 "generar_folio_ficha":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"get_agenda":
+{ Args: { "p_area_id"?: number,"p_desde": string,"p_estados"?: (Database["public"]['Enums']["estado_cita"])[],"p_hasta": string,"p_limite"?: number }; Returns: {
+              "area_clave": string,"area_id": number,"celular": string,"cita_id": string,"estado": Database["public"]['Enums']["estado_cita"],"nombre_completo": string,"origen": Database["public"]['Enums']["origen_cita"],"persona_id": string,"prioridad": Database["public"]['Enums']["prioridad_nivel"],"programada_en": string,"reagendada_de": string,"recomendada_por": string
+            }[]
                            },
 "get_derivaciones":
 { Args: { "p_estado"?: Database["public"]['Enums']["estado_derivacion"],"p_ficha_id"?: string,"p_limite"?: number }; Returns: {

@@ -1,0 +1,108 @@
+import type { Database } from '@/infrastructure/supabase/database.types';
+
+export type EstadoCita = Database['public']['Enums']['estado_cita'];
+export type OrigenCita = Database['public']['Enums']['origen_cita'];
+export type PrioridadNivel = Database['public']['Enums']['prioridad_nivel'];
+
+export type EstadoCitaGestionable = 'confirmada' | 'cancelada' | 'no_asistio';
+
+export const ESTADO_CITA_LABELS: Record<EstadoCita, string> = {
+  agendada: 'Agendada',
+  confirmada: 'Confirmada',
+  cancelada: 'Cancelada',
+  reagendada: 'Reagendada',
+  asistio: 'Asistió',
+  no_asistio: 'No asistió',
+};
+
+export const PRIORIDAD_CITA_LABELS: Record<PrioridadNivel, string> = {
+  alta: 'Alta',
+  media: 'Media',
+  baja: 'Baja',
+};
+
+export interface AgendaItem {
+  citaId: string;
+  programadaEn: string;
+  estado: EstadoCita;
+  prioridad: PrioridadNivel | null;
+  areaId: number;
+  areaClave: string;
+  recomendadaPor: string | null;
+  reagendadaDe: string | null;
+  origen: OrigenCita;
+  personaId: string;
+  nombreCompleto: string;
+  celular: string | null;
+}
+
+export interface AgendaQuery {
+  desde: string;
+  hasta: string;
+  areaId?: number | null;
+  estados?: EstadoCita[] | null;
+  limite?: number;
+}
+
+export interface CitaCreateInput {
+  personaId: string;
+  areaId: number;
+  programadaEn: string;
+  prioridad?: PrioridadNivel | null;
+  recomendadaPor?: string | null;
+  origen?: OrigenCita;
+}
+
+export interface CambiarEstadoCitaResult {
+  citaId: string;
+  estado: EstadoCita;
+  confirmadaEn: string | null;
+}
+
+const VALID_CITA_TRANSITIONS: Record<EstadoCita, readonly EstadoCitaGestionable[]> = {
+  agendada: ['confirmada', 'cancelada', 'no_asistio'],
+  confirmada: ['cancelada', 'no_asistio'],
+  cancelada: [],
+  reagendada: [],
+  asistio: [],
+  no_asistio: [],
+};
+
+/** Valida los campos obligatorios para agendar una cita (`RF-06`). */
+export function validateCitaCreate(input: CitaCreateInput): string | null {
+  if (!input.personaId) {
+    return 'Selecciona la persona para agendar la cita.';
+  }
+  if (!Number.isInteger(input.areaId) || input.areaId <= 0) {
+    return 'Selecciona el área de atención.';
+  }
+  if (!input.programadaEn.trim() || Number.isNaN(Date.parse(input.programadaEn))) {
+    return 'Indica una fecha y hora válidas para la cita.';
+  }
+  if (input.recomendadaPor && input.recomendadaPor.trim().length > 150) {
+    return 'El campo «Quién recomendó» no puede exceder 150 caracteres.';
+  }
+  return null;
+}
+
+/**
+ * Valida transiciones permitidas para `cambiar_estado_cita`:
+ * - `agendada` -> `confirmada` | `cancelada` | `no_asistio`
+ * - `confirmada` -> `cancelada` | `no_asistio`
+ */
+export function validarTransicionCita(
+  actual: EstadoCita,
+  siguiente: EstadoCitaGestionable,
+  motivo?: string | null,
+): string | null {
+  if (actual === siguiente) {
+    return 'La cita ya se encuentra en ese estado.';
+  }
+  if (!VALID_CITA_TRANSITIONS[actual].includes(siguiente)) {
+    return `Transición no permitida: ${ESTADO_CITA_LABELS[actual]} -> ${ESTADO_CITA_LABELS[siguiente]}.`;
+  }
+  if (siguiente === 'cancelada' && motivo && motivo.trim().length > 500) {
+    return 'El motivo de cancelación no puede exceder 500 caracteres.';
+  }
+  return null;
+}
