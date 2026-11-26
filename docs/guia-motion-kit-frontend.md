@@ -3,7 +3,7 @@
 Referencia rápida para el equipo de frontend sobre cómo está integrado `@yewdiel21/motion-kit` (`^0.20.1`) en `apps/admin`, sus reglas de uso y qué componentes ofrece para los módulos del MVP de SEMUJERES.
 
 - **Paquete:** `@yewdiel21/motion-kit` (instalado `0.20.1`)
-- **Stack base:** React 19 (`^19.1.0`), TypeScript (`~5.8.3`), Vite (`^6.3.5`), Tailwind CSS v4 (`@tailwindcss/vite` `^4.3.5`), `gsap` (`^3.15.1`)
+- **Stack base:** React 19 (`^19.3.1`), TypeScript (`^7.0.2` / Go), Oxlint (`^1.95.0`), Vite (`^6.3.5`), Tailwind CSS v4 (`@tailwindcss/vite` `^4.3.5`), `gsap` (`^3.15.1`)
 - **Repositorio de la librería:** `https://github.com/YewdielMartinez/motion-kit`
 - **Playground con ejemplos Vanilla y React:** `https://motion-kit-playground.vercel.app`
 

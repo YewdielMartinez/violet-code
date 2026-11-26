@@ -1,9 +1,18 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Calendar } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/calendar';
 import { useAppointments } from '../api';
 import { isoDate, timeOf } from './format';
 import { WidgetCard, WidgetEmpty, WidgetLoading } from './shared';
+
+function getAgendaRange() {
+  const now = new Date();
+  return {
+    from: isoDate(new Date(now.getFullYear(), now.getMonth(), 1)),
+    to: isoDate(new Date(now.getFullYear(), now.getMonth() + 1, 0)),
+    today: isoDate(now),
+  };
+}
 
 const KIND: Record<string, string> = {
   Psicologica: 'Psicológica',
@@ -14,14 +23,7 @@ const KIND: Record<string, string> = {
 
 /** Calendario del mes (motion-kit Calendar) y lista de las citas de hoy. */
 export function AgendaWidget({ mine }: { mine: boolean }) {
-  const { from, to, today } = useMemo(() => {
-    const now = new Date();
-    return {
-      from: isoDate(new Date(now.getFullYear(), now.getMonth(), 1)),
-      to: isoDate(new Date(now.getFullYear(), now.getMonth() + 1, 0)),
-      today: isoDate(now),
-    };
-  }, []);
+  const [{ from, to, today }] = useState(getAgendaRange);
   const { data, isLoading, isError } = useAppointments(from, to, mine);
 
   const events = useMemo(
