@@ -160,4 +160,76 @@ describe('supabaseCitaRepository', () => {
       }),
     ).rejects.toMatchObject({ code: '23514' });
   });
+
+  it('invoca reagendar_cita, lista urgencias y maneja edge case vacío + error 23505', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: [
+        {
+          cita_anterior_id: 'cita-1',
+          cita_nueva_id: 'cita-9',
+          programada_en: '2099-07-10T10:00:00-07:00',
+          estado: 'agendada',
+        },
+      ],
+      error: null,
+    });
+
+    const reagendada = await supabaseCitaRepository.reagendar({
+      citaId: 'cita-1',
+      nuevaFecha: '2099-07-10T10:00:00-07:00',
+      motivo: '  Cambio de horario  ',
+    });
+    expect(rpcMock).toHaveBeenCalledWith('reagendar_cita', {
+      p_cita_id: 'cita-1',
+      p_nueva_fecha: '2099-07-10T10:00:00-07:00',
+      p_motivo: 'Cambio de horario',
+      p_prioridad: undefined,
+    });
+    expect(reagendada).toEqual({
+      citaAnteriorId: 'cita-1',
+      citaNuevaId: 'cita-9',
+      programadaEn: '2099-07-10T10:00:00-07:00',
+      estado: 'agendada',
+    });
+
+    rpcMock.mockResolvedValueOnce({
+      data: [
+        {
+          persona_id: 'per-1',
+          ficha_id: 'ficha-1',
+          folio: 'SEM-URG-0001',
+          nombre_completo: 'Carmen Urgente',
+          celular: '6681111111',
+          area_ultima_prioridad: 'trabajo_social',
+          fecha_ultima_prioridad: '2026-11-23',
+        },
+      ],
+      error: null,
+    });
+    const urgencias = await supabaseCitaRepository.listarUrgencias(1);
+    expect(rpcMock).toHaveBeenLastCalledWith('get_lista_urgencias', { p_area_id: 1 });
+    expect(urgencias[0]).toEqual({
+      personaId: 'per-1',
+      fichaId: 'ficha-1',
+      folio: 'SEM-URG-0001',
+      nombreCompleto: 'Carmen Urgente',
+      celular: '6681111111',
+      areaUltimaPrioridad: 'trabajo_social',
+      fechaUltimaPrioridad: '2026-11-23',
+    });
+
+    rpcMock.mockResolvedValueOnce({ data: null, error: null });
+    expect(await supabaseCitaRepository.listarUrgencias()).toEqual([]);
+
+    rpcMock.mockResolvedValueOnce({
+      data: null,
+      error: { code: '23505', message: 'Esta cita ya fue reagendada anteriormente' },
+    });
+    await expect(
+      supabaseCitaRepository.reagendar({
+        citaId: 'cita-1',
+        nuevaFecha: '2099-07-12T10:00:00-07:00',
+      }),
+    ).rejects.toMatchObject({ code: '23505' });
+  });
 });

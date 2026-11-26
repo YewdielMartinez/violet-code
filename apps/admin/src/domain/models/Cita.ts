@@ -59,6 +59,30 @@ export interface CambiarEstadoCitaResult {
   confirmadaEn: string | null;
 }
 
+export interface ReagendarCitaInput {
+  citaId: string;
+  nuevaFecha: string;
+  motivo?: string | null;
+  prioridad?: PrioridadNivel | null;
+}
+
+export interface ReagendarCitaResult {
+  citaAnteriorId: string;
+  citaNuevaId: string;
+  programadaEn: string;
+  estado: EstadoCita;
+}
+
+export interface ListaUrgenciasItem {
+  personaId: string;
+  fichaId: string;
+  folio: string;
+  nombreCompleto: string;
+  celular: string | null;
+  areaUltimaPrioridad: string;
+  fechaUltimaPrioridad: string;
+}
+
 const VALID_CITA_TRANSITIONS: Record<EstadoCita, readonly EstadoCitaGestionable[]> = {
   agendada: ['confirmada', 'cancelada', 'no_asistio'],
   confirmada: ['cancelada', 'no_asistio'],
@@ -103,6 +127,24 @@ export function validarTransicionCita(
   }
   if (siguiente === 'cancelada' && motivo && motivo.trim().length > 500) {
     return 'El motivo de cancelación no puede exceder 500 caracteres.';
+  }
+  return null;
+}
+
+/** Valida los campos obligatorios al reagendar una cita (`SF-07`). */
+export function validateReagendarCita(input: ReagendarCitaInput): string | null {
+  if (!input.citaId) {
+    return 'Selecciona la cita a reagendar.';
+  }
+  const parsed = Date.parse(input.nuevaFecha);
+  if (!input.nuevaFecha.trim() || Number.isNaN(parsed)) {
+    return 'Indica una nueva fecha y hora válidas.';
+  }
+  if (parsed <= Date.now()) {
+    return 'La nueva fecha de la cita debe estar en el futuro.';
+  }
+  if (input.motivo && input.motivo.trim().length > 500) {
+    return 'El motivo no puede exceder 500 caracteres.';
   }
   return null;
 }

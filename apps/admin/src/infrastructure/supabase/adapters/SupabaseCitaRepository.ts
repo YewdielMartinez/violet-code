@@ -7,10 +7,14 @@ import type {
   CitaCreateInput,
   EstadoCita,
   EstadoCitaGestionable,
+  ListaUrgenciasItem,
+  ReagendarCitaInput,
+  ReagendarCitaResult,
 } from '@/domain/models/Cita';
 import type { CitaRepository } from '@/domain/ports/CitaRepository';
 
 type RpcAgendaRow = Database['public']['Functions']['get_agenda']['Returns'][number];
+type RpcUrgenciaRow = Database['public']['Functions']['get_lista_urgencias']['Returns'][number];
 
 function mapAgendaRow(row: RpcAgendaRow): AgendaItem {
   return {
@@ -26,6 +30,18 @@ function mapAgendaRow(row: RpcAgendaRow): AgendaItem {
     personaId: row.persona_id,
     nombreCompleto: row.nombre_completo?.trim() || '—',
     celular: row.celular,
+  };
+}
+
+function mapUrgenciaRow(row: RpcUrgenciaRow): ListaUrgenciasItem {
+  return {
+    personaId: row.persona_id,
+    fichaId: row.ficha_id,
+    folio: row.folio,
+    nombreCompleto: row.nombre_completo?.trim() || '—',
+    celular: row.celular,
+    areaUltimaPrioridad: row.area_ultima_prioridad,
+    fechaUltimaPrioridad: row.fecha_ultima_prioridad,
   };
 }
 
@@ -93,5 +109,38 @@ export const supabaseCitaRepository: CitaRepository = {
       estado: row.estado,
       confirmadaEn: row.confirmada_en,
     };
+  },
+
+  async reagendar(input: ReagendarCitaInput): Promise<ReagendarCitaResult> {
+    const cleanMotivo = input.motivo?.trim();
+
+    const { data, error } = await supabase.rpc('reagendar_cita', {
+      p_cita_id: input.citaId,
+      p_nueva_fecha: input.nuevaFecha,
+      p_motivo: cleanMotivo || undefined,
+      p_prioridad: input.prioridad ?? undefined,
+    });
+
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('No se recibió confirmación al reagendar la cita.');
+    }
+
+    return {
+      citaAnteriorId: row.cita_anterior_id,
+      citaNuevaId: row.cita_nueva_id,
+      programadaEn: row.programada_en,
+      estado: row.estado,
+    };
+  },
+
+  async listarUrgencias(areaId?: number | null): Promise<ListaUrgenciasItem[]> {
+    const { data, error } = await supabase.rpc('get_lista_urgencias', {
+      p_area_id: areaId ?? undefined,
+    });
+
+    if (error) throw error;
+    return (data ?? []).map(mapUrgenciaRow);
   },
 };

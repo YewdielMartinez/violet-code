@@ -5,6 +5,9 @@ import type {
   CitaCreateInput,
   EstadoCita,
   EstadoCitaGestionable,
+  ListaUrgenciasItem,
+  ReagendarCitaInput,
+  ReagendarCitaResult,
 } from '../models/Cita';
 
 export interface CitaRepository {
@@ -15,4 +18,6 @@ export interface CitaRepository {
     estado: EstadoCitaGestionable,
     motivo?: string | null,
   ): Promise<CambiarEstadoCitaResult>;
+  reagendar(input: ReagendarCitaInput): Promise<ReagendarCitaResult>;
+  listarUrgencias(areaId?: number | null): Promise<ListaUrgenciasItem[]>;
 }
