@@ -45,9 +45,6 @@ declare
   v_par_pareja    smallint;
   v_par_expareja  smallint;
   v_par_madre     smallint;
-  v_rel_cat       smallint;
-  v_disc_ninguna  smallint;
-  v_etn_ninguno   smallint;
   v_act_taller    smallint;
   v_act_conf      smallint;
 
@@ -168,10 +165,6 @@ begin
   select id into v_par_expareja from public.cat_parentesco where clave = 'expareja';
   select id into v_par_madre    from public.cat_parentesco where clave = 'madre';
 
-  select id into v_rel_cat      from public.cat_religion where clave = 'catolica';
-  select id into v_disc_ninguna from public.cat_discapacidad where clave = 'ninguna';
-  select id into v_etn_ninguno  from public.cat_grupo_etnico where clave = 'ninguno';
-
   select id into v_act_taller from public.cat_tipo_actividad where clave = 'taller';
   select id into v_act_conf   from public.cat_tipo_actividad where clave = 'conferencia';
 
@@ -228,14 +221,14 @@ begin
   -- 6. Personas atendidas (al insertar v_per_1 se liga automáticamente con v_pre_1)
   insert into public.persona (
     id, curp, nombres, apellido_paterno, apellido_materno, celular,
-    escolaridad, discapacidad_id, religion_id, grupo_etnico_id, creado_por
+    escolaridad, discapacidad, religion, grupo_etnico, creado_por
   ) values
     (v_per_1, 'MEZA910315MSLGRN04', 'Adriana', 'Meza', 'Gutiérrez', '6681000001',
-      'preparatoria', v_disc_ninguna, v_rel_cat, v_etn_ninguno, v_uid_ts),
+      'preparatoria', 'Ninguna', 'Católica', 'Ninguno', v_uid_ts),
     (v_per_2, 'SOTO881104MSLRRN07', 'Beatriz', 'Soto', 'Ramírez', '6681000003',
-      'carrera', v_disc_ninguna, v_rel_cat, v_etn_ninguno, v_uid_ts),
+      'carrera', 'Ninguna', 'Católica', 'Ninguno', v_uid_ts),
     (v_per_3, 'CARR950722HSLMNR02', 'Carlos', 'Carrillo', 'Mendoza', '6681000004',
-      'secundaria', v_disc_ninguna, v_rel_cat, v_etn_ninguno, v_uid_ts);
+      'secundaria', 'Ninguna', 'Católica', 'Ninguno', v_uid_ts);
 
   insert into public.domicilio (
     id, persona_id, asentamiento_id, calle, numero_exterior, numero_interior,

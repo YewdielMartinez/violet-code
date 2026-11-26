@@ -18,7 +18,7 @@ import {
 } from './agresor.mapper';
 
 const AGRESOR_SELECT =
-  'id, ficha_id, nombres, apellido_paterno, apellido_materno, parentesco_id, parentesco_otro, asentamiento_id, codigo_postal, calle, numero_exterior, numero_interior, referencias, ocupacion_id, ocupacion_otra, tiene_consumo_droga, drogas, especificacion_droga, utilizo_arma_u_objeto, tipo_arma, especificacion_arma, observaciones, activo, actualizado_en';
+  'id, ficha_id, nombres, apellido_paterno, apellido_materno, parentesco_id, parentesco_otro, asentamiento_id, codigo_postal, calle, numero_exterior, numero_interior, referencias, ocupacion_id, ocupacion_otra, tiene_consumo_droga, drogas, especificacion_droga, utilizo_arma_u_objeto, especificacion_arma, observaciones, activo, actualizado_en';
 
 interface PostgrestLikeError {
   code?: string;

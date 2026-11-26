@@ -45,7 +45,6 @@ function buildInitialState(initial?: Agresor | null): FormState {
     drogas: initial?.drogas ?? [],
     especificacionDroga: initial?.especificacionDroga ?? '',
     utilizoArmaUObjeto: initial?.utilizoArmaUObjeto ?? null,
-    tipoArma: initial?.tipoArma ?? null,
     especificacionArma: initial?.especificacionArma ?? '',
     observaciones: initial?.observaciones ?? '',
   };
@@ -107,7 +106,7 @@ export function AgresorForm({
       codigoPostal: form.asentamientoId !== null ? null : form.codigoPostal,
       drogas: form.tieneConsumoDroga === true ? form.drogas : null,
       especificacionDroga: form.tieneConsumoDroga === true ? form.especificacionDroga : null,
-      tipoArma: form.utilizoArmaUObjeto === true ? form.tipoArma : null,
+      utilizoArmaUObjeto: form.utilizoArmaUObjeto,
       especificacionArma: form.utilizoArmaUObjeto === true ? form.especificacionArma : null,
       actualizadoEnEsperado: initial?.actualizadoEn,
     };

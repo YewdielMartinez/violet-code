@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -204,7 +204,6 @@ export type Database = {
           sexo: Database["public"]["Enums"]["sexo_biologico"] | null
           tiene_consumo_alcohol: boolean | null
           tiene_consumo_droga: boolean | null
-          tipo_arma: Database["public"]["Enums"]["tipo_arma"] | null
           tipo_trabajo: Database["public"]["Enums"]["tipo_trabajo"] | null
           utilizo_arma_u_objeto: boolean | null
           zona: Database["public"]["Enums"]["zona_geografica"] | null
@@ -241,7 +240,6 @@ export type Database = {
           sexo?: Database["public"]["Enums"]["sexo_biologico"] | null
           tiene_consumo_alcohol?: boolean | null
           tiene_consumo_droga?: boolean | null
-          tipo_arma?: Database["public"]["Enums"]["tipo_arma"] | null
           tipo_trabajo?: Database["public"]["Enums"]["tipo_trabajo"] | null
           utilizo_arma_u_objeto?: boolean | null
           zona?: Database["public"]["Enums"]["zona_geografica"] | null
@@ -278,7 +276,6 @@ export type Database = {
           sexo?: Database["public"]["Enums"]["sexo_biologico"] | null
           tiene_consumo_alcohol?: boolean | null
           tiene_consumo_droga?: boolean | null
-          tipo_arma?: Database["public"]["Enums"]["tipo_arma"] | null
           tipo_trabajo?: Database["public"]["Enums"]["tipo_trabajo"] | null
           utilizo_arma_u_objeto?: boolean | null
           zona?: Database["public"]["Enums"]["zona_geografica"] | null
@@ -744,42 +741,6 @@ export type Database = {
         }
         Relationships: []
       }
-      cat_discapacidad: {
-        Row: {
-          clave: string
-          id: number
-          nombre: string
-        }
-        Insert: {
-          clave: string
-          id?: never
-          nombre: string
-        }
-        Update: {
-          clave?: string
-          id?: never
-          nombre?: string
-        }
-        Relationships: []
-      }
-      cat_grupo_etnico: {
-        Row: {
-          clave: string
-          id: number
-          nombre: string
-        }
-        Insert: {
-          clave: string
-          id?: never
-          nombre: string
-        }
-        Update: {
-          clave?: string
-          id?: never
-          nombre?: string
-        }
-        Relationships: []
-      }
       cat_ocupacion: {
         Row: {
           clave: string
@@ -799,24 +760,6 @@ export type Database = {
         Relationships: []
       }
       cat_parentesco: {
-        Row: {
-          clave: string
-          id: number
-          nombre: string
-        }
-        Insert: {
-          clave: string
-          id?: never
-          nombre: string
-        }
-        Update: {
-          clave?: string
-          id?: never
-          nombre?: string
-        }
-        Relationships: []
-      }
-      cat_religion: {
         Row: {
           clave: string
           id: number
@@ -1823,17 +1766,14 @@ export type Database = {
           creado_en: string
           creado_por: string | null
           curp: string
-          discapacidad_id: number | null
-          discapacidad_otra: string | null
+          discapacidad: string | null
           entidad_nacimiento: string
           escolaridad: Database["public"]["Enums"]["escolaridad_nivel"] | null
           fecha_nacimiento: string
-          grupo_etnico_id: number | null
-          grupo_etnico_otro: string | null
+          grupo_etnico: string | null
           id: string
           nombres: string
-          religion_id: number | null
-          religion_otra: string | null
+          religion: string | null
           sexo: string
         }
         Insert: {
@@ -1845,17 +1785,14 @@ export type Database = {
           creado_en?: string
           creado_por?: string | null
           curp: string
-          discapacidad_id?: number | null
-          discapacidad_otra?: string | null
+          discapacidad?: string | null
           entidad_nacimiento?: string
           escolaridad?: Database["public"]["Enums"]["escolaridad_nivel"] | null
           fecha_nacimiento?: string
-          grupo_etnico_id?: number | null
-          grupo_etnico_otro?: string | null
+          grupo_etnico?: string | null
           id?: string
           nombres: string
-          religion_id?: number | null
-          religion_otra?: string | null
+          religion?: string | null
           sexo?: string
         }
         Update: {
@@ -1867,17 +1804,14 @@ export type Database = {
           creado_en?: string
           creado_por?: string | null
           curp?: string
-          discapacidad_id?: number | null
-          discapacidad_otra?: string | null
+          discapacidad?: string | null
           entidad_nacimiento?: string
           escolaridad?: Database["public"]["Enums"]["escolaridad_nivel"] | null
           fecha_nacimiento?: string
-          grupo_etnico_id?: number | null
-          grupo_etnico_otro?: string | null
+          grupo_etnico?: string | null
           id?: string
           nombres?: string
-          religion_id?: number | null
-          religion_otra?: string | null
+          religion?: string | null
           sexo?: string
         }
         Relationships: [
@@ -1886,27 +1820,6 @@ export type Database = {
             columns: ["creado_por"]
             isOneToOne: false
             referencedRelation: "empleado"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "persona_discapacidad_id_fkey"
-            columns: ["discapacidad_id"]
-            isOneToOne: false
-            referencedRelation: "cat_discapacidad"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "persona_grupo_etnico_id_fkey"
-            columns: ["grupo_etnico_id"]
-            isOneToOne: false
-            referencedRelation: "cat_grupo_etnico"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "persona_religion_id_fkey"
-            columns: ["religion_id"]
-            isOneToOne: false
-            referencedRelation: "cat_religion"
             referencedColumns: ["id"]
           },
         ]
@@ -2234,7 +2147,6 @@ export type Database = {
         | "cable"
         | "internet"
       sexo_biologico: "H" | "M"
-      tipo_arma: "arma_fuego" | "arma_blanca" | "objeto_contundente" | "otro"
       tipo_droga:
         | "marihuana"
         | "cristal"
@@ -2499,7 +2411,6 @@ export const Constants = {
         "internet",
       ],
       sexo_biologico: ["H", "M"],
-      tipo_arma: ["arma_fuego", "arma_blanca", "objeto_contundente", "otro"],
       tipo_droga: [
         "marihuana",
         "cristal",

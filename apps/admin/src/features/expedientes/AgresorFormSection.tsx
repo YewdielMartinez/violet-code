@@ -5,7 +5,6 @@ import '@yewdiel21/motion-kit/css/components/skeleton';
 import { Icon } from '@/shared/ui/Icon';
 import {
   DROGA_LABELS,
-  TIPO_ARMA_LABELS,
   formatAgresorNombre,
   useAgresores,
   useAsentamientosAhome,
@@ -195,7 +194,7 @@ export function AgresorFormSection({ fichaId }: Props) {
                     {agresor.utilizoArmaUObjeto === true ? (
                       <span className="rounded-full bg-status-danger-bg px-2.5 py-0.5 text-xs font-medium text-status-danger">
                         Utilizó arma u objeto
-                        {agresor.tipoArma ? `: ${TIPO_ARMA_LABELS[agresor.tipoArma]}` : ''}
+                        {agresor.especificacionArma ? `: ${agresor.especificacionArma}` : ''}
                       </span>
                     ) : null}
                   </div>

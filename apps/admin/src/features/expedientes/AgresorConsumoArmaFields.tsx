@@ -1,12 +1,7 @@
-import { Select } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/select';
 import {
   DROGA_LABELS,
-  TIPO_ARMA_LABELS,
-  TIPOS_ARMA,
   TIPOS_DROGA,
   type AgresorValidationField,
-  type TipoArma,
   type TipoDroga,
 } from './agresorApi';
 
@@ -16,17 +11,11 @@ const TRI_STATE_OPTIONS: { label: string; value: boolean | null }[] = [
   { label: 'Sí', value: true },
 ];
 
-const TIPO_ARMA_OPTIONS = [
-  { value: '', label: 'Sin especificar' },
-  ...TIPOS_ARMA.map((value) => ({ value, label: TIPO_ARMA_LABELS[value] })),
-];
-
 export interface ConsumoArmaValues {
   tieneConsumoDroga: boolean | null;
   drogas: TipoDroga[];
   especificacionDroga: string;
   utilizoArmaUObjeto: boolean | null;
-  tipoArma: TipoArma | null;
   especificacionArma: string;
   observaciones: string;
 }
@@ -57,7 +46,7 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
     onPatch(
       next === true
         ? { utilizoArmaUObjeto: true }
-        : { utilizoArmaUObjeto: next, tipoArma: null, especificacionArma: '' },
+        : { utilizoArmaUObjeto: next, especificacionArma: '' },
     );
   }
 
@@ -168,36 +157,22 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
         </div>
 
         {values.utilizoArmaUObjeto === true ? (
-          <div className="grid gap-3 pt-1 sm:grid-cols-2">
-            <div className="grid gap-1">
-              <span className="text-xs font-medium text-on-surface-variant">Tipo de arma u objeto</span>
-              <Select
-                label="Tipo de arma u objeto"
-                options={TIPO_ARMA_OPTIONS}
-                value={values.tipoArma ?? ''}
-                placeholder="Selecciona una opción…"
-                onChange={(val) => onPatch({ tipoArma: val ? (val as TipoArma) : null })}
+          <div className="grid gap-1 pt-1">
+            <label className="text-xs font-medium text-on-surface-variant">
+              Especificación del arma u objeto
+            </label>
+            <label className="mk-field">
+              <input
+                type="text"
+                maxLength={250}
+                value={values.especificacionArma}
+                placeholder="Describe brevemente el objeto o arma"
+                onChange={(e) => onPatch({ especificacionArma: e.target.value })}
               />
-              {errores.tipoArma ? <p role="alert" className="text-xs text-status-danger">{errores.tipoArma}</p> : null}
-            </div>
-
-            <div className="grid gap-1">
-              <label className="text-xs font-medium text-on-surface-variant">
-                Especificación del arma u objeto
-              </label>
-              <label className="mk-field">
-                <input
-                  type="text"
-                  maxLength={250}
-                  value={values.especificacionArma}
-                  placeholder="Describe brevemente el objeto o arma"
-                  onChange={(e) => onPatch({ especificacionArma: e.target.value })}
-                />
-              </label>
-              {errores.especificacionArma ? (
-                <p role="alert" className="text-xs text-status-danger">{errores.especificacionArma}</p>
-              ) : null}
-            </div>
+            </label>
+            {errores.especificacionArma ? (
+              <p role="alert" className="text-xs text-status-danger">{errores.especificacionArma}</p>
+            ) : null}
           </div>
         ) : null}
       </fieldset>

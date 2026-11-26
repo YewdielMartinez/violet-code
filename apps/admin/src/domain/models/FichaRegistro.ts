@@ -47,9 +47,6 @@ export interface CatalogoItem {
 export interface CatalogosFicha {
   areas: CatalogoItem[];
   ocupaciones: CatalogoItem[];
-  discapacidades: CatalogoItem[];
-  gruposEtnicos: CatalogoItem[];
-  religiones: CatalogoItem[];
   parentescos: CatalogoItem[];
 }
 
@@ -62,9 +59,9 @@ export interface FichaIdentidadInput {
   apellidoMaterno: string;
   celular: string;
   escolaridad: EscolaridadNivel | '';
-  discapacidadId: number | null;
-  grupoEtnicoId: number | null;
-  religionId: number | null;
+  discapacidad: string;
+  grupoEtnico: string;
+  religion: string;
   estadoCivil: EstadoCivil | '';
   ocupacionId: number | null;
   ocupacionOtra: string;
@@ -116,9 +113,9 @@ export const INITIAL_FICHA_IDENTIDAD: FichaIdentidadInput = {
   apellidoMaterno: '',
   celular: '',
   escolaridad: '',
-  discapacidadId: null,
-  grupoEtnicoId: null,
-  religionId: null,
+  discapacidad: '',
+  grupoEtnico: '',
+  religion: '',
   estadoCivil: '',
   ocupacionId: null,
   ocupacionOtra: '',

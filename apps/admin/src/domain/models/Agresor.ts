@@ -1,7 +1,6 @@
 import type { Database } from '@/infrastructure/supabase/database.types';
 import { isAttentionRole, isSupervisor, type StaffRole } from './Auth';
 
-export type TipoArma = Database['public']['Enums']['tipo_arma'];
 export type TipoDroga = Database['public']['Enums']['tipo_droga'];
 
 export const TIPOS_DROGA: readonly TipoDroga[] = [
@@ -20,20 +19,6 @@ export const DROGA_LABELS: Record<TipoDroga, string> = {
   inhalantes: 'Inhalantes',
   medicamento_controlado: 'Medicamento controlado',
   otra: 'Otra',
-};
-
-export const TIPOS_ARMA: readonly TipoArma[] = [
-  'arma_fuego',
-  'arma_blanca',
-  'objeto_contundente',
-  'otro',
-];
-
-export const TIPO_ARMA_LABELS: Record<TipoArma, string> = {
-  arma_fuego: 'Arma de fuego',
-  arma_blanca: 'Arma blanca',
-  objeto_contundente: 'Objeto contundente',
-  otro: 'Otro',
 };
 
 export interface CatalogoOpcion {
@@ -70,7 +55,6 @@ export interface Agresor {
   drogas: TipoDroga[] | null;
   especificacionDroga: string | null;
   utilizoArmaUObjeto: boolean | null;
-  tipoArma: TipoArma | null;
   especificacionArma: string | null;
   observaciones: string | null;
   activo: boolean;
@@ -96,7 +80,6 @@ export interface AgresorInput {
   drogas?: TipoDroga[] | null;
   especificacionDroga?: string | null;
   utilizoArmaUObjeto?: boolean | null;
-  tipoArma?: TipoArma | null;
   especificacionArma?: string | null;
   observaciones?: string | null;
   /** Marca temporal leída al abrir el registro para bloqueo optimista en actualizaciones. */
@@ -117,7 +100,6 @@ export type AgresorValidationField =
   | 'ocupacionOtra'
   | 'drogas'
   | 'especificacionDroga'
-  | 'tipoArma'
   | 'especificacionArma'
   | 'observaciones';
 
@@ -128,7 +110,6 @@ export interface ValidacionAgresorResult {
 
 const CP_REGEX = /^[0-9]{5}$/;
 const DROGA_SET = new Set<string>(TIPOS_DROGA);
-const ARMA_SET = new Set<string>(TIPOS_ARMA);
 
 /**
  * Permiso `agresor.acceder` definido en `07_rls.sql`:
@@ -216,16 +197,12 @@ export function validarAgresor(input: AgresorInput): ValidacionAgresorResult {
     errores.especificacionDroga = 'La especificación de droga no puede exceder 250 caracteres.';
   }
 
-  const tipoArma = input.tipoArma ?? null;
   const especificacionArma = trimmedText(input.especificacionArma);
   const usoArmaActivo = input.utilizoArmaUObjeto === true;
 
-  if (!usoArmaActivo && (tipoArma !== null || especificacionArma.length > 0)) {
-    errores.tipoArma = 'Solo puedes indicar tipo o especificación de arma si utilizó arma u objeto.';
-  } else if (tipoArma !== null && !ARMA_SET.has(tipoArma)) {
-    errores.tipoArma = 'El tipo de arma seleccionado no es válido.';
-  }
-  if ((input.especificacionArma?.length ?? 0) > 250) {
+  if (!usoArmaActivo && especificacionArma.length > 0) {
+    errores.especificacionArma = 'Solo puedes indicar especificación de arma si utilizó arma u objeto.';
+  } else if ((input.especificacionArma?.length ?? 0) > 250) {
     errores.especificacionArma = 'La especificación de arma no puede exceder 250 caracteres.';
   }
 
