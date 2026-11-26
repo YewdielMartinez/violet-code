@@ -7,14 +7,14 @@ Plataforma que conecta la solicitud de auxilio y orientación de una mujer con l
 
 ## Componentes
 
-| Componente | Tecnología | Carpeta | Estado |
-|---|---|---|---|
-| **Violet Code Mobile** — app de la usuaria | Kotlin + Jetpack Compose (MVVM) | [apps/mobile](apps/mobile) | Base: auxilio (911), directorio desde API, salida rápida |
-| **Violet Code Administration** — panel de SEMUJERES | React + TypeScript + Tailwind + motion-kit | [apps/admin](apps/admin) | Base: layout, dashboard, directorio desde API |
-| **Violet Code Core** — API central | ASP.NET Core 9, monolito modular, PostgreSQL | [apps/core](apps/core) | Base: 8 módulos, Catálogos completo, pruebas de arquitectura |
-| **Supabase** — BaaS y base de datos | PostgreSQL + Auth + RLS + Realtime (Supabase CLI) | [supabase](supabase) | Base: inicializado (`config.toml`, `migrations/`, `functions/`) |
-| Design tokens | Tema Material 3 generado con motion-kit | [packages/design-tokens](packages/design-tokens) | Genera CSS (web) y Kotlin (Android) |
-| Infraestructura | Docker Compose | [infra](infra) | PostgreSQL + API |
+| Componente                                          | Tecnología                                        | Carpeta                                          | Estado                                                          |
+| --------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------ | --------------------------------------------------------------- |
+| **Violet Code Mobile** — app de la usuaria          | Kotlin + Jetpack Compose (MVVM)                   | [apps/mobile](apps/mobile)                       | Base: auxilio (911), directorio desde API, salida rápida        |
+| **Violet Code Administration** — panel de SEMUJERES | React + TypeScript + Tailwind + motion-kit        | [apps/admin](apps/admin)                         | Base: layout, dashboard, directorio desde API                   |
+| **Violet Code Core** — API central                  | ASP.NET Core 9, monolito modular, PostgreSQL      | [apps/core](apps/core)                           | Base: 8 módulos, Catálogos completo, pruebas de arquitectura    |
+| **Supabase** — BaaS y base de datos                 | PostgreSQL + Auth + RLS + Realtime (Supabase CLI) | [supabase](supabase)                             | Base: inicializado (`config.toml`, `migrations/`, `functions/`) |
+| Design tokens                                       | Tema Material 3 generado con motion-kit           | [packages/design-tokens](packages/design-tokens) | Genera CSS (web) y Kotlin (Android)                             |
+| Infraestructura                                     | Docker Compose                                    | [infra](infra)                                   | PostgreSQL + API                                                |
 
 ```
 apps/
@@ -64,15 +64,15 @@ Cambiar color: `VIOLET_SEED="#5B2A86" npm run tokens`.
 
 ## Documentación
 
-| # | Documento | Para qué |
-|---|---|---|
-| 00 | [Convocatoria y rúbrica](docs/00-convocatoria-y-rubrica.md) | Entregables y cómo cubrimos cada criterio |
-| 01 | [Product Discovery](docs/discovery/01-product-discovery.md) | Problema, usuarios, hipótesis, alcance |
-| 02 | [Estructura funcional](docs/discovery/02-estructura-funcional.md) | Módulos Mobile / Admin / Core |
-| 03 | [Guía de entrevista](docs/discovery/03-guia-entrevista-semujeres.md) | Preguntas para SEMUJERES |
-| 04 | [Arquitectura](docs/architecture/04-arquitectura-preliminar.md) | Monolito modular, MVVM, datos, seguridad |
-| 05 | [Registro de descubrimiento](docs/discovery/registro/README.md) | Hipótesis, actas, requerimientos, riesgos |
-| 06 | [Post-reunión](docs/discovery/06-post-reunion.md) | De respuestas a historias y MVP |
-| ADR | [docs/adr/](docs/adr/) | Decisiones de arquitectura |
+| #   | Documento                                                            | Para qué                                  |
+| --- | -------------------------------------------------------------------- | ----------------------------------------- |
+| 00  | [Convocatoria y rúbrica](docs/00-convocatoria-y-rubrica.md)          | Entregables y cómo cubrimos cada criterio |
+| 01  | [Product Discovery](docs/discovery/01-product-discovery.md)          | Problema, usuarios, hipótesis, alcance    |
+| 02  | [Estructura funcional](docs/discovery/02-estructura-funcional.md)    | Módulos Mobile / Admin / Core             |
+| 03  | [Guía de entrevista](docs/discovery/03-guia-entrevista-semujeres.md) | Preguntas para SEMUJERES                  |
+| 04  | [Arquitectura](docs/architecture/04-arquitectura-preliminar.md)      | Monolito modular, MVVM, datos, seguridad  |
+| 05  | [Registro de descubrimiento](docs/discovery/registro/README.md)      | Hipótesis, actas, requerimientos, riesgos |
+| 06  | [Post-reunión](docs/discovery/06-post-reunion.md)                    | De respuestas a historias y MVP           |
+| ADR | [docs/adr/](docs/adr)                                                | Decisiones de arquitectura                |
 
 Cómo colaborar: [CONTRIBUTING.md](CONTRIBUTING.md).

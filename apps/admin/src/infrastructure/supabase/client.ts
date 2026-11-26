@@ -7,13 +7,16 @@ import type { Database } from './database.types';
  * `domain/`, `hooks/` y `features/` trabajan contra los puertos.
  * La seguridad la aplican las políticas RLS de `supabase/migrations/`: aquí solo va la llave pública.
  */
-const url = import.meta.env.VITE_SUPABASE_URL;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const url = import.meta.env.VITE_SUPABASE_URL?.trim();
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
-if (!url || !anonKey) {
+const isPlaceholderKey =
+  !anonKey || anonKey.endsWith('...') || anonKey === 'tu_anon_key_aqui';
+
+if (!url || isPlaceholderKey) {
   throw new Error(
-    'Faltan VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY. Copia apps/admin/.env.example a apps/admin/.env.local ' +
-      'y llena los valores de `npx supabase status`.',
+    'Configura VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY reales en apps/admin/.env (o .env.local). ' +
+      'Obtén la llave pública (anon / publishable) desde Project Settings > API Keys en Supabase o con `npx supabase status`.',
   );
 }
 

@@ -1,21 +1,21 @@
 # Arquitectura de Base de Datos, Esquema y RPCs
 
-Referencia técnica del modelo relacional, reglas de integridad, auditoría y contratos de vistas/RPCs en PostgreSQL (`supabase/migrations/`). Diagrama DBML completo en [esquema.dbml](./esquema.dbml) y modelo de autorización en [roles-y-permisos.md](./roles-y-permisos.md).
+Referencia técnica del modelo relacional, reglas de integridad, auditoría y contratos de vistas/RPCs en PostgreSQL (`supabase/migrations/`). Diagrama DBML completo en [esquema.dbml](esquema.dbml) y modelo de autorización en [roles-y-permisos.md](roles-y-permisos.md).
 
 ---
 
 ## 1. Orden de migraciones
 
-| Archivo | Contenido |
-|---|---|
-| [20261125000100_01_base.sql](../migrations/20261125000100_01_base.sql) | Catálogos base (`cat_area`, `cat_asentamiento`, `cat_discapacidad`, `cat_grupo_etnico`, `cat_religion`), cuentas (`empleado`, `usuario_externo`), `persona` y `domicilio`. |
-| [20261125000150_01b_sepomex_ahome.sql](../migrations/20261125000150_01b_sepomex_ahome.sql) | Precarga oficial SEPOMEX de Ahome, Sinaloa (`451` asentamientos). |
-| [20261125000200_02_atencion.sql](../migrations/20261125000200_02_atencion.sql) | `cat_tipo_atencion`, `cat_ocupacion`, `ficha_registro`, `ficha_servicio_solicitado`, `pre_registro`, `cita`, `atencion` y `alerta` (Realtime). |
-| [20261125000300_03_complemento.sql](../migrations/20261125000300_03_complemento.sql) | `historial_clinico`, `directorio_institucion`, `cat_tipo_actividad`, `actividad_preventiva`, `actividad_empleado` y `bitacora_acceso`. |
-| [20261125000400_04_ficha.sql](../migrations/20261125000400_04_ficha.sql) | `cat_parentesco`, `estudio_socioeconomico`, `aportante_hogar`, `agresor`, `orden_proteccion`, `nota_area`, `derivacion`, `cat_tipo_documento`, `documento` y bucket `documentos`. |
-| [20261125000500_05_vistas.sql](../migrations/20261125000500_05_vistas.sql) | Vistas analíticas/operativas y funciones RPC (`get_umeca_citas`, `get_mapa_calor_asentamiento`). |
+| Archivo                                                                                    | Contenido                                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [20261125000100_01_base.sql](../migrations/20261125000100_01_base.sql)                     | Catálogos base (`cat_area`, `cat_asentamiento`, `cat_discapacidad`, `cat_grupo_etnico`, `cat_religion`), cuentas (`empleado`, `usuario_externo`), `persona` y `domicilio`.                      |
+| [20261125000150_01b_sepomex_ahome.sql](../migrations/20261125000150_01b_sepomex_ahome.sql) | Precarga oficial SEPOMEX de Ahome, Sinaloa (`451` asentamientos).                                                                                                                               |
+| [20261125000200_02_atencion.sql](../migrations/20261125000200_02_atencion.sql)             | `cat_tipo_atencion`, `cat_ocupacion`, `ficha_registro`, `ficha_servicio_solicitado`, `pre_registro`, `cita`, `atencion` y `alerta` (Realtime).                                                  |
+| [20261125000300_03_complemento.sql](../migrations/20261125000300_03_complemento.sql)       | `historial_clinico`, `directorio_institucion`, `cat_tipo_actividad`, `actividad_preventiva`, `actividad_empleado` y `bitacora_acceso`.                                                          |
+| [20261125000400_04_ficha.sql](../migrations/20261125000400_04_ficha.sql)                   | `cat_parentesco`, `estudio_socioeconomico`, `aportante_hogar`, `agresor`, `orden_proteccion`, `nota_area`, `derivacion`, `cat_tipo_documento`, `documento` y bucket `documentos`.               |
+| [20261125000500_05_vistas.sql](../migrations/20261125000500_05_vistas.sql)                 | Vistas analíticas/operativas y funciones RPC (`get_umeca_citas`, `get_mapa_calor_asentamiento`).                                                                                                |
 | [20261125000600_06_reglas_negocio.sql](../migrations/20261125000600_06_reglas_negocio.sql) | Folio automático (`ficha_folio_seq`, formato `SEM-AAAA-NNNN`), mayoría de edad `>= 18` en Psicología/Jurídico, columnas generadas de CURP en `pre_registro` y `buscar_pre_registro_por_curp()`. |
-| [20261125000700_07_rls.sql](../migrations/20261125000700_07_rls.sql) | Helpers RBAC + ABAC (`tiene_permiso()`, roles y áreas) y políticas RLS en las 32 tablas públicas + bucket `documentos`. |
+| [20261125000700_07_rls.sql](../migrations/20261125000700_07_rls.sql)                       | Helpers RBAC + ABAC (`tiene_permiso()`, roles y áreas) y políticas RLS en las 32 tablas públicas + bucket `documentos`.                                                                         |
 
 ---
 
@@ -53,12 +53,12 @@ Referencia técnica del modelo relacional, reglas de integridad, auditoría y co
 
 ## 3. Contrato de Vistas y RPCs
 
-| Recurso | Tipo | Acceso | Descripción |
-|---|---|---|---|
-| `vista_lista_urgencias` | Vista (`security_invoker = true`) | Autenticado (RLS) | Expedientes abiertos/en seguimiento con última prioridad `'alta'` sin cita futura agendada/confirmada. |
-| `vista_informe_mensual` | Vista (`security_invoker = true`) | Autenticado (RLS) | Conteos agregados por año, mes (`America/Mazatlan`), área, tipo de atención, primera vez/seguimiento y sexo (sin PII). |
-| `vista_informe_anual` | Vista (`security_invoker = true`) | Autenticado (RLS) | Mismo desglose agregado anual (sin PII). |
-| `get_umeca_citas()` | RPC (`SECURITY DEFINER`) | `authenticated` (solo UMECA activo) | Devuelve citas de origen `'umeca'` (`cita_id`, nombre, `programada_en`, `estado`) y registra automáticamente `'ver'` en `bitacora_acceso`. |
-| `get_mapa_calor_asentamiento(p_umbral_minimo int default 3)` | RPC (`SECURITY DEFINER`) | `authenticated` (roles internos) | Agrega expedientes activos, alertas y actividades preventivas por `cat_asentamiento`, aplicando umbral mínimo de privacidad (`>= p_umbral_minimo`) y sin PII. |
-| `buscar_pre_registro_por_curp(p_curp text)` | RPC (`SECURITY DEFINER`) | `authenticated` (`titular`, `subdireccion`, `trabajo_social`) | Precarga datos de un `pre_registro` móvil activo por CURP exacta al capturar la Ficha Única. |
-| `registrar_consulta(p_tabla text, p_registro_id text)` | RPC (`SECURITY DEFINER`) | `authenticated` (personal/UMECA activo) | Registra en `bitacora_acceso` la apertura de un expediente o datos de agresor. |
+| Recurso                                                      | Tipo                              | Acceso                                                        | Descripción                                                                                                                                                   |
+| ------------------------------------------------------------ | --------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vista_lista_urgencias`                                      | Vista (`security_invoker = true`) | Autenticado (RLS)                                             | Expedientes abiertos/en seguimiento con última prioridad `'alta'` sin cita futura agendada/confirmada.                                                        |
+| `vista_informe_mensual`                                      | Vista (`security_invoker = true`) | Autenticado (RLS)                                             | Conteos agregados por año, mes (`America/Mazatlan`), área, tipo de atención, primera vez/seguimiento y sexo (sin PII).                                        |
+| `vista_informe_anual`                                        | Vista (`security_invoker = true`) | Autenticado (RLS)                                             | Mismo desglose agregado anual (sin PII).                                                                                                                      |
+| `get_umeca_citas()`                                          | RPC (`SECURITY DEFINER`)          | `authenticated` (solo UMECA activo)                           | Devuelve citas de origen `'umeca'` (`cita_id`, nombre, `programada_en`, `estado`) y registra automáticamente `'ver'` en `bitacora_acceso`.                    |
+| `get_mapa_calor_asentamiento(p_umbral_minimo int default 3)` | RPC (`SECURITY DEFINER`)          | `authenticated` (roles internos)                              | Agrega expedientes activos, alertas y actividades preventivas por `cat_asentamiento`, aplicando umbral mínimo de privacidad (`>= p_umbral_minimo`) y sin PII. |
+| `buscar_pre_registro_por_curp(p_curp text)`                  | RPC (`SECURITY DEFINER`)          | `authenticated` (`titular`, `subdireccion`, `trabajo_social`) | Precarga datos de un `pre_registro` móvil activo por CURP exacta al capturar la Ficha Única.                                                                  |
+| `registrar_consulta(p_tabla text, p_registro_id text)`       | RPC (`SECURITY DEFINER`)          | `authenticated` (personal/UMECA activo)                       | Registra en `bitacora_acceso` la apertura de un expediente o datos de agresor.                                                                                |
