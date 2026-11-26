@@ -29,24 +29,42 @@ export const supabaseFichaRepository: FichaRepository = {
 
     let personaId = identidad.existingPersonaId;
     if (!personaId) {
-      const { data: personaRow, error: personaError } = await supabase
+      const { data: existingPersona, error: lookupError } = await supabase
         .from('persona')
-        .insert({
-          curp,
-          nombres: identidad.nombres.trim(),
-          apellido_paterno: identidad.apellidoPaterno.trim(),
-          apellido_materno: emptyToNull(identidad.apellidoMaterno),
-          celular: emptyToNull(identidad.celular),
-          escolaridad: identidad.escolaridad || null,
-          discapacidad_id: identidad.discapacidadId,
-          grupo_etnico_id: identidad.grupoEtnicoId,
-          religion_id: identidad.religionId,
-        })
-        .select('id')
-        .single();
+        .select('id, ficha_registro(id, activo)')
+        .eq('curp', curp)
+        .maybeSingle();
 
-      if (personaError) throw personaError;
-      personaId = personaRow.id;
+      if (lookupError) throw lookupError;
+
+      if (existingPersona) {
+        const hasActiveFicha = Array.isArray(existingPersona.ficha_registro)
+          ? existingPersona.ficha_registro.some((f) => f.activo)
+          : Boolean(existingPersona.ficha_registro?.activo);
+        if (hasActiveFicha) {
+          throw new Error('Esta persona ya tiene una Ficha Única registrada con esa CURP.');
+        }
+        personaId = existingPersona.id;
+      } else {
+        const { data: personaRow, error: personaError } = await supabase
+          .from('persona')
+          .insert({
+            curp,
+            nombres: identidad.nombres.trim(),
+            apellido_paterno: identidad.apellidoPaterno.trim(),
+            apellido_materno: emptyToNull(identidad.apellidoMaterno),
+            celular: emptyToNull(identidad.celular),
+            escolaridad: identidad.escolaridad || null,
+            discapacidad_id: identidad.discapacidadId,
+            grupo_etnico_id: identidad.grupoEtnicoId,
+            religion_id: identidad.religionId,
+          })
+          .select('id')
+          .single();
+
+        if (personaError) throw personaError;
+        personaId = personaRow.id;
+      }
     }
 
     const { data: fichaRow, error: fichaError } = await supabase

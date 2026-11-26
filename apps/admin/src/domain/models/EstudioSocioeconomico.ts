@@ -37,21 +37,25 @@ export const FRECUENCIA_INGRESO_LABELS: Record<FrecuenciaIngreso, string> = {
   variable: 'Variable',
 };
 
-export const SERVICIOS_VIVIENDA = [
-  'Agua potable',
-  'Energía eléctrica',
-  'Drenaje',
-  'Gas',
-  'Internet / Telefonía',
-] as const;
+export const SERVICIOS_VIVIENDA: readonly { value: string; label: string }[] = [
+  { value: 'agua', label: 'Agua potable' },
+  { value: 'drenaje', label: 'Drenaje' },
+  { value: 'luz', label: 'Energía eléctrica (luz)' },
+  { value: 'pavimento', label: 'Pavimento' },
+  { value: 'cable', label: 'TV por cable' },
+  { value: 'internet', label: 'Internet' },
+];
 
-export const BIENES_VIVIENDA = [
-  'Refrigerador',
-  'Estufa',
-  'Lavadora',
-  'Televisión',
-  'Vehículo propio',
-] as const;
+export const BIENES_VIVIENDA: readonly { value: string; label: string }[] = [
+  { value: 'estufa', label: 'Estufa' },
+  { value: 'refrigerador', label: 'Refrigerador' },
+  { value: 'lavadora', label: 'Lavadora' },
+  { value: 'aire_acondicionado', label: 'Aire acondicionado' },
+  { value: 'abanico', label: 'Abanico' },
+  { value: 'tv', label: 'Televisión' },
+  { value: 'microondas', label: 'Microondas' },
+  { value: 'computadora', label: 'Computadora' },
+];
 
 export interface AportanteHogarInput {
   nombre: string;

@@ -43,8 +43,8 @@ const FRECUENCIA_OPTIONS = Object.entries(FRECUENCIA_INGRESO_LABELS).map(([value
   value,
   label,
 }));
-const SERVICIOS_OPTIONS = SERVICIOS_VIVIENDA.map((s) => ({ value: s, label: s }));
-const BIENES_OPTIONS = BIENES_VIVIENDA.map((b) => ({ value: b, label: b }));
+const SERVICIOS_OPTIONS = [...SERVICIOS_VIVIENDA];
+const BIENES_OPTIONS = [...BIENES_VIVIENDA];
 
 /** Paso 3 de la Ficha Única: estudio socioeconómico, vivienda y aportantes del hogar. */
 export function FichaSocioeconomicoStep({ value, onChange, catalogos }: Props) {

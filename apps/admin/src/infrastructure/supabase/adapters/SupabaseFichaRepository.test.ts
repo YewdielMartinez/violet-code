@@ -36,6 +36,7 @@ describe('supabaseFichaRepository', () => {
 
   it('crea persona, ficha_registro con folio automático, servicios, domicilio y estudio', async () => {
     const personaChain = createTableChain({ data: { id: 'per-1' }, error: null });
+    personaChain.maybeSingle.mockResolvedValue({ data: null, error: null });
     const fichaChain = createTableChain({
       data: { id: 'ficha-1', folio: 'SEM-2026-0007' },
       error: null,
