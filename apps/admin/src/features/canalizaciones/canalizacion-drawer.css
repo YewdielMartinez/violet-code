@@ -27,6 +27,12 @@
   filter: none !important;
 }
 
+.mk-dialog.vc-canalizacion-dialog[data-mk-fade] > [data-mk-scroll-viewport],
+.mk-dialog.vc-canalizacion-form-dialog[data-mk-fade] > [data-mk-scroll-viewport] {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
 @media (max-width: 679px) {
   .mk-dialog.vc-canalizacion-dialog[data-mk-placement='side'] {
     inset: 0 0 0 auto;

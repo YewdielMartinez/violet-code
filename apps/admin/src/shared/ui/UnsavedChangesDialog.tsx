@@ -16,6 +16,7 @@ export function UnsavedChangesDialog({
   message = 'Tienes datos capturados que aún no se han guardado. Si sales ahora, se perderán.',
 }: Props) {
   const isBlocked = blocker.state === 'blocked';
+  if (!isBlocked) return null;
 
   return (
     <Dialog.Root

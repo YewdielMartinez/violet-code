@@ -362,3 +362,17 @@ html.vc-icons-loading .mk-icon {
   background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface-variant);
 }
+
+/* Diálogos de alto rendimiento: evita backdrop blur, ghost blur y mask-image en viewport. */
+.mk-dialog.vc-perf-dialog::backdrop {
+  backdrop-filter: none;
+}
+
+.mk-dialog.vc-perf-dialog[data-mk-ghost] [data-mk-part] {
+  filter: none !important;
+}
+
+.mk-dialog.vc-perf-dialog[data-mk-fade] > [data-mk-scroll-viewport] {
+  -webkit-mask-image: none;
+  mask-image: none;
+}

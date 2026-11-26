@@ -256,12 +256,13 @@ describe('ExpedienteDetailPage', () => {
     renderDetailPage();
 
     expect(await screen.findByRole('heading', { name: 'Adriana Meza Gutiérrez' })).toBeTruthy();
+    expect(screen.getByRole('tablist').getAttribute('aria-orientation')).toBe('horizontal');
     const identityCard = screen.getByRole('region', { name: 'Resumen de la usuaria' });
     expect(within(identityCard).getByText('SEM-2026-0001')).toBeTruthy();
     expect(within(identityCard).getByText('MEZA910315MSLGRN04')).toBeTruthy();
     expect(within(identityCard).getByText('En seguimiento')).toBeTruthy();
     expect(within(identityCard).getByText('Prioritario')).toBeTruthy();
-    expect(within(identityCard).getByRole('link', { name: 'Llamar' }).getAttribute('href')).toBe(
+    expect(screen.getByRole('link', { name: 'Llamar' }).getAttribute('href')).toBe(
       'tel:6681000001',
     );
     expect(screen.getByTestId('ficha-resumen')).toBeTruthy();

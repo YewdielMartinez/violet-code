@@ -5,6 +5,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -27,6 +28,7 @@ import {
   useExpedienteById,
   useRegisterConsult,
 } from './api';
+import './expediente-detail.css';
 import { ExpedienteContactoSection } from './drawer/ExpedienteContactoSection';
 import type { DrawerTab } from './drawer/ExpedienteDrawerTabs';
 import {
@@ -153,24 +155,21 @@ const PageLoadingSkeleton = memo(function PageLoadingSkeleton() {
       role="status"
       aria-busy="true"
       aria-label="Cargando expediente"
-      className="mx-auto grid w-full items-start gap-6 px-4 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)]"
+      className="mx-auto grid w-full gap-4 px-4 sm:px-6"
     >
-      <div className="grid gap-4">
-        <div className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-4">
-          <div className="h-7 w-32 rounded-full bg-surface-container-high animate-pulse motion-reduce:animate-none" />
-          <div className="h-5 w-36 rounded-lg bg-surface-container animate-pulse motion-reduce:animate-none" />
-          <div className="h-4 w-48 rounded-lg bg-surface-container animate-pulse motion-reduce:animate-none" />
-          <div className="h-4 w-44 rounded-lg bg-surface-container animate-pulse motion-reduce:animate-none" />
-          <div className="h-11 w-full rounded-xl bg-surface-container-high animate-pulse motion-reduce:animate-none" />
-        </div>
-        <div className="grid gap-2 rounded-2xl border border-outline-variant bg-surface-container-low p-2">
-          {Array.from({ length: 5 }, (_, idx) => (
-            <div
-              key={idx}
-              className="h-12 rounded-xl bg-surface-container animate-pulse motion-reduce:animate-none"
-            />
-          ))}
-        </div>
+      <div className="flex flex-wrap items-center gap-3 pb-1">
+        <div className="h-7 w-32 rounded-full bg-surface-container-high animate-pulse motion-reduce:animate-none" />
+        <div className="h-7 w-28 rounded-full bg-surface-container animate-pulse motion-reduce:animate-none" />
+        <div className="h-5 w-48 rounded-lg bg-surface-container animate-pulse motion-reduce:animate-none" />
+        <div className="h-5 w-40 rounded-lg bg-surface-container animate-pulse motion-reduce:animate-none" />
+      </div>
+      <div className="flex items-center gap-2 overflow-hidden rounded-2xl border border-outline-variant bg-surface-container-low p-1.5">
+        {Array.from({ length: 5 }, (_, idx) => (
+          <div
+            key={idx}
+            className="h-11 w-32 shrink-0 rounded-full bg-surface-container animate-pulse motion-reduce:animate-none"
+          />
+        ))}
       </div>
       <SectionSkeleton label="Cargando detalle del expediente" />
     </div>
@@ -181,6 +180,7 @@ interface LazyTabPanelProps {
   id: string;
   labelledBy: string;
   active: boolean;
+  motionClass: string;
   label: string;
   children: ReactNode;
 }
@@ -189,6 +189,7 @@ const LazyTabPanel = memo(function LazyTabPanel({
   id,
   labelledBy,
   active,
+  motionClass,
   label,
   children,
 }: LazyTabPanelProps) {
@@ -198,79 +199,59 @@ const LazyTabPanel = memo(function LazyTabPanel({
       role="tabpanel"
       aria-labelledby={labelledBy}
       hidden={!active}
-      className={active ? 'min-w-0' : 'hidden'}
+      className={active ? `min-w-0 ${motionClass}`.trim() : 'hidden'}
     >
       <Suspense fallback={<SectionSkeleton label={label} />}>{children}</Suspense>
     </div>
   );
 });
 
-interface SummarySidebarCardProps {
+interface SummaryStripProps {
   expediente: ExpedienteResumen;
 }
 
-const SummarySidebarCard = memo(function SummarySidebarCard({ expediente }: SummarySidebarCardProps) {
+const SummaryStrip = memo(function SummaryStrip({ expediente }: SummaryStripProps) {
   const statusStyle = ESTADO_BADGE_STYLES[expediente.estado];
   const age = calculateAge(expediente.persona.fechaNacimiento);
   const formattedPhone = formatPhoneDisplay(expediente.persona.celular);
-  const telHref = formatTelHref(expediente.persona.celular);
 
   return (
     <section
       aria-label="Resumen de la usuaria"
-      className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-4 text-on-surface"
+      className="mx-auto flex w-full flex-wrap items-center gap-x-3 gap-y-2 px-4 pb-3 sm:px-6"
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <span
-          className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-sm font-medium ${statusStyle.pill}`}
-        >
-          <span aria-hidden className={`size-2 rounded-full ${statusStyle.dot}`} />
-          <span>{ESTADO_FICHA_LABELS[expediente.estado]}</span>
+      <span
+        className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-sm font-medium ${statusStyle.pill}`}
+      >
+        <span aria-hidden className={`size-2 rounded-full ${statusStyle.dot}`} />
+        <span>{ESTADO_FICHA_LABELS[expediente.estado]}</span>
+      </span>
+
+      {expediente.enListaUrgencias ? (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-status-danger-bg px-3.5 py-1 text-sm font-medium text-status-danger">
+          <span aria-hidden className="size-2 rounded-full bg-status-danger" />
+          <span>Prioritario</span>
         </span>
+      ) : null}
 
-        {expediente.enListaUrgencias ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-status-danger-bg px-3.5 py-1 text-sm font-medium text-status-danger">
-            <span aria-hidden className="size-2 rounded-full bg-status-danger" />
-            <span>Prioritario</span>
-          </span>
-        ) : null}
-      </div>
+      <span className="rounded-full bg-surface-container-high px-3 py-1 font-mono text-sm font-semibold text-on-surface">
+        {expediente.folio}
+      </span>
 
-      <div>
-        <p className="text-sm font-medium text-on-surface-variant">Folio</p>
-        <p className="mt-0.5 font-mono text-base font-semibold text-on-surface">
-          {expediente.folio}
-        </p>
-      </div>
+      <span className="text-sm text-on-surface-variant">
+        {formatSexo(expediente.persona.sexo)} ·{' '}
+        {age !== null ? `${age} años` : 'Edad sin registrar'} · Nac.{' '}
+        {formatFechaNacimiento(expediente.persona.fechaNacimiento)}
+      </span>
 
-      <div className="grid gap-1 text-sm text-on-surface-variant">
-        <p className="text-base text-on-surface">
-          {formatSexo(expediente.persona.sexo)} ·{' '}
-          {age !== null ? `${age} años` : 'Edad sin registrar'}
-        </p>
-        <p>Nacimiento: {formatFechaNacimiento(expediente.persona.fechaNacimiento)}</p>
-      </div>
+      <span className="font-mono text-sm font-semibold text-on-surface">
+        {expediente.persona.curp}
+      </span>
 
-      <div>
-        <p className="text-sm font-medium text-on-surface-variant">CURP</p>
-        <p className="mt-0.5 break-all font-mono text-sm font-semibold text-on-surface">
-          {expediente.persona.curp}
-        </p>
-      </div>
-
-      {telHref && formattedPhone ? (
-        <div className="grid gap-2 pt-1">
-          <a
-            href={telHref}
-            className="mk-button mk-button--primary min-h-11 w-full justify-center text-base"
-          >
-            <Icon name="call" />
-            <span>Llamar</span>
-          </a>
-          <p className="text-center font-mono text-sm font-medium text-on-surface-variant">
-            {formattedPhone}
-          </p>
-        </div>
+      {formattedPhone ? (
+        <span className="font-mono text-sm font-medium text-on-surface-variant">
+          {formattedPhone}
+        </span>
       ) : null}
     </section>
   );
@@ -278,7 +259,7 @@ const SummarySidebarCard = memo(function SummarySidebarCard({ expediente }: Summ
 
 /**
  * Página dedicada de detalle de expediente (`/expedientes/:id`).
- * Reemplaza la vista estrecha del cajón con navegación vertical por pestañas,
+ * Reemplaza la vista estrecha del cajón con navegación superior por pestañas,
  * carga diferida por chunk y registro único de consulta en bitácora (`RF-22`).
  */
 export default function ExpedienteDetailPage() {
@@ -383,16 +364,61 @@ export default function ExpedienteDetailPage() {
   }, [activeExpedienteId, canAccessSensitiveTabs]);
 
   const tablistRef = useRef<HTMLDivElement>(null);
+  const indicatorRef = useRef<HTMLSpanElement>(null);
+  const [tabMotion, setTabMotion] = useState<{
+    count: number;
+    dir: 1 | -1;
+    deferredReveal: boolean;
+  }>({ count: 0, dir: 1, deferredReveal: false });
 
   const visibleTabs = useMemo(
     () => ALL_TABS.filter((tab) => !tab.sensitive || canAccessSensitiveTabs),
     [canAccessSensitiveTabs],
   );
 
+  // Posiciona la cápsula activa con transform + width (sin reflow en el panel inferior).
+  useLayoutEffect(() => {
+    const tablist = tablistRef.current;
+    const indicator = indicatorRef.current;
+    if (!tablist || !indicator) return;
+
+    const positionIndicator = () => {
+      const selectedBtn = tablist.querySelector<HTMLButtonElement>('[aria-selected="true"]');
+      if (!selectedBtn || selectedBtn.offsetWidth === 0) return;
+      indicator.style.width = `${selectedBtn.offsetWidth}px`;
+      indicator.style.transform = `translate3d(${selectedBtn.offsetLeft}px, 0, 0)`;
+      indicator.style.opacity = '1';
+      tablist.dataset.indicatorReady = 'true';
+    };
+
+    positionIndicator();
+
+    if (typeof ResizeObserver !== 'function') return;
+    const observer = new ResizeObserver(positionIndicator);
+    observer.observe(tablist);
+    return () => observer.disconnect();
+  }, [activeTab, visibleTabs.length, expediente?.id]);
+
   const selectTab = useCallback(
     (next: DrawerTab) => {
       if (next === activeTab) return;
+      const prevIndex = visibleTabs.findIndex((tab) => tab.id === activeTab);
+      const nextIndex = visibleTabs.findIndex((tab) => tab.id === next);
+      const dir: 1 | -1 = nextIndex >= prevIndex ? 1 : -1;
+      const alreadyMounted = visitedTabs.includes(next);
+
+      setTabMotion((prev) => ({
+        count: prev.count + 1,
+        dir,
+        deferredReveal: !alreadyMounted,
+      }));
       setLocalTab(next);
+
+      const nextButton = tablistRef.current?.querySelector<HTMLButtonElement>(`#tab-${next}`);
+      if (nextButton && typeof nextButton.scrollIntoView === 'function') {
+        nextButton.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+      }
+
       startTransition(() => {
         setSearchParams(
           (prev) => {
@@ -405,7 +431,7 @@ export default function ExpedienteDetailPage() {
         );
       });
     },
-    [activeTab, setSearchParams],
+    [activeTab, visibleTabs, visitedTabs, setSearchParams],
   );
 
   const handleTabIntent = useCallback(
@@ -422,8 +448,8 @@ export default function ExpedienteDetailPage() {
         visibleTabs.findIndex((tab) => tab.id === activeTab),
       );
       let nextIndex = -1;
-      if (event.key === 'ArrowDown') nextIndex = (currentIndex + 1) % visibleTabs.length;
-      else if (event.key === 'ArrowUp') {
+      if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % visibleTabs.length;
+      else if (event.key === 'ArrowLeft') {
         nextIndex = (currentIndex - 1 + visibleTabs.length) % visibleTabs.length;
       } else if (event.key === 'Home') nextIndex = 0;
       else if (event.key === 'End') nextIndex = visibleTabs.length - 1;
@@ -461,6 +487,7 @@ export default function ExpedienteDetailPage() {
 
   const pageTitle =
     expediente?.persona.nombreCompleto ?? (isLoading ? 'Cargando expediente…' : 'Expediente');
+  const telHref = expediente ? formatTelHref(expediente.persona.celular) : null;
 
   const sensitiveTabs = useMemo(
     () =>
@@ -540,6 +567,15 @@ export default function ExpedienteDetailPage() {
                   <Icon name="badge" />
                   <span>Copiar CURP</span>
                 </button>
+                {telHref ? (
+                  <a
+                    href={telHref}
+                    className="mk-button mk-button--primary min-h-11 px-4 text-base"
+                  >
+                    <Icon name="call" />
+                    <span>Llamar</span>
+                  </a>
+                ) : null}
               </>
             ) : null}
           </>
@@ -569,85 +605,110 @@ export default function ExpedienteDetailPage() {
           />
         </div>
       ) : (
-        <div className="mx-auto grid w-full items-start gap-6 px-4 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-          <aside className="grid gap-4 lg:sticky lg:top-4">
-            <SummarySidebarCard expediente={expediente} />
+        <>
+          <SummaryStrip expediente={expediente} />
 
-            <div
-              ref={tablistRef}
-              role="tablist"
-              aria-orientation="vertical"
-              aria-label="Secciones del expediente"
-              onKeyDown={handleTabKeyDown}
-              className="grid gap-1.5 rounded-2xl border border-outline-variant bg-surface-container-low p-2"
-            >
-              {visibleTabs.map((tab) => {
-                const selected = tab.id === activeTab;
-                return (
-                  <button
-                    key={tab.id}
-                    id={`tab-${tab.id}`}
-                    type="button"
-                    role="tab"
-                    aria-selected={selected}
-                    aria-controls={`panel-${tab.id}`}
-                    tabIndex={selected ? 0 : -1}
-                    onPointerEnter={() => handleTabIntent(tab.id)}
-                    onFocus={() => handleTabIntent(tab.id)}
-                    onClick={() => selectTab(tab.id)}
-                    className={`inline-flex min-h-12 w-full items-center justify-start gap-3 rounded-xl px-4 text-base font-medium transition-colors ${selected
-                        ? 'bg-primary text-on-primary'
-                        : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-                      }`}
-                  >
-                    <Icon name={tab.icon} className="text-[20px]" filled={selected} />
-                    <span className="truncate">{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </aside>
-
-          <div className="min-w-0">
-            {!activeTabMounted ? (
-              <div role="tabpanel">
-                <SectionSkeleton label="Cargando sección" />
-              </div>
-            ) : null}
-
-            {visitedTabs.includes('resumen') ? (
+          <div className="sticky top-0 z-20 mx-auto w-full bg-background/95 px-4 py-2.5 sm:px-6">
+            <div className="overflow-x-auto rounded-2xl border border-outline-variant bg-surface-container-low p-1.5">
               <div
-                id="panel-resumen"
-                role="tabpanel"
-                aria-labelledby="tab-resumen"
-                hidden={activeTab !== 'resumen'}
-                className={activeTab === 'resumen' ? 'grid gap-6' : 'hidden'}
+                ref={tablistRef}
+                role="tablist"
+                aria-orientation="horizontal"
+                aria-label="Secciones del expediente"
+                data-tab-animated={tabMotion.count > 0 ? 'true' : undefined}
+                onKeyDown={handleTabKeyDown}
+                className="vc-detail-tabs"
               >
-                <ExpedienteContactoSection expediente={expediente} />
-                <FichaDetalleResumen expediente={expediente} />
-                {canCreate ? (
-                  <FichaGestionAcciones expediente={expediente} onDone={handleBackToList} />
-                ) : null}
+                <span
+                  ref={indicatorRef}
+                  aria-hidden
+                  className={`vc-detail-tabs__indicator ${tabMotion.count === 0 ? 'vc-detail-tabs__indicator--instant' : ''
+                    }`.trim()}
+                />
+                {visibleTabs.map((tab) => {
+                  const selected = tab.id === activeTab;
+                  return (
+                    <button
+                      key={tab.id}
+                      id={`tab-${tab.id}`}
+                      type="button"
+                      role="tab"
+                      aria-selected={selected}
+                      aria-controls={`panel-${tab.id}`}
+                      tabIndex={selected ? 0 : -1}
+                      onPointerEnter={() => handleTabIntent(tab.id)}
+                      onFocus={() => handleTabIntent(tab.id)}
+                      onClick={() => selectTab(tab.id)}
+                      className="vc-detail-tabs__tab"
+                    >
+                      <Icon
+                        name={tab.icon}
+                        className="vc-detail-tabs__icon text-[20px]"
+                        filled={selected}
+                      />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-            ) : null}
-
-            {canAccessSensitiveTabs
-              ? sensitiveTabs.map(({ id: tabId, label, node }) =>
-                visitedTabs.includes(tabId) ? (
-                  <LazyTabPanel
-                    key={tabId}
-                    id={`panel-${tabId}`}
-                    labelledBy={`tab-${tabId}`}
-                    active={activeTab === tabId}
-                    label={label}
-                  >
-                    {node}
-                  </LazyTabPanel>
-                ) : null,
-              )
-              : null}
+            </div>
           </div>
-        </div>
+
+          <div className="mx-auto w-full min-w-0 px-4 pt-4 sm:px-6">
+            {(() => {
+              const enterClass =
+                tabMotion.count === 0
+                  ? ''
+                  : tabMotion.dir > 0
+                    ? 'vc-tab-panel--enter-right'
+                    : 'vc-tab-panel--enter-left';
+              const panelClass = tabMotion.deferredReveal ? 'vc-tab-panel--reveal' : enterClass;
+
+              return (
+                <>
+                  {!activeTabMounted ? (
+                    <div role="tabpanel" className={enterClass}>
+                      <SectionSkeleton label="Cargando sección" />
+                    </div>
+                  ) : null}
+
+                  {visitedTabs.includes('resumen') ? (
+                    <div
+                      id="panel-resumen"
+                      role="tabpanel"
+                      aria-labelledby="tab-resumen"
+                      hidden={activeTab !== 'resumen'}
+                      className={activeTab === 'resumen' ? `grid gap-6 ${panelClass}`.trim() : 'hidden'}
+                    >
+                      <ExpedienteContactoSection expediente={expediente} />
+                      <FichaDetalleResumen expediente={expediente} />
+                      {canCreate ? (
+                        <FichaGestionAcciones expediente={expediente} onDone={handleBackToList} />
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {canAccessSensitiveTabs
+                    ? sensitiveTabs.map(({ id: tabId, label, node }) =>
+                      visitedTabs.includes(tabId) ? (
+                        <LazyTabPanel
+                          key={tabId}
+                          id={`panel-${tabId}`}
+                          labelledBy={`tab-${tabId}`}
+                          active={activeTab === tabId}
+                          motionClass={panelClass}
+                          label={label}
+                        >
+                          {node}
+                        </LazyTabPanel>
+                      ) : null,
+                    )
+                    : null}
+                </>
+              );
+            })()}
+          </div>
+        </>
       )}
     </>
   );

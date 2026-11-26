@@ -317,10 +317,11 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
         }}
         onAfterClose={handleAfterClose}
         closeOnBackdrop={false}
+        animateContent={false}
         drag={false}
         autoResize={false}
       >
-        <Dialog.Content size="lg" dividers>
+        <Dialog.Content size="lg" dividers className="vc-perf-dialog">
           <Dialog.Header>
             <div className="flex min-w-0 items-center gap-3">
               <Dialog.Close label="Cerrar formulario" />

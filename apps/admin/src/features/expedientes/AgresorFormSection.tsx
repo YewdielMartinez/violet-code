@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { EmptyState, Skeleton } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/skeleton';
@@ -14,7 +14,12 @@ import {
 } from './agresorApi';
 import { AgresorForm } from './AgresorForm';
 import { AgresorCard } from './agresor/AgresorCard';
-import { AgresorDialog, AgresorFlipGroup, useAgresorCascade } from './agresor/motionCompat';
+import {
+  AgresorDialog,
+  AgresorFlipGroup,
+  prefersReducedMotion,
+  useAgresorCascade,
+} from './agresor/motionCompat';
 
 const EMPTY_ADD_ACTION = [{ id: 'add', label: 'Agregar persona agresora' }];
 const RETRY_ACTION = [{ id: 'retry', label: 'Reintentar' }];
@@ -39,6 +44,7 @@ export function AgresorFormSection({ fichaId }: Props) {
 
   const [formOpen, setFormOpen] = useState(false);
   const [formMounted, setFormMounted] = useState(false);
+  const [formBodyReady, setFormBodyReady] = useState(() => prefersReducedMotion());
   const [editingAgresor, setEditingAgresor] = useState<Agresor | null>(null);
   const consultedAgresorRef = useRef<string | null>(null);
   const formOpenRef = useRef(false);
@@ -47,6 +53,18 @@ export function AgresorFormSection({ fichaId }: Props) {
   useEffect(() => {
     formOpenRef.current = formOpen;
   }, [formOpen]);
+
+  useEffect(() => {
+    if (!formOpen || formBodyReady) return;
+    if (prefersReducedMotion()) {
+      startTransition(() => setFormBodyReady(true));
+      return;
+    }
+    const rafId = window.requestAnimationFrame(() => {
+      startTransition(() => setFormBodyReady(true));
+    });
+    return () => window.cancelAnimationFrame(rafId);
+  }, [formOpen, formBodyReady]);
 
   const hasAgresores = Boolean(agresores && agresores.length > 0);
   useAgresorCascade(listRef, CASCADE_OPTIONS, [hasAgresores]);
@@ -104,6 +122,7 @@ export function AgresorFormSection({ fichaId }: Props) {
     consultedAgresorRef.current = null;
     setEditingAgresor(null);
     setFormMounted(false);
+    setFormBodyReady(prefersReducedMotion());
   }, []);
 
   if (isError) {
@@ -126,6 +145,7 @@ export function AgresorFormSection({ fichaId }: Props) {
       onOpenChange={handleDialogOpenChange}
       onAfterClose={handleAfterClose}
       closeOnBackdrop={false}
+      animateContent={false}
       drag={false}
       autoResize={false}
     >
@@ -199,7 +219,7 @@ export function AgresorFormSection({ fichaId }: Props) {
         </Skeleton>
       </div>
 
-      <AgresorDialog.Content size="lg" dividers>
+      <AgresorDialog.Content size="lg" dividers className="vc-perf-dialog">
         <AgresorDialog.Header>
           <div className="flex min-w-0 items-center gap-3">
             <AgresorDialog.Close label="Cerrar" />
@@ -210,16 +230,31 @@ export function AgresorFormSection({ fichaId }: Props) {
         </AgresorDialog.Header>
 
         {formMounted ? (
-          <AgresorForm
-            key={editingAgresor?.id ?? 'new'}
-            fichaId={fichaId}
-            initial={editingAgresor}
-            parentescos={parentescos}
-            ocupaciones={ocupaciones}
-            asentamientos={asentamientos}
-            onCancel={() => handleDialogOpenChange(false)}
-            onSaved={() => handleDialogOpenChange(false)}
-          />
+          formBodyReady ? (
+            <AgresorForm
+              key={editingAgresor?.id ?? 'new'}
+              fichaId={fichaId}
+              initial={editingAgresor}
+              parentescos={parentescos}
+              ocupaciones={ocupaciones}
+              asentamientos={asentamientos}
+              onCancel={() => handleDialogOpenChange(false)}
+              onSaved={() => handleDialogOpenChange(false)}
+            />
+          ) : (
+            <AgresorDialog.Body>
+              <div
+                role="status"
+                aria-busy="true"
+                aria-label="Cargando formulario"
+                className="grid gap-4 py-2"
+              >
+                <div className="h-32 rounded-2xl bg-surface-container-low animate-pulse motion-reduce:animate-none" />
+                <div className="h-28 rounded-2xl bg-surface-container-low animate-pulse motion-reduce:animate-none" />
+                <div className="h-20 rounded-2xl bg-surface-container-low animate-pulse motion-reduce:animate-none" />
+              </div>
+            </AgresorDialog.Body>
+          )
         ) : null}
       </AgresorDialog.Content>
     </AgresorDialog.Root>

@@ -1,7 +1,8 @@
-import { useCallback, useRef, useState, type RefObject } from 'react';
+import { startTransition, useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { Dialog, LoadingButton } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
 import '@yewdiel21/motion-kit/css/components/loading-button';
+import { prefersReducedMotion } from '@/features/expedientes/drawer/formatters';
 import { CanalizacionFormFields } from './CanalizacionFormFields';
 import { useCanalizacionForm } from './useCanalizacionForm';
 import './canalizacion-drawer.css';
@@ -88,6 +89,23 @@ interface Props {
     }
     if (open && formKey === 0) setFormKey(1);
 
+    const [bodyReady, setBodyReady] = useState(() => open && prefersReducedMotion());
+
+    useEffect(() => {
+      if (!open) {
+        startTransition(() => setBodyReady(false));
+        return;
+      }
+      if (prefersReducedMotion()) {
+        startTransition(() => setBodyReady(true));
+        return;
+      }
+      const rafId = window.requestAnimationFrame(() => {
+        startTransition(() => setBodyReady(true));
+      });
+      return () => window.cancelAnimationFrame(rafId);
+    }, [open]);
+
     const handleOpenChange = useCallback(
       (next: boolean) => {
         if (!next) onOpenChange(false);
@@ -117,7 +135,7 @@ interface Props {
               <Dialog.Content
                 size={resolvedPlacement === 'center' ? 'md' : undefined}
                 dividers
-                className="vc-canalizacion-form-dialog"
+                className="vc-canalizacion-form-dialog vc-perf-dialog"
               >
                 <Dialog.Header>
                   <div className="flex min-w-0 items-center gap-3">
@@ -125,14 +143,27 @@ interface Props {
                     <Dialog.Title className="truncate">Nueva canalización</Dialog.Title>
                   </div>
                 </Dialog.Header>
-                {formKey > 0 ? (
+                {formKey > 0 && bodyReady ? (
                   <CanalizacionFormBody
                     key={formKey}
                     fixedFichaId={fixedFichaId}
                     fixedFolio={fixedFolio}
                     onDone={requestClose}
                   />
-                ) : null}
+                ) : (
+                  <Dialog.Body>
+                    <div
+                      role="status"
+                      aria-busy="true"
+                      aria-label="Cargando formulario"
+                      className="grid gap-4 py-2"
+                    >
+                      <div className="h-14 rounded-2xl bg-surface-container-low animate-pulse motion-reduce:animate-none" />
+                      <div className="h-14 rounded-2xl bg-surface-container-low animate-pulse motion-reduce:animate-none" />
+                      <div className="h-28 rounded-2xl bg-surface-container-low animate-pulse motion-reduce:animate-none" />
+                    </div>
+                  </Dialog.Body>
+                )}
               </Dialog.Content>
             </Dialog.Root>
           </div>
