@@ -25,7 +25,8 @@ apps/core/**/obj/
 data/real/
 *.dump
 *.sql.gz
-docs
+docs/*
+!docs/*.md
 # Android Studio
 apps/mobile/.idea/
 apps/mobile/captures/

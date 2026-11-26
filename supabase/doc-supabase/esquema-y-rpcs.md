@@ -1,6 +1,6 @@
 # Arquitectura de Base de Datos, Esquema y RPCs
 
-Referencia técnica del modelo relacional, reglas de integridad, auditoría y contratos de vistas/RPCs en PostgreSQL (`supabase/migrations/`). Diagrama DBML completo en [esquema.dbml](./esquema.dbml) y modelo de autorización en [roles-y-permisos.md](./roles-y-permisos.md).
+Referencia técnica del modelo relacional, reglas de integridad, auditoría y contratos de vistas/RPCs en PostgreSQL (`supabase/migrations/`). Diagrama DBML completo en [esquema.dbml](./esquema.dbml), modelo de autorización en [roles-y-permisos.md](./roles-y-permisos.md) y cumplimiento LGPDPPSO/seguridad en [seguridad-y-privacidad.md](./seguridad-y-privacidad.md).
 
 ---
 
