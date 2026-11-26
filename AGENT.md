@@ -21,8 +21,9 @@ Instrucciones operativas obligatorias para cualquier agente que trabaje en **Vio
 
 ---
 
-## 3. Seguridad y control de archivos
+## 3. Seguridad, Notion y control de archivos
 
+- **Notion:** **no crear tarjetas, páginas ni registros en Notion si el usuario no lo indica explícitamente o si no se le pregunta y confirma primero.**
 - **Cero credenciales o usuarios personales de prueba en el repo:** nunca crear ni versionar usuarios ad-hoc en `supabase/snippets/`, `migrations/` o `seed.sql`.
 - Mantener `supabase/snippets/`, `.env` y `.env.local` fuera de Git (`.gitignore`).
 - Antes de hacer `git add` o `commit`, revisar `git status --short` para asegurar que no entren archivos temporales ni `.env`.
