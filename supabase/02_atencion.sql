@@ -89,3 +89,30 @@ create table pre_registro (
 create trigger pre_registro_actualizado
   before update on pre_registro
   for each row execute function set_actualizado_en();
+
+-- ---------------------------------------------------------------------
+-- alerta: registro del botón de ayuda o emergencias.
+-- ---------------------------------------------------------------------
+create table alerta (
+  id               uuid primary key default gen_random_uuid(),
+  
+  persona_id       uuid not null references persona (id) on delete restrict,
+  ficha_id         uuid references ficha_registro (id) on delete restrict, -- Opcional
+  
+  prioridad        text not null default 'alta'
+                   check (prioridad in ('media', 'alta', 'critica')),
+                   
+  estado           text not null default 'nueva'
+                   check (estado in ('nueva', 'en_atencion', 'resuelta', 'falsa_alarma')),
+                   
+  atendida_por     uuid references empleado (id) on delete restrict,
+  
+  activo           boolean not null default true,
+  creado_en        timestamptz not null default now(), -- Aquí queda la fecha y hora exacta del botón
+  actualizado_en   timestamptz not null default now(),
+  creado_por       uuid references empleado (id) on delete restrict
+);
+
+create trigger alerta_actualizado
+  before update on alerta
+  for each row execute function set_actualizado_en();
