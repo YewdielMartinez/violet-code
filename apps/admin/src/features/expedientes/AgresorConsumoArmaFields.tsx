@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 import { Icon } from '@/shared/ui/Icon';
-=======
->>>>>>> 43cd2976496a6c3218dcfcd4da73443b35379412
 import {
   DROGA_LABELS,
   TIPOS_DROGA,
@@ -15,11 +12,6 @@ const TRI_STATE_ITEMS = [
   { value: 'desconocido', label: 'No se sabe' },
   { value: 'no', label: 'No' },
   { value: 'si', label: 'Sí' },
-];
-
-const TIPO_ARMA_ITEMS = [
-  { value: '', label: 'Sin especificar' },
-  ...TIPOS_ARMA.map((value) => ({ value, label: TIPO_ARMA_LABELS[value] })),
 ];
 
 function boolToTriState(value: boolean | null): 'si' | 'no' | 'desconocido' {
@@ -161,25 +153,8 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
           />
         </div>
 
-<<<<<<< HEAD
         <AnimatedReveal show={armaActiva}>
           <div className="grid gap-3 pt-1">
-            <div className="grid gap-1.5">
-              <span className="text-xs font-medium text-on-surface-variant">
-                Tipo de arma u objeto
-              </span>
-              <AgresorRadioGroup
-                variant="pill"
-                label="Tipo de arma u objeto"
-                items={TIPO_ARMA_ITEMS}
-                value={values.tipoArma ?? ''}
-                onChange={(val) => onPatch({ tipoArma: val ? (val as TipoArma) : null })}
-              />
-              {errores.tipoArma ? (
-                <p role="alert" className="text-xs text-status-danger">{errores.tipoArma}</p>
-              ) : null}
-            </div>
-
             <div className="grid gap-1">
               <label className="text-xs font-medium text-on-surface-variant">
                 Especificación del arma u objeto
@@ -199,25 +174,6 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
                 </p>
               ) : null}
             </div>
-=======
-        {values.utilizoArmaUObjeto === true ? (
-          <div className="grid gap-1 pt-1">
-            <label className="text-xs font-medium text-on-surface-variant">
-              Especificación del arma u objeto
-            </label>
-            <label className="mk-field">
-              <input
-                type="text"
-                maxLength={250}
-                value={values.especificacionArma}
-                placeholder="Describe brevemente el objeto o arma"
-                onChange={(e) => onPatch({ especificacionArma: e.target.value })}
-              />
-            </label>
-            {errores.especificacionArma ? (
-              <p role="alert" className="text-xs text-status-danger">{errores.especificacionArma}</p>
-            ) : null}
->>>>>>> 43cd2976496a6c3218dcfcd4da73443b35379412
           </div>
         </AnimatedReveal>
       </fieldset>

@@ -11,7 +11,6 @@ const INITIAL_VALUES: ConsumoArmaValues = {
   drogas: [],
   especificacionDroga: '',
   utilizoArmaUObjeto: null,
-  tipoArma: null,
   especificacionArma: '',
   observaciones: '',
 };
@@ -52,7 +51,7 @@ describe('AgresorConsumoArmaFields', () => {
     );
   });
 
-  it('permite elegir tipo de arma cuando utilizó arma y limpia al cambiar a No se sabe', () => {
+  it('muestra la especificación del arma cuando utilizó arma y la limpia al cambiar a No se sabe', () => {
     render(<Harness />);
 
     const armaGroup = screen.getByRole('radiogroup', {
@@ -60,19 +59,15 @@ describe('AgresorConsumoArmaFields', () => {
     });
     fireEvent.click(within(armaGroup).getByLabelText('Sí'));
 
-    const tipoArmaGroup = screen.getByRole('radiogroup', {
-      name: /Tipo de arma u objeto/i,
-    });
-    const armaBlancaRadio = within(tipoArmaGroup).getByLabelText('Arma blanca') as HTMLInputElement;
-    fireEvent.click(armaBlancaRadio);
-    expect(armaBlancaRadio.checked).toBe(true);
+    const input = screen.getByPlaceholderText(/Describe brevemente el objeto o arma/i) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'Cuchillo' } });
+    expect(input.value).toBe('Cuchillo');
 
     fireEvent.click(within(armaGroup).getByLabelText('No se sabe'));
     fireEvent.click(within(armaGroup).getByLabelText('Sí'));
 
-    const sinEspecificar = within(
-      screen.getByRole('radiogroup', { name: /Tipo de arma u objeto/i }),
-    ).getByLabelText('Sin especificar') as HTMLInputElement;
-    expect(sinEspecificar.checked).toBe(true);
+    expect(
+      (screen.getByPlaceholderText(/Describe brevemente el objeto o arma/i) as HTMLInputElement).value,
+    ).toBe('');
   });
 });
