@@ -969,7 +969,12 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "area_id_por_clave":
+            "actualizar_mi_pre_registro":
+{ Args: { "p_apellido_materno"?: string,"p_apellido_paterno"?: string,"p_celular"?: string,"p_nombres"?: string }; Returns: {
+              "actualizado_en": string,"apellido_materno": string,"apellido_paterno": string,"celular": string,"curp": string,"id": string,"nombres": string
+            }[]
+                           },
+"area_id_por_clave":
 { Args: { "p_clave": string }; Returns: number
                            },
 "atender_alerta":
@@ -1051,10 +1056,18 @@ isOneToOne: false
               "asentamiento_id": number,"codigo_postal": string,"estado": string,"latitud": number,"longitud": number,"municipio": string,"nombre": string,"tipo_asentamiento": string,"total_actividades": number,"total_alertas": number,"total_expedientes": number
             }[]
                            },
+"get_mi_pre_registro":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "apellido_materno": string,"apellido_paterno": string,"aviso_privacidad_aceptado_en": string,"celular": string,"creado_en": string,"curp": string,"id": string,"nombres": string
+            }[]
+                           },
 "get_umeca_citas":
 { Args: Record<PropertyKey, never>; Returns: {
               "apellido_materno": string,"apellido_paterno": string,"cita_id": string,"estado": string,"nombres": string,"programada_en": string
             }[]
+                           },
+"mi_pre_registro_id":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "reagendar_cita":
 { Args: { "p_cita_id": string,"p_motivo"?: string,"p_nueva_fecha": string,"p_prioridad"?: Database["public"]['Enums']["prioridad_nivel"] }; Returns: {
