@@ -57,6 +57,7 @@ export function UmecaHomeView({ displayName }: { displayName: string }) {
     <>
       <PageHeader
         title={`Citas UMECA · ${displayName}`}
+        documentTitle="Citas UMECA"
         description="Consulta de solo lectura autorizada vía get_umeca_citas(). Sin acceso a expedientes ni datos clínicos."
       />
 

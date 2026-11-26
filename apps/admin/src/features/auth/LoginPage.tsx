@@ -8,6 +8,7 @@ import { AuthError, login, refreshSession } from '@/shared/auth/session';
 import { useAuth } from '@/shared/auth/useAuth';
 import { PasswordField } from './PasswordField';
 import { BrandMark } from '@/shared/ui/BrandMark';
+import { useDocumentTitle } from '@/shared/ui/PageHeader';
 import { ThemeToggleButton } from '@/shared/ui/ThemeToggleButton';
 import { LoginHero } from './LoginHero';
 import { PrivacyNoticeDialog } from './PrivacyNoticeDialog';
@@ -143,6 +144,7 @@ export default function LoginPage() {
   const from = (location.state as { from?: string } | null)?.from ?? '/';
   const formId = useId();
   const [open, setOpen] = useState(false);
+  useDocumentTitle('Iniciar sesión');
 
   // Si ya hay una sesión válida (cookie), no pedir credenciales de nuevo.
   useEffect(() => {

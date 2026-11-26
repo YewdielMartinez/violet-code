@@ -29,6 +29,8 @@ begin
   end if;
 end;
 $$;
+-- Desde la migración 31, las funciones nuevas no tienen EXECUTE para PUBLIC por defecto.
+grant execute on function pg_temp.set_actor(uuid) to public;
 
 -- 1) get_expediente_detalle: Recepción -> 42501; ficha inexistente -> 23514
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111106'::uuid); -- recepcion

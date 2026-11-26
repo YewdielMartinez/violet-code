@@ -28,6 +28,8 @@ begin
   end if;
 end;
 $$;
+-- Desde la migración 31, las funciones nuevas no tienen EXECUTE para PUBLIC por defecto.
+grant execute on function pg_temp.set_actor(uuid) to public;
 
 -- 1) verificar_curp sin sesión -> 42501 y CURP inválida -> 23514
 select pg_temp.set_actor(null);

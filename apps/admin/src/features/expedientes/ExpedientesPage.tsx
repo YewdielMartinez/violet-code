@@ -1,5 +1,7 @@
 import {
+  lazy,
   memo,
+  Suspense,
   useCallback,
   useMemo,
   useRef,
@@ -17,6 +19,7 @@ import '@yewdiel21/motion-kit/css/components/menu';
 import '@yewdiel21/motion-kit/css/components/pagination';
 import '@yewdiel21/motion-kit/css/components/select';
 import '@yewdiel21/motion-kit/css/components/skeleton';
+import { puedeAccederAgresor } from '@/domain/models/Agresor';
 import { useAuth } from '@/shared/auth/useAuth';
 import { Icon } from '@/shared/ui/Icon';
 import { PageHeader } from '@/shared/ui/PageHeader';
@@ -38,13 +41,24 @@ import {
   type ExpedienteRow,
   type QuickFilter,
 } from './drawer/expedientesTableConfig';
-import { ExpedienteDrawer } from './ExpedienteDrawer';
-import { NuevaFichaDrawer } from './ficha/NuevaFichaDrawer';
+import { ExpedienteDrawer, preloadExpedienteDrawerTabs } from './ExpedienteDrawer';
 import type { FichaSeedContext } from './ficha/useFichaForm';
-import { VerificarCurpDialog } from './VerificarCurpDialog';
+
+// Diálogos del alta en chunks propios: se descargan al mostrar intención (hover/foco en
+// «Nuevo expediente») y se montan la primera vez que se abren.
+const loadVerificarCurpDialog = () => import('./VerificarCurpDialog');
+const loadNuevaFichaDrawer = () => import('./ficha/NuevaFichaDrawer');
+const VerificarCurpDialog = lazy(() => loadVerificarCurpDialog().then((m) => ({ default: m.VerificarCurpDialog })));
+const NuevaFichaDrawer = lazy(() => loadNuevaFichaDrawer().then((m) => ({ default: m.NuevaFichaDrawer })));
+
+function preloadNuevoExpediente() {
+  void loadVerificarCurpDialog();
+  void loadNuevaFichaDrawer();
+}
 
 interface TableSectionProps {
   tableContainerRef: RefObject<HTMLDivElement | null>;
+  onRowIntent?: () => void;
   isLoading: boolean;
   rows: ExpedienteRow[];
   emptyDescription: string;
@@ -56,6 +70,7 @@ interface TableSectionProps {
 /** Aísla la tabla operativa para que abrir/cerrar el panel o cambiar de pestaña no re-renderice DataTable. */
 const ExpedientesTableSection = memo(function ExpedientesTableSection({
   tableContainerRef,
+  onRowIntent,
   isLoading,
   rows,
   emptyDescription,
@@ -64,7 +79,7 @@ const ExpedientesTableSection = memo(function ExpedientesTableSection({
   onTableKeyDown,
 }: TableSectionProps) {
   return (
-    <div ref={tableContainerRef}>
+    <div ref={tableContainerRef} onPointerOver={onRowIntent} onFocus={onRowIntent}>
       <Skeleton loading={isLoading} shape="card" lines={6} label="Cargando expedientes">
         <DataTable<ExpedienteRow>
           className="vc-expediente-table"
@@ -111,6 +126,18 @@ export default function ExpedientesPage() {
   const selectedId = searchParams.get('expediente');
 
   const canCreateExpediente = user ? canLookupPreRegistro(user.role) : false;
+  const canAccessSensitiveTabs = puedeAccederAgresor(user?.role);
+
+  // Los diálogos perezosos se montan la primera vez que se abren y se quedan montados
+  // (para conservar sus animaciones de cierre).
+  const [verifyMounted, setVerifyMounted] = useState(false);
+  if (verifyOpen && !verifyMounted) setVerifyMounted(true);
+  const [nuevaFichaMounted, setNuevaFichaMounted] = useState(false);
+  if (fichaSeed && !nuevaFichaMounted) setNuevaFichaMounted(true);
+
+  const handleRowIntent = useCallback(() => {
+    if (canAccessSensitiveTabs) preloadExpedienteDrawerTabs();
+  }, [canAccessSensitiveTabs]);
 
   const setQuickFilter = useCallback(
     (next: QuickFilter) => {
@@ -142,13 +169,20 @@ export default function ExpedientesPage() {
 
   const counts = useMemo<Record<QuickFilter, number>>(() => {
     const list = data ?? [];
-    return {
+    const next: Record<QuickFilter, number> = {
       todos: list.length,
-      abierto: list.filter((e) => e.estado === 'abierto').length,
-      en_seguimiento: list.filter((e) => e.estado === 'en_seguimiento').length,
-      prioritarios: list.filter((e) => e.enListaUrgencias).length,
-      cerrado: list.filter((e) => e.estado === 'cerrado').length,
+      abierto: 0,
+      en_seguimiento: 0,
+      prioritarios: 0,
+      cerrado: 0,
     };
+    for (const e of list) {
+      if (e.estado === 'abierto') next.abierto++;
+      else if (e.estado === 'en_seguimiento') next.en_seguimiento++;
+      else if (e.estado === 'cerrado') next.cerrado++;
+      if (e.enListaUrgencias) next.prioritarios++;
+    }
+    return next;
   }, [data]);
 
   const filteredItems = useMemo(() => {
@@ -283,6 +317,8 @@ export default function ExpedientesPage() {
             <button
               type="button"
               className="mk-button mk-button--primary"
+              onPointerEnter={preloadNuevoExpediente}
+              onFocus={preloadNuevoExpediente}
               onClick={() => setVerifyOpen(true)}
             >
               <Icon name="person_add" />
@@ -348,6 +384,7 @@ export default function ExpedientesPage() {
       ) : (
         <ExpedientesTableSection
           tableContainerRef={tableContainerRef}
+          onRowIntent={handleRowIntent}
           isLoading={isLoading}
           rows={rows}
           emptyDescription={emptyDescription}
@@ -357,15 +394,17 @@ export default function ExpedientesPage() {
         />
       )}
 
-      {canCreateExpediente ? (
-        <VerificarCurpDialog
-          open={verifyOpen}
-          onOpenChange={setVerifyOpen}
-          allowPreRegistroLookup={canCreateExpediente}
-          onOpenExpediente={handleOpenFromVerify}
-          onPreloadConfirmed={setPreloadedDraft}
-          onStartFicha={handleStartFicha}
-        />
+      {canCreateExpediente && verifyMounted ? (
+        <Suspense fallback={null}>
+          <VerificarCurpDialog
+            open={verifyOpen}
+            onOpenChange={setVerifyOpen}
+            allowPreRegistroLookup={canCreateExpediente}
+            onOpenExpediente={handleOpenFromVerify}
+            onPreloadConfirmed={setPreloadedDraft}
+            onStartFicha={handleStartFicha}
+          />
+        </Suspense>
       ) : null}
 
       <ExpedienteDrawer
@@ -375,7 +414,11 @@ export default function ExpedientesPage() {
         canManage={canCreateExpediente}
         onClose={closeExpediente}
       />
-      <NuevaFichaDrawer open={Boolean(fichaSeed)} seed={fichaSeed} onClose={handleCloseNuevaFicha} />
+      {nuevaFichaMounted ? (
+        <Suspense fallback={null}>
+          <NuevaFichaDrawer open={Boolean(fichaSeed)} seed={fichaSeed} onClose={handleCloseNuevaFicha} />
+        </Suspense>
+      ) : null}
     </>
   );
 }

@@ -140,4 +140,43 @@ describe('supabaseDashboardRepository', () => {
       usuariaNombre: 'Ana López',
     });
   });
+
+  it('cuenta casos con HEAD + count exact (sin descargar filas ni truncar en 300)', async () => {
+    type Call = [string, ...unknown[]];
+    const builders: { table: string; calls: Call[] }[] = [];
+    const counts = [512, 340, 7, 301];
+    fromMock.mockImplementation((table: string) => {
+      const entry = { table, calls: [] as Call[] };
+      const result = { data: null, error: null, count: counts[builders.length] };
+      builders.push(entry);
+      const builder = {
+        select: (...args: unknown[]) => (entry.calls.push(['select', ...args]), builder),
+        eq: (...args: unknown[]) => (entry.calls.push(['eq', ...args]), builder),
+        not: (...args: unknown[]) => (entry.calls.push(['not', ...args]), builder),
+        then: (resolve: (v: typeof result) => unknown, reject?: (e: unknown) => unknown) =>
+          Promise.resolve(result).then(resolve, reject),
+      };
+      return builder;
+    });
+
+    const summary = await supabaseDashboardRepository.getCasesSummary('emp-1');
+
+    expect(summary).toEqual({ open: 512, inFollowUp: 340, mine: 7, urgencias: 301 });
+    expect(builders.map((b) => b.table)).toEqual([
+      'ficha_registro',
+      'ficha_registro',
+      'ficha_registro',
+      'vista_lista_urgencias',
+    ]);
+    for (const b of builders) {
+      expect(b.calls[0]).toEqual(['select', expect.any(String), { count: 'exact', head: true }]);
+    }
+    expect(builders[0].calls).toContainEqual(['eq', 'activo', true]);
+    expect(builders[0].calls).toContainEqual(['eq', 'estado', 'abierto']);
+    expect(builders[1].calls).toContainEqual(['eq', 'activo', true]);
+    expect(builders[1].calls).toContainEqual(['eq', 'estado', 'en_seguimiento']);
+    expect(builders[2].calls).toContainEqual(['eq', 'activo', true]);
+    expect(builders[2].calls).toContainEqual(['eq', 'creado_por', 'emp-1']);
+    expect(builders[2].calls).toContainEqual(['not', 'estado', 'in', '(cerrado,archivado)']);
+  });
 });

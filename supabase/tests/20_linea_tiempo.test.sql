@@ -21,6 +21,8 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', p_uid::text, 'role', 'authenticated')::text, true);
 end;
 $$;
+-- Desde la migración 31, las funciones nuevas no tienen EXECUTE para PUBLIC por defecto.
+grant execute on function pg_temp.as_user(uuid) to public;
 
 do $$
 declare

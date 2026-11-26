@@ -63,7 +63,8 @@ function NuevaDerivacionForm({
 }) {
   const formId = useId();
   const { user } = useAuth();
-  const { data: catalogos } = useCanalizacionCatalogos(true);
+  // Con expediente fijo no se muestra el selector: no hace falta descargar el listado.
+  const catalogos = useCanalizacionCatalogos({ includeExpedientes: !fixedFichaId });
   const createMutation = useCreateDerivacion();
 
   const [fichaId, setFichaId] = useState(fixedFichaId ?? '');
@@ -78,36 +79,36 @@ function NuevaDerivacionForm({
 
   const areaDestinoId = useMemo(() => {
     if (!internal) return null;
-    const match = (catalogos?.areas ?? []).find((a) => a.clave === destino);
+    const match = (catalogos.areas ?? []).find((a) => a.clave === destino);
     return match?.id ?? null;
-  }, [internal, catalogos?.areas, destino]);
+  }, [internal, catalogos.areas, destino]);
 
   const expedienteOptions = useMemo(
     () =>
-      (catalogos?.expedientes ?? []).map((e) => ({
+      (catalogos.expedientes ?? []).map((e) => ({
         value: e.id,
         label: `${e.folio} · ${e.persona.nombreCompleto}`,
       })),
-    [catalogos?.expedientes],
+    [catalogos.expedientes],
   );
 
   const areaOptions = useMemo(
     () => [
       { value: '', label: 'Sin área específica' },
-      ...(catalogos?.areas ?? []).map((a) => ({ value: String(a.id), label: a.nombre })),
+      ...(catalogos.areas ?? []).map((a) => ({ value: String(a.id), label: a.nombre })),
     ],
-    [catalogos?.areas],
+    [catalogos.areas],
   );
 
   const institucionOptions = useMemo(
     () => [
       { value: '', label: 'Otra institución (capturar nombre)' },
-      ...(catalogos?.instituciones ?? []).map((inst) => ({
+      ...(catalogos.instituciones ?? []).map((inst) => ({
         value: String(inst.id),
         label: inst.nombre,
       })),
     ],
-    [catalogos?.instituciones],
+    [catalogos.instituciones],
   );
 
   async function handleSubmit(e: FormEvent) {

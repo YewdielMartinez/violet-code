@@ -1,6 +1,8 @@
 import {
+  lazy,
   memo,
   startTransition,
+  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -16,9 +18,6 @@ import '@yewdiel21/motion-kit/css/components/dialog';
 import type { StaffRole } from '@/domain/models/Auth';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
 import { puedeAccederAgresor } from './agresorApi';
-import { AgresorFormSection } from './AgresorFormSection';
-import { DerivacionesExpedientePanel } from './DerivacionesExpedientePanel';
-import { DocumentosAdjuntosPanel } from './DocumentosAdjuntosPanel';
 import { ExpedienteContactoSection } from './drawer/ExpedienteContactoSection';
 import { ExpedienteDrawerTabs, type DrawerTab } from './drawer/ExpedienteDrawerTabs';
 import { ExpedienteHeroCard } from './drawer/ExpedienteHeroCard';
@@ -27,6 +26,29 @@ import { prefersReducedMotion } from './drawer/formatters';
 import './drawer/expediente-drawer.css';
 import { FichaDetalleResumen } from './ficha/FichaDetalleResumen';
 import { FichaGestionAcciones } from './ficha/FichaGestionAcciones';
+
+// Pestañas sensibles en chunks propios: solo las descarga quien tiene acceso y las abre.
+const loadAgresorFormSection = () => import('./AgresorFormSection');
+const loadDocumentosAdjuntosPanel = () => import('./DocumentosAdjuntosPanel');
+const loadDerivacionesExpedientePanel = () => import('./DerivacionesExpedientePanel');
+const AgresorFormSection = lazy(() => loadAgresorFormSection().then((m) => ({ default: m.AgresorFormSection })));
+const DocumentosAdjuntosPanel = lazy(() =>
+  loadDocumentosAdjuntosPanel().then((m) => ({ default: m.DocumentosAdjuntosPanel })),
+);
+const DerivacionesExpedientePanel = lazy(() =>
+  loadDerivacionesExpedientePanel().then((m) => ({ default: m.DerivacionesExpedientePanel })),
+);
+
+let tabsPreloaded = false;
+
+/** Precarga las pestañas sensibles (p. ej. al pasar el cursor por una fila o al abrir el panel). */
+export function preloadExpedienteDrawerTabs(): void {
+  if (tabsPreloaded) return;
+  tabsPreloaded = true;
+  void loadAgresorFormSection();
+  void loadDocumentosAdjuntosPanel();
+  void loadDerivacionesExpedientePanel();
+}
 
 // El morph de apertura de motion-kit dura 0.7 s (TIMING.dialog.open). Montar el detalle a la mitad
 // provocaba un tirón; se monta al terminar y mientras tanto se ve el placeholder ligero.
@@ -189,6 +211,11 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
 
   // Difiere el montaje de consultas/secciones pesadas (FichaDetalleResumen, FuseButton, Agresor,
   // Documentos, Canalizaciones) hasta pasar los primeros frames del morphOpen.
+  // Aprovecha el morph de apertura (~0.7 s) para traer las pestañas antes de que hagan falta.
+  useEffect(() => {
+    if (isOpen && canAccessSensitiveTabs) preloadExpedienteDrawerTabs();
+  }, [isOpen, canAccessSensitiveTabs]);
+
   useEffect(() => {
     if (!isOpen) return;
     if (prefersReducedMotion()) {
@@ -318,7 +345,9 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
                 {canAccessSensitiveTabs && activeTab === 'agresor' ? (
                   <div role="tabpanel">
                     {contentReady ? (
-                      <AgresorFormSection key={activeExpediente.id} fichaId={activeExpediente.id} />
+                      <Suspense fallback={<DrawerSectionPlaceholder label="Cargando persona agresora" />}>
+                        <AgresorFormSection key={activeExpediente.id} fichaId={activeExpediente.id} />
+                      </Suspense>
                     ) : (
                       <DrawerSectionPlaceholder label="Cargando persona agresora" />
                     )}
@@ -328,10 +357,12 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
                 {canAccessSensitiveTabs && activeTab === 'documentos' ? (
                   <div role="tabpanel">
                     {contentReady ? (
-                      <DocumentosAdjuntosPanel
-                        key={activeExpediente.id}
-                        fichaId={activeExpediente.id}
-                      />
+                      <Suspense fallback={<DrawerSectionPlaceholder label="Cargando documentos" />}>
+                        <DocumentosAdjuntosPanel
+                          key={activeExpediente.id}
+                          fichaId={activeExpediente.id}
+                        />
+                      </Suspense>
                     ) : (
                       <DrawerSectionPlaceholder label="Cargando documentos" />
                     )}
@@ -341,11 +372,13 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
                 {canAccessSensitiveTabs && activeTab === 'canalizaciones' ? (
                   <div role="tabpanel">
                     {contentReady ? (
-                      <DerivacionesExpedientePanel
-                        key={activeExpediente.id}
-                        fichaId={activeExpediente.id}
-                        folio={activeExpediente.folio}
-                      />
+                      <Suspense fallback={<DrawerSectionPlaceholder label="Cargando canalizaciones" />}>
+                        <DerivacionesExpedientePanel
+                          key={activeExpediente.id}
+                          fichaId={activeExpediente.id}
+                          folio={activeExpediente.folio}
+                        />
+                      </Suspense>
                     ) : (
                       <DrawerSectionPlaceholder label="Cargando canalizaciones" />
                     )}

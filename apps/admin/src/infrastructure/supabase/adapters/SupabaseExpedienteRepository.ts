@@ -211,17 +211,19 @@ export const supabaseExpedienteRepository: ExpedienteRepository = {
     }
 
     if (verifyRow.resultado === 'expediente_existente') {
-      const persona = await fetchPersonaDetail(verifyRow.persona_id, curp, verifyRow.nombre_completo);
-      let enListaUrgencias = false;
-
-      if (verifyRow.ficha_id) {
-        const { data: urgentRow } = await supabase
-          .from('vista_lista_urgencias')
-          .select('ficha_id')
-          .eq('ficha_id', verifyRow.ficha_id)
-          .maybeSingle();
-        enListaUrgencias = Boolean(urgentRow?.ficha_id);
-      }
+      const fichaId = verifyRow.ficha_id;
+      // Independientes: persona y pertenencia a la lista de urgencias se consultan en paralelo.
+      const [persona, enListaUrgencias] = await Promise.all([
+        fetchPersonaDetail(verifyRow.persona_id, curp, verifyRow.nombre_completo),
+        fichaId
+          ? supabase
+              .from('vista_lista_urgencias')
+              .select('ficha_id')
+              .eq('ficha_id', fichaId)
+              .maybeSingle()
+              .then(({ data: urgentRow }) => Boolean(urgentRow?.ficha_id))
+          : false,
+      ]);
 
       return {
         kind: 'expediente_existente',

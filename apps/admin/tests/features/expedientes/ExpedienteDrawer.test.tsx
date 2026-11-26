@@ -41,6 +41,20 @@ vi.mock('@/infrastructure/supabase/adapters/SupabaseAgresorRepository', () => ({
   },
 }));
 
+// Parentesco y ocupación salen de la caché compartida de catálogos (una consulta por catálogo).
+vi.mock('@/infrastructure/supabase/adapters/SupabaseSepomexRepository', () => ({
+  supabaseSepomexRepository: {
+    listAsentamientos: vi.fn().mockResolvedValue([]),
+    getCatalogosFicha: vi.fn(),
+    listCatalogo: (catalogo: string) =>
+      catalogo === 'parentesco'
+        ? listarParentescosMock()
+        : catalogo === 'ocupacion'
+          ? listarOcupacionesMock()
+          : Promise.resolve([]),
+  },
+}));
+
 vi.mock('@/features/expedientes/ficha/FichaDetalleResumen', () => ({
   FichaDetalleResumen: () => <div data-testid="ficha-resumen" />,
 }));

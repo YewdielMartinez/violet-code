@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const { createCompleteMock, getCatalogosMock, listAsentamientosMock, toastMock } = vi.hoisted(() => ({
+const { createCompleteMock, listCatalogoMock, listAsentamientosMock, toastMock } = vi.hoisted(() => ({
   createCompleteMock: vi.fn(),
-  getCatalogosMock: vi.fn(),
+  listCatalogoMock: vi.fn(),
   listAsentamientosMock: vi.fn(),
   toastMock: vi.fn(),
 }));
@@ -18,7 +18,7 @@ vi.mock('@/infrastructure/supabase/adapters/SupabaseFichaRepository', () => ({
   supabaseFichaRepository: { createComplete: createCompleteMock, getDetail: vi.fn(), archive: vi.fn(), deactivate: vi.fn() },
 }));
 vi.mock('@/infrastructure/supabase/adapters/SupabaseSepomexRepository', () => ({
-  supabaseSepomexRepository: { getCatalogosFicha: getCatalogosMock, listAsentamientos: listAsentamientosMock },
+  supabaseSepomexRepository: { listCatalogo: listCatalogoMock, listAsentamientos: listAsentamientosMock },
 }));
 
 vi.mock('@yewdiel21/motion-kit/react', () => {
@@ -134,12 +134,12 @@ function fillStep0() {
 
 beforeEach(() => {
   createCompleteMock.mockReset().mockResolvedValue({ fichaId: 'ficha-99', folio: 'SEM-2026-0099', personaId: 'p-1' });
-  getCatalogosMock.mockReset().mockResolvedValue({
-    areas: [{ id: 1, clave: 'ts', nombre: 'Trabajo Social' }],
-    ocupaciones: [{ id: 2, clave: 'emp', nombre: 'Empleada' }],
-    discapacidades: [], gruposEtnicos: [], religiones: [],
-    parentescos: [{ id: 3, clave: 'hermana', nombre: 'Hermana' }],
-  });
+  const catalogos: Record<string, { id: number; clave: string; nombre: string }[]> = {
+    area: [{ id: 1, clave: 'ts', nombre: 'Trabajo Social' }],
+    ocupacion: [{ id: 2, clave: 'emp', nombre: 'Empleada' }],
+    parentesco: [{ id: 3, clave: 'hermana', nombre: 'Hermana' }],
+  };
+  listCatalogoMock.mockReset().mockImplementation((nombre: string) => Promise.resolve(catalogos[nombre] ?? []));
   // Un asentamiento de Ahome: un CP fuera del catálogo entra en modo "solo código postal".
   listAsentamientosMock.mockReset().mockResolvedValue([
     {
@@ -161,7 +161,11 @@ describe('NuevaFichaDrawer (validación por paso, navegación y cambios sin guar
   it('valida cada paso, enfoca el primer campo inválido y guarda la ficha', async () => {
     const onCreated = vi.fn();
     const { onClose } = renderDrawer({ onCreated });
-    await waitFor(() => expect(getCatalogosMock).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(listCatalogoMock).toHaveBeenCalledWith('area');
+      expect(listCatalogoMock).toHaveBeenCalledWith('ocupacion');
+      expect(listCatalogoMock).toHaveBeenCalledWith('parentesco');
+    });
 
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     const curpInput = screen.getByLabelText(/CURP \*/i);

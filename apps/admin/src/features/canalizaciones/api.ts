@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { DerivacionCreateInput, EstadoDerivacion } from '@/domain/models/Derivacion';
 import { supabaseDerivacionRepository } from '@/infrastructure/supabase/adapters/SupabaseDerivacionRepository';
-import { supabaseDirectorioRepository } from '@/infrastructure/supabase/adapters/SupabaseDirectorioRepository';
-import { supabaseExpedienteRepository } from '@/infrastructure/supabase/adapters/SupabaseExpedienteRepository';
-import { supabaseSepomexRepository } from '@/infrastructure/supabase/adapters/SupabaseSepomexRepository';
+import { directoryQueryOptions } from '@/features/directory/api';
+import { catalogoQueryOptions, expedientesListQueryOptions } from '@/features/expedientes/api';
 
 export type {
   DerivacionCreateInput,
@@ -57,22 +56,28 @@ export function useUpdateEstadoDerivacion() {
   });
 }
 
-export function useCanalizacionCatalogos(enabled = true) {
-  return useQuery({
-    queryKey: ['canalizaciones', 'catalogos'],
-    queryFn: async () => {
-      const [catalogos, instituciones, expedientes] = await Promise.all([
-        supabaseSepomexRepository.getCatalogosFicha(),
-        supabaseDirectorioRepository.listar(),
-        supabaseExpedienteRepository.list(),
-      ]);
-      return {
-        areas: catalogos.areas,
-        instituciones,
-        expedientes,
-      };
-    },
-    staleTime: 5 * 60_000,
-    enabled,
+const CANALIZACION_CATALOGOS_STALE_TIME_MS = 5 * 60_000;
+
+/**
+ * Catálogos del diálogo de canalización. Reutiliza las consultas (y la caché) ya existentes:
+ * áreas (`['catalogos','area']`), directorio (`['directory','all']`) y listado de expedientes
+ * (`['expedientes','list','']`). El listado solo se pide si hay que elegir expediente.
+ */
+export function useCanalizacionCatalogos({
+  enabled = true,
+  includeExpedientes = true,
+}: { enabled?: boolean; includeExpedientes?: boolean } = {}) {
+  const staleTime = CANALIZACION_CATALOGOS_STALE_TIME_MS;
+  const areas = useQuery({ ...catalogoQueryOptions('area'), enabled });
+  const instituciones = useQuery({ ...directoryQueryOptions(), staleTime, enabled });
+  const expedientes = useQuery({
+    ...expedientesListQueryOptions(),
+    staleTime,
+    enabled: enabled && includeExpedientes,
   });
+  return {
+    areas: areas.data,
+    instituciones: instituciones.data,
+    expedientes: expedientes.data,
+  };
 }

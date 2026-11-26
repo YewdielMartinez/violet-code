@@ -107,6 +107,8 @@ begin
   perform set_config('request.jwt.claim.sub', p_uid::text, true);
 end;
 $$;
+-- Desde la migración 31, las funciones nuevas no tienen EXECUTE para PUBLIC por defecto.
+grant execute on function pg_temp.set_actor(uuid) to public;
 
 set local role authenticated;
 

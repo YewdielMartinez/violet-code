@@ -120,29 +120,26 @@ export const supabaseDashboardRepository: DashboardRepository = {
   },
 
   async getCasesSummary(userId: string): Promise<CasesSummary> {
-    const [fichasRes, urgenciasRes] = await Promise.all([
-      supabase.from('ficha_registro').select('id, estado, creado_por').eq('activo', true).limit(300),
-      supabase.from('vista_lista_urgencias').select('ficha_id').limit(300),
+    // Solo conteos (HEAD + count exact): no descarga filas y no se trunca en N registros.
+    const countFichas = () =>
+      supabase.from('ficha_registro').select('id', { count: 'exact', head: true }).eq('activo', true);
+
+    const [openRes, followUpRes, mineRes, urgenciasRes] = await Promise.all([
+      countFichas().eq('estado', 'abierto'),
+      countFichas().eq('estado', 'en_seguimiento'),
+      countFichas().eq('creado_por', userId).not('estado', 'in', '(cerrado,archivado)'),
+      supabase.from('vista_lista_urgencias').select('ficha_id', { count: 'exact', head: true }),
     ]);
 
-    if (fichasRes.error) throw fichasRes.error;
-    if (urgenciasRes.error) throw urgenciasRes.error;
-
-    let open = 0;
-    let inFollowUp = 0;
-    let mine = 0;
-
-    for (const row of fichasRes.data ?? []) {
-      if (row.estado === 'abierto') open++;
-      if (row.estado === 'en_seguimiento') inFollowUp++;
-      if (row.creado_por === userId && row.estado !== 'cerrado' && row.estado !== 'archivado') mine++;
+    for (const res of [openRes, followUpRes, mineRes, urgenciasRes]) {
+      if (res.error) throw res.error;
     }
 
     return {
-      open,
-      inFollowUp,
-      urgencias: (urgenciasRes.data ?? []).length,
-      mine,
+      open: openRes.count ?? 0,
+      inFollowUp: followUpRes.count ?? 0,
+      urgencias: urgenciasRes.count ?? 0,
+      mine: mineRes.count ?? 0,
     };
   },
 

@@ -67,6 +67,7 @@ export default function DashboardPage() {
     <>
       <PageHeader
         title={`${greeting()}, ${firstName}`}
+        documentTitle="Dashboard"
         subtitle={today()}
         actions={
           <button type="button" className="mk-button mk-button--tonal" onClick={() => setCustomizing(true)}>

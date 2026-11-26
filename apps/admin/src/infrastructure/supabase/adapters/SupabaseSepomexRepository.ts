@@ -1,7 +1,13 @@
 import { supabase } from '../client';
 import type { AsentamientoSepomex } from '@/domain/models/Domicilio';
-import type { CatalogosFicha } from '@/domain/models/FichaRegistro';
-import type { SepomexRepository } from '@/domain/ports/SepomexRepository';
+import type { CatalogoItem, CatalogosFicha } from '@/domain/models/FichaRegistro';
+import type { CatalogoNombre, SepomexRepository } from '@/domain/ports/SepomexRepository';
+
+const CATALOGO_TABLES = {
+  area: 'cat_area',
+  ocupacion: 'cat_ocupacion',
+  parentesco: 'cat_parentesco',
+} as const satisfies Record<CatalogoNombre, string>;
 
 export const supabaseSepomexRepository: SepomexRepository = {
   async listAsentamientos(codigoPostal?: string): Promise<AsentamientoSepomex[]> {
@@ -31,19 +37,19 @@ export const supabaseSepomexRepository: SepomexRepository = {
 
   async getCatalogosFicha(): Promise<CatalogosFicha> {
     const [areas, ocupaciones, parentescos] = await Promise.all([
-      supabase.from('cat_area').select('id, clave, nombre').order('nombre'),
-      supabase.from('cat_ocupacion').select('id, clave, nombre').order('nombre'),
-      supabase.from('cat_parentesco').select('id, clave, nombre').order('nombre'),
+      supabaseSepomexRepository.listCatalogo('area'),
+      supabaseSepomexRepository.listCatalogo('ocupacion'),
+      supabaseSepomexRepository.listCatalogo('parentesco'),
     ]);
+    return { areas, ocupaciones, parentescos };
+  },
 
-    for (const res of [areas, ocupaciones, parentescos]) {
-      if (res.error) throw res.error;
-    }
-
-    return {
-      areas: areas.data ?? [],
-      ocupaciones: ocupaciones.data ?? [],
-      parentescos: parentescos.data ?? [],
-    };
+  async listCatalogo(catalogo: CatalogoNombre): Promise<CatalogoItem[]> {
+    const { data, error } = await supabase
+      .from(CATALOGO_TABLES[catalogo])
+      .select('id, clave, nombre')
+      .order('nombre');
+    if (error) throw error;
+    return data ?? [];
   },
 };

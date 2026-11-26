@@ -60,6 +60,10 @@ export function FichaDomicilioStep({ value, onChange, invalidField }: Props) {
 
   const fallbackCpMode = hasFullCp && !isLoading && allAsentamientos.length > 0 && cpMatches.length === 0;
 
+  // El caso normal (CP foráneo tecleado con el catálogo ya cargado) se resuelve en handleCpChange
+  // con un solo onChange. Este efecto queda solo como red de seguridad cuando el catálogo termina
+  // de cargar después de teclear el CP (o al restaurar un borrador); si el valor ya es el esperado
+  // no hace nada.
   useEffect(() => {
     if (fallbackCpMode && (value.asentamientoId !== null || value.codigoPostalForaneo !== cpTrimmed)) {
       onChange({ ...value, asentamientoId: null, codigoPostalForaneo: cpTrimmed });
@@ -131,6 +135,14 @@ export function FichaDomicilioStep({ value, onChange, invalidField }: Props) {
           asentamientoId: matches.length === 1 ? matches[0].id : null,
           codigoPostalForaneo: '',
         });
+        return;
+      }
+      if (!isLoading && allAsentamientos.length > 0) {
+        // CP sin asentamientos en el catálogo: se registra con el CP de respaldo en este mismo cambio
+        // (antes se limpiaba aquí y un efecto volvía a llamar onChange en el render siguiente).
+        if (value.asentamientoId !== null || value.codigoPostalForaneo !== clean) {
+          onChange({ ...value, asentamientoId: null, codigoPostalForaneo: clean });
+        }
         return;
       }
     }
