@@ -77,7 +77,7 @@ Aprovechando la separación hexagonal y el ritmo de entrega, las pruebas se enfo
 
 | Nivel | Qué se prueba | Herramienta | Cuándo / Prioridad |
 |---|---|---|---|
-| **1. Estático (obligatorio)** | Tipado estricto contra `database.types.ts`, reglas ESLint y bundle de producción | `npm run lint -w @violet-code/admin` + `npm run build -w @violet-code/admin` (`tsc -b && vite build`) | En cada cambio antes de hacer commit |
+| **1. Estático (obligatorio)** | Tipado estricto con TypeScript 7 (Go) contra `database.types.ts`, reglas Oxlint y bundle de producción | `npm run lint -w @violet-code/admin` + `npm run build -w @violet-code/admin` (`tsc -b && vite build`) | En cada cambio antes de hacer commit |
 | **2. Unitarias puras (mayor ROI)** | Validaciones de `domain/` (CURP, transiciones de estado, reglas de negocio), mappers `snake_case ↔ camelCase` y hooks con **repositorios fake en memoria** de `domain/ports/` | **Vitest** | En toda lógica de dominio y adaptadores |
 | **3. Componentes críticos** | Solo flujos sensibles: guards por rol (`RequireAuth`), búsqueda y precarga por CURP, validaciones de Ficha Única y transiciones de Citas/Alertas | **Vitest + `@testing-library/react` + `jsdom`** | Solo en flujos críticos del MVP |
 | **4. Integración / Smoke E2E** | Recorrido de los 5 flujos de [`docs/flujo-operativo-mvp.md`](./flujo-operativo-mvp.md) contra Supabase local (`supabase db reset` + `seed.sql`) usando las cuentas reales del seed (`trabajo.social`, `recepcion`, `psicologia`, `titular`, `umeca`) | Verificación manual guiada (o **Playwright** al cerrar el MVP) | Al cerrar cada módulo conectado a BD |
