@@ -299,6 +299,7 @@ export default function ExpedientesPage() {
       <ExpedienteDrawer
         expediente={selected}
         userRole={user?.role}
+        canManage={canCreateExpediente}
         onClose={() => setSelected(null)}
       />
     </>
