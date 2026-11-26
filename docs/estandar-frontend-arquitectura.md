@@ -68,6 +68,7 @@ Todo el código de presentación en `apps/admin` debe seguir también [`docs/gui
 - Usar `@yewdiel21/motion-kit/react` para componentes complejos e interactivos, importando el CSS modular por componente en el archivo que lo usa (nunca `@yewdiel21/motion-kit/css` completo).
 - Usar Tailwind CSS v4 únicamente con los tokens semánticos del tema (`bg-primary`, `bg-surface-container-low`, `text-on-surface`, `border-outline-variant`, `bg-error-container`, etc.), sin colores por defecto de Tailwind.
 - Definir configuraciones constantes (`COLUMNS`, opciones estáticas, acciones) fuera del componente React.
+- Seguir las reglas de idempotencia, concurrencia, errores, zonas horarias y manejo de sesiones de [`docs/resiliencia-concurrencia-sesiones.md`](./resiliencia-concurrencia-sesiones.md).
 
 ---
 
