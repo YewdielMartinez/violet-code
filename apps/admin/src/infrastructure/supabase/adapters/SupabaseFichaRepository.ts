@@ -1,4 +1,5 @@
 import { supabase } from '../client';
+import type { Json } from '../database.types';
 import type { DomicilioDetalle } from '@/domain/models/Domicilio';
 import type { EstudioSocioeconomicoDetalle } from '@/domain/models/EstudioSocioeconomico';
 import type { FichaCompletaDetalle, FichaCreateInput } from '@/domain/models/FichaRegistro';
@@ -10,133 +11,31 @@ function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
   return value ?? null;
 }
 
-function emptyToNull(value: string): string | null {
-  const clean = value.trim();
-  return clean.length > 0 ? clean : null;
-}
-
-function toOptionalNumber(value: string): number | null {
-  const clean = value.trim();
-  if (!clean) return null;
-  const num = Number(clean);
-  return Number.isFinite(num) ? num : null;
-}
-
 export const supabaseFichaRepository: FichaRepository = {
   async createComplete(input: FichaCreateInput): Promise<CreatedFichaResult> {
-    const { identidad, domicilio, estudio } = input;
-    const curp = normalizeCurp(identidad.curp);
+    const payload: FichaCreateInput = {
+      ...input,
+      identidad: {
+        ...input.identidad,
+        curp: normalizeCurp(input.identidad.curp),
+      },
+    };
 
-    let personaId = identidad.existingPersonaId;
-    if (!personaId) {
-      const { data: personaRow, error: personaError } = await supabase
-        .from('persona')
-        .insert({
-          curp,
-          nombres: identidad.nombres.trim(),
-          apellido_paterno: identidad.apellidoPaterno.trim(),
-          apellido_materno: emptyToNull(identidad.apellidoMaterno),
-          celular: emptyToNull(identidad.celular),
-          escolaridad: identidad.escolaridad || null,
-          discapacidad_id: identidad.discapacidadId,
-          grupo_etnico_id: identidad.grupoEtnicoId,
-          religion_id: identidad.religionId,
-        })
-        .select('id')
-        .single();
-
-      if (personaError) throw personaError;
-      personaId = personaRow.id;
-    }
-
-    const { data: fichaRow, error: fichaError } = await supabase
-      .from('ficha_registro')
-      .insert({
-        persona_id: personaId,
-        aviso_privacidad_aceptado_en: new Date().toISOString(),
-        estado_civil: identidad.estadoCivil || null,
-        ocupacion_id: identidad.ocupacionId,
-        ocupacion_otra: emptyToNull(identidad.ocupacionOtra),
-        tiene_trabajo: identidad.tieneTrabajo,
-        numero_hijas: toOptionalNumber(identidad.numeroHijas),
-        numero_hijos_hombres: toOptionalNumber(identidad.numeroHijosHombres),
-        servicio_medico: identidad.servicioMedico || null,
-        servicio_medico_otro:
-          identidad.servicioMedico === 'otro' ? emptyToNull(identidad.servicioMedicoOtro) : null,
-        tiene_embarazo: identidad.tieneEmbarazo,
-        tiene_denuncia: identidad.tieneDenuncia,
-        es_victima_delito: identidad.esVictimaDelito,
-      })
-      .select('id, folio')
-      .single();
-
-    if (fichaError) throw fichaError;
-
-    if (identidad.serviciosSolicitadosAreaIds.length > 0) {
-      const { error: srvError } = await supabase.from('ficha_servicio_solicitado').insert(
-        identidad.serviciosSolicitadosAreaIds.map((areaId) => ({
-          ficha_id: fichaRow.id,
-          area_id: areaId,
-        })),
-      );
-      if (srvError) throw srvError;
-    }
-
-    const { error: domError } = await supabase.from('domicilio').insert({
-      persona_id: personaId,
-      asentamiento_id: domicilio.asentamientoId,
-      codigo_postal:
-        domicilio.asentamientoId === null ? emptyToNull(domicilio.codigoPostalForaneo) : null,
-      calle: emptyToNull(domicilio.calle),
-      numero_exterior: emptyToNull(domicilio.numeroExterior),
-      numero_interior: emptyToNull(domicilio.numeroInterior),
-      referencias: emptyToNull(domicilio.referencias),
-      zona: domicilio.zona || null,
-      es_actual: true,
+    const { data, error } = await supabase.rpc('crear_ficha_completa', {
+      p_payload: payload as unknown as Json,
     });
-    if (domError) throw domError;
 
-    const { data: estudioRow, error: estError } = await supabase
-      .from('estudio_socioeconomico')
-      .insert({
-        ficha_id: fichaRow.id,
-        es_actual: true,
-        ingreso_mensual_propio: toOptionalNumber(estudio.ingresoMensualPropio),
-        numero_dependientes: toOptionalNumber(estudio.numeroDependientes),
-        tiene_apoyo: estudio.tieneApoyo,
-        especificacion_apoyo: estudio.tieneApoyo ? emptyToNull(estudio.especificacionApoyo) : null,
-        tipo_vivienda: estudio.tipoVivienda || null,
-        material: estudio.material || null,
-        material_otro: estudio.material === 'otro' ? emptyToNull(estudio.materialOtro) : null,
-        servicios: estudio.servicios.length > 0 ? estudio.servicios : null,
-        bienes: estudio.bienes.length > 0 ? estudio.bienes : null,
-      })
-      .select('id')
-      .single();
+    if (error) throw error;
 
-    if (estError) throw estError;
-
-    if (estudio.aportantes.length > 0) {
-      const { error: apError } = await supabase.from('aportante_hogar').insert(
-        estudio.aportantes.map((ap) => ({
-          estudio_socioeconomico_id: estudioRow.id,
-          nombre: ap.nombre.trim(),
-          parentesco_id: ap.parentescoId,
-          parentesco_otro: emptyToNull(ap.parentescoOtro),
-          ocupacion_id: ap.ocupacionId,
-          ocupacion_otra: emptyToNull(ap.ocupacionOtra),
-          tipo_trabajo: ap.tipoTrabajo || null,
-          monto: toOptionalNumber(ap.monto),
-          frecuencia: ap.frecuencia || null,
-        })),
-      );
-      if (apError) throw apError;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió el folio del expediente creado.');
     }
 
     return {
-      fichaId: fichaRow.id,
-      folio: fichaRow.folio,
-      personaId,
+      fichaId: row.ficha_id,
+      folio: row.folio,
+      personaId: row.persona_id,
     };
   },
 

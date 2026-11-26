@@ -3,6 +3,8 @@ import { LoadingButton, Select, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/loading-button';
 import '@yewdiel21/motion-kit/css/components/select';
 import { Icon } from '@/shared/ui/Icon';
+import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard';
+import { UnsavedChangesDialog } from '@/shared/ui/UnsavedChangesDialog';
 import {
   useGuardarAgresor,
   validarAgresor,
@@ -81,7 +83,9 @@ export function AgresorForm({
 }: Props) {
   const isEditing = Boolean(initial);
   const saveMutation = useGuardarAgresor(fichaId);
-  const [form, setForm] = useState<FormState>(() => buildInitialState(initial));
+  const initialSnapshot = useMemo(() => buildInitialState(initial), [initial]);
+  const [form, setForm] = useState<FormState>(() => initialSnapshot);
+  const [saved, setSaved] = useState(false);
   const [errores, setErrores] = useState<Partial<Record<AgresorValidationField, string>>>({});
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
   const savedTimerRef = useRef<number | null>(null);
@@ -93,6 +97,12 @@ export function AgresorForm({
       }
     };
   }, []);
+
+  const isDirty = useMemo(
+    () => !saved && JSON.stringify(form) !== JSON.stringify(initialSnapshot),
+    [saved, form, initialSnapshot],
+  );
+  const blocker = useUnsavedChangesGuard(isDirty);
 
   const patchForm = (patch: Partial<FormState>) => setForm((prev) => ({ ...prev, ...patch }));
 
@@ -145,6 +155,7 @@ export function AgresorForm({
     setSubmitState('loading');
     try {
       await saveMutation.mutateAsync({ id: initial?.id, input });
+      setSaved(true);
       setSubmitState('success');
       toast(isEditing ? 'Persona agresora actualizada.' : 'Persona agresora registrada.', {
         tone: 'success',
@@ -304,6 +315,7 @@ export function AgresorForm({
           <span>{isEditing ? 'Guardar cambios' : 'Registrar persona agresora'}</span>
         </LoadingButton>
       </AgresorDialog.Footer>
+      <UnsavedChangesDialog blocker={blocker} />
     </form>
   );
 }

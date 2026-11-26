@@ -25,7 +25,7 @@ const SAMPLE_ROW: AgresorRow = {
   ocupacion_id: 2,
   ocupacion_otra: null,
   tiene_consumo_droga: true,
-  drogas: ['marihuana', 'valor_invalido'],
+  drogas: ['marihuana', 'valor_invalido' as unknown as 'otra'],
   especificacion_droga: 'Consumo ocasional',
   utilizo_arma_u_objeto: true,
   tipo_arma: 'objeto_contundente',

@@ -69,7 +69,7 @@ export function FichaDetalleResumen({ expediente }: Props) {
           detail.domicilio.codigoPostal ? ` (${detail.domicilio.codigoPostal})` : ''
         }`
       : detail.domicilio.codigoPostal
-        ? `Foráneo CP ${detail.domicilio.codigoPostal}`
+        ? `CP ${detail.domicilio.codigoPostal}`
         : null
     : null;
 

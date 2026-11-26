@@ -138,7 +138,10 @@ export function useFichaForm() {
 
     setStepError(null);
     setInvalidField(null);
-    return createMutation.mutateAsync({ identidad, domicilio, estudio });
+    const created = await createMutation.mutateAsync({ identidad, domicilio, estudio });
+    // Tras guardar, el borrador deja de contar como "cambios sin guardar" (guardia de develop).
+    setInitialSnapshot(serializeDraft(identidad, domicilio, estudio));
+    return created;
   }
 
   return {

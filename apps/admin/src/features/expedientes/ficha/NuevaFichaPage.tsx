@@ -2,8 +2,10 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from '@yewdiel21/motion-kit/react';
 import { useAuth } from '@/shared/auth/useAuth';
+import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard';
 import { Icon } from '@/shared/ui/Icon';
 import { PageHeader } from '@/shared/ui/PageHeader';
+import { UnsavedChangesDialog } from '@/shared/ui/UnsavedChangesDialog';
 import { canLookupPreRegistro, useCatalogosFicha } from '../api';
 import { focusFichaField } from './fichaValidation';
 import {
@@ -33,6 +35,7 @@ export default function NuevaFichaPage() {
     step,
     stepError,
     invalidField,
+    isDirty,
     identidad,
     setIdentidad,
     domicilio,
@@ -46,6 +49,8 @@ export default function NuevaFichaPage() {
     submit,
     isSubmitting,
   } = useFichaForm();
+
+  const blocker = useUnsavedChangesGuard(canCreate && isDirty);
 
   const { data: catalogos } = useCatalogosFicha(canCreate);
 
@@ -143,6 +148,7 @@ export default function NuevaFichaPage() {
           />
         </div>
       </div>
+      <UnsavedChangesDialog blocker={blocker} />
     </>
   );
 }

@@ -13,9 +13,9 @@ export interface AsentamientoSepomex {
 }
 
 export interface DomicilioInput {
-  /** Presente cuando el asentamiento pertenece al catálogo SEPOMEX de Ahome. */
+  /** Presente cuando el asentamiento pertenece al catálogo `cat_asentamiento` (SEPOMEX). */
   asentamientoId: number | null;
-  /** Código postal de respaldo (5 dígitos) solo para domicilios fuera de Ahome (`asentamientoId === null`). */
+  /** Código postal de respaldo (5 dígitos) cuando el CP no está en `cat_asentamiento` (`asentamientoId === null`). */
   codigoPostalForaneo: string;
   calle: string;
   numeroExterior: string;
@@ -55,11 +55,11 @@ const CP_REGEX = /^[0-9]{5}$/;
 export function validateDomicilio(input: DomicilioInput): string | null {
   const cp = input.codigoPostalForaneo.trim();
   if (input.asentamientoId !== null && cp.length > 0) {
-    return 'No combines asentamiento local de Ahome con código postal foráneo.';
+    return 'No combines asentamiento del catálogo con código postal manual.';
   }
   if (input.asentamientoId === null) {
     if (!cp) {
-      return 'Selecciona un asentamiento de Ahome o captura un código postal foráneo de 5 dígitos.';
+      return 'Captura un código postal de 5 dígitos o selecciona un asentamiento.';
     }
     if (!CP_REGEX.test(cp)) {
       return 'El código postal debe tener exactamente 5 dígitos.';

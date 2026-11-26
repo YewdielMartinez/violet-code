@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Dialog, useDialog } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
 import type { StaffRole } from '@/domain/models/Auth';
@@ -68,14 +69,13 @@ export function ExpedienteDrawer({
   const dialogInstanceRef = useRef<DialogInstanceRef['current']>(null);
 
   const [expanded, setExpanded] = useState(false);
-  const [tabState, setTabState] = useState<{ fichaId: string | null; tab: DrawerTab }>({
-    fichaId: null,
-    tab: 'resumen',
-  });
+  // La pestaña activa vive en la URL (`?tab=`), igual que el expediente abierto (`?expediente=`).
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const isOpen = Boolean(expediente);
+  const rawTab = searchParams.get('tab');
   const requestedTab: DrawerTab =
-    expediente && tabState.fichaId === expediente.id ? tabState.tab : 'resumen';
+    rawTab === 'agresor' || rawTab === 'documentos' ? rawTab : 'resumen';
   const activeTab: DrawerTab = canAccessSensitiveTabs ? requestedTab : 'resumen';
 
   useEffect(() => {
@@ -91,13 +91,20 @@ export function ExpedienteDrawer({
 
   function selectTab(next: DrawerTab) {
     if (!expediente) return;
-    setTabState({ fichaId: expediente.id, tab: next });
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next === 'resumen') params.delete('tab');
+        else params.set('tab', next);
+        return params;
+      },
+      { replace: true },
+    );
   }
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
       setExpanded(false);
-      setTabState({ fichaId: null, tab: 'resumen' });
       onClose();
     }
   }
