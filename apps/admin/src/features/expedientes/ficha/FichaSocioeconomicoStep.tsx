@@ -103,6 +103,8 @@ export function FichaSocioeconomicoStep({ value, onChange, catalogos }: Props) {
             type="number"
             min={0}
             max={30}
+            step={1}
+            inputMode="numeric"
             value={value.numeroDependientes}
             onChange={(e) => update('numeroDependientes', e.target.value)}
           />

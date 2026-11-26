@@ -36,11 +36,26 @@ export function useFichaForm() {
     domicilio: INITIAL_DOMICILIO_INPUT,
     estudio: INITIAL_ESTUDIO_INPUT,
   }));
-  const [identidad, setIdentidad] = useState<FichaIdentidadInput>(() =>
+  const [identidad, setIdentidadState] = useState<FichaIdentidadInput>(() =>
     createIdentidadFromPreRegistro(null),
   );
-  const [domicilio, setDomicilio] = useState<DomicilioInput>(INITIAL_DOMICILIO_INPUT);
-  const [estudio, setEstudio] = useState<EstudioSocioeconomicoInput>(INITIAL_ESTUDIO_INPUT);
+  const [domicilio, setDomicilioState] = useState<DomicilioInput>(INITIAL_DOMICILIO_INPUT);
+  const [estudio, setEstudioState] = useState<EstudioSocioeconomicoInput>(INITIAL_ESTUDIO_INPUT);
+
+  const setIdentidad = useCallback((next: FichaIdentidadInput) => {
+    setStepError(null);
+    setIdentidadState(next);
+  }, []);
+
+  const setDomicilio = useCallback((next: DomicilioInput) => {
+    setStepError(null);
+    setDomicilioState(next);
+  }, []);
+
+  const setEstudio = useCallback((next: EstudioSocioeconomicoInput) => {
+    setStepError(null);
+    setEstudioState(next);
+  }, []);
 
   const createMutation = useCreateFicha();
 
@@ -54,9 +69,9 @@ export function useFichaForm() {
       domicilio: INITIAL_DOMICILIO_INPUT,
       estudio: INITIAL_ESTUDIO_INPUT,
     });
-    setIdentidad(base);
-    setDomicilio(INITIAL_DOMICILIO_INPUT);
-    setEstudio(INITIAL_ESTUDIO_INPUT);
+    setIdentidadState(base);
+    setDomicilioState(INITIAL_DOMICILIO_INPUT);
+    setEstudioState(INITIAL_ESTUDIO_INPUT);
     setSaved(false);
     setStep(0);
     setStepError(null);
@@ -95,6 +110,11 @@ export function useFichaForm() {
     setStep((prev) => Math.max(prev - 1, 0));
   }
 
+  function goToStep(nextStep: number) {
+    setStepError(null);
+    setStep(nextStep);
+  }
+
   async function submit() {
     const errIdentidad = validateFichaIdentidad(identidad);
     if (errIdentidad) {
@@ -116,14 +136,38 @@ export function useFichaForm() {
     }
 
     setStepError(null);
-    const created = await createMutation.mutateAsync({ identidad, domicilio, estudio });
-    setSaved(true);
-    return created;
+    try {
+      const created = await createMutation.mutateAsync({ identidad, domicilio, estudio });
+      setSaved(true);
+      return created;
+    } catch (err) {
+      const msg =
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message: unknown }).message === 'string'
+          ? (err as { message: string }).message
+          : 'No se pudo guardar el expediente. Verifica los datos e intenta de nuevo.';
+      const code =
+        typeof err === 'object' &&
+        err !== null &&
+        'code' in err &&
+        typeof (err as { code: unknown }).code === 'string'
+          ? (err as { code: string }).code
+          : '';
+
+      if (code === '23505' || /curp|expediente registrado|ficha única/i.test(msg)) {
+        setStep(0);
+      }
+      setStepError(msg);
+      throw err;
+    }
   }
 
   return {
     step,
     setStep,
+    goToStep,
     stepError,
     setStepError,
     isDirty,

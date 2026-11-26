@@ -88,7 +88,7 @@ export const NAVIGATION: NavPage[] = [
     path: '/canalizaciones',
     label: 'Canalizaciones',
     icon: 'alt_route',
-    ready: false,
+    ready: true,
     allowedRoles: ATTENTION_AND_DIRECTION,
   },
   {

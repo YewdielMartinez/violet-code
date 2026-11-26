@@ -30,25 +30,22 @@ export const supabaseSepomexRepository: SepomexRepository = {
   },
 
   async getCatalogosFicha(): Promise<CatalogosFicha> {
-    const [areas, ocupaciones, discapacidades, etnias, religiones, parentescos] = await Promise.all([
+    const [areas, ocupaciones, parentescos] = await Promise.all([
       supabase.from('cat_area').select('id, clave, nombre').order('nombre'),
       supabase.from('cat_ocupacion').select('id, clave, nombre').order('nombre'),
-      supabase.from('cat_discapacidad').select('id, clave, nombre').order('nombre'),
-      supabase.from('cat_grupo_etnico').select('id, clave, nombre').order('nombre'),
-      supabase.from('cat_religion').select('id, clave, nombre').order('nombre'),
       supabase.from('cat_parentesco').select('id, clave, nombre').order('nombre'),
     ]);
 
-    for (const res of [areas, ocupaciones, discapacidades, etnias, religiones, parentescos]) {
+    for (const res of [areas, ocupaciones, parentescos]) {
       if (res.error) throw res.error;
     }
 
     return {
       areas: areas.data ?? [],
       ocupaciones: ocupaciones.data ?? [],
-      discapacidades: discapacidades.data ?? [],
-      gruposEtnicos: etnias.data ?? [],
-      religiones: religiones.data ?? [],
+      discapacidades: [],
+      gruposEtnicos: [],
+      religiones: [],
       parentescos: parentescos.data ?? [],
     };
   },
