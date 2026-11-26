@@ -8,12 +8,28 @@
 
 .mk-dialog.vc-expediente-dialog [data-mk-part='header'] {
   display: grid;
+  /* El kit deja justify-content: space-between (pensado para flex); en grid encogería la columna. */
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: stretch;
   gap: 14px;
   padding: 20px 24px 12px;
 }
 
 .mk-dialog.vc-expediente-dialog [data-mk-part='body'] {
   padding: 8px 24px 28px;
+}
+
+/* Sin blur del fondo: desenfocar toda la página en cada frame cuesta caro en un panel grande.
+   `none` (no `blur(0px)`): el velo del cierre copia este valor y blur(0) igual crea una capa de filtro. */
+.mk-dialog.vc-expediente-dialog::backdrop {
+  backdrop-filter: none;
+}
+
+/* Cierre: motion-kit 0.20.3 anima una copia (ghost) y desenfoca su contenido con blur(32px) aunque
+   el diálogo tenga animateContent={false}. Rasterizar ese blur en un panel grande provocaba un tirón:
+   se anula solo en el ghost (gana a los estilos inline de GSAP por !important). */
+.vc-expediente-dialog[data-mk-ghost] [data-mk-part] {
+  filter: none !important;
 }
 
 @media (max-width: 679px) {

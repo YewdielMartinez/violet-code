@@ -12,6 +12,6 @@
   },
   "devDependencies": {
     "@material/material-color-utilities": "^0.3.0",
-    "@yewdiel21/motion-kit": "^0.20.3"
+    "@yewdiel21/motion-kit": "^0.20.4"
   }
 }

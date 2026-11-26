@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { toast } from '@yewdiel21/motion-kit/react';
 import { ESTADO_FICHA_LABELS, type ExpedienteResumen } from '@/domain/models/Persona';
 import { Icon } from '@/shared/ui/Icon';
@@ -12,7 +13,9 @@ interface Props {
 }
 
 /** Estado operativo del expediente y tarjetas de contacto directo de la usuaria. */
-export function ExpedienteContactoSection({ expediente }: Props) {
+export const ExpedienteContactoSection = memo(function ExpedienteContactoSection({
+  expediente,
+}: Props) {
   const statusStyle = ESTADO_BADGE_STYLES[expediente.estado];
   const rawPhone = expediente.persona.celular?.trim() ?? '';
   const formattedPhone = formatPhoneDisplay(expediente.persona.celular);
@@ -118,4 +121,4 @@ export function ExpedienteContactoSection({ expediente }: Props) {
       </section>
     </div>
   );
-}
+});

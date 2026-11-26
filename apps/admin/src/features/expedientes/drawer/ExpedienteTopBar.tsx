@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Dialog, toast } from '@yewdiel21/motion-kit/react';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
 import { Icon } from '@/shared/ui/Icon';
@@ -10,7 +11,11 @@ interface Props {
 }
 
 /** Cabecera superior del panel: cerrar, expandir ancho y acciones rápidas de contacto/folio. */
-export function ExpedienteTopBar({ expediente, expanded, onToggleExpand }: Props) {
+export const ExpedienteTopBar = memo(function ExpedienteTopBar({
+  expediente,
+  expanded,
+  onToggleExpand,
+}: Props) {
   const phone = expediente?.persona.celular?.trim() ?? '';
 
   async function handleCopyFolio() {
@@ -85,4 +90,4 @@ export function ExpedienteTopBar({ expediente, expanded, onToggleExpand }: Props
       </div>
     </Dialog.Header>
   );
-}
+});

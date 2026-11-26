@@ -145,7 +145,6 @@ export default function CanalizacionesPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Secretaría de las Mujeres · Ahome · Canalizaciones"
         title="Canalizaciones"
         subtitle="Derivaciones internas entre áreas y canalizaciones a instituciones externas."
         actions={

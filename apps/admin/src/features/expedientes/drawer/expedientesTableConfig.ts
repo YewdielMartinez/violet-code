@@ -67,31 +67,15 @@ export function formatTableDate(iso: string): string {
   return Number.isNaN(date.getTime()) ? iso : TABLE_DATE_FMT.format(date);
 }
 
-const SHARED_CELL_KEYS: ReadonlyArray<readonly [key: string, sharedName: string]> = [
-  ['folio', 'expediente-folio'],
-  ['nombreCompleto', 'expediente-nombre'],
-];
-
 /**
- * Marca filas enfocables y envuelve el texto completo de Folio/Usuaria para que
- * `data-mk-shared` viaje íntegro incluso cuando DataTable inserta `<mark>` de búsqueda.
+ * Hace enfocables (Tab + Enter) las filas de la tabla, una sola vez por fila.
+ * Sin `data-mk-shared`: hacer viajar nombre y folio al panel costaba la mitad de los frames al abrir.
  */
 export function decorateExpedienteRows(tbody: HTMLTableSectionElement): void {
   for (const tr of tbody.rows) {
     if (!tr.dataset.id || tr.hasAttribute('data-mk-dt-loading')) continue;
+    if (tr.dataset.vcDecorated === '1') continue;
     tr.tabIndex = 0;
-
-    for (const [key, sharedName] of SHARED_CELL_KEYS) {
-      const td = tr.querySelector<HTMLTableCellElement>(`td[data-key="${key}"]`);
-      if (!td) continue;
-
-      td.setAttribute('data-mk-shared', sharedName);
-      if (td.querySelector('[data-vc-shared-wrap]')) continue;
-
-      const wrapper = document.createElement('span');
-      wrapper.dataset.vcSharedWrap = '';
-      wrapper.append(...td.childNodes);
-      td.append(wrapper);
-    }
+    tr.dataset.vcDecorated = '1';
   }
 }

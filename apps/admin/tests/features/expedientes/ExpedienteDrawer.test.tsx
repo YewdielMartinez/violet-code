@@ -1,10 +1,11 @@
-import { StrictMode, type CSSProperties, type ReactNode } from 'react';
-import { createMemoryRouter, RouterProvider } from 'react-router-dom';
+import { StrictMode, useRef, type ReactNode } from 'react';
+import { createMemoryRouter, RouterProvider, useSearchParams } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { Agresor } from '@/domain/models/Agresor';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
+import { decorateExpedienteRows } from '@/features/expedientes/drawer/expedientesTableConfig';
 import {
   calculateAge,
   formatFechaNacimiento,
@@ -79,63 +80,40 @@ vi.mock('@/features/expedientes/agresor/motionCompat', () => {
   };
 });
 
-vi.mock('@yewdiel21/motion-kit/react', () => ({
-  useCascade: undefined,
-  Dialog: {
-    Root: ({ open, children }: { open?: boolean; children?: ReactNode }) =>
-      open ? <div data-testid="dialog-root">{children}</div> : null,
-    Content: ({
-      children,
-      className,
-      style,
-    }: {
-      children?: ReactNode;
-      className?: string;
-      style?: CSSProperties;
-    }) => (
-      <div data-testid="dialog-content" className={className} style={style}>
-        {children}
+vi.mock('@yewdiel21/motion-kit/react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@yewdiel21/motion-kit/react')>();
+  return {
+    ...actual,
+    useCascade: undefined,
+    useTabs: () => ({ current: null }),
+    EmptyState: ({ title, description }: { title?: string; description?: string }) => (
+      <div>
+        <p>{title}</p>
+        <p>{description}</p>
       </div>
     ),
-    Header: ({ children }: { children?: ReactNode }) => <header>{children}</header>,
-    Title: ({ children, className }: { children?: ReactNode; className?: string }) => (
-      <h2 className={className}>{children}</h2>
+    Skeleton: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+    Select: ({
+      label,
+      value,
+      onChange,
+    }: {
+      label?: string;
+      value?: string;
+      onChange?: (v: string) => void;
+    }) => (
+      <input
+        aria-label={label}
+        value={value ?? ''}
+        onChange={(e) => onChange?.(e.target.value)}
+      />
     ),
-    Close: ({ label }: { label?: string }) => (
-      <button type="button" aria-label={label ?? 'Cerrar'}>
-        {label ?? 'Cerrar'}
-      </button>
+    LoadingButton: ({ children, type }: { children?: ReactNode; type?: 'button' | 'submit' }) => (
+      <button type={type}>{children}</button>
     ),
-    Body: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
-    Footer: ({ children }: { children?: ReactNode }) => <footer>{children}</footer>,
-  },
-  useDialog: () => ({
-    open: true,
-    setOpen: vi.fn(),
-    instance: { current: null },
-  }),
-  useTabs: () => ({ current: null }),
-  EmptyState: ({ title, description }: { title?: string; description?: string }) => (
-    <div>
-      <p>{title}</p>
-      <p>{description}</p>
-    </div>
-  ),
-  Skeleton: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
-  Select: ({
-    label,
-    value,
-    onChange,
-  }: {
-    label?: string;
-    value?: string;
-    onChange?: (v: string) => void;
-  }) => <input aria-label={label} value={value ?? ''} onChange={(e) => onChange?.(e.target.value)} />,
-  LoadingButton: ({ children, type }: { children?: ReactNode; type?: 'button' | 'submit' }) => (
-    <button type={type}>{children}</button>
-  ),
-  toast: toastMock,
-}));
+    toast: toastMock,
+  };
+});
 
 import { ExpedienteDrawer } from '@/features/expedientes/ExpedienteDrawer';
 
@@ -157,6 +135,27 @@ const SAMPLE_EXPEDIENTE: ExpedienteResumen = {
     fechaNacimiento: '1991-03-15',
     entidadNacimiento: 'SL',
     celular: '6681000001',
+  },
+};
+
+const SECOND_EXPEDIENTE: ExpedienteResumen = {
+  id: '55555555-5555-4555-8555-555555555502',
+  folio: 'SEM-2026-0002',
+  estado: 'abierto',
+  creadoEn: '2026-11-21T10:00:00Z',
+  actualizadoEn: '2026-11-26T10:00:00Z',
+  enListaUrgencias: false,
+  persona: {
+    id: '33333333-3333-4333-8333-333333333302',
+    curp: 'LOPA880720MSLNRR09',
+    nombres: 'Laura',
+    apellidoPaterno: 'López',
+    apellidoMaterno: 'Paredes',
+    nombreCompleto: 'Laura López Paredes',
+    sexo: 'M',
+    fechaNacimiento: '1988-07-20',
+    entidadNacimiento: 'SL',
+    celular: null,
   },
 };
 
@@ -275,7 +274,7 @@ describe('ExpedienteDrawer (RBAC, rediseño y bitácora RF-05 / RF-22)', () => {
     expect(screen.getByText('MEZA910315MSLGRN04')).toBeTruthy();
     expect(screen.getByText('668 100 0001')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Llamar' }).getAttribute('href')).toBe('tel:6681000001');
-    expect(screen.getByTestId('ficha-gestion')).toBeTruthy();
+    expect(await screen.findByTestId('ficha-gestion')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copiar CURP' }));
     await waitFor(() => {
@@ -284,26 +283,181 @@ describe('ExpedienteDrawer (RBAC, rediseño y bitácora RF-05 / RF-22)', () => {
     });
   });
 
-  it('alterna el botón Expandir y oculta la zona de gestión cuando canManage es false', () => {
+  it('alterna el botón Expandir y oculta la zona de gestión cuando canManage es false', async () => {
     renderWithQuery(
       <ExpedienteDrawer expediente={SAMPLE_EXPEDIENTE} userRole="psicologia" canManage={false} onClose={vi.fn()} />,
     );
 
+    await screen.findByTestId('ficha-resumen');
     expect(screen.queryByTestId('ficha-gestion')).toBeNull();
+
+    const dialog = document.querySelector<HTMLDialogElement>('dialog.vc-expediente-dialog');
+    expect(dialog).not.toBeNull();
+    expect(dialog!.hasAttribute('open')).toBe(true);
 
     const expandButton = screen.getByRole('button', { name: /Expandir/i });
     expect(expandButton.getAttribute('aria-pressed')).toBe('false');
-    expect((screen.getByTestId('dialog-content').style as CSSStyleDeclaration).getPropertyValue('--vc-drawer-width')).toBe('680px');
+    expect(dialog!.style.getPropertyValue('--vc-drawer-width')).toBe('680px');
 
     fireEvent.click(expandButton);
 
     const collapseButton = screen.getByRole('button', { name: /Contraer/i });
     expect(collapseButton.getAttribute('aria-pressed')).toBe('true');
-    expect((screen.getByTestId('dialog-content').style as CSSStyleDeclaration).getPropertyValue('--vc-drawer-width')).toBe('960px');
+    expect(dialog!.style.getPropertyValue('--vc-drawer-width')).toBe('960px');
+  });
+
+  it('abre, cierra completamente sin dejar cascarón y vuelve a abrir otro expediente de forma repetida', async () => {
+    const expedientes = [SAMPLE_EXPEDIENTE, SECOND_EXPEDIENTE];
+
+    function DrawerHarness() {
+      const [searchParams, setSearchParams] = useSearchParams();
+      const anchorRef = useRef<HTMLElement | null>(null);
+      const selectedId = searchParams.get('expediente');
+      const selected = expedientes.find((item) => item.id === selectedId) ?? null;
+
+      function openRow(exp: ExpedienteResumen, el: HTMLElement) {
+        anchorRef.current = el;
+        setSearchParams({ expediente: exp.id }, { replace: true });
+      }
+
+      function closeRow() {
+        anchorRef.current = null;
+        setSearchParams({}, { replace: true });
+      }
+
+      return (
+        <div>
+          {expedientes.map((exp) => (
+            <button
+              key={exp.id}
+              type="button"
+              onClick={(event) => openRow(exp, event.currentTarget)}
+            >
+              Abrir {exp.folio}
+            </button>
+          ))}
+          <button type="button" onClick={closeRow}>
+            Quitar param URL
+          </button>
+
+          <ExpedienteDrawer
+            expediente={selected}
+            anchor={anchorRef}
+            userRole="trabajo_social"
+            canManage={false}
+            onClose={closeRow}
+          />
+        </div>
+      );
+    }
+
+    renderWithQuery(<DrawerHarness />);
+
+    // El Dialog puede remontarse (reapertura durante el cierre), así que se consulta cada vez.
+    const getDialog = () => document.querySelector<HTMLDialogElement>('dialog.vc-expediente-dialog');
+    const dialog = { hasAttribute: (name: string) => getDialog()?.hasAttribute(name) ?? false };
+    expect(getDialog()).not.toBeNull();
+    expect(dialog!.hasAttribute('open')).toBe(false);
+
+    // 1. Abrir primer expediente
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir SEM-2026-0001' }));
+    await waitFor(() => {
+      expect(dialog!.hasAttribute('open')).toBe(true);
+    });
+    expect(screen.getByRole('heading', { name: 'Adriana Meza Gutiérrez' })).toBeTruthy();
+
+    // 2. Cerrar con el botón X nativo de Dialog.Close -> no debe quedar abierto ni con contenido
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
+    await waitFor(() => {
+      expect(dialog!.hasAttribute('open')).toBe(false);
+    });
+    expect(screen.queryByRole('heading', { name: 'Adriana Meza Gutiérrez' })).toBeNull();
+
+    // 3. Reabrir con el segundo expediente
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir SEM-2026-0002' }));
+    await waitFor(() => {
+      expect(dialog!.hasAttribute('open')).toBe(true);
+    });
+    expect(screen.getByRole('heading', { name: 'Laura López Paredes' })).toBeTruthy();
+    expect(screen.getByText('SEM-2026-0002')).toBeTruthy();
+
+    // 4. Cerrar quitando ?expediente de la URL (cierre controlado / botón Atrás)
+    fireEvent.click(screen.getByRole('button', { name: 'Quitar param URL' }));
+    await waitFor(() => {
+      expect(dialog!.hasAttribute('open')).toBe(false);
+    });
+    expect(screen.queryByRole('heading', { name: 'Laura López Paredes' })).toBeNull();
+
+    // 5. Reabrir de nuevo y cerrar con evento cancel (Escape)
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir SEM-2026-0001' }));
+    await waitFor(() => {
+      expect(dialog!.hasAttribute('open')).toBe(true);
+    });
+    fireEvent(getDialog()!, new Event('cancel', { cancelable: true }));
+    await waitFor(() => {
+      expect(dialog!.hasAttribute('open')).toBe(false);
+    });
+    expect(screen.queryByRole('heading', { name: 'Adriana Meza Gutiérrez' })).toBeNull();
+  });
+
+  it('monta el detalle de inmediato cuando prefers-reduced-motion está activo', () => {
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    try {
+      renderWithQuery(
+        <ExpedienteDrawer
+          expediente={SAMPLE_EXPEDIENTE}
+          userRole="trabajo_social"
+          canManage={true}
+          onClose={vi.fn()}
+        />,
+      );
+      expect(screen.getByTestId('ficha-resumen')).toBeTruthy();
+      expect(screen.getByTestId('ficha-gestion')).toBeTruthy();
+    } finally {
+      window.matchMedia = originalMatchMedia;
+    }
   });
 });
 
-describe('drawer formatters', () => {
+describe('drawer formatters y tabla', () => {
+  it('decora filas de expedientes una sola vez sin duplicar envoltorios compartidos', () => {
+    const table = document.createElement('table');
+    const tbody = document.createElement('tbody');
+    const tr = document.createElement('tr');
+    tr.dataset.id = SAMPLE_EXPEDIENTE.id;
+
+    const tdFolio = document.createElement('td');
+    tdFolio.dataset.key = 'folio';
+    tdFolio.textContent = SAMPLE_EXPEDIENTE.folio;
+
+    const tdNombre = document.createElement('td');
+    tdNombre.dataset.key = 'nombreCompleto';
+    tdNombre.textContent = SAMPLE_EXPEDIENTE.persona.nombreCompleto;
+
+    tr.append(tdFolio, tdNombre);
+    tbody.append(tr);
+    table.append(tbody);
+
+    decorateExpedienteRows(tbody);
+    decorateExpedienteRows(tbody);
+
+    expect(tr.tabIndex).toBe(0);
+    expect(tr.dataset.vcDecorated).toBe('1');
+    // Sin texto compartido: las celdas quedan intactas.
+    expect(tdFolio.hasAttribute('data-mk-shared')).toBe(false);
+    expect(tdNombre.textContent).toBe(SAMPLE_EXPEDIENTE.persona.nombreCompleto);
+  });
   it('calcula edad y formatea sexo, fecha y teléfono sin desfase de zona horaria', () => {
     expect(calculateAge('1991-03-15', new Date(2026, 2, 14))).toBe(34);
     expect(calculateAge('1991-03-15', new Date(2026, 2, 15))).toBe(35);

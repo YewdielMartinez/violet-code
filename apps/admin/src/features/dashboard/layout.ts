@@ -11,7 +11,7 @@ export interface WidgetDef {
   id: WidgetId;
   title: string;
   description: string;
-  column: 'main' | 'side';
+  column: 'top' | 'main' | 'side';
   defaultFor: StaffRole[];
   onlyFor?: StaffRole[];
 }
@@ -37,8 +37,8 @@ export const WIDGETS: WidgetDef[] = [
   {
     id: 'kpis',
     title: 'Resumen del día',
-    description: 'Alertas activas, próxima cita y expedientes pendientes.',
-    column: 'main',
+    description: 'Alertas pendientes, citas de hoy, expedientes activos y casos prioritarios.',
+    column: 'top',
     defaultFor: ALL_EMPLOYEES,
     onlyFor: ALL_EMPLOYEES,
   },
@@ -95,31 +95,49 @@ export const WIDGETS: WidgetDef[] = [
 export const availableWidgets = (role: StaffRole) =>
   WIDGETS.filter((w) => !w.onlyFor || w.onlyFor.includes(role));
 
-const key = (userId: string) => `vc-dashboard:${userId}`;
+const STORAGE_VERSION = 'v2';
+const key = (userId: string) => `vc-dashboard:${STORAGE_VERSION}:${userId}`;
+const cacheKey = (userId: string, role: StaffRole) => `${userId}:${role}`;
 const listeners = new Set<() => void>();
+const memoryFallback = new Map<string, WidgetId[]>();
 const cache = new Map<string, WidgetId[]>();
 
+/** Conserva el orden del catálogo (con `kpis` primero cuando está visible) y filtra por rol. */
+function normalizeOrder(ids: readonly WidgetId[], allowed?: ReadonlySet<WidgetId>): WidgetId[] {
+  const selected = new Set(ids);
+  return WIDGETS.map((w) => w.id).filter((id) => selected.has(id) && (!allowed || allowed.has(id)));
+}
+
 function read(userId: string, role: StaffRole): WidgetId[] {
-  const cached = cache.get(userId);
+  const ck = cacheKey(userId, role);
+  const cached = cache.get(ck);
   if (cached) return cached;
-  let ids: WidgetId[] | null = null;
-  try {
-    ids = JSON.parse(localStorage.getItem(key(userId)) ?? 'null');
-  } catch {
-    ids = null;
+  let ids: WidgetId[] | null = memoryFallback.get(userId) ?? null;
+  if (!ids) {
+    try {
+      const parsed: unknown = JSON.parse(localStorage.getItem(key(userId)) ?? 'null');
+      ids = Array.isArray(parsed) ? (parsed as WidgetId[]) : null;
+    } catch {
+      ids = null;
+    }
   }
   const allowed = new Set(availableWidgets(role).map((w) => w.id));
-  const value = (ids ?? WIDGETS.filter((w) => w.defaultFor.includes(role)).map((w) => w.id)).filter((id) =>
-    allowed.has(id),
-  );
-  cache.set(userId, value);
+  const raw = ids ?? WIDGETS.filter((w) => w.defaultFor.includes(role)).map((w) => w.id);
+  const value = normalizeOrder(raw, allowed);
+  cache.set(ck, value);
   return value;
 }
 
 export function setVisibleWidgets(userId: string, ids: WidgetId[]) {
-  cache.set(userId, ids);
+  const normalized = normalizeOrder(ids);
+  memoryFallback.set(userId, normalized);
+  for (const existingKey of cache.keys()) {
+    if (existingKey.startsWith(`${userId}:`)) {
+      cache.delete(existingKey);
+    }
+  }
   try {
-    localStorage.setItem(key(userId), JSON.stringify(ids));
+    localStorage.setItem(key(userId), JSON.stringify(normalized));
   } catch {
     /* sin almacenamiento: solo en memoria */
   }

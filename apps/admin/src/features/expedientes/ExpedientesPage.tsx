@@ -1,4 +1,13 @@
-import { useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import {
+  memo,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+  type RefObject,
+} from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DataTable, EmptyState, Skeleton } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/data-table';
@@ -34,6 +43,49 @@ import { NuevaFichaDrawer } from './ficha/NuevaFichaDrawer';
 import type { FichaSeedContext } from './ficha/useFichaForm';
 import { VerificarCurpDialog } from './VerificarCurpDialog';
 
+interface TableSectionProps {
+  tableContainerRef: RefObject<HTMLDivElement | null>;
+  isLoading: boolean;
+  rows: ExpedienteRow[];
+  emptyDescription: string;
+  onRowAction: (action: string, row: ExpedienteRow) => void;
+  onTableClick: (event: MouseEvent<HTMLDivElement>) => void;
+  onTableKeyDown: (event: KeyboardEvent<HTMLDivElement>) => void;
+}
+
+/** Aísla la tabla operativa para que abrir/cerrar el panel o cambiar de pestaña no re-renderice DataTable. */
+const ExpedientesTableSection = memo(function ExpedientesTableSection({
+  tableContainerRef,
+  isLoading,
+  rows,
+  emptyDescription,
+  onRowAction,
+  onTableClick,
+  onTableKeyDown,
+}: TableSectionProps) {
+  return (
+    <div ref={tableContainerRef}>
+      <Skeleton loading={isLoading} shape="card" lines={6} label="Cargando expedientes">
+        <DataTable<ExpedienteRow>
+          className="vc-expediente-table"
+          caption="Listado de expedientes activos"
+          rows={rows}
+          columns={COLUMNS}
+          actions={ROW_ACTIONS}
+          onAction={onRowAction}
+          onClick={onTableClick}
+          onKeyDown={onTableKeyDown}
+          onRender={decorateExpedienteRows}
+          pageSize={10}
+          search="Buscar por folio, CURP o nombre…"
+          emptyTitle="Sin expedientes en esta vista"
+          emptyDescription={emptyDescription}
+        />
+      </Skeleton>
+    </div>
+  );
+});
+
 /**
  * Pantalla principal de Expedientes (`RF-03`, `RF-04`, `RF-34`, `RF-22`):
  * - La tabla operativa y filtros rápidos ocupan el plano principal desde el primer vistazo.
@@ -46,8 +98,9 @@ export default function ExpedientesPage() {
   const { mutate: registerConsult } = useRegisterConsult();
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
+  // Se usa ref en vez de useState para el ancla: evita re-render extra y carreras con setSearchParams.
+  const originRef = useRef<HTMLElement | null>(null);
   const [verifyOpen, setVerifyOpen] = useState(false);
-  const [originElement, setOriginElement] = useState<HTMLElement | null>(null);
   const [fichaSeed, setFichaSeed] = useState<FichaSeedContext | null>(null);
   const [preloadedDraft, setPreloadedDraft] = useState<PreRegistroMovil | null>(null);
 
@@ -59,22 +112,25 @@ export default function ExpedientesPage() {
 
   const canCreateExpediente = user ? canLookupPreRegistro(user.role) : false;
 
-  function setQuickFilter(next: QuickFilter) {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        if (next === 'todos') params.delete('filtro');
-        else params.set('filtro', next);
-        return params;
-      },
-      { replace: true },
-    );
-  }
+  const setQuickFilter = useCallback(
+    (next: QuickFilter) => {
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          if (next === 'todos') params.delete('filtro');
+          else params.set('filtro', next);
+          return params;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
 
-  function handleStartFicha(seed: FichaSeedContext) {
+  const handleStartFicha = useCallback((seed: FichaSeedContext) => {
     setVerifyOpen(false);
     setFichaSeed(seed);
-  }
+  }, []);
 
   const byId = useMemo(() => {
     const map = new Map<string, ExpedienteResumen>();
@@ -116,24 +172,28 @@ export default function ExpedientesPage() {
     [filteredItems],
   );
 
-  function openExpediente(expediente: ExpedienteResumen, origin: HTMLElement | null = null) {
-    setOriginElement(origin);
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        params.set('expediente', expediente.id);
-        params.delete('tab');
-        return params;
-      },
-      { replace: true },
-    );
-    registerConsult(expediente.id);
-  }
+  const openExpediente = useCallback(
+    (expediente: ExpedienteResumen, origin: HTMLElement | null = null) => {
+      originRef.current = origin;
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          params.set('expediente', expediente.id);
+          params.delete('tab');
+          return params;
+        },
+        { replace: true },
+      );
+      registerConsult(expediente.id);
+    },
+    [registerConsult, setSearchParams],
+  );
 
-  function closeExpediente() {
-    setOriginElement(null);
+  const closeExpediente = useCallback(() => {
+    originRef.current = null;
     setSearchParams(
       (prev) => {
+        if (!prev.has('expediente') && !prev.has('tab')) return prev;
         const params = new URLSearchParams(prev);
         params.delete('expediente');
         params.delete('tab');
@@ -141,54 +201,78 @@ export default function ExpedientesPage() {
       },
       { replace: true },
     );
-  }
+  }, [setSearchParams]);
 
-  function handleRowAction(action: string, row: ExpedienteRow) {
-    if (action !== 'open') return;
-    const match = byId.get(row.id);
-    if (!match) return;
+  const handleRowAction = useCallback(
+    (action: string, row: ExpedienteRow) => {
+      if (action !== 'open') return;
+      const match = byId.get(row.id);
+      if (!match) return;
 
-    const escapedId = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(row.id) : row.id;
-    const rowEl =
-      tableContainerRef.current?.querySelector<HTMLTableRowElement>(
-        `tbody tr[data-id="${escapedId}"]`,
-      ) ?? null;
+      const escapedId = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(row.id) : row.id;
+      const rowEl =
+        tableContainerRef.current?.querySelector<HTMLTableRowElement>(
+          `tbody tr[data-id="${escapedId}"]`,
+        ) ?? null;
 
-    openExpediente(match, rowEl);
-  }
+      openExpediente(match, rowEl);
+    },
+    [byId, openExpediente],
+  );
 
-  function handleTableClick(event: MouseEvent<HTMLDivElement>) {
-    const target = event.target;
-    if (!(target instanceof Element)) return;
-    if (target.closest('button, a, input, label, [data-mk-dt-actions], [data-mk-dt-row-menu]')) {
-      return;
-    }
-    if (window.getSelection()?.toString()) return;
+  const handleTableClick = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest('button, a, input, label, [data-mk-dt-actions], [data-mk-dt-row-menu]')) {
+        return;
+      }
+      if (window.getSelection()?.toString()) return;
 
-    const rowEl = target.closest<HTMLTableRowElement>('tbody tr[data-id]');
-    if (!rowEl || rowEl.hasAttribute('data-mk-dt-loading')) return;
+      const rowEl = target.closest<HTMLTableRowElement>('tbody tr[data-id]');
+      if (!rowEl || rowEl.hasAttribute('data-mk-dt-loading')) return;
 
-    const rowId = rowEl.dataset.id;
-    const match = rowId ? byId.get(rowId) : undefined;
-    if (match) openExpediente(match, rowEl);
-  }
+      const rowId = rowEl.dataset.id;
+      const match = rowId ? byId.get(rowId) : undefined;
+      if (match) openExpediente(match, rowEl);
+    },
+    [byId, openExpediente],
+  );
 
-  function handleTableKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    const target = event.target;
-    if (
-      !(target instanceof HTMLTableRowElement) ||
-      !target.matches('tbody tr[data-id]') ||
-      target.hasAttribute('data-mk-dt-loading')
-    ) {
-      return;
-    }
+  const handleTableKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      const target = event.target;
+      if (
+        !(target instanceof HTMLTableRowElement) ||
+        !target.matches('tbody tr[data-id]') ||
+        target.hasAttribute('data-mk-dt-loading')
+      ) {
+        return;
+      }
 
-    event.preventDefault();
-    const rowId = target.dataset.id;
-    const match = rowId ? byId.get(rowId) : undefined;
-    if (match) openExpediente(match, target);
-  }
+      event.preventDefault();
+      const rowId = target.dataset.id;
+      const match = rowId ? byId.get(rowId) : undefined;
+      if (match) openExpediente(match, target);
+    },
+    [byId, openExpediente],
+  );
+
+  const handleOpenFromVerify = useCallback(
+    (expediente: ExpedienteResumen) => {
+      openExpediente(expediente);
+    },
+    [openExpediente],
+  );
+
+  const handleCloseNuevaFicha = useCallback(() => {
+    setFichaSeed(null);
+  }, []);
+
+  const emptyDescription = canCreateExpediente
+    ? 'Usa «Nuevo expediente» arriba para verificar una CURP o confirmar un pre-registro móvil.'
+    : 'No hay expedientes activos que coincidan con el filtro seleccionado.';
 
   return (
     <>
@@ -262,29 +346,15 @@ export default function ExpedientesPage() {
           />
         </div>
       ) : (
-        <div ref={tableContainerRef}>
-          <Skeleton loading={isLoading} shape="card" lines={6} label="Cargando expedientes">
-            <DataTable<ExpedienteRow>
-              className="vc-expediente-table"
-              caption="Listado de expedientes activos"
-              rows={rows}
-              columns={COLUMNS}
-              actions={ROW_ACTIONS}
-              onAction={handleRowAction}
-              onClick={handleTableClick}
-              onKeyDown={handleTableKeyDown}
-              onRender={decorateExpedienteRows}
-              pageSize={10}
-              search="Buscar por folio, CURP o nombre…"
-              emptyTitle="Sin expedientes en esta vista"
-              emptyDescription={
-                canCreateExpediente
-                  ? 'Usa «Nuevo expediente» arriba para verificar una CURP o confirmar un pre-registro móvil.'
-                  : 'No hay expedientes activos que coincidan con el filtro seleccionado.'
-              }
-            />
-          </Skeleton>
-        </div>
+        <ExpedientesTableSection
+          tableContainerRef={tableContainerRef}
+          isLoading={isLoading}
+          rows={rows}
+          emptyDescription={emptyDescription}
+          onRowAction={handleRowAction}
+          onTableClick={handleTableClick}
+          onTableKeyDown={handleTableKeyDown}
+        />
       )}
 
       {canCreateExpediente ? (
@@ -292,7 +362,7 @@ export default function ExpedientesPage() {
           open={verifyOpen}
           onOpenChange={setVerifyOpen}
           allowPreRegistroLookup={canCreateExpediente}
-          onOpenExpediente={(expediente) => openExpediente(expediente)}
+          onOpenExpediente={handleOpenFromVerify}
           onPreloadConfirmed={setPreloadedDraft}
           onStartFicha={handleStartFicha}
         />
@@ -300,12 +370,12 @@ export default function ExpedientesPage() {
 
       <ExpedienteDrawer
         expediente={selected}
-        originElement={originElement}
+        anchor={originRef}
         userRole={user?.role}
         canManage={canCreateExpediente}
         onClose={closeExpediente}
       />
-      <NuevaFichaDrawer open={Boolean(fichaSeed)} seed={fichaSeed} onClose={() => setFichaSeed(null)} />
+      <NuevaFichaDrawer open={Boolean(fichaSeed)} seed={fichaSeed} onClose={handleCloseNuevaFicha} />
     </>
   );
 }

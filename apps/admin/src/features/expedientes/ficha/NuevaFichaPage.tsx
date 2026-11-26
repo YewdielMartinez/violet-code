@@ -97,7 +97,6 @@ export default function NuevaFichaPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Secretaría de las Mujeres · Ahome · Trabajo Social"
         title="Nueva Ficha Única"
         subtitle={
           seed?.preRegistro

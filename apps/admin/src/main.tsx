@@ -5,8 +5,10 @@ import { RouterProvider } from 'react-router-dom';
 import { ThemeProvider, Toaster } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/toast';
 import { router } from '@/app/router';
-import { THEME_STORAGE_KEY } from '@/app/theme';
+import { registerCustomThemes, THEME_STORAGE_KEY } from '@/app/theme';
 import './index.css';
+
+registerCustomThemes();
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: false } },

@@ -20,6 +20,7 @@
 @import '@yewdiel21/motion-kit/css/themes/neogreen' layer(motion-kit);
 @import '@yewdiel21/motion-kit/css/themes/black' layer(motion-kit);
 @import '@yewdiel21/motion-kit/css/themes/oled' layer(motion-kit);
+@import './app/themes/salmverse.css' layer(motion-kit);
 @import 'tailwindcss';
 
 @theme inline {
@@ -79,8 +80,8 @@ html {
 /* ── Blanco profundo en modo claro ──────────────────────────────────────────
    Los temas de motion-kit tiñen las superficies claras con su color. Para un sistema
    institucional usamos blanco puro y grises neutros; el color queda solo en acentos.
-   Aplica a cualquier tema, solo cuando el modo resuelto es claro. */
-:root[data-mk-mode='light'] {
+   Aplica a los temas integrados en modo claro; Salmverse conserva su superficie crema (#fff5e4). */
+:root[data-mk-mode='light']:not([data-mk-theme='salmverse']) {
   --md-sys-color-background: #ffffff;
   --md-sys-color-surface: #ffffff;
   --md-sys-color-surface-bright: #ffffff;
@@ -93,7 +94,7 @@ html {
 }
 
 @media (prefers-color-scheme: light) {
-  :root:not([data-mk-mode='dark']) {
+  :root:not([data-mk-mode='dark']):not([data-mk-theme='salmverse']) {
     --md-sys-color-background: #ffffff;
     --md-sys-color-surface: #ffffff;
     --md-sys-color-surface-bright: #ffffff;

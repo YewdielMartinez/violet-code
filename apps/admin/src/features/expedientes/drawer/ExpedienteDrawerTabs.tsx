@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useTabs } from '@yewdiel21/motion-kit/react';
 import { Icon } from '@/shared/ui/Icon';
 
@@ -21,15 +21,13 @@ const ALL_TABS: readonly TabDefinition[] = [
 interface Props {
   activeTab: DrawerTab;
   canAccessSensitiveTabs: boolean;
-  expedienteId: string;
   onChange: (next: DrawerTab) => void;
 }
 
 /** Pestañas tipo pill chip con indicador deslizante animado mediante `useTabs` de motion-kit. */
-export function ExpedienteDrawerTabs({
+export const ExpedienteDrawerTabs = memo(function ExpedienteDrawerTabs({
   activeTab,
   canAccessSensitiveTabs,
-  expedienteId,
   onChange,
 }: Props) {
   const listRef = useRef<HTMLDivElement>(null);
@@ -39,15 +37,22 @@ export function ExpedienteDrawerTabs({
     [canAccessSensitiveTabs],
   );
 
+  const onChangeRef = useRef(onChange);
+  const visibleTabsRef = useRef(visibleTabs);
+  useLayoutEffect(() => {
+    onChangeRef.current = onChange;
+    visibleTabsRef.current = visibleTabs;
+  }, [onChange, visibleTabs]);
+
   const tabs = useTabs(
     listRef,
     {
       onSelect: (index) => {
-        const target = visibleTabs[index];
-        if (target) onChange(target.id);
+        const target = visibleTabsRef.current[index];
+        if (target) onChangeRef.current(target.id);
       },
     },
-    [visibleTabs.length, expedienteId],
+    [visibleTabs.length],
   );
 
   const activeIndex = Math.max(
@@ -88,4 +93,4 @@ export function ExpedienteDrawerTabs({
       <span data-mk-indicator="" aria-hidden className="vc-drawer-tabs__indicator" />
     </div>
   );
-}
+});
