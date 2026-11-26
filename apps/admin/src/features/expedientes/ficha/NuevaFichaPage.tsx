@@ -81,9 +81,16 @@ export default function NuevaFichaPage() {
       if (!created) return;
       toast(`Expediente ${created.folio} registrado.`);
       navigate('/expedientes', { replace: true });
-    } catch {
+    } catch (err) {
+      const msg =
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message: unknown }).message === 'string'
+          ? (err as { message: string }).message
+          : 'No se pudo guardar el expediente. Verifica los datos e intenta de nuevo.';
       setSubmitError(true);
-      toast('No se pudo guardar la ficha. Verifica los datos.', { tone: 'error' });
+      toast(msg, { tone: 'error' });
     }
   }
 

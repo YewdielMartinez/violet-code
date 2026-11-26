@@ -88,6 +88,8 @@ export function FichaSocioeconomicoStep({ value, onChange, catalogos, invalidFie
             max={30}
             data-ficha-field="numeroDependientes"
             aria-invalid={invalidField === 'numeroDependientes' || undefined}
+            step={1}
+            inputMode="numeric"
             value={value.numeroDependientes}
             onChange={(e) => update('numeroDependientes', e.target.value)}
           />

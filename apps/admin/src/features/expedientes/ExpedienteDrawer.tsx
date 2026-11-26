@@ -6,6 +6,7 @@ import type { StaffRole } from '@/domain/models/Auth';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
 import { puedeAccederAgresor } from './agresorApi';
 import { AgresorFormSection } from './AgresorFormSection';
+import { DerivacionesExpedientePanel } from './DerivacionesExpedientePanel';
 import { DocumentosAdjuntosPanel } from './DocumentosAdjuntosPanel';
 import { ExpedienteContactoSection } from './drawer/ExpedienteContactoSection';
 import { ExpedienteDrawerTabs, type DrawerTab } from './drawer/ExpedienteDrawerTabs';
@@ -75,7 +76,9 @@ export function ExpedienteDrawer({
   const isOpen = Boolean(expediente);
   const rawTab = searchParams.get('tab');
   const requestedTab: DrawerTab =
-    rawTab === 'agresor' || rawTab === 'documentos' ? rawTab : 'resumen';
+    rawTab === 'agresor' || rawTab === 'documentos' || rawTab === 'canalizaciones'
+      ? rawTab
+      : 'resumen';
   const activeTab: DrawerTab = canAccessSensitiveTabs ? requestedTab : 'resumen';
 
   useEffect(() => {
@@ -175,6 +178,16 @@ export function ExpedienteDrawer({
               {canAccessSensitiveTabs && activeTab === 'documentos' ? (
                 <div role="tabpanel">
                   <DocumentosAdjuntosPanel key={expediente.id} fichaId={expediente.id} />
+                </div>
+              ) : null}
+
+              {canAccessSensitiveTabs && activeTab === 'canalizaciones' ? (
+                <div role="tabpanel">
+                  <DerivacionesExpedientePanel
+                    key={expediente.id}
+                    fichaId={expediente.id}
+                    folio={expediente.folio}
+                  />
                 </div>
               ) : null}
             </div>

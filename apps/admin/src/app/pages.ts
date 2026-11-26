@@ -6,6 +6,7 @@ const loadDashboard = () => import('@/features/dashboard/DashboardPage');
 const loadDirectory = () => import('@/features/directory/DirectoryPage');
 const loadExpedientes = () => import('@/features/expedientes/ExpedientesPage');
 const loadNuevaFicha = () => import('@/features/expedientes/ficha/NuevaFichaPage');
+const loadCanalizaciones = () => import('@/features/canalizaciones/CanalizacionesPage');
 const loadPending = () => import('@/shared/ui/PendingModulePage');
 
 export const LoginPage = lazy(loadLogin);
@@ -13,6 +14,7 @@ export const DashboardPage = lazy(loadDashboard);
 export const DirectoryPage = lazy(loadDirectory);
 export const ExpedientesPage = lazy(loadExpedientes);
 export const NuevaFichaPage = lazy(loadNuevaFicha);
+export const CanalizacionesPage = lazy(loadCanalizaciones);
 export const PendingModulePage = lazy(loadPending);
 
 const started = new WeakSet<() => Promise<unknown>>();
@@ -28,6 +30,7 @@ const ROUTE_LOADERS: Record<string, () => Promise<unknown>> = {
   '/directorio': loadDirectory,
   '/expedientes': loadExpedientes,
   '/expedientes/nuevo': loadNuevaFicha,
+  '/canalizaciones': loadCanalizaciones,
 };
 
 /** Precarga el chunk de una ruta al pasar el cursor o enfocar un enlace de navegación. */
@@ -35,7 +38,7 @@ export function preloadPage(path: string): void {
   loadOnce(ROUTE_LOADERS[path] ?? loadPending);
 }
 
-const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadDirectory, loadNuevaFicha, loadPending];
+const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadDirectory, loadNuevaFicha, loadCanalizaciones, loadPending];
 
 function scheduleIdle(cb: () => void): () => void {
   if (typeof window === 'undefined') return () => {};

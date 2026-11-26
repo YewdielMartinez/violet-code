@@ -138,15 +138,39 @@ export function useFichaForm() {
 
     setStepError(null);
     setInvalidField(null);
-    const created = await createMutation.mutateAsync({ identidad, domicilio, estudio });
-    // Tras guardar, el borrador deja de contar como "cambios sin guardar" (guardia de develop).
-    setInitialSnapshot(serializeDraft(identidad, domicilio, estudio));
-    return created;
+    try {
+      const created = await createMutation.mutateAsync({ identidad, domicilio, estudio });
+      // Tras guardar, el borrador deja de contar como "cambios sin guardar".
+      setInitialSnapshot(serializeDraft(identidad, domicilio, estudio));
+      return created;
+    } catch (err) {
+      const msg =
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message: unknown }).message === 'string'
+          ? (err as { message: string }).message
+          : 'No se pudo guardar el expediente. Verifica los datos e intenta de nuevo.';
+      const code =
+        typeof err === 'object' &&
+        err !== null &&
+        'code' in err &&
+        typeof (err as { code: unknown }).code === 'string'
+          ? (err as { code: string }).code
+          : '';
+
+      if (code === '23505' || /curp|expediente registrado|ficha única/i.test(msg)) {
+        setStep(0);
+      }
+      setStepError(msg);
+      throw err;
+    }
   }
 
   return {
     step,
     setStep,
+    goToStep,
     stepError,
     setStepError,
     invalidField,
@@ -158,7 +182,6 @@ export function useFichaForm() {
     estudio,
     setEstudio,
     initialize,
-    goToStep,
     goNext,
     goBack,
     submit,

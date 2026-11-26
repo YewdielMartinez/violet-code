@@ -1,7 +1,15 @@
 import { lazy, Suspense, type ComponentType } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { ALL_PAGES } from './navigation';
-import { DashboardPage, DirectoryPage, ExpedientesPage, LoginPage, NuevaFichaPage, PendingModulePage } from './pages';
+import {
+  CanalizacionesPage,
+  DashboardPage,
+  DirectoryPage,
+  ExpedientesPage,
+  LoginPage,
+  NuevaFichaPage,
+  PendingModulePage,
+} from './pages';
 
 const AppLayout = lazy(() => import('./AppLayout').then((m) => ({ default: m.AppLayout })));
 const RequireAuth = lazy(() => import('./RequireAuth').then((m) => ({ default: m.RequireAuth })));
@@ -11,6 +19,7 @@ const READY: Record<string, ComponentType> = {
   '/': DashboardPage,
   '/directorio': DirectoryPage,
   '/expedientes': ExpedientesPage,
+  '/canalizaciones': CanalizacionesPage,
 };
 
 // Sin esqueleto: las páginas ya están precargadas; si alguna tarda, no se muestra un parpadeo intermedio.
