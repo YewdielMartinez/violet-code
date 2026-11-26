@@ -511,6 +511,36 @@ describe('ExpedienteDrawer (RBAC, rediseño y bitácora RF-05 / RF-22)', () => {
     expect(onClose).not.toHaveBeenCalled();
     expect(outerDialog!.hasAttribute('open')).toBe(true);
   });
+
+  it('mantiene montadas las pestañas visitadas para volver sin retardo ni re-registrar consulta', async () => {
+    renderWithQuery(
+      <ExpedienteDrawer
+        expediente={SAMPLE_EXPEDIENTE}
+        userRole="trabajo_social"
+        canManage={false}
+        onClose={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: /Persona agresora/i }));
+    await waitFor(() => {
+      expect(screen.getByText('Roberto Salazar Pineda')).toBeTruthy();
+    });
+    expect(registrarConsultaMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('tab', { name: /Datos/i }));
+    expect(screen.getByTestId('ficha-resumen')).toBeTruthy();
+    // Sigue montada pero oculta; al volver a Persona agresora es instantáneo y no repite bitácora.
+    expect(screen.getByText('Roberto Salazar Pineda').closest('[role="tabpanel"]')?.hasAttribute('hidden')).toBe(
+      true,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: /Persona agresora/i }));
+    expect(screen.getByText('Roberto Salazar Pineda').closest('[role="tabpanel"]')?.hasAttribute('hidden')).toBe(
+      false,
+    );
+    expect(registrarConsultaMock).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('drawer formatters y tabla', () => {

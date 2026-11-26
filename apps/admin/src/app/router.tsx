@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ComponentType } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { ALL_PAGES } from './navigation';
+import { queryClient } from './queryClient';
 import {
   AlertasPage,
   CanalizacionesPage,
@@ -19,6 +20,37 @@ const loadRequireAuth = () => import('./RequireAuth');
 const AppLayout = lazy(() => loadAppLayout().then((m) => ({ default: m.AppLayout })));
 const RequireAuth = lazy(() => loadRequireAuth().then((m) => ({ default: m.RequireAuth })));
 
+type PreloadableDrawerTab =
+  | 'agresor'
+  | 'documentos'
+  | 'canalizaciones'
+  | 'ordenes'
+  | 'seguimiento'
+  | 'notas';
+
+function isPreloadableDrawerTab(tab: string | null): tab is PreloadableDrawerTab {
+  return (
+    tab === 'agresor' ||
+    tab === 'documentos' ||
+    tab === 'canalizaciones' ||
+    tab === 'ordenes' ||
+    tab === 'seguimiento' ||
+    tab === 'notas'
+  );
+}
+
+function hasStoredSupabaseSession(): boolean {
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) return true;
+    }
+  } catch {
+    // Ignora bloqueos de almacenamiento.
+  }
+  return false;
+}
+
 /**
  * Arranque en paralelo: sin esto la carga en frío era serial (chunk de RequireAuth → validar sesión
  * en su useEffect → chunk de AppLayout → chunk de la página). Aquí, al evaluar el entry, se pide la
@@ -35,6 +67,25 @@ function warmStart() {
   void loadRequireAuth();
   void loadAppLayout();
   preloadPage(path);
+
+  if (path === '/expedientes') {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (isPreloadableDrawerTab(tab)) {
+      void import('@/features/expedientes/ExpedienteDrawer').then((m) =>
+        m.preloadExpedienteDrawerTab(tab),
+      );
+    }
+    if (hasStoredSupabaseSession()) {
+      const expedienteId = params.get('expediente');
+      void import('@/features/expedientes/api').then((api) => {
+        void queryClient.prefetchQuery(api.expedientesListQueryOptions());
+        if (expedienteId) {
+          void queryClient.prefetchQuery(api.fichaDetailQueryOptions(expedienteId));
+        }
+      });
+    }
+  }
 }
 
 warmStart();

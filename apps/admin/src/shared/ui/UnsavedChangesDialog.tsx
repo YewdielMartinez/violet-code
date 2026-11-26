@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { Dialog } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
 import type { Blocker } from 'react-router-dom';
@@ -26,25 +27,31 @@ export function UnsavedChangesDialog({
         }
       }}
     >
-      <Dialog.Content size="sm">
-        <Dialog.Header>
-          <Dialog.Title>Cambios sin guardar</Dialog.Title>
+      <Dialog.Content
+        style={{ '--mk-dialog-width': '480px' } as CSSProperties}
+        className="w-[min(480px,calc(100vw-32px))]"
+      >
+        <Dialog.Header
+          className="flex items-center justify-start gap-2"
+          style={{ justifyContent: 'flex-start' }}
+        >
           <Dialog.Close label="Cerrar" />
+          <Dialog.Title>Cambios sin guardar</Dialog.Title>
         </Dialog.Header>
         <Dialog.Body>
-          <p className="text-sm text-on-surface-variant">{message}</p>
+          <p className="text-base leading-relaxed text-on-surface-variant">{message}</p>
         </Dialog.Body>
-        <Dialog.Footer>
+        <Dialog.Footer className="flex flex-wrap items-center justify-end gap-3 pt-2">
           <button
             type="button"
-            className="mk-button mk-button--text"
+            className="mk-button mk-button--tonal min-h-11 px-5 text-base whitespace-nowrap"
             onClick={() => blocker.state === 'blocked' && blocker.reset()}
           >
             Seguir editando
           </button>
           <button
             type="button"
-            className="mk-button mk-button--filled"
+            className="mk-button mk-button--filled bg-error text-on-error min-h-11 px-5 text-base whitespace-nowrap"
             onClick={() => blocker.state === 'blocked' && blocker.proceed()}
           >
             Descartar cambios

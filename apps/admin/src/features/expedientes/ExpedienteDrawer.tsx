@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ReactNode,
   type RefObject,
 } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -63,6 +64,15 @@ const TAB_LOADERS: Partial<Record<DrawerTab, () => Promise<unknown>>> = {
   notas: loadNotasPrivadasPanel,
 };
 
+const IDLE_TAB_ORDER: readonly DrawerTab[] = [
+  'agresor',
+  'documentos',
+  'canalizaciones',
+  'ordenes',
+  'seguimiento',
+  'notas',
+];
+
 const preloadedTabs = new Set<DrawerTab>();
 
 /** Precarga únicamente el chunk de la pestaña solicitada (hover/focus en la pestaña). */
@@ -86,6 +96,16 @@ export function preloadExpedienteDrawerTabs(): void {
   preloadExpedienteDrawerTab('ordenes');
 }
 
+function scheduleIdleTab(cb: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  if (typeof window.requestIdleCallback === 'function') {
+    const id = window.requestIdleCallback(cb, { timeout: 2500 });
+    return () => window.cancelIdleCallback(id);
+  }
+  const id = window.setTimeout(cb, 150);
+  return () => window.clearTimeout(id);
+}
+
 // El morph de apertura de motion-kit dura 0.7 s (TIMING.dialog.open). Montar el detalle a la mitad
 // provocaba un tirón; se monta al terminar y mientras tanto se ve el placeholder ligero.
 const DEFERRED_CONTENT_DELAY_MS = 700;
@@ -106,13 +126,16 @@ const DrawerSectionPlaceholder = memo(function DrawerSectionPlaceholder({
       role="status"
       aria-busy="true"
       aria-label={label}
-      className="grid min-h-[320px] content-start gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest p-4"
+      className="grid min-h-[320px] content-start gap-4 rounded-2xl border border-outline-variant bg-surface-container-lowest p-4"
     >
-      <div className="h-3.5 w-32 rounded-full bg-surface-container-high animate-pulse motion-reduce:animate-none" />
-      <div className="grid gap-2.5 sm:grid-cols-2">
-        <div className="h-14 rounded-xl bg-surface-container animate-pulse motion-reduce:animate-none" />
-        <div className="h-14 rounded-xl bg-surface-container animate-pulse motion-reduce:animate-none" />
-        <div className="h-14 rounded-xl bg-surface-container animate-pulse motion-reduce:animate-none sm:col-span-2" />
+      <div className="flex items-center justify-between gap-3">
+        <div className="h-4 w-40 rounded-full bg-surface-container-high animate-pulse motion-reduce:animate-none" />
+        <div className="h-9 w-28 rounded-full bg-surface-container animate-pulse motion-reduce:animate-none" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="h-16 rounded-xl bg-surface-container animate-pulse motion-reduce:animate-none" />
+        <div className="h-16 rounded-xl bg-surface-container animate-pulse motion-reduce:animate-none" />
+        <div className="h-24 rounded-xl bg-surface-container animate-pulse motion-reduce:animate-none sm:col-span-2" />
       </div>
     </div>
   );
@@ -122,6 +145,7 @@ interface ResumenTabPanelProps {
   expediente: ExpedienteResumen;
   canManage: boolean;
   contentReady: boolean;
+  active: boolean;
   onDone: () => void;
 }
 
@@ -129,10 +153,11 @@ const ResumenTabPanel = memo(function ResumenTabPanel({
   expediente,
   canManage,
   contentReady,
+  active,
   onDone,
 }: ResumenTabPanelProps) {
   return (
-    <div role="tabpanel" className="grid gap-6">
+    <div role="tabpanel" hidden={!active} className={active ? 'grid gap-6' : 'hidden'}>
       <ExpedienteContactoSection expediente={expediente} />
       {contentReady ? (
         <>
@@ -141,6 +166,30 @@ const ResumenTabPanel = memo(function ResumenTabPanel({
         </>
       ) : (
         <DrawerSectionPlaceholder label="Cargando detalle del expediente" />
+      )}
+    </div>
+  );
+});
+
+interface LazyTabPanelProps {
+  active: boolean;
+  contentReady: boolean;
+  label: string;
+  children: ReactNode;
+}
+
+const LazyTabPanel = memo(function LazyTabPanel({
+  active,
+  contentReady,
+  label,
+  children,
+}: LazyTabPanelProps) {
+  return (
+    <div role="tabpanel" hidden={!active} className={active ? undefined : 'hidden'}>
+      {contentReady ? (
+        <Suspense fallback={<DrawerSectionPlaceholder label={label} />}>{children}</Suspense>
+      ) : (
+        <DrawerSectionPlaceholder label={label} />
       )}
     </div>
   );
@@ -208,7 +257,33 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     rawTab === 'notas'
       ? rawTab
       : 'resumen';
-  const activeTab: DrawerTab = canAccessSensitiveTabs ? requestedTab : 'resumen';
+
+  const [localTab, setLocalTab] = useState<DrawerTab>(requestedTab);
+  const [prevRequestedTab, setPrevRequestedTab] = useState<DrawerTab>(requestedTab);
+  if (requestedTab !== prevRequestedTab) {
+    setPrevRequestedTab(requestedTab);
+    setLocalTab(requestedTab);
+  }
+
+  const activeTab: DrawerTab = canAccessSensitiveTabs ? localTab : 'resumen';
+  const activeExpedienteId = (expediente ?? displayed)?.id ?? null;
+
+  const [visitedState, setVisitedState] = useState<{
+    expedienteId: string | null;
+    tabs: DrawerTab[];
+  }>({
+    expedienteId: activeExpedienteId,
+    tabs: [activeTab],
+  });
+  if (visitedState.expedienteId !== activeExpedienteId) {
+    setVisitedState({ expedienteId: activeExpedienteId, tabs: [activeTab] });
+  } else if (!visitedState.tabs.includes(activeTab)) {
+    setVisitedState({
+      expedienteId: activeExpedienteId,
+      tabs: [...visitedState.tabs, activeTab],
+    });
+  }
+  const visitedTabs = visitedState.tabs;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -267,6 +342,36 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     };
   }, [isOpen, shouldDeferContent]);
 
+  useEffect(() => {
+    if (!isOpen || !contentReady || !canAccessSensitiveTabs) return;
+    const nav =
+      typeof navigator !== 'undefined'
+        ? (navigator as Navigator & { connection?: { saveData?: boolean } })
+        : null;
+    if (nav?.connection?.saveData) return;
+
+    let cancelled = false;
+    let index = 0;
+    let cancelIdle: (() => void) | null = null;
+
+    const step = () => {
+      while (index < IDLE_TAB_ORDER.length && preloadedTabs.has(IDLE_TAB_ORDER[index])) index++;
+      if (cancelled || index >= IDLE_TAB_ORDER.length) return;
+      preloadExpedienteDrawerTab(IDLE_TAB_ORDER[index++]);
+      if (index < IDLE_TAB_ORDER.length) cancelIdle = scheduleIdleTab(step);
+    };
+
+    const startTimer = window.setTimeout(() => {
+      if (!cancelled) cancelIdle = scheduleIdleTab(step);
+    }, 1200);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(startTimer);
+      cancelIdle?.();
+    };
+  }, [isOpen, contentReady, canAccessSensitiveTabs]);
+
   const handleTabIntent = useCallback(
     (tab: DrawerTab) => {
       if (canAccessSensitiveTabs) preloadExpedienteDrawerTab(tab);
@@ -277,6 +382,10 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
   const selectTab = useCallback(
     (next: DrawerTab) => {
       if (!isOpen || next === activeTab) return;
+      setLocalTab(next);
+      setVisitedState((prev) =>
+        prev.tabs.includes(next) ? prev : { ...prev, tabs: [...prev.tabs, next] },
+      );
       startTransition(() => {
         setSearchParams(
           (prev) => {
@@ -304,6 +413,7 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     setDisplayed(null);
     setExpanded(false);
     setDeferredReady(false);
+    setVisitedState({ expedienteId: null, tabs: ['resumen'] });
   }, []);
 
   /** Cierre pedido por la app (botón del pie, archivar): mismo camino que la X del kit. */
@@ -381,92 +491,78 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
                   onTabIntent={handleTabIntent}
                 />
 
-                {activeTab === 'resumen' ? (
+                {visitedTabs.includes('resumen') ? (
                   <ResumenTabPanel
                     expediente={activeExpediente}
                     canManage={canManage}
                     contentReady={contentReady}
+                    active={activeTab === 'resumen'}
                     onDone={requestClose}
                   />
                 ) : null}
 
-                {canAccessSensitiveTabs && activeTab === 'agresor' ? (
-                  <div role="tabpanel">
-                    {contentReady ? (
-                      <Suspense fallback={<DrawerSectionPlaceholder label="Cargando persona agresora" />}>
-                        <AgresorFormSection key={activeExpediente.id} fichaId={activeExpediente.id} />
-                      </Suspense>
-                    ) : (
-                      <DrawerSectionPlaceholder label="Cargando persona agresora" />
-                    )}
-                  </div>
+                {canAccessSensitiveTabs && visitedTabs.includes('agresor') ? (
+                  <LazyTabPanel
+                    active={activeTab === 'agresor'}
+                    contentReady={contentReady}
+                    label="Cargando persona agresora"
+                  >
+                    <AgresorFormSection key={activeExpediente.id} fichaId={activeExpediente.id} />
+                  </LazyTabPanel>
                 ) : null}
 
-                {canAccessSensitiveTabs && activeTab === 'documentos' ? (
-                  <div role="tabpanel">
-                    {contentReady ? (
-                      <Suspense fallback={<DrawerSectionPlaceholder label="Cargando documentos" />}>
-                        <DocumentosAdjuntosPanel
-                          key={activeExpediente.id}
-                          fichaId={activeExpediente.id}
-                        />
-                      </Suspense>
-                    ) : (
-                      <DrawerSectionPlaceholder label="Cargando documentos" />
-                    )}
-                  </div>
+                {canAccessSensitiveTabs && visitedTabs.includes('documentos') ? (
+                  <LazyTabPanel
+                    active={activeTab === 'documentos'}
+                    contentReady={contentReady}
+                    label="Cargando documentos"
+                  >
+                    <DocumentosAdjuntosPanel key={activeExpediente.id} fichaId={activeExpediente.id} />
+                  </LazyTabPanel>
                 ) : null}
 
-                {canAccessSensitiveTabs && activeTab === 'canalizaciones' ? (
-                  <div role="tabpanel">
-                    {contentReady ? (
-                      <Suspense fallback={<DrawerSectionPlaceholder label="Cargando canalizaciones" />}>
-                        <DerivacionesExpedientePanel
-                          key={activeExpediente.id}
-                          fichaId={activeExpediente.id}
-                          folio={activeExpediente.folio}
-                        />
-                      </Suspense>
-                    ) : (
-                      <DrawerSectionPlaceholder label="Cargando canalizaciones" />
-                    )}
-                  </div>
+                {canAccessSensitiveTabs && visitedTabs.includes('canalizaciones') ? (
+                  <LazyTabPanel
+                    active={activeTab === 'canalizaciones'}
+                    contentReady={contentReady}
+                    label="Cargando canalizaciones"
+                  >
+                    <DerivacionesExpedientePanel
+                      key={activeExpediente.id}
+                      fichaId={activeExpediente.id}
+                      folio={activeExpediente.folio}
+                    />
+                  </LazyTabPanel>
                 ) : null}
 
-                {canAccessSensitiveTabs && activeTab === 'seguimiento' ? (
-                  <div role="tabpanel">
-                    {contentReady ? (
-                      <Suspense fallback={<DrawerSectionPlaceholder label="Cargando línea de tiempo" />}>
-                        <ExpedienteTimeline key={activeExpediente.id} fichaId={activeExpediente.id} />
-                      </Suspense>
-                    ) : (
-                      <DrawerSectionPlaceholder label="Cargando línea de tiempo" />
-                    )}
-                  </div>
+                {canAccessSensitiveTabs && visitedTabs.includes('seguimiento') ? (
+                  <LazyTabPanel
+                    active={activeTab === 'seguimiento'}
+                    contentReady={contentReady}
+                    label="Cargando línea de tiempo"
+                  >
+                    <ExpedienteTimeline key={activeExpediente.id} fichaId={activeExpediente.id} />
+                  </LazyTabPanel>
                 ) : null}
 
-                {canAccessSensitiveTabs && activeTab === 'notas' ? (
-                  <div role="tabpanel">
-                    {contentReady ? (
-                      <Suspense fallback={<DrawerSectionPlaceholder label="Cargando notas privadas" />}>
-                        <NotasPrivadasPanel key={activeExpediente.id} fichaId={activeExpediente.id} />
-                      </Suspense>
-                    ) : (
-                      <DrawerSectionPlaceholder label="Cargando notas privadas" />
-                    )}
-                  </div>
+                {canAccessSensitiveTabs && visitedTabs.includes('notas') ? (
+                  <LazyTabPanel
+                    active={activeTab === 'notas'}
+                    contentReady={contentReady}
+                    label="Cargando notas privadas"
+                  >
+                    <NotasPrivadasPanel key={activeExpediente.id} fichaId={activeExpediente.id} />
+                  </LazyTabPanel>
                 ) : null}
 
-                {canAccessSensitiveTabs && activeTab === 'ordenes' ? (
-                  <div role="tabpanel">
-                    {contentReady ? (
-                      <Suspense fallback={<DrawerSectionPlaceholder label="Cargando órdenes de protección" />}>
-                        <OrdenesProteccionPanel key={activeExpediente.id} fichaId={activeExpediente.id} />
-                      </Suspense>
-                    ) : (
-                      <DrawerSectionPlaceholder label="Cargando órdenes de protección" />
-                    )}
-                  </div>
+                {canAccessSensitiveTabs && visitedTabs.includes('ordenes') ? (
+                  <LazyTabPanel
+                    active={activeTab === 'ordenes'}
+                    contentReady={contentReady}
+                    label="Cargando órdenes de protección"
+                  >
+                    <OrdenesProteccionPanel key={activeExpediente.id} fichaId={activeExpediente.id} />
+                  </LazyTabPanel>
                 ) : null}
               </div>
             ) : null}

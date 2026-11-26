@@ -90,7 +90,9 @@ export const ExpedienteDrawerTabs = memo(function ExpedienteDrawerTabs({
             aria-selected={selected}
             onPointerEnter={() => onTabIntent?.(tab.id)}
             onFocus={() => onTabIntent?.(tab.id)}
-            onClick={() => onChange(tab.id)}
+            onClick={() => {
+              if (!tabs.current) onChange(tab.id);
+            }}
             className="vc-drawer-tabs__tab"
           >
             <Icon name={tab.icon} className="text-[18px]" filled={selected} />
