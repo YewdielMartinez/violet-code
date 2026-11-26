@@ -139,10 +139,11 @@ select pg_temp.as_user('99000000-0000-4000-a000-000000000006');
 select is((select count(*)::integer from public.persona), 0, 'empleado inactivo obtiene 0 filas de public.persona');
 
 set local role anon;
-select is(
-  (select count(*)::integer from public.persona),
-  0,
-  'anon obtiene 0 filas al consultar public.persona'
+select throws_ok(
+  $$select * from public.persona limit 1$$,
+  '42501',
+  null,
+  'anon recibe 42501 al consultar public.persona'
 );
 
 select * from finish();

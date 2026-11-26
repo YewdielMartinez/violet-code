@@ -54,8 +54,7 @@ violet-code/
 │   │       └── shared/
 │   │           └── ui/                         # Componentes visuales reutilizables basados en motion-kit
 │   │
-│   ├── mobile/                                 # App Android (Kotlin + Jetpack Compose, MVVM)
-│   └── core/                                   # API .NET (módulos auxiliares / referencia de dominio)
+│   └── mobile/                                 # App Android (Kotlin + Jetpack Compose, MVVM)
 │
 ├── packages/
 │   └── design-tokens/                          # Fuente única de color y tokens Material 3 (Web + Android)
