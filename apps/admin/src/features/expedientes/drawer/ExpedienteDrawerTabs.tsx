@@ -1,5 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { useTabs } from '@yewdiel21/motion-kit/react';
+import { memo, useMemo, useRef, type KeyboardEvent } from 'react';
 import { Icon } from '@/shared/ui/Icon';
 
 export type DrawerTab = 'resumen' | 'agresor' | 'documentos' | 'canalizaciones' | 'ordenes' | 'seguimiento' | 'notas';
@@ -29,7 +28,7 @@ interface Props {
   onTabIntent?: (tab: DrawerTab) => void;
 }
 
-/** Pestañas tipo pill chip con indicador deslizante animado mediante `useTabs` de motion-kit. */
+/** Pestañas tipo pill chip con navegación accesible por teclado y transición CSS sin reflow. */
 export const ExpedienteDrawerTabs = memo(function ExpedienteDrawerTabs({
   activeTab,
   canAccessSensitiveTabs,
@@ -43,34 +42,26 @@ export const ExpedienteDrawerTabs = memo(function ExpedienteDrawerTabs({
     [canAccessSensitiveTabs],
   );
 
-  const onChangeRef = useRef(onChange);
-  const visibleTabsRef = useRef(visibleTabs);
-  useLayoutEffect(() => {
-    onChangeRef.current = onChange;
-    visibleTabsRef.current = visibleTabs;
-  }, [onChange, visibleTabs]);
-
-  const tabs = useTabs(
-    listRef,
-    {
-      onSelect: (index) => {
-        const target = visibleTabsRef.current[index];
-        if (target) onChangeRef.current(target.id);
-      },
-    },
-    [visibleTabs.length],
-  );
-
   const activeIndex = Math.max(
     0,
     visibleTabs.findIndex((tab) => tab.id === activeTab),
   );
 
-  useEffect(() => {
-    if (tabs.current && tabs.current.index !== activeIndex) {
-      tabs.current.select(activeIndex);
-    }
-  }, [activeIndex, tabs]);
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    let nextIndex = -1;
+    if (event.key === 'ArrowRight') nextIndex = (activeIndex + 1) % visibleTabs.length;
+    else if (event.key === 'ArrowLeft') nextIndex = (activeIndex - 1 + visibleTabs.length) % visibleTabs.length;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = visibleTabs.length - 1;
+    else return;
+
+    event.preventDefault();
+    const target = visibleTabs[nextIndex];
+    if (!target) return;
+    const buttons = listRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+    buttons?.[nextIndex]?.focus();
+    onChange(target.id);
+  }
 
   return (
     <div
@@ -78,6 +69,7 @@ export const ExpedienteDrawerTabs = memo(function ExpedienteDrawerTabs({
       role="tablist"
       aria-label="Secciones del expediente"
       className="vc-drawer-tabs"
+      onKeyDown={handleKeyDown}
     >
       {visibleTabs.map((tab) => {
         const selected = tab.id === activeTab;
@@ -86,13 +78,11 @@ export const ExpedienteDrawerTabs = memo(function ExpedienteDrawerTabs({
             key={tab.id}
             type="button"
             role="tab"
-            data-mk-tab=""
             aria-selected={selected}
+            tabIndex={selected ? 0 : -1}
             onPointerEnter={() => onTabIntent?.(tab.id)}
             onFocus={() => onTabIntent?.(tab.id)}
-            onClick={() => {
-              if (!tabs.current) onChange(tab.id);
-            }}
+            onClick={() => onChange(tab.id)}
             className="vc-drawer-tabs__tab"
           >
             <Icon name={tab.icon} className="text-[18px]" filled={selected} />
@@ -100,7 +90,6 @@ export const ExpedienteDrawerTabs = memo(function ExpedienteDrawerTabs({
           </button>
         );
       })}
-      <span data-mk-indicator="" aria-hidden className="vc-drawer-tabs__indicator" />
     </div>
   );
 });

@@ -7,7 +7,7 @@
   transition: width 320ms var(--mk-ease-signature);
 }
 
-.mk-dialog.vc-expediente-dialog > [data-mk-part='header'] {
+.mk-dialog.vc-expediente-dialog>[data-mk-part='header'] {
   display: grid;
   /* El kit deja justify-content: space-between (pensado para flex); en grid encogería la columna. */
   grid-template-columns: minmax(0, 1fr);
@@ -16,9 +16,15 @@
   padding: 16px 24px 12px;
 }
 
-.mk-dialog.vc-expediente-dialog > [data-mk-part='body'] {
+.mk-dialog.vc-expediente-dialog>[data-mk-part='body'] {
   padding: 8px 24px 28px;
   scrollbar-gutter: stable;
+}
+
+/* Evita recomponer máscara alpha sobre todo el panel lateral (680px–100vw) en cada frame de scroll o cambio de pestaña. */
+.mk-dialog.vc-expediente-dialog[data-mk-fade]>[data-mk-scroll-viewport] {
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 /* Sin blur del fondo: desenfocar toda la página en cada frame cuesta caro en un panel grande.
@@ -44,19 +50,18 @@
   }
 }
 
-/* Pestañas tipo pill chip con indicador animado de useTabs */
+/* Pestañas tipo pill chip ligeras con transición CSS pura (sin indicador GSAP de ancho/alto que fuerce reflow). */
 .vc-drawer-tabs {
   position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  isolation: isolate;
+  contain: layout style;
 }
 
 .vc-drawer-tabs__tab {
   position: relative;
-  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -71,9 +76,9 @@
   white-space: nowrap;
   cursor: pointer;
   transition:
-    color 200ms ease,
-    border-color 200ms ease,
-    background-color 200ms ease;
+  color 140ms ease,
+  border-color 140ms ease,
+  background-color 140ms ease;
 }
 
 .vc-drawer-tabs__tab:hover:not([aria-selected='true']) {
@@ -83,27 +88,13 @@
 
 .vc-drawer-tabs__tab[aria-selected='true'] {
   border-color: transparent;
-  background: transparent;
-  color: var(--md-sys-color-on-primary);
-}
-
-.vc-drawer-tabs:not([data-mk-ready]) .vc-drawer-tabs__tab[aria-selected='true'] {
   background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
 }
 
 .vc-drawer-tabs__tab:focus-visible {
   outline: 2px solid var(--md-sys-color-primary);
   outline-offset: 2px;
-}
-
-.vc-drawer-tabs__indicator {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 0;
-  border-radius: 999px;
-  background: var(--md-sys-color-primary);
-  pointer-events: none;
 }
 
 /* Controles amplios y legibles dentro del panel del expediente. */
@@ -150,6 +141,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .mk-dialog.vc-expediente-dialog[data-mk-placement='side'],
   .vc-drawer-tabs__tab {
     transition: none;

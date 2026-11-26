@@ -61,6 +61,7 @@ interface Props {
   placement?: 'side' | 'center';
   /** Control del que nace el diálogo; sin él, el kit usa el último control pulsado. */
   anchor?: RefObject<HTMLElement | null> | HTMLElement | null;
+  onAfterClose?: () => void;
 }
 
 /**
@@ -75,6 +76,7 @@ interface Props {
     fixedFolio,
     placement,
     anchor,
+    onAfterClose,
   }: Props) {
     const resolvedPlacement = placement ?? (fixedFichaId ? 'center' : 'side');
     const hostRef = useRef<HTMLDivElement>(null);
@@ -110,6 +112,7 @@ interface Props {
           anchor={anchor ?? undefined}
           open={open}
           onOpenChange={handleOpenChange}
+          onAfterClose={onAfterClose}
         >
               <Dialog.Content
                 size={resolvedPlacement === 'center' ? 'md' : undefined}

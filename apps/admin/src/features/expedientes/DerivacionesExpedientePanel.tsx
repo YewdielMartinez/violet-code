@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { EmptyState, Skeleton, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/skeleton';
@@ -30,8 +30,29 @@ export function DerivacionesExpedientePanel({ fichaId, folio }: Props) {
   const updateEstado = useUpdateEstadoDerivacion();
 
   const [creating, setCreating] = useState(false);
+  const [dialogMounted, setDialogMounted] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const toggleBtnRef = useRef<HTMLButtonElement>(null);
+  const creatingRef = useRef(false);
+
+  useEffect(() => {
+    creatingRef.current = creating;
+  }, [creating]);
+
+  const openCreate = useCallback(() => {
+    creatingRef.current = true;
+    setDialogMounted(true);
+    setCreating(true);
+  }, []);
+
+  const handleDialogOpenChange = useCallback((next: boolean) => {
+    creatingRef.current = next;
+    setCreating(next);
+  }, []);
+
+  const handleDialogAfterClose = useCallback(() => {
+    if (!creatingRef.current) setDialogMounted(false);
+  }, []);
 
   const summaryCounts = useMemo(() => {
     let activas = 0;
@@ -76,20 +97,23 @@ export function DerivacionesExpedientePanel({ fichaId, folio }: Props) {
           type="button"
           aria-haspopup="dialog"
           className="mk-button mk-button--sm mk-button--primary"
-          onClick={() => setCreating(true)}
+          onClick={openCreate}
         >
           <Icon name="alt_route" />
           <span>Canalizar</span>
         </button>
       </div>
 
-      <CanalizacionFormDialog
-        open={creating}
-        onOpenChange={setCreating}
-        fixedFichaId={fichaId}
-        fixedFolio={folio}
-        anchor={toggleBtnRef}
-      />
+      {creating || dialogMounted ? (
+        <CanalizacionFormDialog
+          open={creating}
+          onOpenChange={handleDialogOpenChange}
+          onAfterClose={handleDialogAfterClose}
+          fixedFichaId={fichaId}
+          fixedFolio={folio}
+          anchor={toggleBtnRef}
+        />
+      ) : null}
 
       {isError ? (
         <div className="rounded-2xl border border-outline-variant bg-surface-container-low p-6">
@@ -109,7 +133,7 @@ export function DerivacionesExpedientePanel({ fichaId, folio }: Props) {
                 title="Sin canalizaciones en este expediente"
                 description="Registra una derivación interna o externa cuando el caso lo requiera."
                 actions={EMPTY_CREATE_ACTIONS}
-                onAction={() => setCreating(true)}
+                onAction={openCreate}
               />
             </div>
           ) : (

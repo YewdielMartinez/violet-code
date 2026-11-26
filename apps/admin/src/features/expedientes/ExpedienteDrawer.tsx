@@ -97,7 +97,7 @@ export function preloadExpedienteDrawerTabs(): void {
 }
 
 function scheduleIdleTab(cb: () => void): () => void {
-  if (typeof window === 'undefined') return () => {};
+  if (typeof window === 'undefined') return () => { };
   if (typeof window.requestIdleCallback === 'function') {
     const id = window.requestIdleCallback(cb, { timeout: 2500 });
     return () => window.cancelIdleCallback(id);
@@ -250,11 +250,11 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
   const rawTab = searchParams.get('tab');
   const requestedTab: DrawerTab =
     rawTab === 'agresor' ||
-    rawTab === 'documentos' ||
-    rawTab === 'canalizaciones' ||
-    rawTab === 'ordenes' ||
-    rawTab === 'seguimiento' ||
-    rawTab === 'notas'
+      rawTab === 'documentos' ||
+      rawTab === 'canalizaciones' ||
+      rawTab === 'ordenes' ||
+      rawTab === 'seguimiento' ||
+      rawTab === 'notas'
       ? rawTab
       : 'resumen';
 
@@ -268,22 +268,41 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
   const activeTab: DrawerTab = canAccessSensitiveTabs ? localTab : 'resumen';
   const activeExpedienteId = (expediente ?? displayed)?.id ?? null;
 
-  const [visitedState, setVisitedState] = useState<{
-    expedienteId: string | null;
-    tabs: DrawerTab[];
-  }>({
-    expedienteId: activeExpedienteId,
-    tabs: [activeTab],
-  });
-  if (visitedState.expedienteId !== activeExpedienteId) {
-    setVisitedState({ expedienteId: activeExpedienteId, tabs: [activeTab] });
-  } else if (!visitedState.tabs.includes(activeTab)) {
-    setVisitedState({
+    const [mountedState, setMountedState] = useState<{
+      expedienteId: string | null;
+      tabs: DrawerTab[];
+    }>({
       expedienteId: activeExpedienteId,
-      tabs: [...visitedState.tabs, activeTab],
+      tabs: [activeTab],
     });
+  if (mountedState.expedienteId !== activeExpedienteId) {
+    setMountedState({ expedienteId: activeExpedienteId, tabs: [activeTab] });
   }
-  const visitedTabs = visitedState.tabs;
+  const visitedTabs = mountedState.tabs;
+  const activeTabMounted = visitedTabs.includes(activeTab);
+
+  // Al cambiar a una pestaña aún no montada, pinta primero el pill activo + esqueleto
+  // y monta el panel real en el siguiente frame para no congelar la animación del clic.
+  useEffect(() => {
+    if (!isOpen || !activeExpedienteId || activeTabMounted) return;
+    let raf2 = 0;
+    const raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => {
+        startTransition(() => {
+          setMountedState((prev) => {
+            if (prev.expedienteId !== activeExpedienteId || prev.tabs.includes(activeTab)) {
+              return prev;
+            }
+            return { ...prev, tabs: [...prev.tabs, activeTab] };
+          });
+        });
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
+    };
+  }, [isOpen, activeExpedienteId, activeTab, activeTabMounted]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -383,9 +402,6 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     (next: DrawerTab) => {
       if (!isOpen || next === activeTab) return;
       setLocalTab(next);
-      setVisitedState((prev) =>
-        prev.tabs.includes(next) ? prev : { ...prev, tabs: [...prev.tabs, next] },
-      );
       startTransition(() => {
         setSearchParams(
           (prev) => {
@@ -413,7 +429,7 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     setDisplayed(null);
     setExpanded(false);
     setDeferredReady(false);
-    setVisitedState({ expedienteId: null, tabs: ['resumen'] });
+    setMountedState({ expedienteId: null, tabs: ['resumen'] });
   }, []);
 
   /** Cierre pedido por la app (botón del pie, archivar): mismo camino que la X del kit. */
@@ -490,6 +506,12 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
                   onChange={selectTab}
                   onTabIntent={handleTabIntent}
                 />
+
+                {!activeTabMounted ? (
+                  <div role="tabpanel">
+                    <DrawerSectionPlaceholder label="Cargando sección" />
+                  </div>
+                ) : null}
 
                 {visitedTabs.includes('resumen') ? (
                   <ResumenTabPanel
