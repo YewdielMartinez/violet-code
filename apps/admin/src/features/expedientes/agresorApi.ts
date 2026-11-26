@@ -10,13 +10,10 @@ export type {
   AgresorValidationField,
   AsentamientoOpcion,
   CatalogoOpcion,
-  TipoArma,
   TipoDroga,
 } from '@/domain/models/Agresor';
 export {
   DROGA_LABELS,
-  TIPO_ARMA_LABELS,
-  TIPOS_ARMA,
   TIPOS_DROGA,
   formatAgresorNombre,
   puedeAccederAgresor,

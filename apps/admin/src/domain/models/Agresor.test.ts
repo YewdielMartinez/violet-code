@@ -103,27 +103,26 @@ describe('Agresor — validarAgresor', () => {
     expect(invalidItem.errores.drogas).toBeTruthy();
   });
 
-  it('permite tipoArma y especificacionArma solo cuando utilizoArmaUObjeto es true', () => {
+  it('permite especificacionArma solo cuando utilizoArmaUObjeto es true', () => {
     const ok = validarAgresor(
       baseInput({
         utilizoArmaUObjeto: true,
-        tipoArma: 'arma_blanca',
         especificacionArma: 'Objeto punzocortante',
       }),
     );
     expect(ok.valido).toBe(true);
 
     const invalidFalse = validarAgresor(
-      baseInput({ utilizoArmaUObjeto: false, tipoArma: 'arma_fuego' }),
+      baseInput({ utilizoArmaUObjeto: false, especificacionArma: 'Arma de fuego' }),
     );
     expect(invalidFalse.valido).toBe(false);
-    expect(invalidFalse.errores.tipoArma).toBeTruthy();
+    expect(invalidFalse.errores.especificacionArma).toBeTruthy();
 
     const invalidSpec = validarAgresor(
       baseInput({ utilizoArmaUObjeto: null, especificacionArma: 'Detalle' }),
     );
     expect(invalidSpec.valido).toBe(false);
-    expect(invalidSpec.errores.tipoArma).toBeTruthy();
+    expect(invalidSpec.errores.especificacionArma).toBeTruthy();
   });
 
   it('rechaza observaciones mayores a 5000 caracteres', () => {

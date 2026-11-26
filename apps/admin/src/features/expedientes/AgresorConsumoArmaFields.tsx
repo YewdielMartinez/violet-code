@@ -1,11 +1,11 @@
+<<<<<<< HEAD
 import { Icon } from '@/shared/ui/Icon';
+=======
+>>>>>>> 43cd2976496a6c3218dcfcd4da73443b35379412
 import {
   DROGA_LABELS,
-  TIPO_ARMA_LABELS,
-  TIPOS_ARMA,
   TIPOS_DROGA,
   type AgresorValidationField,
-  type TipoArma,
   type TipoDroga,
 } from './agresorApi';
 import { AnimatedReveal } from './agresor/AnimatedReveal';
@@ -39,7 +39,6 @@ export interface ConsumoArmaValues {
   drogas: TipoDroga[];
   especificacionDroga: string;
   utilizoArmaUObjeto: boolean | null;
-  tipoArma: TipoArma | null;
   especificacionArma: string;
   observaciones: string;
 }
@@ -70,7 +69,7 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
     onPatch(
       next === true
         ? { utilizoArmaUObjeto: true }
-        : { utilizoArmaUObjeto: next, tipoArma: null, especificacionArma: '' },
+        : { utilizoArmaUObjeto: next, especificacionArma: '' },
     );
   }
 
@@ -162,6 +161,7 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
           />
         </div>
 
+<<<<<<< HEAD
         <AnimatedReveal show={armaActiva}>
           <div className="grid gap-3 pt-1">
             <div className="grid gap-1.5">
@@ -199,6 +199,25 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
                 </p>
               ) : null}
             </div>
+=======
+        {values.utilizoArmaUObjeto === true ? (
+          <div className="grid gap-1 pt-1">
+            <label className="text-xs font-medium text-on-surface-variant">
+              Especificación del arma u objeto
+            </label>
+            <label className="mk-field">
+              <input
+                type="text"
+                maxLength={250}
+                value={values.especificacionArma}
+                placeholder="Describe brevemente el objeto o arma"
+                onChange={(e) => onPatch({ especificacionArma: e.target.value })}
+              />
+            </label>
+            {errores.especificacionArma ? (
+              <p role="alert" className="text-xs text-status-danger">{errores.especificacionArma}</p>
+            ) : null}
+>>>>>>> 43cd2976496a6c3218dcfcd4da73443b35379412
           </div>
         </AnimatedReveal>
       </fieldset>

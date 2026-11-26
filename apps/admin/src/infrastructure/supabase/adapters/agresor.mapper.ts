@@ -29,7 +29,6 @@ export type AgresorRow = Pick<
   | 'drogas'
   | 'especificacion_droga'
   | 'utilizo_arma_u_objeto'
-  | 'tipo_arma'
   | 'especificacion_arma'
   | 'observaciones'
   | 'activo'
@@ -71,7 +70,6 @@ function buildPayload(input: AgresorInput): Omit<AgresorInsertRow, 'ficha_id'> {
     tieneConsumoDroga === true ? normalizeNullableText(input.especificacionDroga) : null;
 
   const utilizoArmaUObjeto = input.utilizoArmaUObjeto ?? null;
-  const tipoArma = utilizoArmaUObjeto === true ? (input.tipoArma ?? null) : null;
   const especificacionArma =
     utilizoArmaUObjeto === true ? normalizeNullableText(input.especificacionArma) : null;
 
@@ -93,7 +91,6 @@ function buildPayload(input: AgresorInput): Omit<AgresorInsertRow, 'ficha_id'> {
     drogas,
     especificacion_droga: especificacionDroga,
     utilizo_arma_u_objeto: utilizoArmaUObjeto,
-    tipo_arma: tipoArma,
     especificacion_arma: especificacionArma,
     observaciones: normalizeNullableText(input.observaciones),
   };
@@ -120,7 +117,6 @@ export function mapAgresorRow(row: AgresorRow): Agresor {
     drogas: mapDrogasFromRow(row.drogas),
     especificacionDroga: row.especificacion_droga,
     utilizoArmaUObjeto: row.utilizo_arma_u_objeto,
-    tipoArma: row.tipo_arma,
     especificacionArma: row.especificacion_arma,
     observaciones: row.observaciones,
     activo: row.activo,

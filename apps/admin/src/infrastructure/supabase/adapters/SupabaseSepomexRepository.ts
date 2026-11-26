@@ -43,9 +43,6 @@ export const supabaseSepomexRepository: SepomexRepository = {
     return {
       areas: areas.data ?? [],
       ocupaciones: ocupaciones.data ?? [],
-      discapacidades: [],
-      gruposEtnicos: [],
-      religiones: [],
       parentescos: parentescos.data ?? [],
     };
   },
