@@ -11,8 +11,8 @@ export interface FichaRepository {
   createComplete(input: FichaCreateInput): Promise<CreatedFichaResult>;
   /** Consulta el detalle completo del expediente (Ficha Única, Domicilio y Estudio). */
   getDetail(fichaId: string): Promise<FichaCompletaDetalle | null>;
-  /** Archiva un expediente (`estado = 'archivado'`) sin borrado físico. */
-  archive(fichaId: string): Promise<void>;
+  /** Archiva un expediente (`estado = 'archivado'`) sin borrado físico mediante RPC. */
+  archive(fichaId: string, motivo?: string): Promise<void>;
   /** Baja lógica (`activo = false`) sin borrado físico. */
   deactivate(fichaId: string): Promise<void>;
 }

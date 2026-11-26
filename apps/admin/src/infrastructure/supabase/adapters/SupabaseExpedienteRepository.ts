@@ -27,11 +27,6 @@ function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
   return value ?? null;
 }
 
-function unwrapMany<T>(value: T | T[] | null | undefined): T[] {
-  if (!value) return [];
-  return Array.isArray(value) ? value : [value];
-}
-
 function normalizeText(value: string): string {
   return value
     .normalize('NFD')
@@ -56,6 +51,23 @@ function mapPersona(row: PersonaRowShape): PersonaResumen {
   };
 }
 
+function buildFallbackPersona(id: string, curp: string, nombreCompleto: string | null): PersonaResumen {
+  const cleanCurp = normalizeCurp(curp);
+  const sexo: SexoBiologico = cleanCurp[10] === 'H' ? 'H' : 'M';
+  return {
+    id,
+    curp: cleanCurp,
+    nombres: nombreCompleto?.trim() || 'Persona registrada',
+    apellidoPaterno: '',
+    apellidoMaterno: null,
+    nombreCompleto: nombreCompleto?.trim() || 'Persona registrada',
+    sexo,
+    fechaNacimiento: '',
+    entidadNacimiento: cleanCurp.slice(11, 13),
+    celular: null,
+  };
+}
+
 function matchesSearch(item: ExpedienteResumen, rawQuery: string): boolean {
   const trimmed = rawQuery.trim();
   if (!trimmed) return true;
@@ -73,8 +85,64 @@ function matchesSearch(item: ExpedienteResumen, rawQuery: string): boolean {
   return tokens.every((token) => haystack.includes(token));
 }
 
+async function fetchPersonaDetail(
+  personaId: string | null,
+  curp: string,
+  nombreCompleto: string | null,
+): Promise<PersonaResumen> {
+  if (!personaId) {
+    return buildFallbackPersona('', curp, nombreCompleto);
+  }
+
+  const { data: personaRow, error } = await supabase
+    .from('persona')
+    .select('id, curp, nombres, apellido_paterno, apellido_materno, sexo, fecha_nacimiento, entidad_nacimiento, celular')
+    .eq('id', personaId)
+    .eq('activo', true)
+    .maybeSingle();
+
+  if (error) throw error;
+  return personaRow ? mapPersona(personaRow) : buildFallbackPersona(personaId, curp, nombreCompleto);
+}
+
 export const supabaseExpedienteRepository: ExpedienteRepository = {
   async list(query?: string): Promise<ExpedienteResumen[]> {
+    const trimmed = query?.trim() ?? '';
+
+    if (trimmed.length >= 3) {
+      const { data, error } = await supabase.rpc('buscar_expedientes', {
+        p_termino: trimmed,
+        p_limite: 100,
+        p_incluir_archivados: true,
+      });
+
+      if (error) throw error;
+
+      return (data ?? []).map((row) => {
+        const curp = normalizeCurp(row.curp);
+        return {
+          id: row.ficha_id,
+          folio: row.folio,
+          estado: row.estado,
+          creadoEn: '',
+          actualizadoEn: '',
+          enListaUrgencias: row.en_lista_urgencias,
+          persona: {
+            id: row.persona_id,
+            curp,
+            nombres: row.nombre_completo,
+            apellidoPaterno: '',
+            apellidoMaterno: null,
+            nombreCompleto: row.nombre_completo,
+            sexo: row.sexo === 'H' ? 'H' : 'M',
+            fechaNacimiento: row.fecha_nacimiento,
+            entidadNacimiento: curp.slice(11, 13),
+            celular: null,
+          },
+        };
+      });
+    }
+
     const [fichasRes, urgenciasRes] = await Promise.all([
       supabase
         .from('ficha_registro')
@@ -110,54 +178,28 @@ export const supabaseExpedienteRepository: ExpedienteRepository = {
       });
     }
 
-    return query?.trim() ? items.filter((item) => matchesSearch(item, query)) : items;
+    return trimmed ? items.filter((item) => matchesSearch(item, trimmed)) : items;
   },
 
   async verifyByCurp(rawCurp: string, allowPreRegistroLookup: boolean): Promise<VerificacionCurpResult> {
     const curp = normalizeCurp(rawCurp);
 
-    const { data: personaRow, error: personaError } = await supabase
-      .from('persona')
-      .select(
-        'id, curp, nombres, apellido_paterno, apellido_materno, sexo, fecha_nacimiento, entidad_nacimiento, celular, ficha_registro(id, folio, estado, creado_en, actualizado_en, activo)',
-      )
-      .eq('activo', true)
-      .eq('curp', curp)
-      .maybeSingle();
+    const { data: verifyRows, error: verifyError } = await supabase.rpc('verificar_curp', {
+      p_curp: curp,
+    });
 
-    if (personaError) throw personaError;
+    if (verifyError) throw verifyError;
 
-    if (personaRow) {
-      const persona = mapPersona(personaRow);
-      const activeFicha = unwrapMany(personaRow.ficha_registro)
-        .filter((f) => f.activo)
-        .sort((a, b) => (a.actualizado_en < b.actualizado_en ? 1 : -1))[0];
-
-      if (activeFicha) {
-        const { data: urgentRow } = await supabase
-          .from('vista_lista_urgencias')
-          .select('ficha_id')
-          .eq('ficha_id', activeFicha.id)
-          .maybeSingle();
-
-        return {
-          kind: 'expediente_existente',
-          expediente: {
-            id: activeFicha.id,
-            folio: activeFicha.folio,
-            estado: activeFicha.estado,
-            creadoEn: activeFicha.creado_en,
-            actualizadoEn: activeFicha.actualizado_en,
-            enListaUrgencias: Boolean(urgentRow?.ficha_id),
-            persona,
-          },
-        };
-      }
-
-      return { kind: 'persona_sin_ficha', persona };
+    const verifyRow = Array.isArray(verifyRows) ? verifyRows[0] : verifyRows;
+    if (!verifyRow || verifyRow.resultado === 'nuevo') {
+      return { kind: 'nuevo', curp };
     }
 
-    if (allowPreRegistroLookup) {
+    if (verifyRow.resultado === 'pre_registro_movil') {
+      if (!allowPreRegistroLookup) {
+        return { kind: 'nuevo', curp };
+      }
+
       const { data: preRows, error: preError } = await supabase.rpc('buscar_pre_registro_por_curp', {
         p_curp: curp,
       });
@@ -165,12 +207,39 @@ export const supabaseExpedienteRepository: ExpedienteRepository = {
       if (preError) throw preError;
 
       const match = Array.isArray(preRows) ? preRows[0] : null;
-      if (match) {
-        return {
-          kind: 'pre_registro_movil',
-          preRegistro: mapPreRegistroRow(match),
-        };
+      return match ? { kind: 'pre_registro_movil', preRegistro: mapPreRegistroRow(match) } : { kind: 'nuevo', curp };
+    }
+
+    if (verifyRow.resultado === 'expediente_existente') {
+      const persona = await fetchPersonaDetail(verifyRow.persona_id, curp, verifyRow.nombre_completo);
+      let enListaUrgencias = false;
+
+      if (verifyRow.ficha_id) {
+        const { data: urgentRow } = await supabase
+          .from('vista_lista_urgencias')
+          .select('ficha_id')
+          .eq('ficha_id', verifyRow.ficha_id)
+          .maybeSingle();
+        enListaUrgencias = Boolean(urgentRow?.ficha_id);
       }
+
+      return {
+        kind: 'expediente_existente',
+        expediente: {
+          id: verifyRow.ficha_id ?? '',
+          folio: verifyRow.folio ?? '—',
+          estado: verifyRow.estado ?? 'abierto',
+          creadoEn: '',
+          actualizadoEn: '',
+          enListaUrgencias,
+          persona,
+        },
+      };
+    }
+
+    if (verifyRow.resultado === 'persona_sin_ficha') {
+      const persona = await fetchPersonaDetail(verifyRow.persona_id, curp, verifyRow.nombre_completo);
+      return { kind: 'persona_sin_ficha', persona };
     }
 
     return { kind: 'nuevo', curp };
