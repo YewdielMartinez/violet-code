@@ -40,5 +40,7 @@ supabase stop                               # detiene contenedores locales
 ## Documentación
 
 - [Buenas prácticas (seguridad, optimización, RPCs y tipos)](doc-supabase/buenas-practicas.md)
+- [Arquitectura de base de datos, esquema y RPCs](doc-supabase/esquema-y-rpcs.md)
+- [Módulo de geografía y códigos postales (SEPOMEX)](doc-supabase/geografia-sepomex.md)
 - [Estrategia de pruebas](doc-supabase/pruebas.md)
 - Convenciones de ramas, commits y PRs: [CONTRIBUTING.md](../CONTRIBUTING.md)
