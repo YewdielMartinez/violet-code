@@ -24,3 +24,9 @@ Opción 3. Estructura `apps/{admin,mobile,core}`, `packages/design-tokens`, `inf
 - Positivas: un clon, docs y ADRs junto al código, tokens de diseño compartidos, PRs que cruzan componentes.
 - Negativas: sin caché/orquestación de builds entre ecosistemas; CI debe filtrar por ruta.
 - Reconsiderar si: el número de paquetes JS crece y los builds se vuelven lentos (añadir Turborepo).
+
+---
+
+## Actualización (2026-11-26)
+
+El componente `apps/core` (.NET) descrito en la decisión inicial fue retirado posteriormente al consolidar toda la lógica de servidor, autenticación y persistencia sobre `supabase/` (ver [ADR-0003](./0003-arquitectura-hexagonal-admin-supabase.md)). El texto original superior se conserva como registro histórico del ADR.

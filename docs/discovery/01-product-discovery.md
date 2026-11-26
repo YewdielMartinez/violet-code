@@ -1,6 +1,7 @@
 # 01 · Product Discovery — Violet Code
 
-> Estado: **BORRADOR PRE-REUNIÓN** · Última revisión: 2026-11-16
+> Estado: **BORRADOR PRE-REUNIÓN (registro histórico)** · Última revisión: 2026-11-16
+> **Nota histórica:** Las referencias iniciales a `Core (API central)` y `ASP.NET Core Web API` (`C-02`, `C-05`) fueron superadas posteriormente por **Supabase** (`PostgreSQL 17`, RLS y RPCs; ver [ADR-0003](../adr/0003-arquitectura-hexagonal-admin-supabase.md)).
 > Todo lo marcado como **[H]** es hipótesis. Solo lo marcado como **[C]** está confirmado.
 > Ningún proceso institucional de SEMUJERES Ahome se da por conocido hasta la reunión del martes.
 

@@ -30,7 +30,7 @@ infrastructure/supabase/adapters/Supabase<Nombre>Repository.ts ─────�
 - **Nunca importar `infrastructure/supabase/client` ni `database.types.ts` desde `features/`, `hooks/` o `shared/ui/`.**
 - Un archivo por puerto (`Supabase<Nombre>Repository.ts` implementando `<Nombre>Repository`).
 - El adaptador devuelve modelos de dominio en `camelCase` y **lanza** (`throw error`) el error de Supabase para que TanStack Query lo maneje de forma uniforme en la UI.
-- Si en el futuro un módulo cambia de Supabase directo a `.NET` o a un stub de pruebas, solo cambia el adaptador; `domain/` y `features/` permanecen intactos.
+- Si en el futuro un módulo cambia de Supabase directo a una Edge Function, otro backend HTTP o un stub de pruebas, solo cambia el adaptador; `domain/` y `features/` permanecen intactos.
 
 ---
 

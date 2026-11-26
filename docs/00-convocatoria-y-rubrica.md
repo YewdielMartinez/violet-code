@@ -6,13 +6,13 @@
 
 | # | Entregable | Dónde | Estado |
 |---|---|---|---|
-| 1 | Prototipo funcional ejecutable en vivo | `apps/mobile`, `apps/admin`, `apps/core` + `infra/docker-compose.yml` | Pendiente |
+| 1 | Prototipo funcional ejecutable en vivo | `apps/mobile`, `apps/admin`, `supabase/` | En curso |
 | 2 | Repositorio con documentación técnica (README) | [README.md](../README.md) + `docs/` | En curso |
 | 3 | Pitch deck (impacto y factibilidad de adopción) | `docs/pitch/` | Pendiente |
 
 ## Eje temático
 
-Violet Code cubre el **Eje 1** (prevención, alerta temprana y atención) desde Mobile y el **Eje 3** (gestión interna, trazabilidad y analítica) desde Admin/Core. La convocatoria pide inscribirse en **un** eje: confirmar cuál se registró (riesgo K-14) y presentar el otro como la mitad que cierra el ciclo.
+Violet Code cubre el **Eje 1** (prevención, alerta temprana y atención) desde Mobile y el **Eje 3** (gestión interna, trazabilidad y analítica) desde Admin/Supabase. La convocatoria pide inscribirse en **un** eje: confirmar cuál se registró (riesgo K-14) y presentar el otro como la mitad que cierra el ciclo.
 
 ## Rúbrica → evidencia
 
