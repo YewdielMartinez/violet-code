@@ -169,4 +169,55 @@ describe('supabaseDerivacionRepository', () => {
       code: '23514',
     });
   });
+
+  it('consulta get_historial_canalizaciones y parsea eventos JSONB', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'der-2',
+          ficha_id: 'ficha-1',
+          area_origen_id: 1,
+          area_origen_nombre: 'Trabajo Social',
+          area_destino_id: 2,
+          area_destino_nombre: 'Psicología',
+          institucion_id: null,
+          institucion_nombre: null,
+          institucion_otra: null,
+          destino: 'psicologia',
+          motivo: 'Contención emocional',
+          fecha_derivacion: '2026-11-26',
+          estado: 'en_proceso',
+          creado_en: '2026-11-26T00:00:00Z',
+          actualizado_en: '2026-11-27T09:00:00Z',
+          eventos: [
+            {
+              tipo: 'creacion',
+              fecha: '2026-11-26T00:00:00Z',
+              estado_anterior: null,
+              estado_nuevo: 'pendiente',
+              actor_id: 'emp-1',
+              actor_nombre: 'Laura TS',
+              nota: null,
+            },
+          ],
+        },
+      ],
+      error: null,
+    });
+
+    const historial = await supabaseDerivacionRepository.historialCanalizaciones('ficha-1');
+    expect(rpcMock).toHaveBeenCalledWith('get_historial_canalizaciones', { p_ficha_id: 'ficha-1' });
+    expect(historial).toHaveLength(1);
+    expect(historial[0].eventos).toEqual([
+      {
+        tipo: 'creacion',
+        fecha: '2026-11-26T00:00:00Z',
+        estadoAnterior: null,
+        estadoNuevo: 'pendiente',
+        actorId: 'emp-1',
+        actorNombre: 'Laura TS',
+        nota: null,
+      },
+    ]);
+  });
 });

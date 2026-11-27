@@ -6,6 +6,8 @@
 
 ## `get_contexto_seguimiento`
 
+**Versión:** [`20261128001400_54`](../../migrations/20261128001400_54_quitar_folio_seguimiento.sql)
+
 > Precarga los datos mínimos para abrir el formulario de seguimiento a partir de la cita del día. Registra acceso `'ver'` en `bitacora_acceso` y nunca expone CURP, estudio socioeconómico, agresor ni notas de otras áreas.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
@@ -38,6 +40,8 @@ interface ContextoSeguimientoRow {
 ---
 
 ## `registrar_seguimiento`
+
+**Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
 
 > Cierra una sesión de atención en una sola llamada: marca la asistencia a la cita, crea la hoja de seguimiento (`atencion`), pasa el expediente a `en_seguimiento` y, si se pide, agenda la próxima cita.
 
@@ -94,6 +98,8 @@ interface RegistrarSeguimientoRow {
 ---
 
 ## `corregir_seguimiento`
+
+**Versión:** [`20261128001400_54`](../../migrations/20261128001400_54_quitar_folio_seguimiento.sql)
 
 > Corrige un seguimiento ya registrado. Solo puede ejecutarlo quien creó la atención el mismo día (`America/Mazatlan`), o Dirección en cualquier momento. Exige `p_actualizado_en` para concurrencia optimista (`40001`).
 

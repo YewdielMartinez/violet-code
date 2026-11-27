@@ -8,6 +8,8 @@ Flujo típico: **verificar CURP** → (si es nueva) **crear ficha** → **abrir 
 
 ## `verificar_curp`
 
+**Versión:** [`20261126000700_17`](../../migrations/20261126000700_17_rpc_busqueda_expedientes.sql)
+
 > Una sola llamada para el diálogo "Verificar CURP": dice si la persona ya tiene expediente, si existe sin ficha, si se pre-registró en la app o si es nueva.
 
 | Permiso                     | Roles                       | Tipo    | Bitácora                                        | Migración                      |
@@ -104,6 +106,8 @@ Ejemplo:
 
 ## `buscar_expedientes`
 
+**Versión:** [`20261128000900_48`](../../migrations/20261128000900_48_edad_en_expediente.sql)
+
 > Busca en todo el historial por CURP, folio o nombre, sin bajar todas las fichas al navegador.
 
 | Permiso          | Roles                  | Tipo    | Bitácora | Migración                      |
@@ -166,6 +170,8 @@ interface BuscarExpedientesRow {
 
 ## `buscar_pre_registro_por_curp`
 
+**Versión:** [`20261126000700_17`](../../migrations/20261126000700_17_rpc_busqueda_expedientes.sql)
+
 > Trae lo que la usuaria capturó en la app para precargar la Ficha Única.
 
 | Permiso               | Roles        | Tipo    | Bitácora | Migración                                   |
@@ -204,6 +210,8 @@ interface PreRegistroRow {
 ---
 
 ## `crear_ficha_completa`
+
+**Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
 
 > Alta atómica de la Ficha Única: persona, ficha, servicios solicitados, domicilio y estudio socioeconómico. Si algo falla, no se guarda nada.
 
@@ -306,6 +314,8 @@ interface CrearFichaPayload {
 ---
 
 ## `get_expediente_detalle`
+
+**Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
 
 > Todo lo que la pantalla de expediente necesita en un solo objeto.
 
@@ -438,6 +448,8 @@ interface ExpedienteDetalle {
 
 ## `actualizar_domicilio`
 
+**Versión:** [`20261128001000_49`](../../migrations/20261128001000_49_rpc_actualizar_domicilio.sql)
+
 > Actualiza el domicilio actual de una persona (marca el anterior como `es_actual = false` y crea el nuevo con `es_actual = true`). Bloquea expedientes archivados (`23514`) y aplica concurrencia optimista (`23505`).
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
@@ -463,6 +475,8 @@ const { data, error } = await supabase
 ---
 
 ## `archivar_ficha`
+
+**Versión:** [`20261127000700_38`](../../migrations/20261127000700_38_archivar_y_reabrir.sql)
 
 > Pasa un expediente a `archivado` cuando ya no tiene nada pendiente, guardando motivo, fecha y responsable.
 
@@ -498,6 +512,8 @@ const { data, error } = await supabase
 
 ## `reabrir_ficha`
 
+**Versión:** [`20261127000700_38`](../../migrations/20261127000700_38_archivar_y_reabrir.sql)
+
 > Reabre un expediente `archivado` guardando motivo, fecha y quién lo autoriza.
 
 | Permiso              | Roles    | Tipo      | Bitácora                         | Migración                |
@@ -531,6 +547,8 @@ const { data, error } = await supabase
 ---
 
 ## `get_linea_tiempo`
+
+**Versión:** [`20261128001400_54`](../../migrations/20261128001400_54_quitar_folio_seguimiento.sql)
 
 > Historia del caso en orden cronológico: registro, citas, atenciones, derivaciones, órdenes de protección y alertas.
 
@@ -580,6 +598,8 @@ interface LineaTiempoRow {
 
 ## `registrar_consulta`
 
+**Versión:** [`20261126000600_16`](../../migrations/20261126000600_16_storage_y_bitacora.sql)
+
 > Deja constancia de una lectura sensible que **no** pasó por una RPC (por ejemplo, abrir los datos de la persona agresora con `.from('agresor')`).
 
 | Permiso                        | Roles                       | Tipo      | Bitácora       | Migración                    |
@@ -614,6 +634,8 @@ const { error } = await supabase.rpc("registrar_consulta", {
 
 ## `actualizar_persona`
 
+**Versión:** [`20261127000400_35`](../../migrations/20261127000400_35_rpc_editar_persona_y_ficha.sql)
+
 > Edita datos generales de una persona con bloqueo optimista y sin alterar CURP ni columnas calculadas.
 
 | Permiso               | Roles        | Tipo      | Bitácora                       | Migración                        |
@@ -643,6 +665,8 @@ const { data, error } = await supabase
 ---
 
 ## `actualizar_ficha`
+
+**Versión:** [`20261128001700_59`](../../migrations/20261128001700_59_casillas_sin_dato.sql)
 
 > Edita los datos de la Ficha Única y sus servicios solicitados con bloqueo optimista.
 
@@ -677,6 +701,8 @@ const { data, error } = await supabase
 
 ## `guardar_agresor`
 
+**Versión:** [`20261128001600_58`](../../migrations/20261128001600_58_consumo_como_lista.sql)
+
 > Crea (`p_agresor_id = null`) o edita una persona agresora con bloqueo optimista y validaciones de parentesco/consumo/domicilio.
 
 | Permiso           | Roles                  | Tipo      | Bitácora        | Migración              |
@@ -703,6 +729,8 @@ const { data, error } = await supabase
 
 ## `desactivar_agresor`
 
+**Versión:** [`20261127000500_36`](../../migrations/20261127000500_36_rpc_guardar_agresor.sql)
+
 > Realiza baja lógica (`activo = false`) de una persona agresora si no tiene orden de protección vigente ligada.
 
 | Permiso           | Roles                  | Tipo      | Bitácora          | Migración                 |
@@ -726,6 +754,8 @@ const { data, error } = await supabase
 ---
 
 ## `guardar_historial_clinico` y `get_historial_clinico`
+
+**Versión:** [`20261127000600_37`](../../migrations/20261127000600_37_rpc_historial_clinico_y_estudio.sql)
 
 > Crea o actualiza el historial clínico psicológico del expediente (con bloqueo optimista y RN-01) y lo consulta dejando registro `'ver'` en bitácora.
 
@@ -758,6 +788,8 @@ const { data, error } = await supabase
 
 ## `registrar_estudio_socioeconomico`
 
+**Versión:** [`20261128001500_57`](../../migrations/20261128001500_57_ficha_campos_opcionales.sql)
+
 > Registra una nueva versión del estudio socioeconómico con sus aportantes (marcando el anterior como `es_actual = false`), o corrige el estudio de hoy si fue creado por la misma persona.
 
 | Permiso               | Roles        | Tipo      | Bitácora        | Migración                             |
@@ -788,6 +820,8 @@ const { data, error } = await supabase
 ---
 
 ## `cambiar_prioridad_expediente`
+
+**Versión:** [`20261128001100_50`](../../migrations/20261128001100_50_prioridad_en_expediente.sql)
 
 > Actualiza la prioridad operativa del expediente (`ficha_registro.prioridad` y `prioridad_actualizada_en`). Disponible para todos los roles operativos excepto Recepción, UMECA y app.
 

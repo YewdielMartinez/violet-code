@@ -19,6 +19,8 @@ Estados: `nueva → tomada → atendida`. Orígenes: `app_movil`, `telefono`, `p
 
 ## `get_cola_alertas`
 
+**Versión:** [`20261128000800_47`](../../migrations/20261128000800_47_tiene_permiso_agenda_alertas.sql)
+
 > La cola de la línea 24/7, ordenada por prioridad (alta → baja) y, dentro de cada prioridad, la más antigua primero.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
@@ -80,6 +82,8 @@ interface ColaAlertaRow {
 
 ## `tomar_alerta`
 
+**Versión:** [`20261128000800_47`](../../migrations/20261128000800_47_tiene_permiso_agenda_alertas.sql)
+
 > Asigna la alerta a quien la toma. Bloquea la fila, así que si dos personas pulsan "Tomar" al mismo tiempo, solo una gana.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
@@ -117,6 +121,8 @@ interface AlertaEstadoRow {
 ---
 
 ## `atender_alerta`
+
+**Versión:** [`20261128000800_47`](../../migrations/20261128000800_47_tiene_permiso_agenda_alertas.sql)
 
 > Concluye la atención de una alerta tomada.
 

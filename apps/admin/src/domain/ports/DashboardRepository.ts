@@ -6,6 +6,7 @@ import type {
   CasesSummary,
   CitaItem,
   EstadoAlerta,
+  MapaCalorAsentamientoItem,
   SchedulingSummary,
 } from '../models/Dashboard';
 
@@ -17,4 +18,6 @@ export interface DashboardRepository {
   getCasesToReview(mine: boolean, userId: string, limit?: number): Promise<CaseItem[]>;
   getSchedulingSummary(): Promise<SchedulingSummary>;
   getAppointments(fromIsoDate: string, toIsoDate: string): Promise<CitaItem[]>;
+  /** Consulta agregados por asentamiento vía `get_mapa_calor_asentamiento` (umbral mínimo por defecto 3). */
+  mapaCalor(umbralMinimo?: number): Promise<MapaCalorAsentamientoItem[]>;
 }

@@ -31,6 +31,8 @@ Estados de una cita: `agendada → confirmada → asistio | no_asistio`, o `canc
 
 ## `get_agenda`
 
+**Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
+
 > Citas de un rango de fechas, ya filtradas por lo que el rol puede ver.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
@@ -93,6 +95,8 @@ interface AgendaRow {
 
 ## `cambiar_estado_cita`
 
+**Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
+
 > Confirmar, cancelar o marcar que no asistió.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
@@ -135,6 +139,8 @@ const { data, error } = await supabase
 ---
 
 ## `reagendar_cita`
+
+**Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
 
 > Mueve una cita a otra fecha conservando el historial: la vieja queda `reagendada` y se crea una nueva `agendada` que apunta a ella.
 
@@ -186,6 +192,8 @@ interface ReagendarCitaRow {
 
 ## `get_lista_urgencias`
 
+**Versión:** [`20261128001300_52`](../../migrations/20261128001300_52_urgencias_por_expediente.sql)
+
 > RF-07: expedientes cuya prioridad más reciente es alta y que todavía no tienen cita próxima. Sale primero quien lleva más tiempo esperando.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
@@ -226,6 +234,8 @@ interface UrgenciaRow {
 
 ## `buscar_personas_agenda`
 
+**Versión:** [`20261127001100_42`](../../migrations/20261127001100_42_agenda_busqueda_umeca.sql)
+
 > Autocompletado de la persona al crear una cita: nombre (sin acentos) o prefijo de CURP, solo personas con expediente activo y no archivado.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
@@ -263,6 +273,8 @@ interface PersonaAgendaRow {
 ---
 
 ## `get_umeca_citas`
+
+**Versión:** [`20261127001100_42`](../../migrations/20261127001100_42_agenda_busqueda_umeca.sql)
 
 > Vista de UMECA: nombre, fecha, estado y área de las citas que UMECA canalizó.
 

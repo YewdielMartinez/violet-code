@@ -1,4 +1,5 @@
 import { supabase } from '../client';
+import { mapSupabaseError } from './errors';
 import type {
   AlertaItem,
   AlertsSummary,
@@ -7,6 +8,7 @@ import type {
   CasesSummary,
   CitaItem,
   EstadoAlerta,
+  MapaCalorAsentamientoItem,
   SchedulingSummary,
 } from '@/domain/models/Dashboard';
 import type { DashboardRepository } from '@/domain/ports/DashboardRepository';
@@ -228,6 +230,28 @@ export const supabaseDashboardRepository: DashboardRepository = {
       areaClave: row.area_clave ?? null,
       areaNombre: AREA_LABELS[row.area_clave] ?? 'Área',
       usuariaNombre: row.nombre_completo || 'Usuaria',
+    }));
+  },
+
+  async mapaCalor(umbralMinimo = 3): Promise<MapaCalorAsentamientoItem[]> {
+    const { data, error } = await supabase.rpc('get_mapa_calor_asentamiento', {
+      p_umbral_minimo: umbralMinimo,
+    });
+
+    if (error) throw mapSupabaseError(error);
+
+    return (data ?? []).map((row) => ({
+      asentamientoId: row.asentamiento_id,
+      codigoPostal: row.codigo_postal,
+      nombre: row.nombre,
+      tipoAsentamiento: row.tipo_asentamiento,
+      municipio: row.municipio,
+      estado: row.estado,
+      latitud: row.latitud,
+      longitud: row.longitud,
+      totalExpedientes: row.total_expedientes,
+      totalAlertas: row.total_alertas,
+      totalActividades: row.total_actividades,
     }));
   },
 };

@@ -2,6 +2,9 @@ import { supabase } from '../client';
 import { mapSupabaseError } from './errors';
 import type {
   ContextoHojaSeguimiento,
+  ContextoSeguimiento,
+  CorregirSeguimientoInput,
+  CorregirSeguimientoResult,
   TipoAtencion,
 } from '@/domain/models/HojaSeguimiento';
 import type {
@@ -23,6 +26,11 @@ import {
   mapNotaRow,
   mapTipoAtencionRow,
 } from './seguimiento.mapper';
+
+function toOptionalRpcText(value: string | null | undefined): string | undefined {
+  if (value === null || value === undefined) return undefined;
+  return value.trim();
+}
 
 export const supabaseSeguimientoRepository: SeguimientoRepository = {
   async registrar(input: SeguimientoCreateInput): Promise<SeguimientoResult> {
@@ -50,6 +58,52 @@ export const supabaseSeguimientoRepository: SeguimientoRepository = {
       citaProximaId: row.cita_proxima_id ?? null,
       esPrimeraVezArea: row.es_primera_vez_area,
       tieneHistorialClinico: row.tiene_historial_clinico,
+    };
+  },
+
+  async contexto(citaId: string): Promise<ContextoSeguimiento> {
+    const { data, error } = await supabase.rpc('get_contexto_seguimiento', {
+      p_cita_id: citaId,
+    });
+
+    if (error) throw mapSupabaseError(error);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió el contexto de la cita.');
+    }
+
+    return {
+      fichaId: row.ficha_id,
+      folioExpediente: row.folio_expediente,
+      nombrePersona: row.nombre_persona,
+      edad: row.edad ?? null,
+      esPrimeraVezArea: row.es_primera_vez_area,
+      ultimaProximaAccion: row.ultima_proxima_accion ?? null,
+      tieneOrdenVigente: row.tiene_orden_vigente,
+      tieneHistorialClinico: row.tiene_historial_clinico ?? null,
+    };
+  },
+
+  async corregir(input: CorregirSeguimientoInput): Promise<CorregirSeguimientoResult> {
+    const { data, error } = await supabase.rpc('corregir_seguimiento', {
+      p_atencion_id: input.atencionId,
+      p_actualizado_en: input.actualizadoEn,
+      p_tipo_atencion_id: input.tipoAtencionId ?? undefined,
+      p_acciones_realizadas: toOptionalRpcText(input.accionesRealizadas),
+      p_proxima_accion: toOptionalRpcText(input.proximaAccion),
+      p_prioridad: input.prioridad ?? undefined,
+      p_observaciones: toOptionalRpcText(input.observaciones),
+    });
+
+    if (error) throw mapSupabaseError(error);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió confirmación al corregir el seguimiento.');
+    }
+
+    return {
+      atencionId: row.atencion_id,
+      actualizadoEn: row.actualizado_en,
     };
   },
 

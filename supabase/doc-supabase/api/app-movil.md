@@ -26,6 +26,8 @@ Content-Type: application/json
 
 ## `registrar_mi_perfil` (RPC — reemplaza el `insert` directo a `pre_registro`)
 
+**Versión:** [`20261128000600_45`](../../migrations/20261128000600_45_rpc_perfil_usuaria_app.sql)
+
 > El `insert` directo a `pre_registro` está bloqueado (`with check (false)`). La usuaria registra su perfil con este RPC, aceptando el aviso de privacidad.
 
 | Permiso | Quién | Tipo | Bitácora |
@@ -52,6 +54,8 @@ Content-Type: application/json
 ---
 
 ## `get_mi_estado_app` y `desactivar_mi_cuenta`
+
+**Versión:** [`20261128000600_45`](../../migrations/20261128000600_45_rpc_perfil_usuaria_app.sql)
 
 ```http
 POST /rest/v1/rpc/get_mi_estado_app
@@ -105,6 +109,8 @@ Prefer: return=minimal
 
 ## `get_mi_pre_registro`
 
+**Versión:** [`20261126001700_27`](../../migrations/20261126001700_27_pre_registro_seguro.sql)
+
 > Lee el pre-registro de la usuaria. A propósito **no** devuelve `persona_id` ni `estado`, para que la app no revele si esa CURP ya tenía expediente en SEMUJERES.
 
 | Permiso | Quién | Tipo | Bitácora | Migración |
@@ -140,6 +146,8 @@ POST /rest/v1/rpc/get_mi_pre_registro
 
 ## `actualizar_mi_pre_registro`
 
+**Versión:** [`20261126001700_27`](../../migrations/20261126001700_27_pre_registro_seguro.sql)
+
 > Edita los datos que la usuaria sí puede cambiar. La CURP no se puede cambiar.
 
 | Permiso | Quién | Tipo | Bitácora | Migración |
@@ -173,6 +181,8 @@ POST /rest/v1/rpc/actualizar_mi_pre_registro
 ---
 
 ## `enviar_alerta` (RPC — reemplaza el `insert` directo a `alerta`)
+
+**Versión:** [`20261128000700_46`](../../migrations/20261128000700_46_rpc_enviar_alerta_y_auth.sql)
 
 > El botón de auxilio. El `insert` directo sobre `alerta` está bloqueado para usuarias de la app (`42501`). Este RPC resuelve `pre_registro_id` desde la sesión y aplica un límite de **3 alertas por hora**.
 

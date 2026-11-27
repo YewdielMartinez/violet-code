@@ -1,5 +1,5 @@
 import { type StaffRole, isAttentionRole } from './Auth';
-import { areasCreablesPorRol, type AgendaItem, type EstadoCita } from './Cita';
+import { areasCreablesPorRol, type AgendaItem, type EstadoCita, type PrioridadNivel } from './Cita';
 import { type DomicilioDetalle, type DomicilioInput, validateDomicilio } from './Domicilio';
 import type { EstadoCivil } from './FichaRegistro';
 
@@ -28,6 +28,32 @@ export interface ContextoHojaSeguimiento {
   ocupacionOtra: string | null;
   celular: string | null;
   domicilio: DomicilioDetalle | null;
+}
+
+export interface ContextoSeguimiento {
+  fichaId: string;
+  folioExpediente: string;
+  nombrePersona: string;
+  edad: number | null;
+  esPrimeraVezArea: boolean;
+  ultimaProximaAccion: string | null;
+  tieneOrdenVigente: boolean;
+  tieneHistorialClinico: boolean | null;
+}
+
+export interface CorregirSeguimientoInput {
+  atencionId: string;
+  actualizadoEn: string;
+  tipoAtencionId?: number | null;
+  accionesRealizadas?: string | null;
+  proximaAccion?: string | null;
+  prioridad?: PrioridadNivel | null;
+  observaciones?: string | null;
+}
+
+export interface CorregirSeguimientoResult {
+  atencionId: string;
+  actualizadoEn: string;
 }
 
 /**
