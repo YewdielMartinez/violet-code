@@ -1,6 +1,6 @@
 # RPC: `public.actualizar_ficha`
 
-- **Migración:** `supabase/migrations/20261127000400_35_rpc_editar_persona_y_ficha.sql`
+- **Migración:** `supabase/migrations/20261128001500_57_ficha_campos_opcionales.sql` *(actualiza `_35_`)*
 - **Cubre:** `RF-01`, `RN-08`, `RN-15.1` (Sprint 02 · A-03)
 
 ## Actores autorizados
@@ -27,10 +27,10 @@
   p_drogas?: TipoDroga[] | null;
   p_especificacion_droga?: string | null;
   p_tiene_consumo_alcohol?: boolean | null;
-  p_servicios_solicitados_area_ids?: number[] | null; // Si se envía, debe tener >= 1 área válida
+  p_servicios_solicitados_area_ids?: number[] | null; // null conserva; [] vacía los servicios solicitados
 }
 ```
-- `null` = conservar valor actual; `''` = limpiar textos opcionales (`ocupacion_otra`, `servicio_medico_otro`, `especificacion_droga`).
+- `null` = conservar valor actual; `''` = limpiar textos opcionales (`ocupacion_otra`, `servicio_medico_otro`, `especificacion_droga`); `[]` en `p_servicios_solicitados_area_ids` = elimina todos los servicios solicitados del expediente.
 - Nunca modifica `folio`, `persona_id`, `estado`, `aviso_privacidad_aceptado_en`, `registrada_en` ni `activo`.
 - Los cambios en `ficha_servicio_solicitado` quedan auditados por el trigger `ficha_servicio_solicitado_bitacora` (`crear` / `desactivar`).
 
@@ -39,5 +39,5 @@ Fila única actualizada con los campos del expediente más `servicios_solicitado
 
 ## Errores
 - `42501`: sin permiso `expediente.escribir`.
-- `23514`: ficha inexistente/inactiva, expediente archivado (`"Reabre el expediente para editarlo"`), inconsistencia de `servicio_medico_otro`/`drogas`, rangos fuera de `0..30`, ocupación/área inexistente o arreglo de servicios vacío.
+- `23514`: ficha inexistente/inactiva, expediente archivado (`"Reabre el expediente para editarlo"`), inconsistencia de `servicio_medico_otro`/`drogas`, rangos fuera de `0..30` u ocupación/área inexistente.
 - `23505`: `p_actualizado_en` obsoleto (`"Este registro fue modificado por otra persona. Recarga los datos."`).
