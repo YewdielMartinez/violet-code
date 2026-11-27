@@ -13,7 +13,7 @@ create extension if not exists pgtap with schema extensions;
 
 begin;
 
-select plan(14);
+select plan(15);
 
 create or replace function pg_temp.set_actor(p_uid uuid)
 returns void
@@ -57,6 +57,19 @@ select is(
   ),
   true,
   'get_expediente_detalle(false) devuelve ficha y persona sin clave agresores'
+);
+
+select is(
+  (
+    select
+      coalesce(res -> 'ficha' ->> 'actualizado_en', '') <> ''
+      and coalesce(res -> 'persona' ->> 'actualizado_en', '') <> ''
+      and coalesce(res -> 'domicilio_actual' ->> 'actualizado_en', '') <> ''
+      and coalesce(res -> 'estudio_actual' ->> 'actualizado_en', '') <> ''
+    from (select public.get_expediente_detalle('55555555-5555-4555-8555-555555555501'::uuid, false) as res) t
+  ),
+  true,
+  'get_expediente_detalle devuelve actualizado_en en ficha, persona, domicilio_actual y estudio_actual'
 );
 
 select is(

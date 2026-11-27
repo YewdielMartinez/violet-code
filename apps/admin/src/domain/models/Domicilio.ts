@@ -34,6 +34,7 @@ export interface DomicilioDetalle {
   numeroInterior: string | null;
   referencias: string | null;
   zona: ZonaGeografica | null;
+  actualizadoEn?: string | null;
 }
 
 export interface DomicilioUpdateInput {

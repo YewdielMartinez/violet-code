@@ -11,6 +11,7 @@ import {
   toActualizarPersonaArgs,
   toRegistrarEstudioArgs,
 } from './fichaEdicion.mapper';
+import type { TipoDroga } from '@/domain/models/Agresor';
 import type { PrioridadNivel } from '@/domain/models/Cita';
 import type {
   DomicilioActualizadoResult,
@@ -29,6 +30,8 @@ import type {
 } from '@/domain/models/EstudioSocioeconomico';
 import type {
   CambiarPrioridadExpedienteResult,
+  ConsumoAlcohol,
+  EscolaridadNivel,
   EstadoCivil,
   FichaActualizada,
   FichaCompletaDetalle,
@@ -51,10 +54,15 @@ interface RpcDetallePayload {
     id: string;
     folio: string;
     estado: EstadoFicha;
+    prioridad?: PrioridadNivel | null;
+    prioridad_actualizada_en?: string | null;
     registrada_en: string;
+    actualizado_en?: string | null;
     aviso_privacidad_aceptado_en: string;
     estado_civil: EstadoCivil | null;
+    ocupacion_id?: number | null;
     ocupacion_nombre: string | null;
+    ocupacion_otra?: string | null;
     servicio_medico: ServicioMedico | null;
     servicio_medico_otro: string | null;
     tiene_trabajo: boolean | null;
@@ -63,6 +71,9 @@ interface RpcDetallePayload {
     tiene_embarazo: boolean | null;
     tiene_denuncia: boolean | null;
     es_victima_delito: boolean | null;
+    drogas?: TipoDroga[] | null;
+    especificacion_droga?: string | null;
+    consumo_alcohol?: ConsumoAlcohol | null;
   };
   persona: {
     id: string;
@@ -74,6 +85,11 @@ interface RpcDetallePayload {
     fecha_nacimiento: string;
     entidad_nacimiento: string;
     celular: string | null;
+    escolaridad?: EscolaridadNivel | null;
+    discapacidad?: string | null;
+    grupo_etnico?: string | null;
+    religion?: string | null;
+    actualizado_en?: string | null;
   };
   servicios_solicitados?: { area_id: number; clave: string; nombre: string }[];
   domicilio_actual?: {
@@ -86,6 +102,7 @@ interface RpcDetallePayload {
     numero_interior: string | null;
     referencias: string | null;
     zona: ZonaGeografica | null;
+    actualizado_en?: string | null;
   } | null;
   estudio_actual?: {
     id: string;
@@ -99,11 +116,14 @@ interface RpcDetallePayload {
     material_otro: string | null;
     servicios: EstudioSocioeconomicoDetalle['servicios'] | null;
     bienes: EstudioSocioeconomicoDetalle['bienes'] | null;
+    actualizado_en?: string | null;
     aportantes?: {
       id: string;
       nombre: string;
+      parentesco_id?: number | null;
       parentesco_nombre: string | null;
       parentesco_otro: string | null;
+      ocupacion_id?: number | null;
       ocupacion_nombre: string | null;
       ocupacion_otra: string | null;
       tipo_trabajo: TipoTrabajo | null;
@@ -129,6 +149,7 @@ function mapDetallePayload(raw: RpcDetallePayload): FichaCompletaDetalle {
         numeroInterior: domRow.numero_interior,
         referencias: domRow.referencias,
         zona: domRow.zona,
+        actualizadoEn: domRow.actualizado_en ?? null,
       }
     : null;
 
@@ -145,11 +166,16 @@ function mapDetallePayload(raw: RpcDetallePayload): FichaCompletaDetalle {
         materialOtro: estRow.material_otro,
         servicios: estRow.servicios ?? [],
         bienes: estRow.bienes ?? [],
+        actualizadoEn: estRow.actualizado_en ?? null,
         aportantes: (estRow.aportantes ?? []).map((ap) => ({
           id: ap.id,
           nombre: ap.nombre,
+          parentescoId: ap.parentesco_id ?? null,
           parentescoNombre: ap.parentesco_nombre ?? ap.parentesco_otro ?? null,
+          parentescoOtro: ap.parentesco_otro ?? null,
+          ocupacionId: ap.ocupacion_id ?? null,
           ocupacionNombre: ap.ocupacion_nombre ?? ap.ocupacion_otra ?? null,
+          ocupacionOtra: ap.ocupacion_otra ?? null,
           tipoTrabajo: ap.tipo_trabajo,
           monto: ap.monto,
           frecuencia: ap.frecuencia,
@@ -158,15 +184,21 @@ function mapDetallePayload(raw: RpcDetallePayload): FichaCompletaDetalle {
     : null;
 
   const sexo: SexoBiologico = persona.sexo === 'H' ? 'H' : 'M';
+  const serviciosRows = raw.servicios_solicitados ?? [];
 
   return {
     id: ficha.id,
     folio: ficha.folio,
     estado: ficha.estado,
+    prioridad: ficha.prioridad ?? null,
+    prioridadActualizadaEn: ficha.prioridad_actualizada_en ?? null,
     registradaEn: ficha.registrada_en,
+    actualizadoEn: ficha.actualizado_en ?? null,
     avisoPrivacidadAceptadoEn: ficha.aviso_privacidad_aceptado_en,
     estadoCivil: ficha.estado_civil,
+    ocupacionId: ficha.ocupacion_id ?? null,
     ocupacionNombre: ficha.ocupacion_nombre ?? null,
+    ocupacionOtra: ficha.ocupacion_otra ?? null,
     servicioMedico: ficha.servicio_medico,
     servicioMedicoOtro: ficha.servicio_medico_otro,
     tieneTrabajo: ficha.tiene_trabajo,
@@ -175,9 +207,13 @@ function mapDetallePayload(raw: RpcDetallePayload): FichaCompletaDetalle {
     tieneEmbarazo: ficha.tiene_embarazo,
     tieneDenuncia: ficha.tiene_denuncia,
     esVictimaDelito: ficha.es_victima_delito,
-    serviciosSolicitados: (raw.servicios_solicitados ?? [])
+    drogas: ficha.drogas ?? [],
+    especificacionDroga: ficha.especificacion_droga ?? null,
+    consumoAlcohol: ficha.consumo_alcohol ?? null,
+    serviciosSolicitados: serviciosRows
       .map((s) => s.nombre)
       .filter((name): name is string => Boolean(name)),
+    serviciosSolicitadosAreaIds: serviciosRows.map((s) => s.area_id),
     persona: {
       id: persona.id,
       curp: normalizeCurp(persona.curp),
@@ -193,6 +229,11 @@ function mapDetallePayload(raw: RpcDetallePayload): FichaCompletaDetalle {
       fechaNacimiento: persona.fecha_nacimiento,
       entidadNacimiento: persona.entidad_nacimiento,
       celular: persona.celular,
+      escolaridad: persona.escolaridad ?? null,
+      discapacidad: persona.discapacidad ?? null,
+      grupoEtnico: persona.grupo_etnico ?? null,
+      religion: persona.religion ?? null,
+      actualizadoEn: persona.actualizado_en ?? null,
     },
     domicilio,
     estudio,

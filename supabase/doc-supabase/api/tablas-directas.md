@@ -90,11 +90,11 @@ Una sola fila por ficha (`ficha_id` único). Para leer y guardar usa las RPC [`g
 
 ### `nota_area`
 
-| Leer                                                      | Crear / editar |
-| --------------------------------------------------------- | -------------- |
-| `seguimiento.registrar` y **solo su área** (TS, Psi, Jur) | Igual          |
+| Leer                                                                           | Crear / editar                                      |
+| ------------------------------------------------------------------------------ | --------------------------------------------------- |
+| Dirección (`titular`, `subdireccion`) todas; `seguimiento.registrar` su área | `seguimiento.registrar` y **solo su área** (`42501` en Dirección) |
 
-Notas privadas de cada área. Dirección **no** las ve. `area_id` debe ser el del actor; si mandas otro, `42501`.
+Notas privadas entre áreas (TS, Psi, Jur no ven las de otra área). Titular y Subdirección leen todas en solo lectura (`42501` si intentan insertar o actualizar). Para áreas de atención, `area_id` debe ser el del actor; si mandas otro, `42501`.
 
 ```ts
 await supabase

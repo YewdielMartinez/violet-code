@@ -81,10 +81,15 @@ describe('supabaseFichaRepository', () => {
           id: 'ficha-1',
           folio: 'SEM-2026-0007',
           estado: 'abierto',
+          prioridad: 'alta',
+          prioridad_actualizada_en: '2026-11-26T10:30:00Z',
           registrada_en: '2026-11-26T10:00:00Z',
+          actualizado_en: '2026-11-26T11:00:00Z',
           aviso_privacidad_aceptado_en: '2026-11-26T10:00:00Z',
           estado_civil: 'soltero',
+          ocupacion_id: 2,
           ocupacion_nombre: 'Empleada(o)',
+          ocupacion_otra: null,
           servicio_medico: 'imss',
           servicio_medico_otro: null,
           tiene_trabajo: true,
@@ -93,6 +98,9 @@ describe('supabaseFichaRepository', () => {
           tiene_embarazo: false,
           tiene_denuncia: false,
           es_victima_delito: true,
+          drogas: ['no_consume'],
+          especificacion_droga: null,
+          consumo_alcohol: 'no_consume',
         },
         persona: {
           id: 'per-1',
@@ -104,6 +112,11 @@ describe('supabaseFichaRepository', () => {
           fecha_nacimiento: '1990-05-12',
           entidad_nacimiento: 'SL',
           celular: '6681234567',
+          escolaridad: 'preparatoria',
+          discapacidad: null,
+          grupo_etnico: null,
+          religion: null,
+          actualizado_en: '2026-11-26T11:01:00Z',
         },
         servicios_solicitados: [
           { area_id: 1, clave: 'trabajo_social', nombre: 'Trabajo Social' },
@@ -118,6 +131,7 @@ describe('supabaseFichaRepository', () => {
           numero_interior: null,
           referencias: 'Portón azul',
           zona: 'urbana',
+          actualizado_en: '2026-11-26T11:02:00Z',
         },
         estudio_actual: {
           id: 'est-1',
@@ -131,6 +145,7 @@ describe('supabaseFichaRepository', () => {
           material_otro: null,
           servicios: ['agua', 'luz'],
           bienes: ['estufa'],
+          actualizado_en: '2026-11-26T11:03:00Z',
           aportantes: [
             {
               id: 'ap-1',
@@ -159,18 +174,25 @@ describe('supabaseFichaRepository', () => {
     expect(detail).toMatchObject({
       id: 'ficha-1',
       folio: 'SEM-2026-0007',
+      actualizadoEn: '2026-11-26T11:00:00Z',
+      prioridad: 'alta',
+      ocupacionId: 2,
       ocupacionNombre: 'Empleada(o)',
       serviciosSolicitados: ['Trabajo Social'],
+      serviciosSolicitadosAreaIds: [1],
       persona: {
         curp: 'GALA900512MSLNRR01',
         nombreCompleto: 'Laura García Lara',
+        actualizadoEn: '2026-11-26T11:01:00Z',
       },
       domicilio: {
         asentamientoNombre: 'Centro',
         codigoPostal: '81200',
+        actualizadoEn: '2026-11-26T11:02:00Z',
       },
       estudio: {
         servicios: ['agua', 'luz'],
+        actualizadoEn: '2026-11-26T11:03:00Z',
         aportantes: [
           {
             id: 'ap-1',

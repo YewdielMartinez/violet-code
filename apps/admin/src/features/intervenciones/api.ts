@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { NotaPrivadaCreateInput, NotaPrivadaUpdateInput } from '@/domain/models/NotaPrivada';
 import { supabaseSeguimientoRepository } from '@/infrastructure/supabase/adapters/SupabaseSeguimientoRepository';
 import { supabaseSepomexRepository } from '@/infrastructure/supabase/adapters/SupabaseSepomexRepository';
+import { useAuth } from '@/shared/auth/useAuth';
 
 export { useAgenda, useCambiarEstadoCita } from '@/features/agenda/api';
 export { useLineaTiempo, useRegistrarSeguimiento } from '@/features/seguimiento/api';
@@ -11,7 +12,8 @@ const CATALOGO_STALE_MS = 10 * 60_000;
 export const INTERVENCIONES_KEYS = {
   tiposAtencion: (areaId: number | null) => ['catalogos', 'tipo_atencion', areaId] as const,
   contexto: (personaId: string) => ['intervenciones', 'contexto', personaId] as const,
-  notas: (fichaId: string) => ['intervenciones', 'notas', fichaId] as const,
+  // Incluye al usuario: cada rol ve notas distintas del mismo expediente (RLS de `nota_area`).
+  notas: (userId: string | null, fichaId: string) => ['intervenciones', 'notas', userId, fichaId] as const,
   // Misma clave que la Ficha Única para compartir la caché del catálogo.
   ocupaciones: () => ['catalogos', 'ocupacion'] as const,
   asentamientos: (cp: string) => ['sepomex', 'asentamientos', cp] as const,
@@ -55,8 +57,9 @@ export function useContextoHoja(personaId: string | null, enabled = true) {
 }
 
 export function useNotasPrivadas(fichaId: string, enabled = true) {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: INTERVENCIONES_KEYS.notas(fichaId),
+    queryKey: INTERVENCIONES_KEYS.notas(user?.id ?? null, fichaId),
     queryFn: () => supabaseSeguimientoRepository.listarNotas(fichaId),
     enabled: enabled && Boolean(fichaId),
   });
@@ -64,7 +67,8 @@ export function useNotasPrivadas(fichaId: string, enabled = true) {
 
 function useInvalidateNotas(fichaId: string) {
   const qc = useQueryClient();
-  return () => void qc.invalidateQueries({ queryKey: INTERVENCIONES_KEYS.notas(fichaId) });
+  const { user } = useAuth();
+  return () => void qc.invalidateQueries({ queryKey: INTERVENCIONES_KEYS.notas(user?.id ?? null, fichaId) });
 }
 
 export function useCrearNotaPrivada(fichaId: string) {

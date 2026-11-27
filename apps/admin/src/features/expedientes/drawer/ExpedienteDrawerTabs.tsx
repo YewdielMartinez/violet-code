@@ -1,13 +1,22 @@
 import { memo, useMemo, useRef, type KeyboardEvent } from 'react';
 import { Icon } from '@/shared/ui/Icon';
 
-export type DrawerTab = 'resumen' | 'agresor' | 'documentos' | 'canalizaciones' | 'ordenes' | 'seguimiento' | 'notas';
+export type DrawerTab =
+  | 'resumen'
+  | 'agresor'
+  | 'documentos'
+  | 'canalizaciones'
+  | 'ordenes'
+  | 'seguimiento'
+  | 'notas'
+  | 'historial';
 
 interface TabDefinition {
   id: DrawerTab;
   label: string;
   icon: string;
   sensitive: boolean;
+  historialOnly?: boolean;
 }
 
 const ALL_TABS: readonly TabDefinition[] = [
@@ -16,14 +25,21 @@ const ALL_TABS: readonly TabDefinition[] = [
   { id: 'documentos', label: 'Documentos', icon: 'folder_open', sensitive: true },
   { id: 'canalizaciones', label: 'Canalizaciones', icon: 'alt_route', sensitive: true },
   { id: 'ordenes', label: 'Órdenes de Protección', icon: 'gavel', sensitive: true },
-  // Dirección también las ve (es parte del acceso sensible); el panel de notas le explica que no aplica.
   { id: 'seguimiento', label: 'Seguimiento', icon: 'timeline', sensitive: true },
   { id: 'notas', label: 'Notas privadas', icon: 'lock', sensitive: true },
+  {
+    id: 'historial',
+    label: 'Historial clínico',
+    icon: 'psychology',
+    sensitive: true,
+    historialOnly: true,
+  },
 ];
 
 interface Props {
   activeTab: DrawerTab;
   canAccessSensitiveTabs: boolean;
+  canAccessHistorial?: boolean;
   onChange: (next: DrawerTab) => void;
   onTabIntent?: (tab: DrawerTab) => void;
 }
@@ -32,14 +48,19 @@ interface Props {
 export const ExpedienteDrawerTabs = memo(function ExpedienteDrawerTabs({
   activeTab,
   canAccessSensitiveTabs,
+  canAccessHistorial = false,
   onChange,
   onTabIntent,
 }: Props) {
   const listRef = useRef<HTMLDivElement>(null);
 
   const visibleTabs = useMemo(
-    () => ALL_TABS.filter((tab) => !tab.sensitive || canAccessSensitiveTabs),
-    [canAccessSensitiveTabs],
+    () =>
+      ALL_TABS.filter((tab) => {
+        if (tab.historialOnly) return canAccessHistorial;
+        return !tab.sensitive || canAccessSensitiveTabs;
+      }),
+    [canAccessSensitiveTabs, canAccessHistorial],
   );
 
   const activeIndex = Math.max(

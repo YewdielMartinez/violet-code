@@ -315,7 +315,7 @@ interface CrearFichaPayload {
 
 ## `get_expediente_detalle`
 
-**Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
+**Versión:** [`20261128002100_62`](../../migrations/20261128002100_62_detalle_actualizado_en.sql)
 
 > Todo lo que la pantalla de expediente necesita en un solo objeto.
 
@@ -344,6 +344,7 @@ interface ExpedienteDetalle {
     prioridad: 'alta' | 'media' | 'baja' | null;
     prioridad_actualizada_en: string | null;
     registrada_en: string;
+    actualizado_en: string;
     aviso_privacidad_aceptado_en: string;
     estado_civil: EstadoCivil | null;
     ocupacion_id: number | null;
@@ -375,6 +376,7 @@ interface ExpedienteDetalle {
     discapacidad: string | null;
     religion: string | null;
     grupo_etnico: string | null;
+    actualizado_en: string;
   };
   servicios_solicitados: Array<{
     area_id: number;
@@ -391,6 +393,7 @@ interface ExpedienteDetalle {
     numero_interior: string | null;
     referencias: string | null;
     zona: "urbana" | "rural" | null;
+    actualizado_en: string;
   } | null;
   estudio_actual: {
     id: string;
@@ -404,6 +407,7 @@ interface ExpedienteDetalle {
     material_otro: string | null;
     servicios: ServicioVivienda[] | null;
     bienes: BienVivienda[] | null;
+    actualizado_en: string;
     aportantes: Array<{
       id: string;
       nombre: string;

@@ -79,7 +79,7 @@
 - **RN-06:** La cita se confirma un día antes; si se cancela, se reagenda y se llama a alguien con urgencia.
 - **RN-07:** Psicología atiende a mayores de edad y población LGBTQ+.
 - **RN-08:** La Ficha Única la crea Trabajo Social. Todos los datos del formulario de ficha única de registro serán consultables por las tres áreas.
-- **RN-09:** Las notas de cada área son personales, solo las ve la propia área.
+- **RN-09:** Las notas de cada área son personales entre áreas (solo las ve y edita la propia área); Titular y Subdirección pueden consultarlas en solo lectura.
 - **RN-10:** Hay prioridad según la magnitud del caso y un «código 100» para emergencias (por investigar).
 - **RN-11:** Protocolo: cita, trabajo social, jurídico y/o psicología, acompañamiento a fiscalía si hace falta, refugio si es muy vulnerable.
 - **RN-12:** El folio lo crea SEMUJERES (formato por inventar).
@@ -89,8 +89,8 @@
   - **RN-15.1 (Baja lógica y derechos ARCO):** Prohibido el borrado físico (`ON DELETE RESTRICT`); toda depuración o bloqueo por ejercicio de derechos ARCO se realiza mediante `activo = false` o estado `archivado` conservando la trazabilidad en bitácora.
 - **RN-16:** La línea 24/7 la atienden titular, subdirección y jurídico.
 - **RN-17:** Una alerta de una persona con orden de protección vigente entra con prioridad alta. Es decisión del equipo y SEMUJERES debe confirmarla. En la demo, la cuenta de la app se liga a una persona sintética.
-- **RN-18:** Titular y subdirección ven todo; trabajo social, psicología y jurídico ven lo de su área más la Ficha Única. Las notas de cada área son privadas.
-  - **RN-18.1 (Aislamiento estricto por área y rol):** `nota_area` es visible y editable únicamente por su propia área (ni Dirección accede a notas privadas); `recepcion` solo gestiona citas de Trabajo Social y Psicología sin acceso a expedientes ni persona agresora.
+- **RN-18:** Titular y subdirección ven todo (incluidas las notas de cada área en solo lectura); trabajo social, psicología y jurídico ven lo de su área más la Ficha Única y no ven las notas de otras áreas.
+  - **RN-18.1 (Aislamiento entre áreas y acceso de lectura en Dirección):** `nota_area` es visible y editable únicamente por su propia área, y consultable en solo lectura por Titular y Subdirección (sin crear ni editar); ninguna área de atención ve las notas de otra; `recepcion` solo gestiona citas de Trabajo Social y Psicología sin acceso a expedientes ni persona agresora.
 - **RN-19:** «Primera vez» se calcula con el primer registro de la persona en trabajo social, se deriva por primera vez una de las áreas.
 
 *(Nota: la numeración original pasa de `RN-13` a `RN-15`.)*

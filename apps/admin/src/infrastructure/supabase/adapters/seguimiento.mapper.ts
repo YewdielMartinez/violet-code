@@ -5,7 +5,7 @@ import type { NotaPrivada } from '@/domain/models/NotaPrivada';
 import type { TipoEventoLineaTiempo } from '@/domain/models/Seguimiento';
 
 type Tables = Database['public']['Tables'];
-type NotaRow = Tables['nota_area']['Row'];
+type NotaRow = Tables['nota_area']['Row'] & { cat_area?: { nombre: string } | null };
 type TipoAtencionRow = Pick<Tables['cat_tipo_atencion']['Row'], 'id' | 'area_id' | 'clave' | 'nombre'>;
 type DomicilioRow = Pick<
   Tables['domicilio']['Row'],
@@ -19,7 +19,8 @@ type DomicilioRow = Pick<
   | 'zona'
 > & { cat_asentamiento: { nombre: string; codigo_postal: string } | null };
 
-export const NOTA_SELECT = 'id, ficha_id, area_id, contenido, activo, creado_en, actualizado_en, creado_por';
+export const NOTA_SELECT =
+  'id, ficha_id, area_id, contenido, activo, creado_en, actualizado_en, creado_por, cat_area(nombre)';
 export const DOMICILIO_SELECT =
   'id, asentamiento_id, codigo_postal, calle, numero_exterior, numero_interior, referencias, zona, cat_asentamiento(nombre, codigo_postal)';
 
@@ -42,6 +43,7 @@ export function mapNotaRow(row: NotaRow): NotaPrivada {
     id: row.id,
     fichaId: row.ficha_id,
     areaId: row.area_id,
+    areaNombre: row.cat_area?.nombre ?? null,
     contenido: row.contenido,
     creadoEn: row.creado_en,
     actualizadoEn: row.actualizado_en,

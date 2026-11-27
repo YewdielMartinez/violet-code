@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
+import { ExpedientePrioridadControl } from './ExpedientePrioridadControl';
 import { calculateAge, formatFechaNacimiento, formatSexo } from './formatters';
 
 interface Props {
@@ -26,6 +27,7 @@ export const ExpedienteHeroCard = memo(function ExpedienteHeroCard({ expediente 
         <span>{formatSexo(expediente.persona.sexo)}</span>
         <span>{age !== null ? `${age} años` : 'Edad sin registrar'}</span>
         <span>{formatFechaNacimiento(expediente.persona.fechaNacimiento)}</span>
+        <ExpedientePrioridadControl fichaId={expediente.id} estado={expediente.estado} />
       </div>
     </section>
   );

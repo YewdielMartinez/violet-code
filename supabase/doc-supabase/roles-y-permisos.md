@@ -43,7 +43,7 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
 
 | Actor | Origen en BD | Alcance operativo principal |
 |---|---|---|
-| `titular` / `subdireccion` (`es_direccion()`) | `empleado` | Supervisión global, catálogos, cuentas, directorio, bitácora, línea 24/7, expedientes e informes. **No** lee `nota_area`. |
+| `titular` / `subdireccion` (`es_direccion()`) | `empleado` | Supervisión global, catálogos, cuentas, directorio, bitácora, línea 24/7, expedientes, informes y lectura de todas las `nota_area` (sin crear ni editar). |
 | `trabajo_social` | `empleado` | Alta/edición de `persona`, `ficha_registro`, `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar`, precarga de `pre_registro`, agenda de TS y Psicología, atenciones de TS y órdenes de protección. |
 | `psicologia` | `empleado` | Lectura de Ficha Única, `historial_clinico` propio, `atencion` y `nota_area` de Psicología, su agenda (`cita`) y cola de alertas. |
 | `juridico` | `empleado` | Lectura de Ficha Única, su agenda directa (`cita`, puede crear/reagendar en su área), `atencion` y `nota_area` de Jurídico, `orden_proteccion` y línea 24/7 (`alerta`). |
@@ -67,7 +67,7 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
 | `orden_proteccion` | S / I / U | S / I / U | S | S / I / U | — | — | — |
 | `cita` | S / I / U (todas) | S (`ts`+`psic`) / U (`ts`; sin I) | S / I / U (`psic`) | S / I / U (`jur`) | S / I / U (`ts`+`psic`+`jur`) | RPC `get_umeca_citas()` | — |
 | `atencion` | S / I / U (todas) | S / I / U (`ts`) | S / I / U (`psic`) | S / I / U (`jur`) | — | — | — |
-| `nota_area` | — *(privada)* | S / I / U (`ts`) | S / I / U (`psic`) | S / I / U (`jur`) | — | — | — |
+| `nota_area` | S (todas) | S / I / U (`ts`) | S / I / U (`psic`) | S / I / U (`jur`) | — | — | — |
 | `historial_clinico` | S / I / U | — | S / I / U | — | — | — | — |
 | `derivacion` | S / I / U | S / I / U | S (propia/destino) / I / U | S (propia/destino) / I / U | — | — | — |
 | `actividad_preventiva`, `actividad_empleado` | S / I / U | S / I / U | S / I / U | S / I / U | S | — | — |

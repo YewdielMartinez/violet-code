@@ -13,7 +13,7 @@ create extension if not exists pgtap with schema extensions;
 
 begin;
 
-select plan(79);
+select plan(80);
 
 -- Fixtures deterministas (como superusuario antes de activar authenticated)
 do $$
@@ -361,13 +361,22 @@ select pg_temp.set_actor('11111111-1111-4111-8111-111111111106'::uuid); -- recep
 select is((select count(*)::int from public.atencion), 0, 'recepcion no lee atencion');
 
 -- =====================================================================
--- 6. nota_area (privada por área; Dirección sin acceso)
+-- 6. nota_area (privada entre áreas; Dirección lee todas sin escribir)
 -- =====================================================================
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111101'::uuid); -- titular
-select is((select count(*)::int from public.nota_area), 0, 'titular no lee nota_area');
+select is(
+  (select count(*)::int from public.nota_area where id in ('ffffffff-2100-4000-8000-000000000001','ffffffff-2100-4000-8000-000000000002','ffffffff-2100-4000-8000-000000000003')),
+  3, 'titular lee las 3 nota_area'
+);
 select throws_ok(
   $$insert into public.nota_area (ficha_id, area_id, contenido) values ('55555555-5555-4555-8555-555555555501', (select id from public.cat_area where clave = 'trabajo_social'), 'Nota titular')$$,
   '42501', null, 'titular no inserta nota_area'
+);
+
+select pg_temp.set_actor('11111111-1111-4111-8111-111111111102'::uuid); -- subdireccion
+select is(
+  (select count(*)::int from public.nota_area where id in ('ffffffff-2100-4000-8000-000000000001','ffffffff-2100-4000-8000-000000000002','ffffffff-2100-4000-8000-000000000003')),
+  3, 'subdireccion lee las 3 nota_area'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111103'::uuid); -- trabajo_social

@@ -3,6 +3,7 @@ import {
   NOTA_PRIVADA_MAX_LENGTH,
   ordenarNotasRecientes,
   puedeGestionarNotasPrivadas,
+  puedeVerNotasPrivadas,
   validateNotaPrivada,
   type NotaPrivada,
 } from '@/domain/models/NotaPrivada';
@@ -26,8 +27,19 @@ describe('NotaPrivada (RF-10, RN-09, RN-18.1)', () => {
     expect(puedeGestionarNotasPrivadas(undefined)).toBe(false);
   });
 
+  it('áreas de atención y Dirección ven notas privadas; recepción y UMECA no', () => {
+    expect(puedeVerNotasPrivadas('trabajo_social')).toBe(true);
+    expect(puedeVerNotasPrivadas('psicologia')).toBe(true);
+    expect(puedeVerNotasPrivadas('juridico')).toBe(true);
+    expect(puedeVerNotasPrivadas('titular')).toBe(true);
+    expect(puedeVerNotasPrivadas('subdireccion')).toBe(true);
+    expect(puedeVerNotasPrivadas('recepcion')).toBe(false);
+    expect(puedeVerNotasPrivadas('umeca')).toBe(false);
+    expect(puedeVerNotasPrivadas(undefined)).toBe(false);
+  });
+
   it('ordena por la última edición, de la más reciente a la más antigua', () => {
-    const base = { fichaId: 'f-1', areaId: 2, contenido: 'Nota', creadoPor: null };
+    const base = { fichaId: 'f-1', areaId: 2, areaNombre: 'Psicología', contenido: 'Nota', creadoPor: null };
     const notas: NotaPrivada[] = [
       { ...base, id: 'a', creadoEn: '2026-11-01T10:00:00Z', actualizadoEn: '2026-11-01T10:00:00Z' },
       { ...base, id: 'b', creadoEn: '2026-10-01T10:00:00Z', actualizadoEn: '2026-11-20T10:00:00Z' },

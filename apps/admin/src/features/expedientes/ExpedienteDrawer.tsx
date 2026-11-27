@@ -18,6 +18,7 @@ import gsap from 'gsap';
 import { Dialog } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
 import type { StaffRole } from '@/domain/models/Auth';
+import { puedeAccederHistorialClinico } from '@/domain/models/FichaRegistro';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
 import { puedeAccederAgresor } from './agresorApi';
 import { ExpedienteContactoSection } from './drawer/ExpedienteContactoSection';
@@ -35,6 +36,7 @@ const loadDerivacionesExpedientePanel = () => import('./DerivacionesExpedientePa
 const loadOrdenesProteccionPanel = () => import('@/features/solicitudes/OrdenesProteccionPanel');
 const loadExpedienteTimeline = () => import('@/features/intervenciones/ExpedienteTimeline');
 const loadNotasPrivadasPanel = () => import('@/features/intervenciones/NotasPrivadasPanel');
+const loadHistorialClinicoPanel = () => import('./HistorialClinicoPanel');
 const AgresorFormSection = lazy(() => loadAgresorFormSection().then((m) => ({ default: m.AgresorFormSection })));
 const DocumentosAdjuntosPanel = lazy(() =>
   loadDocumentosAdjuntosPanel().then((m) => ({ default: m.DocumentosAdjuntosPanel })),
@@ -53,6 +55,9 @@ const ExpedienteTimeline = lazy(() =>
 const NotasPrivadasPanel = lazy(() =>
   loadNotasPrivadasPanel().then((m) => ({ default: m.NotasPrivadasPanel })),
 );
+const HistorialClinicoPanel = lazy(() =>
+  loadHistorialClinicoPanel().then((m) => ({ default: m.HistorialClinicoPanel })),
+);
 
 const TAB_LOADERS: Partial<Record<DrawerTab, () => Promise<unknown>>> = {
   agresor: loadAgresorFormSection,
@@ -61,6 +66,7 @@ const TAB_LOADERS: Partial<Record<DrawerTab, () => Promise<unknown>>> = {
   ordenes: loadOrdenesProteccionPanel,
   seguimiento: loadExpedienteTimeline,
   notas: loadNotasPrivadasPanel,
+  historial: loadHistorialClinicoPanel,
 };
 
 const IDLE_TAB_ORDER: readonly DrawerTab[] = [
@@ -142,18 +148,14 @@ const DrawerSectionPlaceholder = memo(function DrawerSectionPlaceholder({
 
 interface ResumenTabPanelProps {
   expediente: ExpedienteResumen;
-  canManage: boolean;
   contentReady: boolean;
   active: boolean;
-  onDone: () => void;
 }
 
 const ResumenTabPanel = memo(function ResumenTabPanel({
   expediente,
-  canManage,
   contentReady,
   active,
-  onDone,
 }: ResumenTabPanelProps) {
   return (
     <div role="tabpanel" hidden={!active} className={active ? 'grid gap-6' : 'hidden'}>
@@ -215,10 +217,10 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
   originElement = null,
   fromUserInteraction = false,
   userRole,
-  canManage,
   onClose,
 }: Props) {
   const canAccessSensitiveTabs = puedeAccederAgresor(userRole);
+  const canAccessHistorial = puedeAccederHistorialClinico(userRole);
   const hostRef = useRef<HTMLDivElement>(null);
   const bodyInnerRef = useRef<HTMLDivElement>(null);
 
@@ -252,7 +254,8 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
       rawTab === 'canalizaciones' ||
       rawTab === 'ordenes' ||
       rawTab === 'seguimiento' ||
-      rawTab === 'notas'
+      rawTab === 'notas' ||
+      rawTab === 'historial'
       ? rawTab
       : 'resumen';
 
@@ -263,7 +266,10 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     setLocalTab(requestedTab);
   }
 
-  const activeTab: DrawerTab = canAccessSensitiveTabs ? localTab : 'resumen';
+  const activeTab: DrawerTab =
+    !canAccessSensitiveTabs || (localTab === 'historial' && !canAccessHistorial)
+      ? 'resumen'
+      : localTab;
   const activeExpedienteId = (expediente ?? displayed)?.id ?? null;
 
     const [mountedState, setMountedState] = useState<{
@@ -430,13 +436,6 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     setMountedState({ expedienteId: null, tabs: ['resumen'] });
   }, []);
 
-  /** Cierre pedido por la app (botón del pie, archivar): mismo camino que la X del kit. */
-  const requestClose = useCallback(() => {
-    const close = hostRef.current?.querySelector<HTMLButtonElement>('[data-mk-part="close"]');
-    if (close) close.click();
-    else onClose();
-  }, [onClose]);
-
   const handleToggleExpand = useCallback(() => {
     setExpanded((prev) => !prev);
   }, []);
@@ -501,6 +500,7 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
                 <ExpedienteDrawerTabs
                   activeTab={activeTab}
                   canAccessSensitiveTabs={canAccessSensitiveTabs}
+                  canAccessHistorial={canAccessHistorial}
                   onChange={selectTab}
                   onTabIntent={handleTabIntent}
                 />
@@ -514,10 +514,8 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
                 {visitedTabs.includes('resumen') ? (
                   <ResumenTabPanel
                     expediente={activeExpediente}
-                    canManage={canManage}
                     contentReady={contentReady}
                     active={activeTab === 'resumen'}
-                    onDone={requestClose}
                   />
                 ) : null}
 
@@ -582,6 +580,20 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
                     label="Cargando órdenes de protección"
                   >
                     <OrdenesProteccionPanel key={activeExpediente.id} fichaId={activeExpediente.id} />
+                  </LazyTabPanel>
+                ) : null}
+
+                {canAccessHistorial && visitedTabs.includes('historial') ? (
+                  <LazyTabPanel
+                    active={activeTab === 'historial'}
+                    contentReady={contentReady}
+                    label="Cargando historial clínico"
+                  >
+                    <HistorialClinicoPanel
+                      key={activeExpediente.id}
+                      fichaId={activeExpediente.id}
+                      estado={activeExpediente.estado}
+                    />
                   </LazyTabPanel>
                 ) : null}
               </div>

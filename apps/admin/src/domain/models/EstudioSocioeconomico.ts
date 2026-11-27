@@ -129,11 +129,16 @@ export interface EstudioSocioeconomicoDetalle {
   materialOtro: string | null;
   servicios: string[];
   bienes: string[];
+  actualizadoEn?: string | null;
   aportantes: {
     id: string;
     nombre: string;
+    parentescoId?: number | null;
     parentescoNombre: string | null;
+    parentescoOtro?: string | null;
+    ocupacionId?: number | null;
     ocupacionNombre: string | null;
+    ocupacionOtra?: string | null;
     tipoTrabajo: TipoTrabajo | null;
     monto: number | null;
     frecuencia: FrecuenciaIngreso | null;
