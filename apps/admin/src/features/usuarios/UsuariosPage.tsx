@@ -26,12 +26,14 @@ import { UsuarioEstadoDialog } from './UsuarioEstadoDialog';
 import {
   COLUMNS,
   QUICK_FILTERS,
+  ROL_FILTERS,
   RETRY_ACTION,
   ROW_ACTIONS,
   decorateUsuarioRows,
   formatTableDate,
   type UsuarioRow,
   type UsuariosQuickFilter,
+  type UsuariosRolFilter,
 } from './usuariosTableConfig';
 import './usuarios.css';
 
@@ -92,6 +94,24 @@ export default function UsuariosPage() {
     ? (rawFilter as UsuariosQuickFilter)
     : 'todos';
 
+  const rawRol = searchParams.get('rol');
+  const rolFilter: UsuariosRolFilter = ROL_FILTERS.some((f) => f.id === rawRol) ? (rawRol as UsuariosRolFilter) : 'todos';
+
+  const setRolFilter = useCallback(
+    (next: UsuariosRolFilter) => {
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          if (next === 'todos') params.delete('rol');
+          else params.set('rol', next);
+          return params;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
   const setQuickFilter = useCallback(
     (next: UsuariosQuickFilter) => {
       setSearchParams(
@@ -115,14 +135,23 @@ export default function UsuariosPage() {
 
   const counts = useMemo<Record<UsuariosQuickFilter, number>>(() => {
     const list = data ?? [];
-    const next: Record<UsuariosQuickFilter, number> = { todos: list.length, activos: 0, inactivos: 0, externos: 0 };
+    const next: Record<UsuariosQuickFilter, number> = { todos: list.length, activos: 0, inactivos: 0 };
     for (const c of list) {
       if (c.activo) next.activos++;
       else next.inactivos++;
-      if (c.tipo === 'externo') next.externos++;
     }
     return next;
   }, [data]);
+
+  const rolCounts = useMemo<Record<UsuariosRolFilter, number>>(() => {
+    const list = data ?? [];
+    return { todos: list.length, umeca: list.filter((c) => c.rol === 'umeca').length };
+  }, [data]);
+
+  const rolOptions = useMemo(
+    () => ROL_FILTERS.map((f) => ({ value: f.id, label: f.label, count: rolCounts[f.id] })),
+    [rolCounts],
+  );
 
   const filterOptions = useMemo(
     () => QUICK_FILTERS.map((f) => ({ value: f.id, label: f.label, count: counts[f.id] })),
@@ -131,14 +160,13 @@ export default function UsuariosPage() {
 
   const rows: UsuarioRow[] = useMemo(() => {
     const list = data ?? [];
-    const filtered =
+    const porEstado =
       quickFilter === 'activos'
         ? list.filter((c) => c.activo)
         : quickFilter === 'inactivos'
           ? list.filter((c) => !c.activo)
-          : quickFilter === 'externos'
-            ? list.filter((c) => c.tipo === 'externo')
-            : list;
+          : list;
+    const filtered = rolFilter === 'umeca' ? porEstado.filter((c) => c.rol === 'umeca') : porEstado;
     return filtered.map((c) => ({
       id: c.id,
       nombreCompleto: c.id === user?.id ? `${c.nombre} (tú)` : c.nombre,
@@ -147,7 +175,7 @@ export default function UsuariosPage() {
       estado: c.activo ? ESTADO_CUENTA_LABELS.activo : ESTADO_CUENTA_LABELS.inactivo,
       altaLabel: formatTableDate(c.creadoEn),
     }));
-  }, [data, quickFilter, user?.id]);
+  }, [data, quickFilter, rolFilter, user?.id]);
 
   const openEditor = useCallback(
     (cuenta: UsuarioCuenta | null) => {
@@ -238,6 +266,14 @@ export default function UsuariosPage() {
               value={quickFilter}
               defaultValue="todos"
               onChange={(v) => setQuickFilter(v as UsuariosQuickFilter)}
+            />
+            <ToolbarFilterMenu
+              label="Rol"
+              icon="badge"
+              options={rolOptions}
+              value={rolFilter}
+              defaultValue="todos"
+              onChange={(v) => setRolFilter(v as UsuariosRolFilter)}
             />
             <ToolbarPrimaryButton
               label="Nuevo usuario"

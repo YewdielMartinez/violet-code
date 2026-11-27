@@ -64,7 +64,6 @@ export function useUrgencias(areaId?: number | null): UrgenciasState {
 }
 
 function UrgenciaRow({ item, fresh, index }: { item: ListaUrgenciasItem; fresh: boolean; index: number }) {
-  const href = telHref(item.celular);
   const espera = etiquetaEspera(diasDeEspera(item.fechaUltimaPrioridad));
   return (
     <li className={`sp-row sp-row--urgencia${fresh ? ' sp-row--new' : ''}`} style={rowStyle(index)}>
@@ -83,24 +82,6 @@ function UrgenciaRow({ item, fresh, index }: { item: ListaUrgenciasItem; fresh: 
           {espera ? ` · ${espera.toLowerCase()}` : ''}
         </span>
       </Link>
-      <div className="sp-row__actions">
-        {href ? (
-          <a
-            className="sp-act sp-act--tonal"
-            href={href}
-            aria-label={`Llamar a ${item.nombreCompleto}: ${item.celular}`}
-            title={item.celular ?? undefined}
-          >
-            <Icon name="call" />
-            <span>Llamar</span>
-          </a>
-        ) : (
-          <span className="sp-row__nophone" aria-label="Sin celular registrado" title="Sin celular registrado">
-            <Icon name="phone_disabled" />
-            <span>Sin celular</span>
-          </span>
-        )}
-      </div>
     </li>
   );
 }
