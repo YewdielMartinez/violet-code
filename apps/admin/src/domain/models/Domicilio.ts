@@ -36,6 +36,25 @@ export interface DomicilioDetalle {
   zona: ZonaGeografica | null;
 }
 
+export interface DomicilioUpdateInput {
+  personaId: string;
+  actualizadoEn?: string | null;
+  asentamientoId?: number | null;
+  codigoPostal?: string | null;
+  calle?: string | null;
+  numeroExterior?: string | null;
+  numeroInterior?: string | null;
+  referencias?: string | null;
+  zona?: ZonaGeografica | null;
+}
+
+export interface DomicilioActualizadoResult {
+  domicilioId: string;
+  personaId: string;
+  esActual: boolean;
+  actualizadoEn: string;
+}
+
 export const INITIAL_DOMICILIO_INPUT: DomicilioInput = {
   asentamientoId: null,
   codigoPostalForaneo: '',

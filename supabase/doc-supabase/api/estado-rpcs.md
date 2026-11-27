@@ -27,11 +27,11 @@ Corte: 27-nov-2026, rama `develop` con la migración `60_integrar_develop_y_supa
 | [`registrar_consulta`](../rpcs/registrar_consulta.md) | `16` | ✅ | ✅ Expediente y Agresor | |
 | [`archivar_ficha`](../rpcs/archivar_ficha.md) | `18` (última en `38`) | ✅ | ✅ `SupabaseFichaRepository.archive` | El adapter acepta `motivo` opcional; la RPC lo exige. |
 | [`reabrir_ficha`](../rpcs/reabrir_ficha.md) | `38` | ✅ | ✅ `SupabaseFichaRepository.reopen` | |
-| [`actualizar_persona`](../rpcs/actualizar_persona.md) | `35` | ✅ | ❌ | |
-| [`actualizar_ficha`](../rpcs/actualizar_ficha.md) | `35` (última en `59`) | ✅ | ❌ | |
-| [`actualizar_domicilio`](../rpcs/actualizar_domicilio.md) | `49` | ✅ | ❌ | Se quitó el insert directo en `domicilio` de la copia de la hoja; falta exponer la RPC en `SupabaseFichaRepository`. |
-| [`cambiar_prioridad_expediente`](../rpcs/cambiar_prioridad_expediente.md) | `50` | ✅ | ❌ | |
-| [`registrar_estudio_socioeconomico`](../rpcs/registrar_estudio_socioeconomico.md) | `37` | ✅ | ❌ | |
+| [`actualizar_persona`](../rpcs/actualizar_persona.md) | `35` | ✅ | ✅ `SupabaseFichaRepository.actualizarPersona` | |
+| [`actualizar_ficha`](../rpcs/actualizar_ficha.md) | `35` (última en `59`) | ✅ | ✅ `SupabaseFichaRepository.actualizar` | |
+| [`actualizar_domicilio`](../rpcs/actualizar_domicilio.md) | `49` | ✅ | ✅ `SupabaseFichaRepository.actualizarDomicilio` | |
+| [`cambiar_prioridad_expediente`](../rpcs/cambiar_prioridad_expediente.md) | `50` | ✅ | ✅ `SupabaseFichaRepository.cambiarPrioridad` | |
+| [`registrar_estudio_socioeconomico`](../rpcs/registrar_estudio_socioeconomico.md) | `37` | ✅ | ✅ `SupabaseFichaRepository.registrarEstudioSocioeconomico` | |
 | *(desactivar ficha)* | — | — | ⚠️ `@deprecated` | `SupabaseFichaRepository.deactivate` quedó marcado `@deprecated` (sin RPC; RLS bloquea `42501`). |
 
 ### Agresor
@@ -45,8 +45,8 @@ Corte: 27-nov-2026, rama `develop` con la migración `60_integrar_develop_y_supa
 
 | RPC | Migración | Base de datos | Admin (adapters) | Nota |
 |---|---|---|---|---|
-| [`get_historial_clinico`](../rpcs/get_historial_clinico.md) | `37` | ✅ | ❌ | No hay adapter de historial clínico. |
-| [`guardar_historial_clinico`](../rpcs/guardar_historial_clinico.md) | `37` | ✅ | ❌ | |
+| [`get_historial_clinico`](../rpcs/get_historial_clinico.md) | `37` | ✅ | ✅ `SupabaseHistorialClinicoRepository.obtener` | |
+| [`guardar_historial_clinico`](../rpcs/guardar_historial_clinico.md) | `37` | ✅ | ✅ `SupabaseHistorialClinicoRepository.guardar` | |
 
 ### Agenda y citas
 

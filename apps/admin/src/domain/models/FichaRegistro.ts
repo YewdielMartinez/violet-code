@@ -1,4 +1,6 @@
 import type { Database } from '@/infrastructure/supabase/database.types';
+import type { TipoDroga } from './Agresor';
+import type { PrioridadNivel } from './Cita';
 import type { DomicilioDetalle, DomicilioInput } from './Domicilio';
 import type {
   EstudioSocioeconomicoDetalle,
@@ -10,6 +12,7 @@ import type { PreRegistroMovil } from './PreRegistroMovil';
 export type EstadoCivil = Database['public']['Enums']['estado_civil'];
 export type EscolaridadNivel = Database['public']['Enums']['escolaridad_nivel'];
 export type ServicioMedico = Database['public']['Enums']['servicio_medico'];
+export type ConsumoAlcohol = Database['public']['Enums']['consumo_alcohol'];
 
 export const ESTADO_CIVIL_LABELS: Record<EstadoCivil, string> = {
   soltero: 'Soltera(o)',
@@ -103,6 +106,69 @@ export interface FichaCompletaDetalle {
   persona: PersonaResumen;
   domicilio: DomicilioDetalle | null;
   estudio: EstudioSocioeconomicoDetalle | null;
+}
+
+export type CampoSinDatoFicha =
+  | 'estado_civil'
+  | 'ocupacion_id'
+  | 'tiene_trabajo'
+  | 'numero_hijas'
+  | 'numero_hijos_hombres'
+  | 'servicio_medico'
+  | 'tiene_embarazo'
+  | 'tiene_denuncia'
+  | 'es_victima_delito'
+  | 'drogas'
+  | 'consumo_alcohol';
+
+export interface FichaUpdateInput {
+  fichaId: string;
+  actualizadoEn: string;
+  estadoCivil?: EstadoCivil | null;
+  ocupacionId?: number | null;
+  ocupacionOtra?: string | null;
+  tieneTrabajo?: boolean | null;
+  numeroHijas?: number | null;
+  numeroHijosHombres?: number | null;
+  servicioMedico?: ServicioMedico | null;
+  servicioMedicoOtro?: string | null;
+  tieneEmbarazo?: boolean | null;
+  tieneDenuncia?: boolean | null;
+  esVictimaDelito?: boolean | null;
+  drogas?: TipoDroga[] | null;
+  especificacionDroga?: string | null;
+  consumoAlcohol?: ConsumoAlcohol | null;
+  serviciosSolicitadosAreaIds?: number[] | null;
+  camposSinDato?: CampoSinDatoFicha[] | null;
+}
+
+export interface FichaActualizada {
+  id: string;
+  folio: string;
+  personaId: string;
+  estado: EstadoFicha;
+  estadoCivil: EstadoCivil | null;
+  ocupacionId: number | null;
+  ocupacionOtra: string | null;
+  tieneTrabajo: boolean | null;
+  numeroHijas: number | null;
+  numeroHijosHombres: number | null;
+  servicioMedico: ServicioMedico | null;
+  servicioMedicoOtro: string | null;
+  tieneEmbarazo: boolean | null;
+  tieneDenuncia: boolean | null;
+  esVictimaDelito: boolean | null;
+  drogas: TipoDroga[] | null;
+  especificacionDroga: string | null;
+  consumoAlcohol: ConsumoAlcohol | null;
+  serviciosSolicitadosAreaIds: number[];
+  actualizadoEn: string;
+}
+
+export interface CambiarPrioridadExpedienteResult {
+  fichaId: string;
+  prioridad: PrioridadNivel;
+  prioridadActualizadaEn: string;
 }
 
 export const INITIAL_FICHA_IDENTIDAD: FichaIdentidadInput = {

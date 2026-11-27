@@ -83,6 +83,40 @@ export interface EstudioSocioeconomicoInput {
   aportantes: AportanteHogarInput[];
 }
 
+export interface AportanteRegistroInput {
+  nombre?: string | null;
+  parentescoId?: number | null;
+  parentescoOtro?: string | null;
+  ocupacionId?: number | null;
+  ocupacionOtra?: string | null;
+  tipoTrabajo?: TipoTrabajo | null;
+  monto?: number | null;
+  frecuencia?: FrecuenciaIngreso | null;
+}
+
+export interface EstudioSocioeconomicoRegistroInput {
+  fichaId: string;
+  ingresoMensualPropio?: number | null;
+  numeroDependientes?: number | null;
+  tieneApoyo?: boolean;
+  especificacionApoyo?: string | null;
+  tipoVivienda?: TipoVivienda | null;
+  material?: MaterialVivienda | null;
+  materialOtro?: string | null;
+  servicios?: ServicioVivienda[] | null;
+  bienes?: BienVivienda[] | null;
+  aportantes?: AportanteRegistroInput[];
+}
+
+export interface EstudioSocioeconomicoRegistradoResult {
+  estudioId: string;
+  fichaId: string;
+  fechaEstudio: string;
+  esActual: boolean;
+  fueCorreccion: boolean;
+  actualizadoEn: string;
+}
+
 export interface EstudioSocioeconomicoDetalle {
   id: string;
   fechaEstudio: string;

@@ -1,20 +1,49 @@
 import { supabase } from '../client';
 import type { Json } from '../database.types';
-import type { DomicilioDetalle, ZonaGeografica } from '@/domain/models/Domicilio';
+import { mapSupabaseError } from './errors';
+import {
+  mapDomicilioActualizadoRow,
+  mapEstudioRegistradoRow,
+  mapFichaActualizadaRow,
+  mapPersonaActualizadaRow,
+  toActualizarDomicilioArgs,
+  toActualizarFichaArgs,
+  toActualizarPersonaArgs,
+  toRegistrarEstudioArgs,
+} from './fichaEdicion.mapper';
+import type { PrioridadNivel } from '@/domain/models/Cita';
+import type {
+  DomicilioActualizadoResult,
+  DomicilioDetalle,
+  DomicilioUpdateInput,
+  ZonaGeografica,
+} from '@/domain/models/Domicilio';
 import type {
   EstudioSocioeconomicoDetalle,
+  EstudioSocioeconomicoRegistradoResult,
+  EstudioSocioeconomicoRegistroInput,
   FrecuenciaIngreso,
   MaterialVivienda,
   TipoTrabajo,
   TipoVivienda,
 } from '@/domain/models/EstudioSocioeconomico';
 import type {
+  CambiarPrioridadExpedienteResult,
   EstadoCivil,
+  FichaActualizada,
   FichaCompletaDetalle,
   FichaCreateInput,
+  FichaUpdateInput,
   ServicioMedico,
 } from '@/domain/models/FichaRegistro';
-import { formatFullName, normalizeCurp, type EstadoFicha, type SexoBiologico } from '@/domain/models/Persona';
+import {
+  formatFullName,
+  normalizeCurp,
+  type EstadoFicha,
+  type PersonaActualizada,
+  type PersonaUpdateInput,
+  type SexoBiologico,
+} from '@/domain/models/Persona';
 import type { CreatedFichaResult, FichaRepository } from '@/domain/ports/FichaRepository';
 
 interface RpcDetallePayload {
@@ -214,6 +243,79 @@ export const supabaseFichaRepository: FichaRepository = {
     }
 
     return mapDetallePayload(data as unknown as RpcDetallePayload);
+  },
+
+  async actualizarPersona(input: PersonaUpdateInput): Promise<PersonaActualizada> {
+    const { data, error } = await supabase.rpc('actualizar_persona', toActualizarPersonaArgs(input));
+
+    if (error) throw mapSupabaseError(error);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió los datos actualizados de la persona.');
+    }
+    return mapPersonaActualizadaRow(row);
+  },
+
+  async actualizar(input: FichaUpdateInput): Promise<FichaActualizada> {
+    const { data, error } = await supabase.rpc('actualizar_ficha', toActualizarFichaArgs(input));
+
+    if (error) throw mapSupabaseError(error);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió los datos actualizados del expediente.');
+    }
+    return mapFichaActualizadaRow(row);
+  },
+
+  async actualizarDomicilio(input: DomicilioUpdateInput): Promise<DomicilioActualizadoResult> {
+    const { data, error } = await supabase.rpc(
+      'actualizar_domicilio',
+      toActualizarDomicilioArgs(input),
+    );
+
+    if (error) throw mapSupabaseError(error);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió el domicilio actualizado.');
+    }
+    return mapDomicilioActualizadoRow(row);
+  },
+
+  async cambiarPrioridad(
+    fichaId: string,
+    prioridad: PrioridadNivel,
+  ): Promise<CambiarPrioridadExpedienteResult> {
+    const { data, error } = await supabase.rpc('cambiar_prioridad_expediente', {
+      p_ficha_id: fichaId,
+      p_prioridad: prioridad,
+    });
+
+    if (error) throw mapSupabaseError(error);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió la prioridad actualizada del expediente.');
+    }
+    return {
+      fichaId: row.ficha_id,
+      prioridad: row.prioridad,
+      prioridadActualizadaEn: row.prioridad_actualizada_en,
+    };
+  },
+
+  async registrarEstudioSocioeconomico(
+    input: EstudioSocioeconomicoRegistroInput,
+  ): Promise<EstudioSocioeconomicoRegistradoResult> {
+    const { data, error } = await supabase.rpc(
+      'registrar_estudio_socioeconomico',
+      toRegistrarEstudioArgs(input),
+    );
+
+    if (error) throw mapSupabaseError(error);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió el estudio socioeconómico registrado.');
+    }
+    return mapEstudioRegistradoRow(row);
   },
 
   async archive(fichaId: string, motivo?: string): Promise<void> {
