@@ -77,8 +77,8 @@ begin
     (v_fic_1, 'SEM-TEST20-01', v_per_1, now(), v_uid_ts);
 
   -- 6 tipos de evento para la ficha
-  insert into public.cita (persona_id, area_id, programada_en, estado, motivo_cancelacion, prioridad, origen, creado_por) values
-    (v_per_1, v_area_ts, now() - interval '3 days', 'cancelada', 'SECRETO_CITA_TS', 'media', 'regular', v_uid_rec);
+  insert into public.cita (persona_id, area_id, programada_en, estado, motivo_cancelacion, origen, creado_por) values
+    (v_per_1, v_area_ts, now() - interval '3 days', 'cancelada', 'SECRETO_CITA_TS', 'regular', v_uid_rec);
 
   insert into public.atencion (ficha_id, area_id, tipo_atencion_id, atendida_por, atendida_en, acciones_realizadas, creado_por) values
     (v_fic_1, v_area_ts,   v_tipo_ts,   v_uid_ts,   now() - interval '2 days', 'SECRETO_ATENCION_TS',   v_uid_ts),

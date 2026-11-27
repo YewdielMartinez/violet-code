@@ -78,8 +78,8 @@ begin
     (v_per_urg, 'TETU910315MSLRRR02', 'UrgenciaNombre', 'Prueba', '6681002002', v_uid_ts);
 
   -- Cita agendada en TS para comprobar get_agenda
-  insert into public.cita (persona_id, area_id, programada_en, estado, prioridad, origen, creado_por) values
-    (v_per_ag, v_area_ts, now() + interval '2 days', 'agendada', 'media', 'regular', v_uid_rec);
+  insert into public.cita (persona_id, area_id, programada_en, estado, origen, creado_por) values
+    (v_per_ag, v_area_ts, now() + interval '2 days', 'agendada', 'regular', v_uid_rec);
 
   -- Ficha + atención prioridad alta sin cita futura para comprobar get_lista_urgencias
   insert into public.ficha_registro (id, folio, persona_id, aviso_privacidad_aceptado_en, creado_por) values

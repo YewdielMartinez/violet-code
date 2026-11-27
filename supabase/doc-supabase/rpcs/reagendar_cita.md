@@ -1,6 +1,6 @@
 # RPC: `public.reagendar_cita`
 
-- **Migración:** `supabase/migrations/20261126001300_23_rpc_reagendar_y_urgencias.sql`
+- **Migración:** `supabase/migrations/20261128001100_50_prioridad_en_expediente.sql` *(actualiza `47_tiene_permiso_agenda_alertas.sql` y `23_rpc_reagendar_y_urgencias.sql`)*
 - **Cubre:** `RF-06`, `RN-04`, `RN-06` (SF-07)
 
 ## Actores autorizados
@@ -14,7 +14,6 @@
   p_cita_id: string;
   p_nueva_fecha: string;                // ISO 8601 en el futuro (> now())
   p_motivo?: string | null;             // Opcional (<= 500 chars)
-  p_prioridad?: PrioridadNivel | null;  // Si es null, copia la de la cita original
 }
 ```
 

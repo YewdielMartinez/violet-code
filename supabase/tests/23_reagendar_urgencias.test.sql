@@ -74,10 +74,10 @@ begin
     (v_fic_3, 'SEM-URG-0003', v_per_3, 'en_seguimiento', now(), v_uid_ts);
 
   -- Citas de prueba
-  insert into public.cita (id, persona_id, area_id, programada_en, estado, prioridad, recomendada_por, creado_por) values
-    ('92000000-0000-4000-a000-000000000301', v_per_2, v_area_psic, '2099-07-01T10:00:00-07:00', 'agendada',  'alta', 'TS', v_uid_rec),
-    ('92000000-0000-4000-a000-000000000302', v_per_2, v_area_jur,  '2099-07-02T11:00:00-07:00', 'agendada',  'baja', null, v_uid_jur),
-    ('92000000-0000-4000-a000-000000000303', v_per_3, v_area_ts,   '2099-07-03T12:00:00-07:00', 'cancelada', null, null, v_uid_rec);
+  insert into public.cita (id, persona_id, area_id, programada_en, estado, recomendada_por, creado_por) values
+    ('92000000-0000-4000-a000-000000000301', v_per_2, v_area_psic, '2099-07-01T10:00:00-07:00', 'agendada',  'TS', v_uid_rec),
+    ('92000000-0000-4000-a000-000000000302', v_per_2, v_area_jur,  '2099-07-02T11:00:00-07:00', 'agendada',  null, v_uid_jur),
+    ('92000000-0000-4000-a000-000000000303', v_per_3, v_area_ts,   '2099-07-03T12:00:00-07:00', 'cancelada', null, v_uid_rec);
 
   -- Atenciones para probar get_lista_urgencias
   insert into public.atencion (ficha_id, area_id, tipo_atencion_id, atendida_en, prioridad, creado_por) values
@@ -147,7 +147,6 @@ select ok(
       and old_c.motivo_cancelacion = 'Cambio de horario'
       and new_c.estado = 'agendada'
       and new_c.reagendada_de = '92000000-0000-4000-a000-000000000301'
-      and new_c.prioridad = 'alta'
       and new_c.recomendada_por = 'TS'
    from public.cita old_c
    join public.cita new_c on new_c.reagendada_de = old_c.id

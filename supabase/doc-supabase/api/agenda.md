@@ -59,7 +59,6 @@ interface AgendaRow {
   cita_id: string;
   programada_en: string;
   estado: EstadoCita;
-  prioridad: 'alta' | 'media' | 'baja' | null;
   area_id: number;
   area_clave: 'trabajo_social' | 'psicologia' | 'juridico' | string;
   recomendada_por: string | null;
@@ -136,7 +135,7 @@ const { data, error } = await supabase
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| Empleado activo + alcance de área | Todos los empleados (ver tabla de alcance) | Escritura | Sí, por trigger | `_23_rpc_reagendar_y_urgencias` |
+| `agenda.gestionar` + alcance de área | Todos los empleados (ver tabla de alcance) | Escritura | Sí, por trigger | `_50_prioridad_en_expediente` |
 
 **Llamada**
 
@@ -146,7 +145,6 @@ const { data, error } = await supabase
     p_cita_id: citaId,
     p_nueva_fecha: '2026-12-02T09:30:00-07:00',
     p_motivo: 'Cambio de horario laboral',
-    p_prioridad: null,   // null = conserva la prioridad de la cita original
   })
   .single();
 ```

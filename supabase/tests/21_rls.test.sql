@@ -63,11 +63,11 @@ begin
 
   -- Citas fijas por área (TS, Psicología, Jurídico)
   insert into public.cita (
-    id, persona_id, area_id, programada_en, prioridad, estado, origen, creado_por
+    id, persona_id, area_id, programada_en, estado, origen, creado_por
   ) values
-    ('cccccccc-2100-4000-8000-000000000001', v_per_1, v_area_ts,   now() + interval '10 days', 'media', 'agendada', 'regular', v_uid_ts),
-    ('cccccccc-2100-4000-8000-000000000002', v_per_1, v_area_psic, now() + interval '11 days', 'media', 'agendada', 'regular', v_uid_psic),
-    ('cccccccc-2100-4000-8000-000000000003', v_per_1, v_area_jur,  now() + interval '12 days', 'media', 'agendada', 'regular', v_uid_jur)
+    ('cccccccc-2100-4000-8000-000000000001', v_per_1, v_area_ts,   now() + interval '10 days', 'agendada', 'regular', v_uid_ts),
+    ('cccccccc-2100-4000-8000-000000000002', v_per_1, v_area_psic, now() + interval '11 days', 'agendada', 'regular', v_uid_psic),
+    ('cccccccc-2100-4000-8000-000000000003', v_per_1, v_area_jur,  now() + interval '12 days', 'agendada', 'regular', v_uid_jur)
   on conflict (id) do nothing;
 
   -- Atenciones fijas por área (TS, Psicología, Jurídico)

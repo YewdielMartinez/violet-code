@@ -31,8 +31,8 @@ select ok(
 );
 
 select ok(
-  pg_get_functiondef('public.reagendar_cita(uuid, timestamptz, text, public.prioridad_nivel)'::regprocedure) ~* 'tiene_permiso\(''agenda\.gestionar''\)'
-  and pg_get_functiondef('public.reagendar_cita(uuid, timestamptz, text, public.prioridad_nivel)'::regprocedure) !~* 'e\.rol\s+in',
+  pg_get_functiondef('public.reagendar_cita(uuid, timestamptz, text)'::regprocedure) ~* 'tiene_permiso\(''agenda\.gestionar''\)'
+  and pg_get_functiondef('public.reagendar_cita(uuid, timestamptz, text)'::regprocedure) !~* 'e\.rol\s+in',
   'reagendar_cita usa tiene_permiso(agenda.gestionar) sin e.rol in'
 );
 

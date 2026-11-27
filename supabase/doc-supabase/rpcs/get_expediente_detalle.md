@@ -1,6 +1,6 @@
 # `get_expediente_detalle`
 
-- **Migración:** [`20261128000900_48_edad_en_expediente.sql`](../../migrations/20261128000900_48_edad_en_expediente.sql) *(actualiza [`20261126000800_18_rpc_detalle_y_archivo.sql`](../../migrations/20261126000800_18_rpc_detalle_y_archivo.sql))*
+- **Migración:** [`20261128001100_50_prioridad_en_expediente.sql`](../../migrations/20261128001100_50_prioridad_en_expediente.sql) *(actualiza [`20261128000900_48_edad_en_expediente.sql`](../../migrations/20261128000900_48_edad_en_expediente.sql) y [`20261126000800_18_rpc_detalle_y_archivo.sql`](../../migrations/20261126000800_18_rpc_detalle_y_archivo.sql))*
 - **Permiso RBAC:** `tiene_permiso('expediente.ver')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico` (`recepcion` y `umeca` denegados).
 
@@ -12,7 +12,7 @@
 
 ## 2. Salida
 Objeto `jsonb` único con:
-- `ficha`: datos de `ficha_registro` + `ocupacion_nombre`.
+- `ficha`: datos de `ficha_registro` (incluyendo `prioridad` y `prioridad_actualizada_en`) + `ocupacion_nombre`.
 - `persona`: datos de `persona` + `edad` calculada en servidor (`calcular_edad()`).
 - `servicios_solicitados`: arreglo `{ area_id, clave, nombre }`.
 - `domicilio_actual`: domicilio actual activo (o `null`).

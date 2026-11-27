@@ -262,7 +262,9 @@ const { data, error } = await supabase.rpc('get_expediente_detalle', {
 ```ts
 interface ExpedienteDetalle {
   ficha: {
-    id: string; folio: string; estado: EstadoFicha; registrada_en: string;
+    id: string; folio: string; estado: EstadoFicha;
+    prioridad: 'alta' | 'media' | 'baja' | null; prioridad_actualizada_en: string | null;
+    registrada_en: string;
     aviso_privacidad_aceptado_en: string; estado_civil: EstadoCivil | null;
     ocupacion_id: number | null; ocupacion_nombre: string | null; ocupacion_otra: string | null;
     tiene_trabajo: boolean | null; servicio_medico: ServicioMedico | null; servicio_medico_otro: string | null;
@@ -444,3 +446,33 @@ const { error } = await supabase.rpc('registrar_consulta', {
 **Errores:** `42501` (sin sesión, inactivo) · `23514` (tabla no permitida o id vacío).
 
 **En el front:** `SupabaseAgresorRepository.registrarConsulta` y `SupabaseExpedienteRepository.registerConsult`. Esta última quedará de sobra cuando el detalle use `get_expediente_detalle`.
+
+
+---
+
+## `cambiar_prioridad_expediente`
+
+> Actualiza la prioridad operativa del expediente (`ficha_registro.prioridad` y `prioridad_actualizada_en`). Disponible para todos los roles operativos excepto Recepción, UMECA y app.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+|---|---|---|---|---|
+| `expediente.ver` | Tit, Sub, TS, Psi, Jur | Escritura | Sí (`'actualizar'` sobre `ficha_registro`) | `_50_prioridad_en_expediente` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('cambiar_prioridad_expediente', {
+    p_ficha_id: fichaId,
+    p_prioridad: 'alta',
+  })
+  .single();
+// data: { ficha_id, prioridad, prioridad_actualizada_en }
+```
+
+**Errores**
+
+| Código | Cuándo | Mensaje UI |
+|---|---|---|
+| `42501` | Recepción, UMECA, app, inactivo o sin sesión | Fijo de permiso |
+| `23514` | `p_ficha_id` nulo, expediente inexistente/inactivo o expediente archivado | `error.message` |
