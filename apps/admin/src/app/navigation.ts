@@ -78,15 +78,6 @@ export const NAVIGATION: NavPage[] = [
     allowedRoles: DIRECTION_ONLY,
   },
   {
-    path: '/directorio',
-    label: 'Directorio',
-    title: 'Directorio y Puntos Violeta',
-    icon: 'location_on',
-    ready: true,
-    mobile: true,
-    allowedRoles: ALL_EMPLOYEES,
-  },
-  {
     path: '/usuarios',
     label: 'Usuarios',
     icon: 'manage_accounts',
