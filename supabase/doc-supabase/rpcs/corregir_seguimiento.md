@@ -1,6 +1,6 @@
 # `corregir_seguimiento`
 
-- **Migración:** [`20261127001100_43_corregir_seguimiento.sql`](../../migrations/20261127001100_43_corregir_seguimiento.sql)
+- **Migración:** [`20261128000400_43_corregir_seguimiento.sql`](../../migrations/20261128000400_43_corregir_seguimiento.sql)
 - **Permiso RBAC:** `seguimiento.corregir` (`titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico`).
 - **Regla ABAC:**
   - Personal de área (`trabajo_social`, `psicologia`, `juridico`): solo puede corregir atenciones **creadas por él mismo** y **el mismo día** (`America/Mazatlan`).
