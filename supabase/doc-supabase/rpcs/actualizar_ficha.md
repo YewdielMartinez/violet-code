@@ -1,6 +1,6 @@
 # RPC: `public.actualizar_ficha`
 
-- **Migración:** `supabase/migrations/20261128001500_57_ficha_campos_opcionales.sql` *(actualiza `_35_`)*
+- **Migración:** `supabase/migrations/20261128001600_58_consumo_como_lista.sql` *(actualiza `_35_`, `_57_`)*
 - **Cubre:** `RF-01`, `RN-08`, `RN-15.1` (Sprint 02 · A-03)
 
 ## Actores autorizados
@@ -23,10 +23,9 @@
   p_tiene_embarazo?: boolean | null;
   p_tiene_denuncia?: boolean | null;
   p_es_victima_delito?: boolean | null;
-  p_tiene_consumo_droga?: boolean | null;
-  p_drogas?: TipoDroga[] | null;
+  p_drogas?: TipoDroga[] | null;         // 'no_consume' es exclusivo en la lista
   p_especificacion_droga?: string | null;
-  p_tiene_consumo_alcohol?: boolean | null;
+  p_consumo_alcohol?: ConsumoAlcohol | null; // 'no_consume' | 'ocasional' | 'frecuente'
   p_servicios_solicitados_area_ids?: number[] | null; // null conserva; [] vacía los servicios solicitados
 }
 ```

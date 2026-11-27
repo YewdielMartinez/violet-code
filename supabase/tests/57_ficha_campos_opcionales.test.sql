@@ -55,8 +55,8 @@ create temp table pg_temp.res_act (
   tiene_trabajo boolean, numero_hijas smallint, numero_hijos_hombres smallint,
   servicio_medico public.servicio_medico, servicio_medico_otro text,
   tiene_embarazo boolean, tiene_denuncia boolean, es_victima_delito boolean,
-  tiene_consumo_droga boolean, drogas public.tipo_droga[], especificacion_droga text,
-  tiene_consumo_alcohol boolean, servicios_solicitados_area_ids smallint[],
+  drogas public.tipo_droga[], especificacion_droga text,
+  consumo_alcohol public.consumo_alcohol, servicios_solicitados_area_ids smallint[],
   actualizado_en timestamptz
 ) on commit drop;
 create temp table pg_temp.res_agr (
@@ -66,8 +66,8 @@ create temp table pg_temp.res_agr (
   asentamiento_id integer, codigo_postal text, calle text, numero_exterior text,
   numero_interior text, referencias text, zona public.zona_geografica,
   ocupacion_id smallint, ocupacion_otra text, tipo_trabajo public.tipo_trabajo,
-  tiene_consumo_droga boolean, drogas public.tipo_droga[], especificacion_droga text,
-  tiene_consumo_alcohol boolean, especificacion_arma text, observaciones text,
+  drogas public.tipo_droga[], especificacion_droga text,
+  consumo_alcohol public.consumo_alcohol, especificacion_arma text, observaciones text,
   activo boolean, actualizado_en timestamptz
 ) on commit drop;
 create temp table pg_temp.res_est (
@@ -190,7 +190,7 @@ select *
 from public.actualizar_ficha(
   '57000000-0000-4000-a000-000000000201',
   (select actualizado_en from public.ficha_registro where id = '57000000-0000-4000-a000-000000000201'),
-  null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+  null, null, null, null, null, null, null, null, null, null, null, null, null, null,
   null
 );
 
@@ -206,7 +206,7 @@ select *
 from public.actualizar_ficha(
   '57000000-0000-4000-a000-000000000201',
   (select actualizado_en from public.ficha_registro where id = '57000000-0000-4000-a000-000000000201'),
-  null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+  null, null, null, null, null, null, null, null, null, null, null, null, null, null,
   '{}'::smallint[]
 );
 
@@ -229,7 +229,7 @@ select ok(
 set local role authenticated;
 
 select throws_ok(
-  $$select * from public.actualizar_ficha('57000000-0000-4000-a000-000000000201', (select actualizado_en from public.ficha_registro where id = '57000000-0000-4000-a000-000000000201'), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, array[9999]::smallint[])$$,
+  $$select * from public.actualizar_ficha('57000000-0000-4000-a000-000000000201', (select actualizado_en from public.ficha_registro where id = '57000000-0000-4000-a000-000000000201'), null, null, null, null, null, null, null, null, null, null, null, null, null, null, array[9999]::smallint[])$$,
   '23514', null, 'actualizar_ficha sigue rechazando area inexistente'
 );
 

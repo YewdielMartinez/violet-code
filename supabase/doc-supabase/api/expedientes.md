@@ -10,39 +10,78 @@ Flujo típico: **verificar CURP** → (si es nueva) **crear ficha** → **abrir 
 
 > Una sola llamada para el diálogo "Verificar CURP": dice si la persona ya tiene expediente, si existe sin ficha, si se pre-registró en la app o si es nueva.
 
-| Permiso | Roles | Tipo | Bitácora | Migración |
-|---|---|---|---|---|
+| Permiso                     | Roles                       | Tipo    | Bitácora                                        | Migración                      |
+| --------------------------- | --------------------------- | ------- | ----------------------------------------------- | ------------------------------ |
 | `expediente.verificar_curp` | Todos los empleados activos | Lectura | Sí: `'ver'` sobre `persona` cuando la encuentra | `_17_rpc_busqueda_expedientes` |
 
 **Llamada**
 
 ```ts
 const { data, error } = await supabase
-  .rpc('verificar_curp', { p_curp: curp.trim().toUpperCase() })
+  .rpc("verificar_curp", { p_curp: curp.trim().toUpperCase() })
   .single();
 ```
 
 **Parámetros**
 
-| Parámetro | Tipo | Obligatorio | Regla |
-|---|---|---|---|
-| `p_curp` | `string` | Sí | CURP oficial de 18 caracteres. La RPC la pasa a mayúsculas y quita espacios. |
+| Parámetro | Tipo     | Obligatorio | Regla                                                                        |
+| --------- | -------- | ----------- | ---------------------------------------------------------------------------- |
+| `p_curp`  | `string` | Sí          | CURP oficial de 18 caracteres. La RPC la pasa a mayúsculas y quita espacios. |
 
 **Respuesta** (siempre 1 fila)
 
 ```ts
 type VerificarCurpRow =
-  | { resultado: 'expediente_existente'; persona_id: string; ficha_id: string | null; folio: string; estado: EstadoFicha | null; nombre_completo: string; pre_registro_id: null }
-  | { resultado: 'persona_sin_ficha';    persona_id: string; ficha_id: null; folio: null; estado: null; nombre_completo: string; pre_registro_id: null }
-  | { resultado: 'pre_registro_movil';   persona_id: null;   ficha_id: null; folio: null; estado: null; nombre_completo: string; pre_registro_id: string }
-  | { resultado: 'nuevo';                persona_id: null;   ficha_id: null; folio: null; estado: null; nombre_completo: null;   pre_registro_id: null };
+  | {
+      resultado: "expediente_existente";
+      persona_id: string;
+      ficha_id: string | null;
+      folio: string;
+      estado: EstadoFicha | null;
+      nombre_completo: string;
+      pre_registro_id: null;
+    }
+  | {
+      resultado: "persona_sin_ficha";
+      persona_id: string;
+      ficha_id: null;
+      folio: null;
+      estado: null;
+      nombre_completo: string;
+      pre_registro_id: null;
+    }
+  | {
+      resultado: "pre_registro_movil";
+      persona_id: null;
+      ficha_id: null;
+      folio: null;
+      estado: null;
+      nombre_completo: string;
+      pre_registro_id: string;
+    }
+  | {
+      resultado: "nuevo";
+      persona_id: null;
+      ficha_id: null;
+      folio: null;
+      estado: null;
+      nombre_completo: null;
+      pre_registro_id: null;
+    };
 ```
 
 Ejemplo:
 
 ```json
-{ "resultado": "expediente_existente", "persona_id": "3333…11", "ficha_id": "5555…11",
-  "folio": "SEM-2026-0091", "estado": "abierto", "nombre_completo": "Lucía Fernanda Álvarez Méndez", "pre_registro_id": null }
+{
+  "resultado": "expediente_existente",
+  "persona_id": "3333…11",
+  "ficha_id": "5555…11",
+  "folio": "SEM-2026-0091",
+  "estado": "abierto",
+  "nombre_completo": "Lucía Fernanda Álvarez Méndez",
+  "pre_registro_id": null
+}
 ```
 
 **Comportamiento**
@@ -54,10 +93,10 @@ Ejemplo:
 
 **Errores**
 
-| Código | Cuándo | Mensaje UI |
-|---|---|---|
-| `42501` | Sin sesión, inactivo, UMECA o usuaria de la app | Fijo de permiso |
-| `23514` | La CURP no tiene formato válido | `error.message` ("La CURP no tiene un formato válido") |
+| Código  | Cuándo                                          | Mensaje UI                                             |
+| ------- | ----------------------------------------------- | ------------------------------------------------------ |
+| `42501` | Sin sesión, inactivo, UMECA o usuaria de la app | Fijo de permiso                                        |
+| `23514` | La CURP no tiene formato válido                 | `error.message` ("La CURP no tiene un formato válido") |
 
 **En el front:** `SupabaseExpedienteRepository.verifyByCurp` (hoy hace un join REST; cambiar a esta RPC) · hook `expedientes/useVerifyCurp`.
 
@@ -67,15 +106,15 @@ Ejemplo:
 
 > Busca en todo el historial por CURP, folio o nombre, sin bajar todas las fichas al navegador.
 
-| Permiso | Roles | Tipo | Bitácora | Migración |
-|---|---|---|---|---|
-| `expediente.ver` | Tit, Sub, TS, Psi, Jur | Lectura | No | `_17_rpc_busqueda_expedientes` |
+| Permiso          | Roles                  | Tipo    | Bitácora | Migración                      |
+| ---------------- | ---------------------- | ------- | -------- | ------------------------------ |
+| `expediente.ver` | Tit, Sub, TS, Psi, Jur | Lectura | No       | `_17_rpc_busqueda_expedientes` |
 
 **Llamada**
 
 ```ts
-const { data, error } = await supabase.rpc('buscar_expedientes', {
-  p_termino: 'lucia alvarez',
+const { data, error } = await supabase.rpc("buscar_expedientes", {
+  p_termino: "lucia alvarez",
   p_limite: 20,
   p_incluir_archivados: false,
 });
@@ -83,11 +122,11 @@ const { data, error } = await supabase.rpc('buscar_expedientes', {
 
 **Parámetros**
 
-| Parámetro | Tipo | Obligatorio | Regla |
-|---|---|---|---|
-| `p_termino` | `string` | Sí | Mínimo 3 caracteres. Se detecta el tipo: 18 caracteres alfanuméricos = CURP exacta; empieza con `SEM-` = folio (prefijo); otro = nombre. |
-| `p_limite` | `number` | No | Default 20. Se ajusta solo a `1..100` (no da error). |
-| `p_incluir_archivados` | `boolean` | No | Default `false`. |
+| Parámetro              | Tipo      | Obligatorio | Regla                                                                                                                                    |
+| ---------------------- | --------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `p_termino`            | `string`  | Sí          | Mínimo 3 caracteres. Se detecta el tipo: 18 caracteres alfanuméricos = CURP exacta; empieza con `SEM-` = folio (prefijo); otro = nombre. |
+| `p_limite`             | `number`  | No          | Default 20. Se ajusta solo a `1..100` (no da error).                                                                                     |
+| `p_incluir_archivados` | `boolean` | No          | Default `false`.                                                                                                                         |
 
 **Respuesta** (arreglo)
 
@@ -99,11 +138,11 @@ interface BuscarExpedientesRow {
   persona_id: string;
   curp: string;
   nombre_completo: string;
-  sexo: 'H' | 'M';
-  fecha_nacimiento: string;          // 'YYYY-MM-DD'
+  sexo: "H" | "M";
+  fecha_nacimiento: string; // 'YYYY-MM-DD'
   en_lista_urgencias: boolean;
-  coincidencia: 'curp' | 'folio' | 'nombre';
-  similitud: number;                 // 1.0 en CURP/folio; 0..1 en nombre
+  coincidencia: "curp" | "folio" | "nombre";
+  similitud: number; // 1.0 en CURP/folio; 0..1 en nombre
 }
 ```
 
@@ -115,12 +154,12 @@ interface BuscarExpedientesRow {
 
 **Errores**
 
-| Código | Cuándo | Mensaje UI |
-|---|---|---|
-| `42501` | Recepción, UMECA, app, inactivo | Fijo de permiso |
+| Código  | Cuándo                            | Mensaje UI                                                  |
+| ------- | --------------------------------- | ----------------------------------------------------------- |
+| `42501` | Recepción, UMECA, app, inactivo   | Fijo de permiso                                             |
 | `23514` | Término con menos de 3 caracteres | `error.message`. Mejor: no llamar hasta tener 3 caracteres. |
 
-**En el front:** `SupabaseExpedienteRepository.list(query)` (hoy trae 200 fichas y filtra en el navegador) · hook `expedientes/useExpedientes` · `queryKey ['expedientes','list',q]`. Usa *debounce* de 300 ms en el buscador.
+**En el front:** `SupabaseExpedienteRepository.list(query)` (hoy trae 200 fichas y filtra en el navegador) · hook `expedientes/useExpedientes` · `queryKey ['expedientes','list',q]`. Usa _debounce_ de 300 ms en el buscador.
 
 ---
 
@@ -128,15 +167,15 @@ interface BuscarExpedientesRow {
 
 > Trae lo que la usuaria capturó en la app para precargar la Ficha Única.
 
-| Permiso | Roles | Tipo | Bitácora | Migración |
-|---|---|---|---|---|
-| `expediente.escribir` | Tit, Sub, TS | Lectura | No | `_06_reglas_negocio`, actualizada en `_17_` |
+| Permiso               | Roles        | Tipo    | Bitácora | Migración                                   |
+| --------------------- | ------------ | ------- | -------- | ------------------------------------------- |
+| `expediente.escribir` | Tit, Sub, TS | Lectura | No       | `_06_reglas_negocio`, actualizada en `_17_` |
 
 **Llamada**
 
 ```ts
 const { data, error } = await supabase
-  .rpc('buscar_pre_registro_por_curp', { p_curp: curp })
+  .rpc("buscar_pre_registro_por_curp", { p_curp: curp })
   .maybeSingle();
 ```
 
@@ -149,11 +188,11 @@ interface PreRegistroRow {
   nombres: string;
   apellido_paterno: string;
   apellido_materno: string | null;
-  sexo: 'H' | 'M';                 // calculado desde la CURP
-  fecha_nacimiento: string;        // calculada desde la CURP
-  entidad_nacimiento: string;      // clave de 2 letras
+  sexo: "H" | "M"; // calculado desde la CURP
+  fecha_nacimiento: string; // calculada desde la CURP
+  entidad_nacimiento: string; // clave de 2 letras
   celular: string | null;
-  persona_id: string | null;       // si ya se ligó por CURP
+  persona_id: string | null; // si ya se ligó por CURP
 }
 ```
 
@@ -167,15 +206,15 @@ interface PreRegistroRow {
 
 > Alta atómica de la Ficha Única: persona, ficha, servicios solicitados, domicilio y estudio socioeconómico. Si algo falla, no se guarda nada.
 
-| Permiso | Roles | Tipo | Bitácora | Migración |
-|---|---|---|---|---|
-| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por triggers (`'crear'`) | `_10_`, actualizada hasta `_18_` |
+| Permiso               | Roles        | Tipo      | Bitácora                     | Migración                        |
+| --------------------- | ------------ | --------- | ---------------------------- | -------------------------------- |
+| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por triggers (`'crear'`) | `_10_`, actualizada hasta `_58_` |
 
 **Llamada**
 
 ```ts
 const { data, error } = await supabase
-  .rpc('crear_ficha_completa', { p_payload: payload })
+  .rpc("crear_ficha_completa", { p_payload: payload })
   .single();
 // data: { ficha_id, folio, persona_id }
 ```
@@ -185,35 +224,61 @@ const { data, error } = await supabase
 ```ts
 interface CrearFichaPayload {
   identidad: {
-    existingPersonaId?: string | null;    // si verificar_curp devolvió persona_sin_ficha
-    curp: string; nombres: string; apellidoPaterno: string; apellidoMaterno?: string | null;
-    celular?: string | null; escolaridad?: EscolaridadNivel | null; discapacidad?: string | null;
-    grupoEtnico?: string | null; religion?: string | null; estadoCivil?: EstadoCivil | null;
-    ocupacionId?: number | null; ocupacionOtra?: string | null; tieneTrabajo?: boolean | null;
-    numeroHijas?: number; numeroHijosHombres?: number;
-    servicioMedico?: ServicioMedico | null; servicioMedicoOtro?: string | null;
-    tieneEmbarazo?: boolean | null; tieneDenuncia?: boolean | null; esVictimaDelito?: boolean | null;
-    tieneConsumoDroga?: boolean | null; drogas?: TipoDroga[]; especificacionDroga?: string | null;
-    tieneConsumoAlcohol?: boolean | null;
-    serviciosSolicitadosAreaIds: number[];  // al menos 1
-    avisoPrivacidadAceptado: true;          // obligatorio
+    existingPersonaId?: string | null; // si verificar_curp devolvió persona_sin_ficha
+    curp: string;
+    nombres: string;
+    apellidoPaterno: string;
+    apellidoMaterno?: string | null;
+    celular?: string | null;
+    escolaridad?: EscolaridadNivel | null;
+    discapacidad?: string | null;
+    grupoEtnico?: string | null;
+    religion?: string | null;
+    estadoCivil?: EstadoCivil | null;
+    ocupacionId?: number | null;
+    ocupacionOtra?: string | null;
+    tieneTrabajo?: boolean | null;
+    numeroHijas?: number;
+    numeroHijosHombres?: number;
+    servicioMedico?: ServicioMedico | null;
+    servicioMedicoOtro?: string | null;
+    tieneEmbarazo?: boolean | null;
+    tieneDenuncia?: boolean | null;
+    esVictimaDelito?: boolean | null;
+    drogas?: TipoDroga[];
+    especificacionDroga?: string | null; // 'no_consume' es exclusivo
+    consumoAlcohol?: ConsumoAlcohol | null; // 'no_consume' | 'ocasional' | 'frecuente'
+    serviciosSolicitadosAreaIds?: number[]; // opcional (omitido, null o [])
+    avisoPrivacidadAceptado: true; // obligatorio
   };
   domicilio: {
-    asentamientoId?: number | null; codigoPostalForaneo?: string | null;
-    calle?: string | null; numeroExterior?: string | null; numeroInterior?: string | null;
-    referencias?: string | null; zona?: 'urbana' | 'rural' | null;
+    asentamientoId?: number | null;
+    codigoPostalForaneo?: string | null;
+    calle?: string | null;
+    numeroExterior?: string | null;
+    numeroInterior?: string | null;
+    referencias?: string | null;
+    zona?: "urbana" | "rural" | null;
   };
   estudio: {
-    ingresoMensualPropio?: number | null; numeroDependientes?: number | null;
-    tieneApoyo?: boolean | null; especificacionApoyo?: string | null;
-    tipoVivienda?: TipoVivienda | null; material?: MaterialVivienda | null; materialOtro?: string | null;
-    servicios?: ServicioVivienda[];   // 'agua' | 'drenaje' | 'luz' | 'pavimento' | 'cable' | 'internet'
-    bienes?: BienVivienda[];          // 'estufa' | 'refrigerador' | 'lavadora' | ...
+    ingresoMensualPropio?: number | null;
+    numeroDependientes?: number | null;
+    tieneApoyo?: boolean | null;
+    especificacionApoyo?: string | null;
+    tipoVivienda?: TipoVivienda | null;
+    material?: MaterialVivienda | null;
+    materialOtro?: string | null;
+    servicios?: ServicioVivienda[]; // 'agua' | 'drenaje' | 'luz' | 'pavimento' | 'cable' | 'internet'
+    bienes?: BienVivienda[]; // 'estufa' | 'refrigerador' | 'lavadora' | ...
     aportantes?: Array<{
-      nombre: string; parentescoId?: number | null; parentescoOtro?: string | null;
-      ocupacionId?: number | null; ocupacionOtra?: string | null;
-      tipoTrabajo?: 'fijo' | 'temporal' | 'negocio_propio' | null;
-      monto?: number | null; frecuencia?: FrecuenciaIngreso | null;
+      nombre: string;
+      parentescoId?: number | null;
+      parentescoOtro?: string | null;
+      ocupacionId?: number | null;
+      ocupacionOtra?: string | null;
+      tipoTrabajo?: "fijo" | "temporal" | "negocio_propio" | null;
+      monto?: number | null;
+      frecuencia?: FrecuenciaIngreso | null;
     }>;
   };
 }
@@ -228,11 +293,11 @@ interface CrearFichaPayload {
 
 **Errores**
 
-| Código | Cuándo | Mensaje UI |
-|---|---|---|
-| `42501` | Psi, Jur, Rec, UMECA, app | Fijo de permiso |
-| `23514` | Aviso de privacidad no aceptado; sin servicios solicitados; dato fuera de catálogo | `error.message` |
-| `23505` | La CURP ya tiene expediente completo | `error.message` (trae el folio). Ofrecer "Abrir expediente". |
+| Código  | Cuándo                                                                             | Mensaje UI                                                   |
+| ------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `42501` | Psi, Jur, Rec, UMECA, app                                                          | Fijo de permiso                                              |
+| `23514` | Aviso de privacidad no aceptado; sin servicios solicitados; dato fuera de catálogo | `error.message`                                              |
+| `23505` | La CURP ya tiene expediente completo                                               | `error.message` (trae el folio). Ofrecer "Abrir expediente". |
 
 **En el front:** ya se usa en `SupabaseFichaRepository` (mapper de camelCase existente).
 
@@ -242,14 +307,14 @@ interface CrearFichaPayload {
 
 > Todo lo que la pantalla de expediente necesita en un solo objeto.
 
-| Permiso | Roles | Tipo | Bitácora | Migración |
-|---|---|---|---|---|
-| `expediente.ver` | Tit, Sub, TS, Psi, Jur | Lectura | Sí: `'ver'` sobre `ficha_registro` (y `agresor` si se piden) | `_18_rpc_detalle_y_archivo` |
+| Permiso          | Roles                  | Tipo    | Bitácora                                                     | Migración                     |
+| ---------------- | ---------------------- | ------- | ------------------------------------------------------------ | ----------------------------- |
+| `expediente.ver` | Tit, Sub, TS, Psi, Jur | Lectura | Sí: `'ver'` sobre `ficha_registro` (y `agresor` si se piden) | `_18_`, actualizada en `_58_` |
 
 **Llamada**
 
 ```ts
-const { data, error } = await supabase.rpc('get_expediente_detalle', {
+const { data, error } = await supabase.rpc("get_expediente_detalle", {
   p_ficha_id: fichaId,
   p_incluir_agresores: false,
 });
@@ -261,37 +326,91 @@ const { data, error } = await supabase.rpc('get_expediente_detalle', {
 ```ts
 interface ExpedienteDetalle {
   ficha: {
-    id: string; folio: string; estado: EstadoFicha; registrada_en: string;
-    aviso_privacidad_aceptado_en: string; estado_civil: EstadoCivil | null;
-    ocupacion_id: number | null; ocupacion_nombre: string | null; ocupacion_otra: string | null;
-    tiene_trabajo: boolean | null; servicio_medico: ServicioMedico | null; servicio_medico_otro: string | null;
-    numero_hijas: number; numero_hijos_hombres: number; tiene_embarazo: boolean | null;
-    tiene_denuncia: boolean | null; es_victima_delito: boolean | null;
-    tiene_consumo_droga: boolean | null; drogas: TipoDroga[] | null; especificacion_droga: string | null;
-    tiene_consumo_alcohol: boolean | null;
+    id: string;
+    folio: string;
+    estado: EstadoFicha;
+    registrada_en: string;
+    aviso_privacidad_aceptado_en: string;
+    estado_civil: EstadoCivil | null;
+    ocupacion_id: number | null;
+    ocupacion_nombre: string | null;
+    ocupacion_otra: string | null;
+    tiene_trabajo: boolean | null;
+    servicio_medico: ServicioMedico | null;
+    servicio_medico_otro: string | null;
+    numero_hijas: number;
+    numero_hijos_hombres: number;
+    tiene_embarazo: boolean | null;
+    tiene_denuncia: boolean | null;
+    es_victima_delito: boolean | null;
+    drogas: TipoDroga[] | null;
+    especificacion_droga: string | null;
+    consumo_alcohol: ConsumoAlcohol | null;
   };
   persona: {
-    id: string; curp: string; nombres: string; apellido_paterno: string; apellido_materno: string | null;
-    sexo: 'H' | 'M'; fecha_nacimiento: string; entidad_nacimiento: string; celular: string | null;
-    escolaridad: EscolaridadNivel | null; discapacidad: string | null; religion: string | null; grupo_etnico: string | null;
+    id: string;
+    curp: string;
+    nombres: string;
+    apellido_paterno: string;
+    apellido_materno: string | null;
+    sexo: "H" | "M";
+    fecha_nacimiento: string;
+    entidad_nacimiento: string;
+    celular: string | null;
+    escolaridad: EscolaridadNivel | null;
+    discapacidad: string | null;
+    religion: string | null;
+    grupo_etnico: string | null;
   };
-  servicios_solicitados: Array<{ area_id: number; clave: string; nombre: string }>;
+  servicios_solicitados: Array<{
+    area_id: number;
+    clave: string;
+    nombre: string;
+  }>;
   domicilio_actual: {
-    id: string; asentamiento_id: number | null; asentamiento_nombre: string | null; codigo_postal: string | null;
-    calle: string | null; numero_exterior: string | null; numero_interior: string | null;
-    referencias: string | null; zona: 'urbana' | 'rural' | null;
+    id: string;
+    asentamiento_id: number | null;
+    asentamiento_nombre: string | null;
+    codigo_postal: string | null;
+    calle: string | null;
+    numero_exterior: string | null;
+    numero_interior: string | null;
+    referencias: string | null;
+    zona: "urbana" | "rural" | null;
   } | null;
   estudio_actual: {
-    id: string; fecha_estudio: string; ingreso_mensual_propio: number | null; numero_dependientes: number | null;
-    tiene_apoyo: boolean | null; especificacion_apoyo: string | null; tipo_vivienda: TipoVivienda | null;
-    material: MaterialVivienda | null; material_otro: string | null;
-    servicios: ServicioVivienda[] | null; bienes: BienVivienda[] | null;
-    aportantes: Array<{ id: string; nombre: string; parentesco_id: number | null; parentesco_nombre: string | null;
-      parentesco_otro: string | null; ocupacion_id: number | null; ocupacion_nombre: string | null;
-      ocupacion_otra: string | null; tipo_trabajo: TipoTrabajo | null; monto: number | null; frecuencia: FrecuenciaIngreso | null }>;
+    id: string;
+    fecha_estudio: string;
+    ingreso_mensual_propio: number | null;
+    numero_dependientes: number | null;
+    tiene_apoyo: boolean | null;
+    especificacion_apoyo: string | null;
+    tipo_vivienda: TipoVivienda | null;
+    material: MaterialVivienda | null;
+    material_otro: string | null;
+    servicios: ServicioVivienda[] | null;
+    bienes: BienVivienda[] | null;
+    aportantes: Array<{
+      id: string;
+      nombre: string;
+      parentesco_id: number | null;
+      parentesco_nombre: string | null;
+      parentesco_otro: string | null;
+      ocupacion_id: number | null;
+      ocupacion_nombre: string | null;
+      ocupacion_otra: string | null;
+      tipo_trabajo: TipoTrabajo | null;
+      monto: number | null;
+      frecuencia: FrecuenciaIngreso | null;
+    }>;
   } | null;
   orden_vigente: boolean;
-  citas_hoy: Array<{ cita_id: string; programada_en: string; estado: EstadoCita; area_clave: string }>;
+  citas_hoy: Array<{
+    cita_id: string;
+    programada_en: string;
+    estado: EstadoCita;
+    area_clave: string;
+  }>;
   agresores?: Array<Record<string, unknown>>; // filas completas de `agresor`; solo con p_incluir_agresores
 }
 ```
@@ -304,9 +423,9 @@ interface ExpedienteDetalle {
 
 **Errores**
 
-| Código | Cuándo | Mensaje UI |
-|---|---|---|
-| `42501` | Recepción, UMECA, app, inactivo | Vista de "sin acceso" |
+| Código  | Cuándo                                               | Mensaje UI                                              |
+| ------- | ---------------------------------------------------- | ------------------------------------------------------- |
+| `42501` | Recepción, UMECA, app, inactivo                      | Vista de "sin acceso"                                   |
 | `23514` | `p_ficha_id` nulo, expediente inexistente o inactivo | `error.message` ("Expediente no encontrado o inactivo") |
 
 **En el front:** `SupabaseFichaRepository.getDetail` (cambiar implementación) · hook `expedientes/useFichaDetail` · `queryKey ['expedientes','detail',id]`.
@@ -317,15 +436,15 @@ interface ExpedienteDetalle {
 
 > Pasa un expediente a `archivado` cuando ya no tiene nada pendiente, guardando motivo, fecha y responsable.
 
-| Permiso | Roles | Tipo | Bitácora | Migración |
-|---|---|---|---|---|
+| Permiso               | Roles        | Tipo      | Bitácora                         | Migración                         |
+| --------------------- | ------------ | --------- | -------------------------------- | --------------------------------- |
 | `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por trigger (`'actualizar'`) | `_38_archivar_y_reabrir` (`_18_`) |
 
 **Llamada**
 
 ```ts
 const { data, error } = await supabase
-  .rpc('archivar_ficha', { p_ficha_id: fichaId, p_motivo: 'Caso concluido' })
+  .rpc("archivar_ficha", { p_ficha_id: fichaId, p_motivo: "Caso concluido" })
   .single();
 // data: { ficha_id, estado: 'archivado', actualizado_en }
 ```
@@ -338,9 +457,9 @@ const { data, error } = await supabase
 
 **Errores**
 
-| Código | Cuándo | Mensaje UI |
-|---|---|---|
-| `42501` | Psi, Jur, Rec, UMECA | Fijo de permiso |
+| Código  | Cuándo                                                                              | Mensaje UI                              |
+| ------- | ----------------------------------------------------------------------------------- | --------------------------------------- |
+| `42501` | Psi, Jur, Rec, UMECA                                                                | Fijo de permiso                         |
 | `23514` | `p_motivo` vacío/largo, inexistente, ya archivado, citas futuras o alertas abiertas | `error.message` (dice cuál es la causa) |
 
 **En el front:** `SupabaseFichaRepository.archive` (`features/expedientes/api.ts`) actualmente llama sin `p_motivo` y la pantalla debe solicitar motivo obligatorio (invalida `['expedientes','detail',id]` y `['expedientes','list']`).
@@ -351,15 +470,18 @@ const { data, error } = await supabase
 
 > Reabre un expediente `archivado` guardando motivo, fecha y quién lo autoriza.
 
-| Permiso | Roles | Tipo | Bitácora | Migración |
-|---|---|---|---|---|
+| Permiso              | Roles    | Tipo      | Bitácora                         | Migración                |
+| -------------------- | -------- | --------- | -------------------------------- | ------------------------ |
 | `expediente.reabrir` | Tit, Sub | Escritura | Sí, por trigger (`'actualizar'`) | `_38_archivar_y_reabrir` |
 
 **Llamada**
 
 ```ts
 const { data, error } = await supabase
-  .rpc('reabrir_ficha', { p_ficha_id: fichaId, p_motivo: 'Usuaria solicita reingreso' })
+  .rpc("reabrir_ficha", {
+    p_ficha_id: fichaId,
+    p_motivo: "Usuaria solicita reingreso",
+  })
   .single();
 // data: { ficha_id, estado: 'abierto' | 'en_seguimiento', actualizado_en }
 ```
@@ -371,24 +493,27 @@ const { data, error } = await supabase
 
 **Errores**
 
-| Código | Cuándo | Mensaje UI |
-|---|---|---|
-| `42501` | TS, Psi, Jur, Rec, UMECA | Fijo de permiso |
+| Código  | Cuándo                                                  | Mensaje UI      |
+| ------- | ------------------------------------------------------- | --------------- |
+| `42501` | TS, Psi, Jur, Rec, UMECA                                | Fijo de permiso |
 | `23514` | `p_motivo` vacío/largo, inexistente o no está archivado | `error.message` |
+
 ---
 
 ## `get_linea_tiempo`
 
 > Historia del caso en orden cronológico: registro, citas, atenciones, derivaciones, órdenes de protección y alertas.
 
-| Permiso | Roles | Tipo | Bitácora | Migración |
-|---|---|---|---|---|
-| `expediente.ver` | Tit, Sub, TS, Psi, Jur | Lectura | No | `_20_rpc_linea_tiempo` |
+| Permiso          | Roles                  | Tipo    | Bitácora | Migración              |
+| ---------------- | ---------------------- | ------- | -------- | ---------------------- |
+| `expediente.ver` | Tit, Sub, TS, Psi, Jur | Lectura | No       | `_20_rpc_linea_tiempo` |
 
 **Llamada**
 
 ```ts
-const { data, error } = await supabase.rpc('get_linea_tiempo', { p_ficha_id: fichaId });
+const { data, error } = await supabase.rpc("get_linea_tiempo", {
+  p_ficha_id: fichaId,
+});
 ```
 
 **Respuesta** (arreglo, de lo más nuevo a lo más viejo)
@@ -396,10 +521,16 @@ const { data, error } = await supabase.rpc('get_linea_tiempo', { p_ficha_id: fic
 ```ts
 interface LineaTiempoRow {
   fecha: string;
-  tipo: 'registro' | 'cita' | 'atencion' | 'derivacion' | 'orden_proteccion' | 'alerta';
+  tipo:
+    | "registro"
+    | "cita"
+    | "atencion"
+    | "derivacion"
+    | "orden_proteccion"
+    | "alerta";
   area: string | null;
-  titulo: string;          // siempre visible
-  detalle: string | null;  // null si el evento no es del rol/área del actor
+  titulo: string; // siempre visible
+  detalle: string | null; // null si el evento no es del rol/área del actor
   referencia_id: string;
 }
 ```
@@ -421,25 +552,25 @@ interface LineaTiempoRow {
 
 > Deja constancia de una lectura sensible que **no** pasó por una RPC (por ejemplo, abrir los datos de la persona agresora con `.from('agresor')`).
 
-| Permiso | Roles | Tipo | Bitácora | Migración |
-|---|---|---|---|---|
+| Permiso                        | Roles                       | Tipo      | Bitácora       | Migración                    |
+| ------------------------------ | --------------------------- | --------- | -------------- | ---------------------------- |
 | Empleado activo o UMECA activo | Todos los empleados + UMECA | Escritura | Es la bitácora | `_03_`, endurecida en `_16_` |
 
 **Llamada**
 
 ```ts
-const { error } = await supabase.rpc('registrar_consulta', {
-  p_tabla: 'agresor',
+const { error } = await supabase.rpc("registrar_consulta", {
+  p_tabla: "agresor",
   p_registro_id: agresorId,
 });
 ```
 
 **Parámetros**
 
-| Parámetro | Tipo | Regla |
-|---|---|---|
-| `p_tabla` | `'ficha_registro' \| 'agresor' \| 'persona' \| 'documento' \| 'historial_clinico' \| 'cita'` | Cualquier otro valor da `23514`. |
-| `p_registro_id` | `string` | No vacío. |
+| Parámetro       | Tipo                                                                                         | Regla                            |
+| --------------- | -------------------------------------------------------------------------------------------- | -------------------------------- |
+| `p_tabla`       | `'ficha_registro' \| 'agresor' \| 'persona' \| 'documento' \| 'historial_clinico' \| 'cita'` | Cualquier otro valor da `23514`. |
+| `p_registro_id` | `string`                                                                                     | No vacío.                        |
 
 **Respuesta:** `data = null`.
 
@@ -455,19 +586,19 @@ const { error } = await supabase.rpc('registrar_consulta', {
 
 > Edita datos generales de una persona con bloqueo optimista y sin alterar CURP ni columnas calculadas.
 
-| Permiso | Roles | Tipo | Bitácora | Migración |
-| --- | --- | --- | --- | --- |
+| Permiso               | Roles        | Tipo      | Bitácora                       | Migración                        |
+| --------------------- | ------------ | --------- | ------------------------------ | -------------------------------- |
 | `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por trigger (`actualizar`) | `_35_rpc_editar_persona_y_ficha` |
 
 **Llamada**
 
 ```ts
 const { data, error } = await supabase
-  .rpc('actualizar_persona', {
+  .rpc("actualizar_persona", {
     p_persona_id: personaId,
     p_actualizado_en: personaActualizadoEn,
-    p_celular: '6681234567',
-    p_religion: '', // '' limpia el campo opcional; null lo conserva
+    p_celular: "6681234567",
+    p_religion: "", // '' limpia el campo opcional; null lo conserva
   })
   .single();
 ```
@@ -485,18 +616,18 @@ const { data, error } = await supabase
 
 > Edita los datos de la Ficha Única y sus servicios solicitados con bloqueo optimista.
 
-| Permiso | Roles | Tipo | Bitácora | Migración |
-| --- | --- | --- | --- | --- |
-| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí (`ficha_registro` + `ficha_servicio_solicitado`) | `_35_rpc_editar_persona_y_ficha` |
+| Permiso               | Roles        | Tipo      | Bitácora                                            | Migración              |
+| --------------------- | ------------ | --------- | --------------------------------------------------- | ---------------------- |
+| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí (`ficha_registro` + `ficha_servicio_solicitado`) | `_35_`, `_57_`, `_58_` |
 
 **Llamada**
 
 ```ts
 const { data, error } = await supabase
-  .rpc('actualizar_ficha', {
+  .rpc("actualizar_ficha", {
     p_ficha_id: fichaId,
     p_actualizado_en: fichaActualizadoEn,
-    p_estado_civil: 'divorciado',
+    p_estado_civil: "divorciado",
     p_servicios_solicitados_area_ids: [areaTsId, areaJurId],
   })
   .single();
@@ -505,9 +636,10 @@ const { data, error } = await supabase
 **Reglas y errores**
 
 - No modifica `folio`, `persona_id`, `estado`, `aviso_privacidad_aceptado_en`, `registrada_en` ni `activo`.
-- Si se pasa `p_servicios_solicitados_area_ids`, exige al menos un área válida y registra altas/bajas en `bitacora_acceso` (`ficha_servicio_solicitado`).
+- Si se pasa `p_servicios_solicitados_area_ids` con áreas válidas, sincroniza y registra altas/bajas en `bitacora_acceso` (`ficha_servicio_solicitado`); `[]` los limpia todos y `null` los conserva.
+- `p_drogas` acepta `TipoDroga[]` (`'no_consume'` es exclusivo) y `p_consumo_alcohol` usa `ConsumoAlcohol`.
 - `42501`: rol sin `expediente.escribir`.
-- `23514`: expediente archivado (`"Reabre el expediente para editarlo"`), servicio vacío o inconsistencia de drogas/`servicio_medico_otro`.
+- `23514`: expediente archivado (`"Reabre el expediente para editarlo"`), área inexistente o inconsistencia de drogas/`servicio_medico_otro`.
 - `23505`: `p_actualizado_en` viejo (`"Este registro fue modificado por otra persona. Recarga los datos."`).
 
 ---
@@ -516,19 +648,19 @@ const { data, error } = await supabase
 
 > Crea (`p_agresor_id = null`) o edita una persona agresora con bloqueo optimista y validaciones de parentesco/consumo/domicilio.
 
-| Permiso | Roles | Tipo | Bitácora | Migración |
-| --- | --- | --- | --- | --- |
-| `agresor.acceder` | Tit, Sub, TS, Psi, Jur | Escritura | Sí, por trigger | `_36_rpc_guardar_agresor` |
+| Permiso           | Roles                  | Tipo      | Bitácora        | Migración              |
+| ----------------- | ---------------------- | --------- | --------------- | ---------------------- |
+| `agresor.acceder` | Tit, Sub, TS, Psi, Jur | Escritura | Sí, por trigger | `_36_`, `_57_`, `_58_` |
 
 **Llamada**
 
 ```ts
 const { data, error } = await supabase
-  .rpc('guardar_agresor', {
+  .rpc("guardar_agresor", {
     p_agresor_id: agresorId ?? null, // null = crear
     p_ficha_id: fichaId,
     p_actualizado_en: agresorActualizadoEn ?? null,
-    p_nombres: 'Roberto',
+    p_nombres: "Roberto",
     p_parentesco_id: parentescoId,
   })
   .single();
@@ -542,17 +674,17 @@ const { data, error } = await supabase
 
 > Realiza baja lógica (`activo = false`) de una persona agresora si no tiene orden de protección vigente ligada.
 
-| Permiso | Roles | Tipo | Bitácora | Migración |
-| --- | --- | --- | --- | --- |
+| Permiso           | Roles                  | Tipo      | Bitácora          | Migración                 |
+| ----------------- | ---------------------- | --------- | ----------------- | ------------------------- |
 | `agresor.acceder` | Tit, Sub, TS, Psi, Jur | Escritura | Sí (`desactivar`) | `_36_rpc_guardar_agresor` |
 
 **Llamada**
 
 ```ts
 const { data, error } = await supabase
-  .rpc('desactivar_agresor', {
+  .rpc("desactivar_agresor", {
     p_agresor_id: agresorId,
-    p_motivo: 'Registro duplicado',
+    p_motivo: "Registro duplicado",
   })
   .single();
 // data: { agresor_id, activo: false, actualizado_en }
@@ -566,8 +698,8 @@ const { data, error } = await supabase
 
 > Crea o actualiza el historial clínico psicológico del expediente (con bloqueo optimista y RN-01) y lo consulta dejando registro `'ver'` en bitácora.
 
-| Permiso | Roles | Tipo | Bitácora | Migración |
-| --- | --- | --- | --- | --- |
+| Permiso                     | Roles         | Tipo                | Bitácora                          | Migración                             |
+| --------------------------- | ------------- | ------------------- | --------------------------------- | ------------------------------------- |
 | `historial_clinico.acceder` | Tit, Sub, Psi | Lectura / Escritura | Sí (`ver`, `crear`, `actualizar`) | `_37_rpc_historial_clinico_y_estudio` |
 
 **Llamada**
@@ -575,15 +707,15 @@ const { data, error } = await supabase
 ```ts
 // Lectura (registra 'ver' automáticamente en bitácora)
 const { data: historial } = await supabase
-  .rpc('get_historial_clinico', { p_ficha_id: fichaId })
+  .rpc("get_historial_clinico", { p_ficha_id: fichaId })
   .maybeSingle();
 
 // Alta (p_actualizado_en = null) o edición (p_actualizado_en requerido)
 const { data, error } = await supabase
-  .rpc('guardar_historial_clinico', {
+  .rpc("guardar_historial_clinico", {
     p_ficha_id: fichaId,
     p_actualizado_en: historial?.actualizado_en ?? null,
-    p_motivo_consulta: 'Ansiedad derivada de violencia familiar',
+    p_motivo_consulta: "Ansiedad derivada de violencia familiar",
     p_tiene_atencion_psicologica_previa: false,
   })
   .single();
@@ -597,22 +729,24 @@ const { data, error } = await supabase
 
 > Registra una nueva versión del estudio socioeconómico con sus aportantes (marcando el anterior como `es_actual = false`), o corrige el estudio de hoy si fue creado por la misma persona.
 
-| Permiso | Roles | Tipo | Bitácora | Migración |
-| --- | --- | --- | --- | --- |
+| Permiso               | Roles        | Tipo      | Bitácora        | Migración                             |
+| --------------------- | ------------ | --------- | --------------- | ------------------------------------- |
 | `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por trigger | `_37_rpc_historial_clinico_y_estudio` |
 
 **Llamada**
 
 ```ts
 const { data, error } = await supabase
-  .rpc('registrar_estudio_socioeconomico', {
+  .rpc("registrar_estudio_socioeconomico", {
     p_ficha_id: fichaId,
     p_ingreso_mensual_propio: 7500,
     p_numero_dependientes: 2,
     p_tiene_apoyo: false,
-    p_tipo_vivienda: 'rentada',
-    p_material: 'block',
-    p_aportantes: [{ nombre: 'Rosa Ruiz', monto: 2000, frecuencia: 'quincenal' }],
+    p_tipo_vivienda: "rentada",
+    p_material: "block",
+    p_aportantes: [
+      { nombre: "Rosa Ruiz", monto: 2000, frecuencia: "quincenal" },
+    ],
   })
   .single();
 // data: { estudio_id, ficha_id, fecha_estudio, es_actual, fue_correccion, actualizado_en }
