@@ -7,9 +7,11 @@ import '@yewdiel21/motion-kit/css/components/toast';
 import { queryClient } from '@/app/queryClient';
 import { router } from '@/app/router';
 import { registerCustomThemes, THEME_STORAGE_KEY } from '@/app/theme';
+import { installFileInputCancelGuard } from '@/shared/dom/fileInputCancelGuard';
 import './index.css';
 
 registerCustomThemes();
+installFileInputCancelGuard();
 
 // El Toaster arrastra GSAP (~61 kB gzip): se carga aparte para que no bloquee el primer pintado.
 // Los toast() emitidos antes de montarlo no se pierden: la cola vive en el store del kit (módulo
