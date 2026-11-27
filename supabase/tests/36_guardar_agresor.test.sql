@@ -171,7 +171,7 @@ from public.guardar_agresor(
   'Vecino cercano',
   null,
   '81200',
-  null, null, null, null, null, null, null, null,
+  null, null, null, null, null, (select id from public.cat_ocupacion order by id limit 1), null, null,
   array['marihuana']::public.tipo_droga[],
   'Consumo frecuente',
   'ocasional'::public.consumo_alcohol,
