@@ -124,30 +124,23 @@ Para registrar una atención usa `registrar_seguimiento`, que además marca la c
 
 ## <a id="cita"></a>`cita` (alta de cita)
 
-No hay RPC para crear una cita: es un `insert` directo. Leer, cambiar estado y reagendar sí van por RPC (ver [agenda.md](./agenda.md)).
-
-| Crear | Regla |
-|---|---|
-| `agenda.gestionar` + alcance | Tit, Sub: cualquier área. Recepción: TS y Psicología. TS, Psi, Jur: solo su área. |
+> **Cerrada la inserción directa (`42501`):** usa la RPC `crear_cita` (ver [crear_cita.md](../rpcs/crear_cita.md) y [agenda.md](./agenda.md)).
 
 ```ts
 const { data, error } = await supabase
-  .from('cita')
-  .insert({
-    persona_id,
-    area_id,
-    programada_en: '2026-12-01T10:00:00-07:00',
-    prioridad: 'media',            // opcional
-    recomendada_por: 'Trabajo Social',
-    origen: 'regular',             // 'umeca' para canalizaciones de UMECA
+  .rpc('crear_cita', {
+    p_persona_id: personaId,
+    p_area_id: areaId,
+    p_programada_en: '2026-12-01T10:00:00-07:00',
+    p_recomendada_por: 'Trabajo Social',
+    p_origen: 'regular', // 'umeca' para canalizaciones de UMECA
   })
-  .select('id, programada_en, estado')
   .single();
 ```
 
-- Nace `agendada`. No mandes `estado`, `confirmada_en` ni `reagendada_de`.
+- Nace `agendada`.
 - Psicología y Jurídico no pueden tener citas de menores de 18 años (RN-01): `23514`.
-- Recepción ya no lee `persona`: obtiene `persona_id` de `verificar_curp`.
+- Rechaza fecha pasada, expediente archivado o cita duplicada en misma área y hora: `23514`.
 - Después invalida `['agenda']` y `['agenda','urgencias']`.
 
 ## <a id="derivacion"></a>`derivacion` (alta)

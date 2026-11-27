@@ -6,7 +6,7 @@ Estados de una cita: `agendada → confirmada → asistio | no_asistio`, o `canc
 
 | Quién pone el estado | Estado |
 |---|---|
-| Alta de cita (`.from('cita').insert`) | `agendada` |
+| `crear_cita` | `agendada` |
 | `cambiar_estado_cita` | `confirmada`, `cancelada`, `no_asistio` |
 | `reagendar_cita` | `reagendada` (vieja) + `agendada` (nueva) |
 | `registrar_seguimiento` | `asistio` |
@@ -20,7 +20,7 @@ Estados de una cita: `agendada → confirmada → asistio | no_asistio`, o `canc
 | Trabajo Social | Trabajo Social y Psicología | Solo Trabajo Social |
 | Psicología, Jurídico | Solo su área | Solo su área |
 
-> Crear una cita nueva no tiene RPC: es un `insert` directo sobre `cita`. Ver [tablas-directas.md](./tablas-directas.md#cita).
+> El `insert` directo sobre `cita` está cerrado (`42501`). Usa `crear_cita`.
 
 ---
 

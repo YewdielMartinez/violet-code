@@ -257,9 +257,9 @@ select is(
   (select count(*)::int from public.cita where id in ('cccccccc-2100-4000-8000-000000000001','cccccccc-2100-4000-8000-000000000002','cccccccc-2100-4000-8000-000000000003')),
   3, 'titular ve citas de todas las areas'
 );
-select lives_ok(
+select throws_ok(
   $$insert into public.cita (persona_id, area_id, programada_en) values ('33333333-3333-4333-8333-333333333301', (select id from public.cat_area where clave = 'juridico'), now() + interval '20 days')$$,
-  'titular inserta cita de juridico'
+  '42501', null, 'titular no inserta cita directo (usa crear_cita)'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111106'::uuid); -- recepcion
@@ -267,9 +267,9 @@ select is(
   (select count(*)::int from public.cita where id in ('cccccccc-2100-4000-8000-000000000001','cccccccc-2100-4000-8000-000000000002','cccccccc-2100-4000-8000-000000000003')),
   2, 'recepcion ve citas de TS y Psic, no Jur'
 );
-select lives_ok(
+select throws_ok(
   $$insert into public.cita (persona_id, area_id, programada_en) values ('33333333-3333-4333-8333-333333333301', (select id from public.cat_area where clave = 'psicologia'), now() + interval '21 days')$$,
-  'recepcion agenda cita de psicologia'
+  '42501', null, 'recepcion no inserta cita directo (usa crear_cita)'
 );
 select throws_ok(
   $$insert into public.cita (persona_id, area_id, programada_en) values ('33333333-3333-4333-8333-333333333301', (select id from public.cat_area where clave = 'juridico'), now() + interval '22 days')$$,
@@ -281,9 +281,9 @@ select is(
   (select count(*)::int from public.cita where id in ('cccccccc-2100-4000-8000-000000000001','cccccccc-2100-4000-8000-000000000002','cccccccc-2100-4000-8000-000000000003')),
   2, 'trabajo_social ve citas de TS y Psic, no Jur'
 );
-select lives_ok(
+select throws_ok(
   $$insert into public.cita (persona_id, area_id, programada_en) values ('33333333-3333-4333-8333-333333333301', (select id from public.cat_area where clave = 'trabajo_social'), now() + interval '23 days')$$,
-  'trabajo_social inserta cita en su area'
+  '42501', null, 'trabajo_social no inserta cita directo (usa crear_cita)'
 );
 select throws_ok(
   $$insert into public.cita (persona_id, area_id, programada_en) values ('33333333-3333-4333-8333-333333333301', (select id from public.cat_area where clave = 'psicologia'), now() + interval '24 days')$$,
@@ -305,9 +305,9 @@ select is(
   (select count(*)::int from public.cita where id in ('cccccccc-2100-4000-8000-000000000001','cccccccc-2100-4000-8000-000000000002','cccccccc-2100-4000-8000-000000000003')),
   1, 'juridico solo ve su cita'
 );
-select lives_ok(
+select throws_ok(
   $$insert into public.cita (persona_id, area_id, programada_en) values ('33333333-3333-4333-8333-333333333301', (select id from public.cat_area where clave = 'juridico'), now() + interval '26 days')$$,
-  'juridico inserta cita en su area'
+  '42501', null, 'juridico no inserta cita directo (usa crear_cita)'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111107'::uuid); -- umeca
