@@ -23,6 +23,7 @@ export interface SeguimientoCreateInput {
 
 export interface SeguimientoResult {
   atencionId: string;
+  folioSeguimiento: string;
   citaProximaId: string | null;
   esPrimeraVezArea: boolean;
   tieneHistorialClinico: boolean;

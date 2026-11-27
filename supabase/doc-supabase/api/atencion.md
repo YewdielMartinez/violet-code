@@ -10,7 +10,7 @@
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| `seguimiento.registrar` + tener área | TS, Psi, Jur (cada quien en su área) | Escritura | Sí, por triggers (`'crear'`/`'actualizar'`) | `_40_seguimiento_con_asistencia` |
+| `seguimiento.registrar` + tener área | TS, Psi, Jur (cada quien en su área) | Escritura | Sí, por triggers (`'crear'`/`'actualizar'`) | `_41_folio_seguimiento` |
 
 **Llamada**
 
@@ -47,6 +47,7 @@ const { data, error } = await supabase
 ```ts
 interface RegistrarSeguimientoRow {
   atencion_id: string;
+  folio_seguimiento: string;        // generado en servidor (provisional: SEG-AAAA-NNNNN)
   cita_proxima_id: string | null;   // solo si mandaste p_proxima_cita_en
   es_primera_vez_area: boolean;     // RN-19: primera atención de esa ficha en esa área
   tiene_historial_clinico: boolean; // útil en Psicología para pedir el historial si aún no existe
@@ -56,6 +57,7 @@ interface RegistrarSeguimientoRow {
 **Comportamiento**
 
 - El área sale siempre del actor (`auth_area_id()`); el front no la manda.
+- El `folio_seguimiento` se genera siempre en servidor (`SEG-AAAA-NNNNN` provisional); el front no lo manda ni puede editarlo.
 - Exige `p_cita_id` de una cita programada para **hoy** (`America/Mazatlan`) y la pasa automáticamente a `asistio`. Si la persona llega sin cita previa, el flujo crea primero una cita del día (`estado = 'agendada'`) y luego registra el seguimiento.
 - Si el expediente estaba `abierto`, pasa a `en_seguimiento`.
 - Psicología y Jurídico no pueden atender a menores de 18 años (RN-01): lo bloquea un trigger con `23514`.

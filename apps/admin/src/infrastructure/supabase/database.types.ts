@@ -1,4 +1,4 @@
-
+﻿
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
@@ -227,14 +227,14 @@ isOneToOne: false
                   ]
                 },"atencion": {
                   Row: {
-                    "acciones_realizadas": string | null,"activo": boolean,"actualizado_en": string,"area_id": number,"atendida_en": string,"atendida_por": string | null,"celular": string | null,"cita_id": string | null,"creado_en": string,"creado_por": string | null,"domicilio_id": string | null,"estado_civil": Database["public"]['Enums']["estado_civil"] | null,"ficha_id": string,"id": string,"observaciones": string | null,"ocupacion_id": number | null,"ocupacion_otra": string | null,"prioridad": Database["public"]['Enums']["prioridad_nivel"] | null,"proxima_accion": string | null,"tipo_atencion_id": number
+                    "acciones_realizadas": string | null,"activo": boolean,"actualizado_en": string,"area_id": number,"atendida_en": string,"atendida_por": string | null,"celular": string | null,"cita_id": string | null,"creado_en": string,"creado_por": string | null,"domicilio_id": string | null,"estado_civil": Database["public"]['Enums']["estado_civil"] | null,"ficha_id": string,"folio_seguimiento": string,"id": string,"observaciones": string | null,"ocupacion_id": number | null,"ocupacion_otra": string | null,"prioridad": Database["public"]['Enums']["prioridad_nivel"] | null,"proxima_accion": string | null,"tipo_atencion_id": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "acciones_realizadas"?: string | null,"activo"?: boolean,"actualizado_en"?: string,"area_id": number,"atendida_en"?: string,"atendida_por"?: string | null,"celular"?: string | null,"cita_id"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"domicilio_id"?: string | null,"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"ficha_id": string,"id"?: string,"observaciones"?: string | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"prioridad"?: Database["public"]['Enums']["prioridad_nivel"] | null,"proxima_accion"?: string | null,"tipo_atencion_id": number
+                    "acciones_realizadas"?: string | null,"activo"?: boolean,"actualizado_en"?: string,"area_id": number,"atendida_en"?: string,"atendida_por"?: string | null,"celular"?: string | null,"cita_id"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"domicilio_id"?: string | null,"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"ficha_id": string,"folio_seguimiento"?: string,"id"?: string,"observaciones"?: string | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"prioridad"?: Database["public"]['Enums']["prioridad_nivel"] | null,"proxima_accion"?: string | null,"tipo_atencion_id": number
                   }
                   Update: {
-                    "acciones_realizadas"?: string | null,"activo"?: boolean,"actualizado_en"?: string,"area_id"?: number,"atendida_en"?: string,"atendida_por"?: string | null,"celular"?: string | null,"cita_id"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"domicilio_id"?: string | null,"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"ficha_id"?: string,"id"?: string,"observaciones"?: string | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"prioridad"?: Database["public"]['Enums']["prioridad_nivel"] | null,"proxima_accion"?: string | null,"tipo_atencion_id"?: number
+                    "acciones_realizadas"?: string | null,"activo"?: boolean,"actualizado_en"?: string,"area_id"?: number,"atendida_en"?: string,"atendida_por"?: string | null,"celular"?: string | null,"cita_id"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"domicilio_id"?: string | null,"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"ficha_id"?: string,"folio_seguimiento"?: string,"id"?: string,"observaciones"?: string | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"prioridad"?: Database["public"]['Enums']["prioridad_nivel"] | null,"proxima_accion"?: string | null,"tipo_atencion_id"?: number
                   }
                   Relationships: [
                     {
@@ -1036,6 +1036,9 @@ isOneToOne: false
 "generar_folio_ficha":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"generar_folio_seguimiento":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
 "get_actividades_preventivas":
 { Args: { "p_desde"?: string,"p_hasta"?: string,"p_limite"?: number }; Returns: {
               "asentamiento_id": number,"asentamiento_nombre": string,"codigo_postal": string,"creado_en": string,"creado_por": string,"creado_por_nombre": string,"direccion": string,"id": string,"municipio": string,"nivel_educativo": Database["public"]['Enums']["nivel_educativo"],"numero_asistentes": number,"participantes": Json,"programada_en": string,"referencias": string,"sede": string,"tipo_actividad_clave": string,"tipo_actividad_id": number,"tipo_actividad_nombre": string,"tipo_institucion": Database["public"]['Enums']["tipo_institucion_actividad"],"titulo": string
@@ -1112,7 +1115,7 @@ isOneToOne: false
                            },
 "registrar_seguimiento":
 { Args: { "p_acciones_realizadas"?: string,"p_cita_id"?: string,"p_ficha_id": string,"p_observaciones"?: string,"p_prioridad"?: Database["public"]['Enums']["prioridad_nivel"],"p_proxima_accion"?: string,"p_proxima_cita_en"?: string,"p_tipo_atencion_id"?: number }; Returns: {
-              "atencion_id": string,"cita_proxima_id": string,"es_primera_vez_area": boolean,"tiene_historial_clinico": boolean
+              "atencion_id": string,"cita_proxima_id": string,"es_primera_vez_area": boolean,"folio_seguimiento": string,"tiene_historial_clinico": boolean
             }[]
                            },
 "tiene_orden_vigente":
