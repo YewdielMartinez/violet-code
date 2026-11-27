@@ -244,13 +244,11 @@ select throws_ok(
 insert into pg_temp.res_agr
 select *
 from public.guardar_agresor(
-  null,
-  (select ficha_id from pg_temp.res_crear),
-  null, 'Pedro', null, null, null, null, null, null, null, null, null, null,
-  null, null, null, null, null, null, null, null, null, null,
-  array['cristal']::public.tipo_droga[],
-  'Diario',
-  'frecuente'::public.consumo_alcohol,
+  p_ficha_id => (select ficha_id from pg_temp.res_crear),
+  p_nombres => 'Pedro',
+  p_drogas => array['cristal']::public.tipo_droga[],
+  p_especificacion_droga => 'Diario',
+  p_consumo_alcohol => 'frecuente'::public.consumo_alcohol,
   p_parentesco_id => (select id from public.cat_parentesco order by id limit 1),
   p_ocupacion_id => (select id from public.cat_ocupacion order by id limit 1)
 );

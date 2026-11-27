@@ -569,3 +569,6 @@ revoke all on function public.guardar_agresor(
 grant execute on function public.guardar_agresor(
   uuid, uuid, timestamptz, text, text, text, smallint, date, text,
   public.sexo_biologico, public.estado_civil, text, smallint, text, integer,
+  text, text, text, text, text, public.zona_geografica, smallint, text,
+  public.tipo_trabajo, public.tipo_droga[], text, public.consumo_alcohol, text, text
+) to authenticated;
