@@ -1,0 +1,56 @@
+/* Panel de informes: solo se animan `transform` y `opacity`; los colores salen de los tokens del tema. */
+
+.inf-body {
+  animation: inf-in 260ms var(--mk-ease-flow, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+.inf-kpi {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container-low);
+  animation: inf-in 260ms var(--mk-ease-flow, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+.inf-kpi:nth-child(2) {
+  animation-delay: 50ms;
+}
+
+.inf-kpi:nth-child(3) {
+  animation-delay: 100ms;
+}
+
+.inf-kpi__value {
+  font-size: 2.25rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--md-sys-color-on-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.inf-kpi__label {
+  font-size: 0.8125rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+@keyframes inf-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.inf-table [data-mk-dt-table] td[data-key='area'] {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inf-body,
+  .inf-kpi {
+    animation: none;
+  }
+}

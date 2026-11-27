@@ -13,8 +13,10 @@ val localProps = Properties().apply {
     if (file.exists()) file.inputStream().use(::load)
 }
 
-fun configValue(name: String, fallback: String): String {
-    val raw = (localProps.getProperty(name) ?: System.getenv(name) ?: fallback).trim()
+fun configValue(name: String, fallback: String, vararg aliases: String): String {
+    val raw = (listOf(name, *aliases).firstNotNullOfOrNull { key ->
+        (localProps.getProperty(key) ?: System.getenv(key))?.trim()?.ifEmpty { null }
+    } ?: fallback).trim()
     return raw.ifEmpty { fallback }.replace("\\", "\\\\").replace("\"", "\\\"")
 }
 
@@ -32,15 +34,16 @@ android {
 
     buildTypes {
         debug {
-            // Emulador Android → Supabase local en la PC (:54321). En Cloud, definir en local.properties.
-            buildConfigField("String", "SUPABASE_URL", "\"${configValue("SUPABASE_URL", "http://10.0.2.2:54321/")}\"")
-            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${configValue("SUPABASE_ANON_KEY", "")}\"")
+            // Emulador Android → Supabase local en la PC (10.0.2.2:55321, ver supabase/config.toml). En Cloud, definir
+            // `supabase.url` y `supabase.publishableKey` en apps/mobile/local.properties (ignorado por git). Nunca service_role.
+            buildConfigField("String", "SUPABASE_URL", "\"${configValue("supabase.url", "http://10.0.2.2:55321", "SUPABASE_URL")}\"")
+            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${configValue("supabase.publishableKey", "", "SUPABASE_ANON_KEY")}\"")
         }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            buildConfigField("String", "SUPABASE_URL", "\"${configValue("SUPABASE_URL", "https://placeholder.supabase.co/")}\"")
-            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${configValue("SUPABASE_ANON_KEY", "")}\"")
+            buildConfigField("String", "SUPABASE_URL", "\"${configValue("supabase.url", "https://placeholder.supabase.co", "SUPABASE_URL")}\"")
+            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${configValue("supabase.publishableKey", "", "SUPABASE_ANON_KEY")}\"")
         }
     }
 

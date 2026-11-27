@@ -22,7 +22,7 @@ vi.mock('@/infrastructure/supabase/adapters/SupabaseAuthRepository', () => ({
 }));
 
 import { PerfilCuentaSection } from '@/features/perfil/PerfilCuentaSection';
-import { login, sessionStore } from '@/shared/auth/session';
+import { login, logout, sessionStore } from '@/shared/auth/session';
 
 const PERFIL: MiPerfil = {
   id: 'u-1',
@@ -81,11 +81,19 @@ describe('PerfilCuentaSection', () => {
     repo.logout.mockResolvedValue(undefined);
   });
 
-  afterEach(cleanup);
+  afterEach(async () => {
+    cleanup();
+    await logout();
+  });
 
-  it('muestra nombre, correo, rol, área, estado y teléfono', async () => {
+  it('muestra el titular con correo y nombre (sin duplicarlos como tarjetas de rol/área) y los datos de la cuenta', async () => {
     renderPage();
-    expect(await screen.findByRole('heading', { name: 'Claudia Trabajo Social' })).toBeTruthy();
+    const hero = await findSection('Resumen de tu cuenta');
+    expect(within(hero).getByText('Correo')).toBeTruthy();
+    expect(within(hero).getByText('ts@demo.violetcode.local')).toBeTruthy();
+    expect(within(hero).getByText('Nombre')).toBeTruthy();
+    expect(within(hero).getByText('Claudia Trabajo Social')).toBeTruthy();
+    expect(screen.getAllByRole('region', { name: 'Resumen de tu cuenta' })).toHaveLength(1);
     const cuenta = await findSection('Datos de la cuenta');
     expect(within(cuenta).getByText('ts@demo.violetcode.local')).toBeTruthy();
     expect(within(cuenta).getByText('Rol')).toBeTruthy();
@@ -94,6 +102,30 @@ describe('PerfilCuentaSection', () => {
     expect(within(cuenta).getByText('Activa')).toBeTruthy();
     const contacto = await findSection('Datos de contacto');
     expect(within(contacto).getByText('667 123 4567')).toBeTruthy();
+  });
+
+  it('el titular sale de la sesión al instante, sin esperar get_mi_perfil', async () => {
+    repo.login.mockResolvedValue({
+      accessToken: 't',
+      expiresAt: '2030-01-01T00:00:00Z',
+      user: {
+        id: 'u-1',
+        email: 'sesion@demo.violetcode.local',
+        displayName: 'Nombre de Sesión',
+        role: 'trabajo_social',
+        areaId: 1,
+        areaClave: 'trabajo_social',
+        areaNombre: 'Trabajo Social',
+        activo: true,
+      },
+    });
+    await login('sesion@demo.violetcode.local', 'x');
+    repo.miPerfil.mockReturnValue(new Promise(() => {}));
+    renderPage();
+    const hero = screen.getByRole('region', { name: 'Resumen de tu cuenta' });
+    expect(within(hero).getByText('Nombre de Sesión')).toBeTruthy();
+    expect(within(hero).getByText('sesion@demo.violetcode.local')).toBeTruthy();
+    expect(screen.getByRole('status', { name: 'Cargando perfil' })).toBeTruthy();
   });
 
   it('muestra los permisos plegados y los lista agrupados al pulsar «Ver permisos»', async () => {

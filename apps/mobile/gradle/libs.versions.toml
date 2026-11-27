@@ -13,6 +13,8 @@ room = "2.7.1"
 retrofit = "2.11.0"
 okhttp = "4.12.0"
 serialization = "1.8.1"
+supabase = "3.2.6"
+ktor = "3.3.1"
 junit = "4.13.2"
 
 [libraries]
@@ -48,6 +50,12 @@ retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = 
 retrofit-kotlinx-serialization = { group = "com.squareup.retrofit2", name = "converter-kotlinx-serialization", version.ref = "retrofit" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
+
+# Supabase (auth + postgrest). Solo URL pública + clave publishable/anon: nunca service_role.
+supabase-bom = { group = "io.github.jan-tennert.supabase", name = "bom", version.ref = "supabase" }
+supabase-auth = { group = "io.github.jan-tennert.supabase", name = "auth-kt" }
+supabase-postgrest = { group = "io.github.jan-tennert.supabase", name = "postgrest-kt" }
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 
 # Pruebas
 junit = { group = "junit", name = "junit", version.ref = "junit" }
