@@ -1,9 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { generatePath, Link, useSearchParams } from 'react-router-dom';
 import { Dialog, useDialog } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
+import { HISTORIAL_CLINICO_PATH } from '@/app/navigation';
 import type { StaffRole } from '@/domain/models/Auth';
+import { puedeAccederHistorialClinico } from '@/domain/models/HistorialClinico';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
+import { Icon } from '@/shared/ui/Icon';
 import { puedeAccederAgresor } from './agresorApi';
 import { AgresorFormSection } from './AgresorFormSection';
 import { DerivacionesExpedientePanel } from './DerivacionesExpedientePanel';
@@ -151,6 +154,15 @@ export function ExpedienteDrawer({
           {expediente ? (
             <div className="grid gap-5">
               <ExpedienteHeroCard expediente={expediente} />
+
+              {puedeAccederHistorialClinico(userRole) && (
+                <Link
+                  to={generatePath(HISTORIAL_CLINICO_PATH, { fichaId: expediente.id })}
+                  className="mk-button mk-button--tonal justify-self-start"
+                >
+                  <Icon name="clinical_notes" /> Historial clínico
+                </Link>
+              )}
 
               <ExpedienteDrawerTabs
                 activeTab={activeTab}

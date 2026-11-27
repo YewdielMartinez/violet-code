@@ -26,7 +26,7 @@ function hideIconsUntilFontReady() {
   root.classList.add('vc-icons-loading');
 
   let done = false;
-  let timer: ReturnType<typeof window.setTimeout> | undefined;
+  let timer: number | undefined;
 
   const finish = () => {
     if (done) return;

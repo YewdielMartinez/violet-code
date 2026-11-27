@@ -1,4 +1,8 @@
+import { matchPath } from 'react-router-dom';
 import type { StaffRole } from '@/domain/models/Auth';
+import { puedeAccederHistorialClinico } from '@/domain/models/HistorialClinico';
+
+export const HISTORIAL_CLINICO_PATH = '/expedientes/:fichaId/historial-clinico';
 
 /**
  * Mapa de navegación del panel alineado con los 7 roles reales en Supabase.
@@ -140,6 +144,7 @@ export function getNavigationForRole(role: StaffRole | undefined): NavPage[] {
 
 export function canAccessPath(role: StaffRole | undefined, pathname: string): boolean {
   if (!role) return false;
+  if (matchPath(HISTORIAL_CLINICO_PATH, pathname)) return puedeAccederHistorialClinico(role);
   if (pathname === '/expedientes/nuevo') {
     return role === 'titular' || role === 'subdireccion' || role === 'trabajo_social';
   }
