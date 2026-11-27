@@ -56,7 +56,7 @@ Se usa para derivaciones externas (`institucion_id`) y en la app (directorio de 
 | `persona` | `expediente.ver` (Tit, Sub, TS, Psi, Jur) | `expediente.escribir` (Tit, Sub, TS) | Recepción ya no la lee (B-08); para buscar usa `verificar_curp`. |
 | `ficha_registro` | `expediente.ver` | `expediente.escribir` | El alta va por `crear_ficha_completa`; archivar, por `archivar_ficha`. |
 | `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar` | `expediente.ver` | `expediente.escribir` | Normalmente se escriben dentro de `crear_ficha_completa`. |
-| `domicilio` | `expediente.ver` | `expediente.ver` | |
+| `domicilio` | `expediente.ver` | Cerrado (`actualizar_domicilio`) | Usar el RPC [`actualizar_domicilio`](../rpcs/actualizar_domicilio.md); `insert`/`update` directos bloqueados (`42501`). |
 | `agresor` | `agresor.acceder` (Tit, Sub, TS, Psi, Jur) | `agresor.acceder` | Al abrirlo, llama `registrar_consulta('agresor', id)`. Edición con bloqueo optimista por `actualizado_en`. |
 | `documento` | `expediente.ver` | `expediente.ver` | Ver [storage.md](./storage.md). |
 

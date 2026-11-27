@@ -969,7 +969,12 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "actualizar_mi_pre_registro":
+            "actualizar_domicilio":
+{ Args: { "p_actualizado_en"?: string,"p_asentamiento_id"?: number,"p_calle"?: string,"p_codigo_postal"?: string,"p_numero_exterior"?: string,"p_numero_interior"?: string,"p_persona_id": string,"p_referencias"?: string,"p_zona"?: Database["public"]['Enums']["zona_geografica"] }; Returns: {
+              "actualizado_en": string,"domicilio_id": string,"es_actual": boolean,"persona_id": string
+            }[]
+                           },
+"actualizar_mi_pre_registro":
 { Args: { "p_apellido_materno"?: string,"p_apellido_paterno"?: string,"p_celular"?: string,"p_nombres"?: string }; Returns: {
               "actualizado_en": string,"apellido_materno": string,"apellido_paterno": string,"celular": string,"curp": string,"id": string,"nombres": string
             }[]

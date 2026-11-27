@@ -314,6 +314,32 @@ interface ExpedienteDetalle {
 
 ---
 
+## `actualizar_domicilio`
+
+> Actualiza el domicilio actual de una persona (marca el anterior como `es_actual = false` y crea el nuevo con `es_actual = true`). Bloquea expedientes archivados (`23514`) y aplica concurrencia optimista (`23505`).
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+|---|---|---|---|---|
+| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por trigger | `_49_rpc_actualizar_domicilio` |
+
+```ts
+const { data, error } = await supabase
+  .rpc('actualizar_domicilio', {
+    p_persona_id: personaId,
+    p_actualizado_en: domicilioActual.actualizado_en,
+    p_asentamiento_id: asentamientoId,
+    p_calle: calle,
+    p_numero_exterior: numExt,
+    p_numero_interior: numInt,
+    p_referencias: referencias,
+    p_codigo_postal: null,
+    p_zona: 'urbana',
+  })
+  .single();
+```
+
+---
+
 ## `archivar_ficha`
 
 > Pasa un expediente a `archivado` cuando ya no tiene nada pendiente.

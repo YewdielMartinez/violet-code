@@ -117,13 +117,13 @@ select pg_temp.set_actor('11111111-1111-4111-8111-111111111101'::uuid); -- titul
 select ok((select count(*) >= 1 from public.domicilio), 'titular lee domicilio');
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111103'::uuid); -- trabajo_social
-select lives_ok(
+select throws_ok(
   $$insert into public.domicilio (id, persona_id, calle, es_actual) values ('44444444-2100-4000-8000-000000000091', '33333333-3333-4333-8333-333333333301', 'Calle A06', false)$$,
-  'trabajo_social inserta domicilio'
+  '42501', null, 'trabajo_social no inserta domicilio directamente (with check false)'
 );
-select lives_ok(
-  $$update public.domicilio set referencias = 'Ref A06' where id = '44444444-2100-4000-8000-000000000091'$$,
-  'trabajo_social actualiza domicilio'
+select throws_ok(
+  $$update public.domicilio set referencias = 'Ref A06' where persona_id = '33333333-3333-4333-8333-333333333301'$$,
+  '42501', null, 'trabajo_social no actualiza domicilio directamente (with check false)'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111104'::uuid); -- psicologia
