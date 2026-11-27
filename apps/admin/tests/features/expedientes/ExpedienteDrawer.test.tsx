@@ -287,7 +287,7 @@ describe('ExpedienteDrawer (RBAC, rediseño y bitácora RF-05 / RF-22)', () => {
     expect(screen.getByText('Prioritario')).toBeTruthy();
     expect(screen.getByText('MEZA910315MSLGRN04')).toBeTruthy();
     expect(screen.getByText('668 100 0001')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Llamar' }).getAttribute('href')).toBe('tel:6681000001');
+    expect(screen.queryByRole('link', { name: 'Llamar' })).toBeNull();
     expect(await screen.findByTestId('ficha-gestion')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copiar CURP' }));

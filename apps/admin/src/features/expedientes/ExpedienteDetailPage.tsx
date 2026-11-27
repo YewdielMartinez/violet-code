@@ -113,11 +113,6 @@ function parseRequestedTab(rawTab: string | null): DrawerTab {
   return 'resumen';
 }
 
-function formatTelHref(celular: string | null): string | null {
-  const clean = celular?.trim().replace(/[^\d+]/g, '') ?? '';
-  return clean ? `tel:${clean}` : null;
-}
-
 function scheduleIdleStep(cb: () => void): () => void {
   if (typeof window === 'undefined') return () => { };
   if (typeof window.requestIdleCallback === 'function') {
@@ -487,7 +482,6 @@ export default function ExpedienteDetailPage() {
 
   const pageTitle =
     expediente?.persona.nombreCompleto ?? (isLoading ? 'Cargando expediente…' : 'Expediente');
-  const telHref = expediente ? formatTelHref(expediente.persona.celular) : null;
 
   const sensitiveTabs = useMemo(
     () =>
@@ -567,15 +561,6 @@ export default function ExpedienteDetailPage() {
                   <Icon name="badge" />
                   <span>Copiar CURP</span>
                 </button>
-                {telHref ? (
-                  <a
-                    href={telHref}
-                    className="mk-button mk-button--primary min-h-11 px-4 text-base"
-                  >
-                    <Icon name="call" />
-                    <span>Llamar</span>
-                  </a>
-                ) : null}
               </>
             ) : null}
           </>
