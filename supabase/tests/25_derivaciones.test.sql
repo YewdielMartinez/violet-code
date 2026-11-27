@@ -224,9 +224,9 @@ select is(
   'psicologia avanza su derivacion de pendiente a en_proceso'
 );
 
--- 15. Camino feliz: en_proceso -> concluida
+-- 15. Camino feliz: en_proceso -> concluida (nota obligatoria desde A-02 S2)
 select is(
-  (select estado from public.cambiar_estado_derivacion('90000000-0000-4000-a000-000000000302', 'concluida')),
+  (select estado from public.cambiar_estado_derivacion('90000000-0000-4000-a000-000000000302', 'concluida', 'Valoración psicológica concluida')),
   'concluida'::public.estado_derivacion,
   'psicologia concluye su derivacion de en_proceso a concluida'
 );
