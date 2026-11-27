@@ -286,6 +286,7 @@
 }
 
 /* Los bloques del formulario entran en cascada corta. */
+.vc-hc-dictado,
 .vc-hc-edit-field,
 .vc-hc-switch,
 .vc-hc-form__footer {
@@ -305,6 +306,32 @@
   line-height: 1.35;
   color: var(--md-sys-color-on-surface-variant);
   transition: color 160ms ease;
+}
+
+/* Cabecera del campo: etiqueta + acceso «Dictar aquí» o marca del destino del dictado. */
+.vc-hc-edit-field__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 2rem;
+}
+
+.vc-hc-edit-field__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.vc-hc-edit-field[data-dictado='true'] .vc-hc-textarea {
+  border-color: color-mix(in srgb, var(--md-sys-color-primary) 60%, var(--md-sys-color-outline-variant));
 }
 
 .vc-hc-edit-field:focus-within .vc-hc-edit-field__label {
@@ -628,6 +655,7 @@
 @media (prefers-reduced-motion: reduce) {
   .vc-hc-stage,
   .vc-hc-field,
+  .vc-hc-dictado,
   .vc-hc-edit-field,
   .vc-hc-switch,
   .vc-hc-form__footer,
