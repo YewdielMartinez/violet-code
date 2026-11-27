@@ -1,4 +1,11 @@
 import { useCallback, useMemo, useState, type SetStateAction } from 'react';
+import {
+  INITIAL_FICHA_AGRESOR,
+  hasFichaAgresorData,
+  toAgresorInput,
+  type AgresorValidationField,
+  type FichaAgresorInput,
+} from '@/domain/models/Agresor';
 import { INITIAL_DOMICILIO_INPUT, type DomicilioInput } from '@/domain/models/Domicilio';
 import {
   INITIAL_ESTUDIO_INPUT,
@@ -6,16 +13,20 @@ import {
 } from '@/domain/models/EstudioSocioeconomico';
 import {
   createIdentidadFromPreRegistro,
+  type CatalogosFicha,
   type FichaIdentidadInput,
 } from '@/domain/models/FichaRegistro';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
 import type { PreRegistroMovil } from '@/domain/models/PreRegistroMovil';
 import { useCreateFicha } from '../api';
 import {
+  validateStepAgresor,
   validateStepDomicilio,
   validateStepEstudio,
   validateStepIdentidad,
 } from './fichaValidation';
+
+const LAST_STEP = 3;
 
 export interface FichaSeedContext {
   curp?: string;
@@ -26,25 +37,31 @@ export interface FichaSeedContext {
 function serializeDraft(
   identidad: FichaIdentidadInput,
   domicilio: DomicilioInput,
+  agresor: FichaAgresorInput,
   estudio: EstudioSocioeconomicoInput,
 ): string {
-  return JSON.stringify({ identidad, domicilio, estudio });
+  return JSON.stringify({ identidad, domicilio, agresor, estudio });
 }
 
-export function useFichaForm() {
+export function useFichaForm(catalogos?: CatalogosFicha) {
   const [step, setStep] = useState(0);
   const [stepError, setStepError] = useState<string | null>(null);
   const [invalidField, setInvalidField] = useState<string | null>(null);
+  const [agresorErrors, setAgresorErrors] = useState<
+    Partial<Record<AgresorValidationField, string>>
+  >({});
   const [duplicateExpediente, setDuplicateExpediente] = useState<ExpedienteResumen | null>(null);
   const [identidad, setIdentidadRaw] = useState<FichaIdentidadInput>(() =>
     createIdentidadFromPreRegistro(null),
   );
   const [domicilio, setDomicilioRaw] = useState<DomicilioInput>(INITIAL_DOMICILIO_INPUT);
+  const [agresor, setAgresorRaw] = useState<FichaAgresorInput>(INITIAL_FICHA_AGRESOR);
   const [estudio, setEstudioRaw] = useState<EstudioSocioeconomicoInput>(INITIAL_ESTUDIO_INPUT);
   const [initialSnapshot, setInitialSnapshot] = useState(() =>
     serializeDraft(
       createIdentidadFromPreRegistro(null),
       INITIAL_DOMICILIO_INPUT,
+      INITIAL_FICHA_AGRESOR,
       INITIAL_ESTUDIO_INPUT,
     ),
   );
@@ -52,8 +69,8 @@ export function useFichaForm() {
   const createMutation = useCreateFicha();
 
   const isDirty = useMemo(
-    () => serializeDraft(identidad, domicilio, estudio) !== initialSnapshot,
-    [identidad, domicilio, estudio, initialSnapshot],
+    () => serializeDraft(identidad, domicilio, agresor, estudio) !== initialSnapshot,
+    [identidad, domicilio, agresor, estudio, initialSnapshot],
   );
 
   const setIdentidad = useCallback((next: SetStateAction<FichaIdentidadInput>) => {
@@ -66,6 +83,13 @@ export function useFichaForm() {
     setDomicilioRaw(next);
     setStepError(null);
     setInvalidField(null);
+  }, []);
+
+  const setAgresor = useCallback((next: SetStateAction<FichaAgresorInput>) => {
+    setAgresorRaw(next);
+    setStepError(null);
+    setInvalidField(null);
+    setAgresorErrors({});
   }, []);
 
   const setEstudio = useCallback((next: SetStateAction<EstudioSocioeconomicoInput>) => {
@@ -81,18 +105,23 @@ export function useFichaForm() {
     }
     setIdentidadRaw(base);
     setDomicilioRaw(INITIAL_DOMICILIO_INPUT);
+    setAgresorRaw(INITIAL_FICHA_AGRESOR);
     setEstudioRaw(INITIAL_ESTUDIO_INPUT);
-    setInitialSnapshot(serializeDraft(base, INITIAL_DOMICILIO_INPUT, INITIAL_ESTUDIO_INPUT));
+    setInitialSnapshot(
+      serializeDraft(base, INITIAL_DOMICILIO_INPUT, INITIAL_FICHA_AGRESOR, INITIAL_ESTUDIO_INPUT),
+    );
     setStep(0);
     setStepError(null);
     setInvalidField(null);
+    setAgresorErrors({});
     setDuplicateExpediente(null);
   }, []);
 
   const goToStep = useCallback((nextStep: number) => {
     setStepError(null);
     setInvalidField(null);
-    setStep(Math.max(0, Math.min(2, nextStep)));
+    setAgresorErrors({});
+    setStep(Math.max(0, Math.min(LAST_STEP, nextStep)));
   }, []);
 
   function goNext(onInvalid?: (field: string) => void): boolean {
@@ -103,6 +132,26 @@ export function useFichaForm() {
       setInvalidField('curp');
       onInvalid?.('curp');
       return false;
+    }
+
+    if (step === 2) {
+      const agresorCheck = validateStepAgresor(
+        agresor,
+        catalogos?.parentescos ?? [],
+        catalogos?.ocupaciones ?? [],
+      );
+      if (agresorCheck) {
+        setAgresorErrors(agresorCheck.errors);
+        setStepError(agresorCheck.failure.error);
+        setInvalidField(agresorCheck.failure.field);
+        onInvalid?.(agresorCheck.failure.field);
+        return false;
+      }
+      setAgresorErrors({});
+      setStepError(null);
+      setInvalidField(null);
+      setStep((prev) => Math.min(prev + 1, LAST_STEP));
+      return true;
     }
 
     const failure =
@@ -121,13 +170,14 @@ export function useFichaForm() {
 
     setStepError(null);
     setInvalidField(null);
-    setStep((prev) => Math.min(prev + 1, 2));
+    setStep((prev) => Math.min(prev + 1, LAST_STEP));
     return true;
   }
 
   function goBack() {
     setStepError(null);
     setInvalidField(null);
+    setAgresorErrors({});
     setStep((prev) => Math.max(prev - 1, 0));
   }
 
@@ -142,9 +192,14 @@ export function useFichaForm() {
       return null;
     }
 
+    const parentescos = catalogos?.parentescos ?? [];
+    const ocupaciones = catalogos?.ocupaciones ?? [];
+    const agresorCheck = validateStepAgresor(agresor, parentescos, ocupaciones);
+
     const checks = [
       validateStepIdentidad(identidad),
       validateStepDomicilio(domicilio),
+      agresorCheck ? agresorCheck.failure : null,
       validateStepEstudio(estudio),
     ];
 
@@ -154,16 +209,27 @@ export function useFichaForm() {
       setStep(i);
       setStepError(failure.error);
       setInvalidField(failure.field);
+      setAgresorErrors(i === 2 && agresorCheck ? agresorCheck.errors : {});
       onInvalid?.(failure.field, i);
       return null;
     }
 
     setStepError(null);
     setInvalidField(null);
+    setAgresorErrors({});
+    const agresorPayload = hasFichaAgresorData(agresor)
+      ? toAgresorInput(agresor, '', parentescos, ocupaciones)
+      : null;
+
     try {
-      const created = await createMutation.mutateAsync({ identidad, domicilio, estudio });
+      const created = await createMutation.mutateAsync({
+        identidad,
+        domicilio,
+        estudio,
+        agresor: agresorPayload,
+      });
       // Tras guardar, el borrador deja de contar como "cambios sin guardar".
-      setInitialSnapshot(serializeDraft(identidad, domicilio, estudio));
+      setInitialSnapshot(serializeDraft(identidad, domicilio, agresor, estudio));
       return created;
     } catch (err) {
       const msg =
@@ -196,6 +262,7 @@ export function useFichaForm() {
     stepError,
     setStepError,
     invalidField,
+    agresorErrors,
     duplicateExpediente,
     setDuplicateExpediente,
     isDirty,
@@ -203,6 +270,8 @@ export function useFichaForm() {
     setIdentidad,
     domicilio,
     setDomicilio,
+    agresor,
+    setAgresor,
     estudio,
     setEstudio,
     initialize,

@@ -4,11 +4,13 @@ import { LoadingButton, Stepper, Steps } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/loading-button';
 import '@yewdiel21/motion-kit/css/components/stepper';
 import '@yewdiel21/motion-kit/css/components/steps';
+import type { AgresorValidationField, FichaAgresorInput } from '@/domain/models/Agresor';
 import type { DomicilioInput } from '@/domain/models/Domicilio';
 import type { EstudioSocioeconomicoInput } from '@/domain/models/EstudioSocioeconomico';
 import type { CatalogosFicha, FichaIdentidadInput } from '@/domain/models/FichaRegistro';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
 import { Icon } from '@/shared/ui/Icon';
+import { FichaAgresorStep } from './FichaAgresorStep';
 import { FichaDomicilioStep } from './FichaDomicilioStep';
 import { FichaIdentidadStep } from './FichaIdentidadStep';
 import { FichaSocioeconomicoStep } from './FichaSocioeconomicoStep';
@@ -17,8 +19,11 @@ import './ficha-wizard.css';
 export const FICHA_STEP_ITEMS = [
   { label: 'Identidad', description: 'CURP, servicios y aviso' },
   { label: 'Domicilio', description: 'Ubicación y dirección' },
+  { label: 'Persona agresora', description: 'Datos opcionales del agresor' },
   { label: 'Estudio socioeconómico', description: 'Vivienda y aportantes' },
 ];
+
+const LAST_STEP = FICHA_STEP_ITEMS.length - 1;
 
 const SUBMIT_LABELS = {
   loading: 'Guardando…',
@@ -46,11 +51,14 @@ interface StepsSectionProps {
   step: number;
   stepError: string | null;
   invalidField: string | null;
+  agresorErrors?: Partial<Record<AgresorValidationField, string>>;
   duplicateExpediente?: ExpedienteResumen | null;
   identidad: FichaIdentidadInput;
   onIdentidadChange: (next: FichaIdentidadInput) => void;
   domicilio: DomicilioInput;
   onDomicilioChange: (next: DomicilioInput) => void;
+  agresor: FichaAgresorInput;
+  onAgresorChange: (next: FichaAgresorInput) => void;
   estudio: EstudioSocioeconomicoInput;
   onEstudioChange: (next: EstudioSocioeconomicoInput) => void;
   catalogos?: CatalogosFicha;
@@ -68,11 +76,14 @@ export function FichaWizardSteps({
   step,
   stepError,
   invalidField,
+  agresorErrors,
   duplicateExpediente,
   identidad,
   onIdentidadChange,
   domicilio,
   onDomicilioChange,
+  agresor,
+  onAgresorChange,
   estudio,
   onEstudioChange,
   catalogos,
@@ -115,14 +126,14 @@ export function FichaWizardSteps({
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
-        if (step < 2) onNext();
+        if (step < LAST_STEP) onNext();
         else onSubmit();
       }}
     >
       <Steps index={step} align="start" duration={0.22} onChange={handleStepChange} className="vc-ficha-steps">
         <div className="mb-3 flex items-center justify-between gap-3 text-xs text-on-surface-variant">
           <span>
-            Paso <Steps.Counter className="font-mono font-semibold text-on-surface" /> de 3
+            Paso <Steps.Counter className="font-mono font-semibold text-on-surface" /> de {FICHA_STEP_ITEMS.length}
           </span>
           <span>Los campos con * son obligatorios</span>
         </div>
@@ -150,6 +161,21 @@ export function FichaWizardSteps({
               Domicilio de la usuaria
             </h3>
             <FichaDomicilioStep value={domicilio} onChange={onDomicilioChange} invalidField={invalidField} />
+          </div>
+        </Steps.Step>
+
+        <Steps.Step>
+          <div data-mk-flow-item="" className="w-full">
+            <h3 data-mk-step-title="" className="mb-4 text-base font-semibold text-on-surface">
+              Datos de la persona agresora (opcional)
+            </h3>
+            <FichaAgresorStep
+              value={agresor}
+              onChange={onAgresorChange}
+              catalogos={catalogos}
+              errors={agresorErrors}
+              invalidField={invalidField}
+            />
           </div>
         </Steps.Step>
 
@@ -202,7 +228,7 @@ export function FichaWizardFooter({
         <span className={step > 0 ? 'ml-1.5' : undefined}>{step === 0 ? 'Cancelar' : 'Atrás'}</span>
       </button>
 
-      {step < 2 ? (
+      {step < LAST_STEP ? (
         <button type="button" className="mk-button mk-button--filled" onClick={onNext} disabled={!canContinue}>
           <span>Siguiente</span>
           <Icon name="arrow_forward" />

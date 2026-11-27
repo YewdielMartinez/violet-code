@@ -37,6 +37,7 @@
 }
 
 .vc-ficha-stepper [data-mk-stepper-list] {
+  flex-wrap: wrap;
   gap: 0.375rem;
 }
 

@@ -1,3 +1,11 @@
+import {
+  hasFichaAgresorData,
+  toAgresorInput,
+  validarAgresor,
+  type AgresorValidationField,
+  type CatalogoOpcion,
+  type FichaAgresorInput,
+} from '@/domain/models/Agresor';
 import { validateDomicilio, type DomicilioInput } from '@/domain/models/Domicilio';
 import {
   validateEstudioSocioeconomico,
@@ -88,6 +96,54 @@ export function validateStepEstudio(
     }
   }
   return { error, field: 'ingresoMensualPropio' };
+}
+
+const AGRESOR_FIELD_ORDER: readonly AgresorValidationField[] = [
+  'nombres',
+  'apellidoPaterno',
+  'apellidoMaterno',
+  'parentescoOtro',
+  'ocupacionOtra',
+  'codigoPostal',
+  'calle',
+  'numeroExterior',
+  'numeroInterior',
+  'referencias',
+  'drogas',
+  'especificacionDroga',
+  'especificacionArma',
+  'observaciones',
+];
+
+export interface AgresorStepValidationResult {
+  failure: StepValidationFailure;
+  errors: Partial<Record<AgresorValidationField, string>>;
+}
+
+export function validateStepAgresor(
+  input: FichaAgresorInput,
+  parentescos: readonly CatalogoOpcion[] = [],
+  ocupaciones: readonly CatalogoOpcion[] = [],
+): AgresorStepValidationResult | null {
+  if (!hasFichaAgresorData(input)) return null;
+
+  const base = validarAgresor(toAgresorInput(input, '', parentescos, ocupaciones));
+  const errors: Partial<Record<AgresorValidationField, string>> = { ...base.errores };
+
+  if (!input.apellidoPaterno.trim()) {
+    errors.apellidoPaterno = 'El apellido paterno de la persona agresora es obligatorio.';
+  }
+
+  const firstKey = AGRESOR_FIELD_ORDER.find((key) => Boolean(errors[key]));
+  if (!firstKey) return null;
+
+  return {
+    failure: {
+      error: errors[firstKey] ?? 'Revisa los datos de la persona agresora.',
+      field: `agresor-${firstKey}`,
+    },
+    errors,
+  };
 }
 
 const FOCUSABLE_SELECTOR = [

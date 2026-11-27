@@ -6,9 +6,12 @@ import {
   useQueryClient,
   type UseQueryResult,
 } from '@tanstack/react-query';
+import type { AgresorInput } from '@/domain/models/Agresor';
 import type { CatalogoItem, CatalogosFicha, FichaCreateInput } from '@/domain/models/FichaRegistro';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
 import type { CatalogoNombre } from '@/domain/ports/SepomexRepository';
+import type { CreatedFichaResult } from '@/domain/ports/FichaRepository';
+import { supabaseAgresorRepository } from '@/infrastructure/supabase/adapters/SupabaseAgresorRepository';
 import { supabaseExpedienteRepository } from '@/infrastructure/supabase/adapters/SupabaseExpedienteRepository';
 import { supabaseFichaRepository } from '@/infrastructure/supabase/adapters/SupabaseFichaRepository';
 import { supabaseSepomexRepository } from '@/infrastructure/supabase/adapters/SupabaseSepomexRepository';
@@ -131,10 +134,32 @@ export function useFichaDetail(fichaId: string | null) {
   });
 }
 
+export interface CreateFichaVariables extends FichaCreateInput {
+  agresor?: Omit<AgresorInput, 'fichaId'> | null;
+}
+
+export interface CreateFichaOutcome extends CreatedFichaResult {
+  agresorError?: string;
+}
+
 export function useCreateFicha() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: FichaCreateInput) => supabaseFichaRepository.createComplete(input),
+    mutationFn: async ({ agresor, ...fichaInput }: CreateFichaVariables): Promise<CreateFichaOutcome> => {
+      const created = await supabaseFichaRepository.createComplete(fichaInput);
+      if (!agresor) return created;
+
+      try {
+        await supabaseAgresorRepository.crear({ ...agresor, fichaId: created.fichaId });
+        return created;
+      } catch (err) {
+        const message =
+          err instanceof Error && err.message
+            ? err.message
+            : 'No se pudo guardar la persona agresora.';
+        return { ...created, agresorError: message };
+      }
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['expedientes'] });
     },
