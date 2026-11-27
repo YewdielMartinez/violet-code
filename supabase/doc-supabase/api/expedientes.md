@@ -528,3 +528,63 @@ const { data, error } = await supabase
 ```
 
 **Errores:** `42501` (sin permiso) · `23514` (expediente archivado o tiene orden de protección vigente asociada).
+
+---
+
+## `guardar_historial_clinico` y `get_historial_clinico`
+
+> Crea o actualiza el historial clínico psicológico del expediente (con bloqueo optimista y RN-01) y lo consulta dejando registro `'ver'` en bitácora.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+| --- | --- | --- | --- | --- |
+| `historial_clinico.acceder` | Tit, Sub, Psi | Lectura / Escritura | Sí (`ver`, `crear`, `actualizar`) | `_37_rpc_historial_clinico_y_estudio` |
+
+**Llamada**
+
+```ts
+// Lectura (registra 'ver' automáticamente en bitácora)
+const { data: historial } = await supabase
+  .rpc('get_historial_clinico', { p_ficha_id: fichaId })
+  .maybeSingle();
+
+// Alta (p_actualizado_en = null) o edición (p_actualizado_en requerido)
+const { data, error } = await supabase
+  .rpc('guardar_historial_clinico', {
+    p_ficha_id: fichaId,
+    p_actualizado_en: historial?.actualizado_en ?? null,
+    p_motivo_consulta: 'Ansiedad derivada de violencia familiar',
+    p_tiene_atencion_psicologica_previa: false,
+  })
+  .single();
+```
+
+**Errores:** `42501` (TS, Jur, Rec, UMECA) · `23514` (expediente archivado o persona menor de 18 años RN-01) · `23505` (`p_actualizado_en` obsoleto).
+
+---
+
+## `registrar_estudio_socioeconomico`
+
+> Registra una nueva versión del estudio socioeconómico con sus aportantes (marcando el anterior como `es_actual = false`), o corrige el estudio de hoy si fue creado por la misma persona.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+| --- | --- | --- | --- | --- |
+| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por trigger | `_37_rpc_historial_clinico_y_estudio` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('registrar_estudio_socioeconomico', {
+    p_ficha_id: fichaId,
+    p_ingreso_mensual_propio: 7500,
+    p_numero_dependientes: 2,
+    p_tiene_apoyo: false,
+    p_tipo_vivienda: 'rentada',
+    p_material: 'block',
+    p_aportantes: [{ nombre: 'Rosa Ruiz', monto: 2000, frecuencia: 'quincenal' }],
+  })
+  .single();
+// data: { estudio_id, ficha_id, fecha_estudio, es_actual, fue_correccion, actualizado_en }
+```
+
+**Errores:** `42501` (Psi, Jur, Rec, UMECA) · `23514` (expediente archivado, apoyo/material inconsistentes o datos de aportantes inválidos).

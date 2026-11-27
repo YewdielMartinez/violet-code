@@ -55,7 +55,7 @@ Se usa para derivaciones externas (`institucion_id`) y en la app (directorio de 
 |---|---|---|---|
 | `persona` | `expediente.ver` (Tit, Sub, TS, Psi, Jur) | `expediente.escribir` (Tit, Sub, TS) | Recepción ya no la lee (B-08); para buscar usa `verificar_curp`. |
 | `ficha_registro` | `expediente.ver` | `expediente.escribir` | El alta va por `crear_ficha_completa`; archivar, por `archivar_ficha`. |
-| `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar` | `expediente.ver` | `expediente.escribir` | Normalmente se escriben dentro de `crear_ficha_completa`. |
+| `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar` | `expediente.ver` | `expediente.escribir` | Alta en `crear_ficha_completa`; edición por `actualizar_ficha` y `registrar_estudio_socioeconomico` ([expedientes.md](./expedientes.md)). |
 | `domicilio` | `expediente.ver` | `expediente.ver` | |
 | `agresor` | `agresor.acceder` (Tit, Sub, TS, Psi, Jur) | `agresor.acceder` | Al abrirlo, llama `registrar_consulta('agresor', id)`. Edición con bloqueo optimista por `actualizado_en`. |
 | `documento` | `expediente.ver` | `expediente.ver` | Ver [storage.md](./storage.md). |
@@ -84,21 +84,7 @@ Al crear o cambiar una orden vigente, un trigger sube a `alta` las alertas `nuev
 |---|---|
 | `historial_clinico.acceder` (Tit, Sub, Psi) | Igual |
 
-Una sola fila por ficha (`ficha_id` único). Para guardar sin saber si existe:
-
-```ts
-await supabase
-  .from('historial_clinico')
-  .upsert(
-    { ficha_id, antecedentes_familiares, antecedentes_personales, motivo_consulta,
-      observaciones_iniciales, tiene_atencion_psicologica_previa },
-    { onConflict: 'ficha_id' },
-  )
-  .select('id, ficha_id, actualizado_en')
-  .single();
-```
-
-Cada campo de texto admite hasta 5000 caracteres. Al leerlo, llama `registrar_consulta('historial_clinico', fichaId)`.
+Una sola fila por ficha (`ficha_id` único). Para leer y guardar usa las RPC [`get_historial_clinico` y `guardar_historial_clinico`](./expedientes.md#guardar_historial_clinico-y-get_historial_clinico) (registran `'ver'` en bitácora, validan RN-01 y aplican bloqueo optimista).
 
 ### `nota_area`
 
