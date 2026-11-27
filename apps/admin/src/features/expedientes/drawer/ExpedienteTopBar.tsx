@@ -60,12 +60,7 @@ export const ExpedienteTopBar = memo(function ExpedienteTopBar({
                 <span>Copiar folio</span>
               </button>
 
-              {phone ? (
-                <a href={`tel:${phone}`} className="mk-button mk-button--primary">
-                  <Icon name="call" />
-                  <span>Llamar</span>
-                </a>
-              ) : (
+              {!phone ? (
                 <button
                   type="button"
                   className="mk-button mk-button--primary"
@@ -74,7 +69,7 @@ export const ExpedienteTopBar = memo(function ExpedienteTopBar({
                   <Icon name="badge" />
                   <span>Copiar CURP</span>
                 </button>
-              )}
+              ) : null}
             </>
           ) : null}
 

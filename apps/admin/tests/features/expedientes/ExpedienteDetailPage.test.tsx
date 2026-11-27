@@ -262,9 +262,7 @@ describe('ExpedienteDetailPage', () => {
     expect(within(identityCard).getByText('MEZA910315MSLGRN04')).toBeTruthy();
     expect(within(identityCard).getByText('En seguimiento')).toBeTruthy();
     expect(within(identityCard).getByText('Prioritario')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Llamar' }).getAttribute('href')).toBe(
-      'tel:6681000001',
-    );
+    expect(screen.queryByRole('link', { name: 'Llamar' })).toBeNull();
     expect(screen.getByTestId('ficha-resumen')).toBeTruthy();
     expect(screen.getByTestId('ficha-gestion')).toBeTruthy();
 
