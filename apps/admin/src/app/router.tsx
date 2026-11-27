@@ -1,6 +1,6 @@
 import { lazy, Suspense, type ComponentType } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
-import { ALL_PAGES } from './navigation';
+import { ALL_PAGES, HISTORIAL_CLINICO_PATH } from './navigation';
 import { queryClient } from './queryClient';
 import {
   AlertasPage,
@@ -8,6 +8,7 @@ import {
   DirectoryPage,
   ExpedienteDetailPage,
   ExpedientesPage,
+  HistorialClinicoPage,
   IntervencionesPage,
   LoginPage,
   NuevaFichaPage,
@@ -160,6 +161,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={pageFallback}>
             <ExpedienteDetailPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: HISTORIAL_CLINICO_PATH,
+        element: (
+          <Suspense fallback={pageFallback}>
+            <HistorialClinicoPage />
           </Suspense>
         ),
       },

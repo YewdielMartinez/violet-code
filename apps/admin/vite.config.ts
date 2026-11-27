@@ -26,6 +26,7 @@ export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
+  worker: { format: 'es' },
   build: {
     rollupOptions: {
       output: {

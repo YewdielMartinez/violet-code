@@ -37,6 +37,17 @@ describe('navigation permissions by role', () => {
     }
   });
 
+  it('protege la URL directa del historial clínico, incluso con mayúsculas o barra final', () => {
+    for (const ruta of ['/expedientes/ficha/historial-clinico', '/EXPEDIENTES/ficha/HISTORIAL-CLINICO/']) {
+      for (const rol of ['psicologia', 'titular', 'subdireccion'] as const) {
+        expect(canAccessPath(rol, ruta)).toBe(true);
+      }
+      for (const rol of ['trabajo_social', 'juridico', 'recepcion', 'umeca', undefined] as const) {
+        expect(canAccessPath(rol, ruta)).toBe(false);
+      }
+    }
+  });
+
   it('devuelve lista vacía y niega acceso si no hay rol', () => {
     expect(getNavigationForRole(undefined)).toEqual([]);
     expect(canAccessPath(undefined, '/')).toBe(false);

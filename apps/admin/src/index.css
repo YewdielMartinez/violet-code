@@ -278,6 +278,18 @@ body {
   translate: -50% 0;
 }
 
+/* Historial clínico: las observaciones son el contenido principal, no un resumen. Respeta saltos de línea
+   y usa el color de texto pleno en lugar del atenuado por defecto de la línea de tiempo. */
+.mk-timeline.vc-timeline-clinico [data-mk-tl-description] {
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  background: var(--md-sys-color-surface);
+  color: var(--mk-text);
+  font-size: 0.9375rem;
+  white-space: pre-wrap;
+}
+
 /* Evita CLS y texto de ligadura visible mientras Material Symbols Rounded carga de forma asíncrona. */
 .mk-icon {
   width: 1em;

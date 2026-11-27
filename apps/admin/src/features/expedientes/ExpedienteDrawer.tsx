@@ -13,12 +13,15 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { generatePath, Link, useSearchParams } from 'react-router-dom';
 import gsap from 'gsap';
 import { Dialog } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
+import { HISTORIAL_CLINICO_PATH } from '@/app/navigation';
 import type { StaffRole } from '@/domain/models/Auth';
+import { puedeAccederHistorialClinico } from '@/domain/models/HistorialClinico';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
+import { Icon } from '@/shared/ui/Icon';
 import { puedeAccederAgresor } from './agresorApi';
 import { ExpedienteContactoSection } from './drawer/ExpedienteContactoSection';
 import { ExpedienteDrawerTabs, type DrawerTab } from './drawer/ExpedienteDrawerTabs';
@@ -499,6 +502,15 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
             {activeExpediente ? (
               <div ref={bodyInnerRef} className="grid gap-5">
                 <ExpedienteHeroCard expediente={activeExpediente} />
+
+                {puedeAccederHistorialClinico(userRole) && (
+                  <Link
+                    to={generatePath(HISTORIAL_CLINICO_PATH, { fichaId: activeExpediente.id })}
+                    className="mk-button mk-button--tonal justify-self-start"
+                  >
+                    <Icon name="clinical_notes" /> Historial clínico
+                  </Link>
+                )}
 
                 <ExpedienteDrawerTabs
                   activeTab={activeTab}
