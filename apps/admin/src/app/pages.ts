@@ -9,6 +9,7 @@ const loadExpedienteDetail = () => import('@/features/expedientes/ExpedienteDeta
 const loadNuevaFicha = () => import('@/features/expedientes/ficha/NuevaFichaPage');
 const loadAgenda = () => import('@/features/agenda/AgendaPage');
 const loadActividades = () => import('@/features/actividades/ActividadesPage');
+const loadActividadForm = () => import('@/features/actividades/ActividadFormPage');
 const loadIntervenciones = () => import('@/features/intervenciones/IntervencionesPage');
 const loadAlertas = () => import('@/features/solicitudes/AlertasPage');
 const loadUsuarios = () => import('@/features/usuarios/UsuariosPage');
@@ -23,6 +24,7 @@ export const ExpedienteDetailPage = lazy(loadExpedienteDetail);
 export const NuevaFichaPage = lazy(loadNuevaFicha);
 export const AgendaPage = lazy(loadAgenda);
 export const ActividadesPage = lazy(loadActividades);
+export const ActividadFormPage = lazy(loadActividadForm);
 export const IntervencionesPage = lazy(loadIntervenciones);
 export const AlertasPage = lazy(loadAlertas);
 export const UsuariosPage = lazy(loadUsuarios);
@@ -45,6 +47,7 @@ const ROUTE_LOADERS: Record<string, () => Promise<unknown>> = {
   '/solicitudes': loadAlertas,
   '/agenda': loadAgenda,
   '/actividades': loadActividades,
+  '/actividades/nuevo': loadActividadForm,
   '/intervenciones': loadIntervenciones,
   '/usuarios': loadUsuarios,
   '/usuarios/nuevo': loadUsuarioForm,
@@ -63,7 +66,7 @@ export function preloadPage(path: string): void {
   loadOnce(ROUTE_LOADERS[path] ?? loadPending);
 }
 
-const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadDirectory, loadNuevaFicha, loadAlertas, loadAgenda, loadActividades, loadIntervenciones, loadUsuarios, loadUsuarioForm, loadPending];
+const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadDirectory, loadNuevaFicha, loadAlertas, loadAgenda, loadActividades, loadActividadForm, loadIntervenciones, loadUsuarios, loadUsuarioForm, loadPending];
 
 function scheduleIdle(cb: () => void): () => void {
   if (typeof window === 'undefined') return () => { };

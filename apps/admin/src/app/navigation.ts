@@ -1,3 +1,4 @@
+import { puedeRegistrarActividad } from '@/domain/models/ActividadPreventiva';
 import type { StaffRole } from '@/domain/models/Auth';
 
 /**
@@ -125,6 +126,9 @@ export function canAccessPath(role: StaffRole | undefined, pathname: string): bo
   if (!role) return false;
   if (pathname === '/expedientes/nuevo') {
     return role === 'titular' || role === 'subdireccion' || role === 'trabajo_social';
+  }
+  if (pathname === '/actividades/nuevo') {
+    return puedeRegistrarActividad(role);
   }
   if (pathname.startsWith('/usuarios/')) {
     return DIRECTION_ONLY.includes(role);

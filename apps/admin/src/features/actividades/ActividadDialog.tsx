@@ -3,11 +3,10 @@ import { Dialog } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
 import type { ActividadPreventivaItem } from '@/domain/models/ActividadPreventiva';
 import { DialogHeader } from '@/shared/ui/DialogHeader';
-import { ActividadCrearForm } from './ActividadCrearForm';
 import { ActividadDetalle } from './ActividadDetalle';
 import './actividades.css';
 
-export type ActividadDialogState = { kind: 'crear' } | { kind: 'detalle'; actividad: ActividadPreventivaItem };
+export type ActividadDialogState = { kind: 'detalle'; actividad: ActividadPreventivaItem };
 
 export interface ActividadDialogProps {
   state: ActividadDialogState | null;
@@ -21,7 +20,7 @@ export interface ActividadDialogProps {
 
 /** Firma estable de la vista de entrada: los cambios locales se descartan solo cuando cambia (no por identidad). */
 function firmaEstado(state: ActividadDialogState): string {
-  return state.kind === 'crear' ? 'crear' : `detalle:${state.actividad.id}`;
+  return `detalle:${state.actividad.id}`;
 }
 
 /**
@@ -64,13 +63,8 @@ export function ActividadDialog({ state, onClose, anchor, ahora, puedeRegistrar 
   }, []);
 
   const view = state ?? held;
-  const actividad = view?.kind === 'detalle' ? { ...view.actividad, ...parche.cambios } : null;
-  const titulo = view?.kind === 'crear' ? 'Nueva actividad' : 'Actividad';
+  const actividad = view ? { ...view.actividad, ...parche.cambios } : null;
   // El título de la actividad ya está en la tarjeta del detalle: el encabezado solo dice «Actividad».
-  const descripcion =
-    view?.kind === 'crear'
-      ? 'Programa o registra una capacitación, taller o jornada en una escuela, empresa o comunidad.'
-      : null;
 
   return (
     <Dialog.Root
@@ -85,13 +79,12 @@ export function ActividadDialog({ state, onClose, anchor, ahora, puedeRegistrar 
     >
       <Dialog.Content size="lg" dividers className="vc-perf-dialog vc-dlg act-dialog">
         <DialogHeader
-          title={titulo}
-          description={descripcion}
+          title="Actividad"
+          description={null}
           viewKey={view ? firmaEstado(view) : 'none'}
-          actionsSlotRef={view?.kind === 'detalle' ? setAccionesSlot : null}
+          actionsSlotRef={setAccionesSlot}
         />
 
-        {view?.kind === 'crear' ? <ActividadCrearForm onCancel={onClose} onCreated={onClose} /> : null}
         {actividad ? (
           <ActividadDetalle
             key={actividad.id}
