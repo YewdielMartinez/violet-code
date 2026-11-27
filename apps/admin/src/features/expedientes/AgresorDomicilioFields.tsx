@@ -19,9 +19,19 @@ interface Props {
   values: DomicilioValues;
   errores: Partial<Record<AgresorValidationField, string>>;
   onPatch: (patch: Partial<DomicilioValues>) => void;
+  surfaceClassName?: string;
+  fieldPrefix?: string;
 }
 
-export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch }: Props) {
+export function AgresorDomicilioFields({
+  asentamientos,
+  values,
+  errores,
+  onPatch,
+  surfaceClassName = 'bg-surface-container-low',
+  fieldPrefix = '',
+}: Props) {
+  const fieldKey = (name: string) => (fieldPrefix ? `${fieldPrefix}${name}` : name);
   const [modoCpManual, setModoCpManual] = useState(
     () => values.asentamientoId === null && values.codigoPostal.trim().length > 0,
   );
@@ -49,7 +59,7 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
   }
 
   return (
-    <fieldset className="grid gap-4 rounded-2xl border border-outline-variant bg-surface-container-low p-5 sm:grid-cols-2">
+    <fieldset className={`grid gap-4 rounded-2xl border border-outline-variant ${surfaceClassName} p-5 sm:grid-cols-2`}>
       <legend className="px-1 text-sm font-semibold uppercase tracking-wide text-on-surface-variant">
         Domicilio
       </legend>
@@ -98,6 +108,7 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
               type="text"
               inputMode="numeric"
               maxLength={5}
+              data-ficha-field={fieldKey('codigoPostal')}
               value={values.codigoPostal}
               aria-invalid={errores.codigoPostal ? true : undefined}
               placeholder="Ej. 81200"
@@ -120,10 +131,15 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
           <input
             type="text"
             maxLength={150}
+            data-ficha-field={fieldKey('calle')}
+            aria-invalid={errores.calle ? true : undefined}
             value={values.calle}
             onChange={(e) => onPatch({ calle: e.target.value })}
           />
         </label>
+        {errores.calle ? (
+          <p role="alert" className="text-sm text-status-danger">{errores.calle}</p>
+        ) : null}
       </div>
 
       <div className="grid gap-1">
@@ -132,10 +148,15 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
           <input
             type="text"
             maxLength={30}
+            data-ficha-field={fieldKey('numeroExterior')}
+            aria-invalid={errores.numeroExterior ? true : undefined}
             value={values.numeroExterior}
             onChange={(e) => onPatch({ numeroExterior: e.target.value })}
           />
         </label>
+        {errores.numeroExterior ? (
+          <p role="alert" className="text-sm text-status-danger">{errores.numeroExterior}</p>
+        ) : null}
       </div>
 
       <div className="grid gap-1">
@@ -144,10 +165,15 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
           <input
             type="text"
             maxLength={30}
+            data-ficha-field={fieldKey('numeroInterior')}
+            aria-invalid={errores.numeroInterior ? true : undefined}
             value={values.numeroInterior}
             onChange={(e) => onPatch({ numeroInterior: e.target.value })}
           />
         </label>
+        {errores.numeroInterior ? (
+          <p role="alert" className="text-sm text-status-danger">{errores.numeroInterior}</p>
+        ) : null}
       </div>
 
       <div className="grid gap-1 sm:col-span-2">
@@ -156,10 +182,15 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
           <input
             type="text"
             maxLength={250}
+            data-ficha-field={fieldKey('referencias')}
+            aria-invalid={errores.referencias ? true : undefined}
             value={values.referencias}
             onChange={(e) => onPatch({ referencias: e.target.value })}
           />
         </label>
+        {errores.referencias ? (
+          <p role="alert" className="text-sm text-status-danger">{errores.referencias}</p>
+        ) : null}
       </div>
     </fieldset>
   );

@@ -38,9 +38,18 @@ interface Props {
   values: ConsumoArmaValues;
   errores: Partial<Record<AgresorValidationField, string>>;
   onPatch: (patch: Partial<ConsumoArmaValues>) => void;
+  surfaceClassName?: string;
+  fieldPrefix?: string;
 }
 
-export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
+export function AgresorConsumoArmaFields({
+  values,
+  errores,
+  onPatch,
+  surfaceClassName = 'bg-surface-container-low',
+  fieldPrefix = '',
+}: Props) {
+  const fieldKey = (name: string) => (fieldPrefix ? `${fieldPrefix}${name}` : name);
   function handleConsumo(next: boolean | null) {
     onPatch(
       next === true
@@ -60,7 +69,7 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
 
   return (
     <div className="grid gap-5">
-      <fieldset className="grid gap-4 rounded-2xl border border-outline-variant bg-surface-container-low p-5">
+      <fieldset className={`grid gap-4 rounded-2xl border border-outline-variant ${surfaceClassName} p-5`}>
         <legend className="px-1 text-sm font-semibold uppercase tracking-wide text-on-surface-variant">
           Consumo de sustancias
         </legend>
@@ -81,7 +90,12 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
             <span className="text-sm font-medium text-on-surface-variant">
               Sustancias detectadas (selecciona una o más)
             </span>
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Tipos de drogas">
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label="Tipos de drogas"
+              data-ficha-field={fieldKey('drogas')}
+            >
               {TIPOS_DROGA.map((droga) => {
                 const checked = values.drogas.includes(droga);
                 return (
@@ -110,6 +124,8 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
                 <input
                   type="text"
                   maxLength={250}
+                  data-ficha-field={fieldKey('especificacionDroga')}
+                  aria-invalid={errores.especificacionDroga ? true : undefined}
                   value={values.especificacionDroga}
                   placeholder="Ej. frecuencia o sustancia adicional"
                   onChange={(e) => onPatch({ especificacionDroga: e.target.value })}
@@ -125,7 +141,7 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
         </AnimatedReveal>
       </fieldset>
 
-      <fieldset className="grid gap-4 rounded-2xl border border-outline-variant bg-surface-container-low p-5">
+      <fieldset className={`grid gap-4 rounded-2xl border border-outline-variant ${surfaceClassName} p-5`}>
         <legend className="px-1 text-sm font-semibold uppercase tracking-wide text-on-surface-variant">
           Uso de arma u objeto
         </legend>
@@ -138,6 +154,8 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
             <input
               type="text"
               maxLength={250}
+              data-ficha-field={fieldKey('especificacionArma')}
+              aria-invalid={errores.especificacionArma ? true : undefined}
               value={values.especificacionArma}
               placeholder="Describe brevemente el objeto o arma"
               onChange={(e) => onPatch({ especificacionArma: e.target.value })}
@@ -162,6 +180,8 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
           <textarea
             rows={4}
             maxLength={5000}
+            data-ficha-field={fieldKey('observaciones')}
+            aria-invalid={errores.observaciones ? true : undefined}
             value={values.observaciones}
             onChange={(e) => onPatch({ observaciones: e.target.value })}
             placeholder="Notas relevantes sobre contexto, antecedentes o señas particulares…"
