@@ -1,6 +1,6 @@
 # `registrar_seguimiento`
 
-- **Migración:** [`20261128000400_43_corregir_seguimiento.sql`](../../migrations/20261128000400_43_corregir_seguimiento.sql) *(actualiza [`20261128000200_41_folio_seguimiento.sql`](../../migrations/20261128000200_41_folio_seguimiento.sql), [`20261128000100_40_seguimiento_con_asistencia.sql`](../../migrations/20261128000100_40_seguimiento_con_asistencia.sql) y [`20261126000900_19_rpc_registrar_seguimiento.sql`](../../migrations/20261126000900_19_rpc_registrar_seguimiento.sql))*
+- **Migración:** [`20261128001400_54_quitar_folio_seguimiento.sql`](../../migrations/20261128001400_54_quitar_folio_seguimiento.sql) *(actualiza [`20261128000400_43_corregir_seguimiento.sql`](../../migrations/20261128000400_43_corregir_seguimiento.sql), [`20261128000200_41_folio_seguimiento.sql`](../../migrations/20261128000200_41_folio_seguimiento.sql), [`20261128000100_40_seguimiento_con_asistencia.sql`](../../migrations/20261128000100_40_seguimiento_con_asistencia.sql) y [`20261126000900_19_rpc_registrar_seguimiento.sql`](../../migrations/20261126000900_19_rpc_registrar_seguimiento.sql))*
 - **Permiso RBAC:** `tiene_permiso('seguimiento.registrar')` + `auth_area_id() is not null`
 - **Actores autorizados:** `trabajo_social`, `psicologia`, `juridico` (cada área sobre sus propias citas del día y tipos de atención).
 
@@ -20,14 +20,12 @@
 | Columna | Tipo | Descripción |
 |---|---|---|
 | `atencion_id` | `uuid` | ID de la hoja de seguimiento (`public.atencion`) creada. |
-| `folio_seguimiento` | `text` | Folio único generado en servidor (formato provisional `SEG-AAAA-NNNNN`). |
 | `cita_proxima_id` | `uuid` | ID de la cita nueva si se envió `p_proxima_cita_en` (`null` en caso contrario). |
 | `es_primera_vez_area` | `boolean` | `true` si no existía atención activa previa de esa ficha en esa área (RN-19). |
 | `tiene_historial_clinico` | `boolean` | `true` si la ficha ya cuenta con `historial_clinico` activo. |
 
 ## 3. Reglas ABAC y efectos secundarios
 - El área se resuelve siempre del actor (`auth_area_id()`).
-- El `folio_seguimiento` se genera siempre en servidor (`generar_folio_seguimiento()` + trigger `BEFORE INSERT OR UPDATE`); el front no puede enviarlo ni modificarlo.
 - Exige asistencia a una cita válida del día (`(c.programada_en at time zone 'America/Mazatlan')::date = (now() at time zone 'America/Mazatlan')::date`) y la marca automáticamente como `'asistio'`.
 - Si la ficha está en `'abierto'`, pasa automáticamente a `'en_seguimiento'`.
 - El trigger `atencion_validar_mayoria_edad` bloquea Psicología/Jurídico para menores de 18 años (`23514`, RN-01).

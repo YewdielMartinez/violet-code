@@ -7,7 +7,7 @@
 
 begin;
 
-select plan(12);
+select plan(11);
 
 create or replace function pg_temp.set_actor(p_user_id uuid) returns void language plpgsql as $$
 begin
@@ -185,12 +185,6 @@ select is(
   'TS recibe contexto mínimo con orden vigente, última acción de TS y tiene_historial_clinico nulo'
 );
 
-select matches(
-  (select ultimo_folio_seguimiento from tmp_ctx_ts),
-  '^SEG-\d{4}-\d{5}$',
-  'TS recibe ultimo_folio_seguimiento con formato SEG-AAAA-NNNNN'
-);
-
 reset role;
 select ok(
   exists (
@@ -204,7 +198,7 @@ select ok(
   'get_contexto_seguimiento registra acceso ver en bitacora_acceso'
 );
 
--- 11-12) Psicología recibe tiene_historial_clinico booleano y NO ve notas/folio de TS
+-- 11) Psicología recibe tiene_historial_clinico booleano y NO ve notas de TS
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111104'::uuid); -- psicologia
 
 create temp table tmp_ctx_psi as
@@ -213,17 +207,15 @@ select * from public.get_contexto_seguimiento('96000000-0000-4000-a000-000000000
 select is(
   (select json_build_object(
     'es_primera_vez_area', es_primera_vez_area,
-    'ultimo_folio_seguimiento', ultimo_folio_seguimiento,
     'ultima_proxima_accion', ultima_proxima_accion,
     'tiene_historial_clinico', tiene_historial_clinico
   )::text from tmp_ctx_psi),
   json_build_object(
     'es_primera_vez_area', true,
-    'ultimo_folio_seguimiento', null::text,
     'ultima_proxima_accion', null::text,
     'tiene_historial_clinico', false
   )::text,
-  'Psicología recibe tiene_historial_clinico booleano y no ve folio/acción de TS'
+  'Psicología recibe tiene_historial_clinico booleano y no ve acción de TS'
 );
 
 select ok(

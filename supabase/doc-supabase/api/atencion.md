@@ -29,7 +29,6 @@ interface ContextoSeguimientoRow {
   nombre_persona: string;
   edad: number | null;
   es_primera_vez_area: boolean;
-  ultimo_folio_seguimiento: string | null;
   ultima_proxima_accion: string | null;
   tiene_orden_vigente: boolean;
   tiene_historial_clinico: boolean | null; // solo Psicología; null en TS y Jurídico
@@ -44,7 +43,7 @@ interface ContextoSeguimientoRow {
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| `seguimiento.registrar` + tener área | TS, Psi, Jur (cada quien en su área) | Escritura | Sí, por triggers (`'crear'`/`'actualizar'`) | `_41_folio_seguimiento` |
+| `seguimiento.registrar` + tener área | TS, Psi, Jur (cada quien en su área) | Escritura | Sí, por triggers (`'crear'`/`'actualizar'`) | `_54_quitar_folio_seguimiento` |
 
 **Llamada**
 
@@ -81,7 +80,6 @@ const { data, error } = await supabase
 ```ts
 interface RegistrarSeguimientoRow {
   atencion_id: string;
-  folio_seguimiento: string;        // generado en servidor (provisional: SEG-AAAA-NNNNN)
   cita_proxima_id: string | null;   // solo si mandaste p_proxima_cita_en
   es_primera_vez_area: boolean;     // RN-19: primera atención de esa ficha en esa área
   tiene_historial_clinico: boolean; // útil en Psicología para pedir el historial si aún no existe
@@ -91,7 +89,6 @@ interface RegistrarSeguimientoRow {
 **Comportamiento**
 
 - El área sale siempre del actor (`auth_area_id()`); el front no la manda.
-- El `folio_seguimiento` se genera siempre en servidor (`SEG-AAAA-NNNNN` provisional); el front no lo manda ni puede editarlo.
 - No copia `estado_civil`, `ocupacion_id`, `ocupacion_otra`, `celular` ni `domicilio_id` de la ficha en cada atención.
 
 ---

@@ -104,9 +104,10 @@ select ok(
     select 1
     from public.get_linea_tiempo('9b000000-0000-4000-a000-000000000201') lt
     where lt.tipo = 'atencion'
-      and lt.titulo ~ '\(SEG-\d{4}-\d{5}\)'
+      and lt.titulo like 'Atención Trabajo Social · %'
+      and lt.titulo !~ '\(SEG-\d{4}-\d{5}\)'
   ),
-  'get_linea_tiempo muestra folio_seguimiento en el título de atención'
+  'get_linea_tiempo muestra el título de atención sin folio_seguimiento'
 );
 
 select ok(

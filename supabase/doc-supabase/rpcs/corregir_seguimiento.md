@@ -1,6 +1,6 @@
 # `corregir_seguimiento`
 
-- **Migración:** [`20261128000400_43_corregir_seguimiento.sql`](../../migrations/20261128000400_43_corregir_seguimiento.sql)
+- **Migración:** [`20261128001400_54_quitar_folio_seguimiento.sql`](../../migrations/20261128001400_54_quitar_folio_seguimiento.sql) *(actualiza [`20261128000400_43_corregir_seguimiento.sql`](../../migrations/20261128000400_43_corregir_seguimiento.sql))*
 - **Permiso RBAC:** `seguimiento.corregir` (`titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico`).
 - **Regla ABAC:**
   - Personal de área (`trabajo_social`, `psicologia`, `juridico`): solo puede corregir atenciones **creadas por él mismo** y **el mismo día** (`America/Mazatlan`).
@@ -21,7 +21,6 @@
 | Columna | Tipo | Descripción |
 |---|---|---|
 | `atencion_id` | `uuid` | ID de la atención corregida. |
-| `folio_seguimiento` | `text` | Folio inmutable de la atención (`SEG-AAAA-NNNNN`). |
 | `actualizado_en` | `timestamptz` | Nueva marca de tiempo tras la actualización. |
 
 ## 3. Bitácora y RLS
