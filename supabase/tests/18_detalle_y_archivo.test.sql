@@ -156,10 +156,9 @@ select lives_ok(
           'apellidoMaterno', 'Núñez',
           'avisoPrivacidadAceptado', true,
           'serviciosSolicitadosAreaIds', jsonb_build_array((select id from public.cat_area where clave = 'trabajo_social')),
-          'tieneConsumoDroga', true,
           'drogas', jsonb_build_array('marihuana'),
           'especificacionDroga', 'Ocasional',
-          'tieneConsumoAlcohol', true
+          'consumoAlcohol', 'ocasional'
         ),
         'domicilio', jsonb_build_object('zona', 'urbana'),
         'estudio', jsonb_build_object('servicios', jsonb_build_array('agua'), 'bienes', jsonb_build_array())
@@ -170,15 +169,14 @@ select lives_ok(
 
 select is(
   (
-    select f.tiene_consumo_droga = true
-       and f.drogas = array['marihuana']::public.tipo_droga[]
-       and f.tiene_consumo_alcohol = true
+    select f.drogas = array['marihuana']::public.tipo_droga[]
+       and f.consumo_alcohol = 'ocasional'::public.consumo_alcohol
     from public.ficha_registro f
     join public.persona p on p.id = f.persona_id
     where p.curp = 'GOME940512MSLRRN08'
   ),
   true,
-  'crear_ficha_completa guarda tiene_consumo_droga, drogas y tiene_consumo_alcohol'
+  'crear_ficha_completa guarda drogas y consumo_alcohol'
 );
 
 select throws_ok(

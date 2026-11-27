@@ -52,10 +52,9 @@ create temp table pg_temp.res_a03_fic (
   tiene_embarazo                 boolean,
   tiene_denuncia                 boolean,
   es_victima_delito              boolean,
-  tiene_consumo_droga            boolean,
   drogas                         public.tipo_droga[],
   especificacion_droga           text,
-  tiene_consumo_alcohol          boolean,
+  consumo_alcohol                public.consumo_alcohol,
   servicios_solicitados_area_ids smallint[],
   actualizado_en                 timestamptz
 ) on commit drop;
@@ -83,15 +82,15 @@ begin
 
   insert into public.ficha_registro (
     id, folio, persona_id, estado, aviso_privacidad_aceptado_en,
-    estado_civil, tiene_trabajo, tiene_consumo_droga, drogas, especificacion_droga, creado_por
+    estado_civil, tiene_trabajo, drogas, especificacion_droga, creado_por
   ) values
     (
       v_fic_act, 'SEM-S2A3-0001', v_per_act, 'abierto', now(),
-      'casado', true, true, array['marihuana']::public.tipo_droga[], 'Ocasional', v_uid_ts
+      'casado', true, array['marihuana']::public.tipo_droga[], 'Ocasional', v_uid_ts
     ),
     (
       v_fic_arch, 'SEM-S2A3-0002', v_per_arch, 'archivado', now(),
-      'soltero', false, false, null, null, v_uid_ts
+      'soltero', false, null, null, v_uid_ts
     );
 
   insert into public.ficha_servicio_solicitado (ficha_id, area_id, creado_por) values
@@ -270,13 +269,13 @@ set local role authenticated;
 
 -- 22-29) actualizar_ficha: validaciones, servicios solicitados y bitácora
 select throws_ok(
-  $$select * from public.actualizar_ficha('95000000-0000-4000-a000-000000000201', (select actualizado_en from public.ficha_registro where id = '95000000-0000-4000-a000-000000000201'), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, array[9999]::smallint[])$$,
+  $$select * from public.actualizar_ficha('95000000-0000-4000-a000-000000000201', (select actualizado_en from public.ficha_registro where id = '95000000-0000-4000-a000-000000000201'), null, null, null, null, null, null, null, null, null, null, null, null, null, null, array[9999]::smallint[])$$,
   '23514', null, 'actualizar_ficha rechaza area inexistente en servicios solicitados'
 );
 
 select throws_ok(
-  $$select * from public.actualizar_ficha('95000000-0000-4000-a000-000000000201', (select actualizado_en from public.ficha_registro where id = '95000000-0000-4000-a000-000000000201'), null, null, null, null, null, null, null, null, null, null, null, false, array['marihuana']::public.tipo_droga[])$$,
-  '23514', null, 'actualizar_ficha rechaza drogas si tiene_consumo_droga = false'
+  $$select * from public.actualizar_ficha('95000000-0000-4000-a000-000000000201', (select actualizado_en from public.ficha_registro where id = '95000000-0000-4000-a000-000000000201'), null, null, null, null, null, null, null, null, null, null, null, array['no_consume', 'marihuana']::public.tipo_droga[])$$,
+  '23514', null, 'actualizar_ficha rechaza no_consume combinado con otra droga'
 );
 
 insert into pg_temp.res_a03_fic
@@ -295,10 +294,9 @@ from public.actualizar_ficha(
   null,
   null,
   null,
-  false,
+  array['no_consume']::public.tipo_droga[],
   null,
-  null,
-  null,
+  'no_consume'::public.consumo_alcohol,
   array[
     (select id from public.cat_area where clave = 'trabajo_social'),
     (select id from public.cat_area where clave = 'juridico')
