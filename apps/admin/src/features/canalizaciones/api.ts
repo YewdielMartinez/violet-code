@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { DerivacionCreateInput, EstadoDerivacion } from '@/domain/models/Derivacion';
 import { supabaseDerivacionRepository } from '@/infrastructure/supabase/adapters/SupabaseDerivacionRepository';
-import { supabaseDirectorioRepository } from '@/infrastructure/supabase/adapters/SupabaseDirectorioRepository';
-import { supabaseExpedienteRepository } from '@/infrastructure/supabase/adapters/SupabaseExpedienteRepository';
-import { supabaseSepomexRepository } from '@/infrastructure/supabase/adapters/SupabaseSepomexRepository';
+import { directoryQueryOptions } from '@/features/directory/api';
+import { catalogoQueryOptions, expedientesListQueryOptions } from '@/features/expedientes/api';
 
 export type {
   DerivacionCreateInput,
@@ -17,8 +16,25 @@ export {
   ESTADO_DERIVACION_LABELS,
   ESTADOS_DERIVACION,
   isInternalDestino,
+  validarTransicionDerivacion,
   validateDerivacion,
 } from '@/domain/models/Derivacion';
+
+export function extraerMensajeErrorDerivacion(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as { message: unknown }).message === 'string' &&
+    (error as { message: string }).message.trim()
+  ) {
+    return (error as { message: string }).message;
+  }
+  return fallback;
+}
 
 export function useDerivaciones(estado?: EstadoDerivacion) {
   return useQuery({
@@ -39,6 +55,7 @@ export function useDerivacionesByFicha(fichaId: string | null) {
 export function useCreateDerivacion() {
   const queryClient = useQueryClient();
   return useMutation({
+    retry: false,
     mutationFn: (input: DerivacionCreateInput) => supabaseDerivacionRepository.create(input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['canalizaciones'] });
@@ -49,6 +66,7 @@ export function useCreateDerivacion() {
 export function useUpdateEstadoDerivacion() {
   const queryClient = useQueryClient();
   return useMutation({
+    retry: false,
     mutationFn: ({ id, estado }: { id: string; estado: EstadoDerivacion }) =>
       supabaseDerivacionRepository.updateEstado(id, estado),
     onSuccess: () => {
@@ -57,22 +75,27 @@ export function useUpdateEstadoDerivacion() {
   });
 }
 
-export function useCanalizacionCatalogos(enabled = true) {
-  return useQuery({
-    queryKey: ['canalizaciones', 'catalogos'],
-    queryFn: async () => {
-      const [catalogos, instituciones, expedientes] = await Promise.all([
-        supabaseSepomexRepository.getCatalogosFicha(),
-        supabaseDirectorioRepository.listar(),
-        supabaseExpedienteRepository.list(),
-      ]);
-      return {
-        areas: catalogos.areas,
-        instituciones,
-        expedientes,
-      };
-    },
-    staleTime: 5 * 60_000,
-    enabled,
+const CANALIZACION_CATALOGOS_STALE_TIME_MS = 5 * 60_000;
+
+/**
+ * Catálogos para crear canalizaciones. Reutiliza las consultas (y la caché) existentes:
+ * áreas (`['catalogos','area']`), directorio (`['directory','all']`) y listado de expedientes.
+ */
+export function useCanalizacionCatalogos({
+  enabled = true,
+  includeExpedientes = true,
+}: { enabled?: boolean; includeExpedientes?: boolean } = {}) {
+  const staleTime = CANALIZACION_CATALOGOS_STALE_TIME_MS;
+  const areas = useQuery({ ...catalogoQueryOptions('area'), enabled });
+  const instituciones = useQuery({ ...directoryQueryOptions(), staleTime, enabled });
+  const expedientes = useQuery({
+    ...expedientesListQueryOptions(),
+    staleTime,
+    enabled: enabled && includeExpedientes,
   });
+  return {
+    areas: areas.data,
+    instituciones: instituciones.data,
+    expedientes: expedientes.data,
+  };
 }

@@ -67,31 +67,58 @@ export function formatTableDate(iso: string): string {
   return Number.isNaN(date.getTime()) ? iso : TABLE_DATE_FMT.format(date);
 }
 
-const SHARED_CELL_KEYS: ReadonlyArray<readonly [key: string, sharedName: string]> = [
-  ['folio', 'expediente-folio'],
-  ['nombreCompleto', 'expediente-nombre'],
-];
+type PillTone = 'success' | 'warning' | 'info' | 'danger' | 'neutral';
+
+const ESTADO_TONES: Record<string, PillTone> = {
+  Abierto: 'info',
+  'En seguimiento': 'warning',
+  Cerrado: 'success',
+};
+
+const URGENCIA_TONES: Record<string, PillTone> = {
+  Prioritario: 'danger',
+  Normal: 'neutral',
+};
+
+/** Reemplaza el texto plano de una celda por una cápsula visual preservando su `textContent`. */
+function decoratePillCell(
+  td: HTMLTableCellElement | null,
+  tones: Record<string, PillTone>,
+): void {
+  if (!td || td.querySelector('.vc-dt-pill')) return;
+  const rawText = td.textContent ?? '';
+  const key = rawText.trim();
+  if (!key) return;
+
+  const tone = tones[key] ?? 'neutral';
+  const pill = document.createElement('span');
+  pill.className = `vc-dt-pill vc-dt-pill--${tone}`;
+
+  const dot = document.createElement('span');
+  dot.className = 'vc-dt-pill__dot';
+  dot.setAttribute('aria-hidden', 'true');
+
+  const label = document.createElement('span');
+  label.textContent = rawText;
+
+  pill.append(dot, label);
+  td.replaceChildren(pill);
+}
 
 /**
- * Marca filas enfocables y envuelve el texto completo de Folio/Usuaria para que
- * `data-mk-shared` viaje íntegro incluso cuando DataTable inserta `<mark>` de búsqueda.
+ * Hace enfocables (Tab + Enter) las filas de la tabla y decora estado/prioridad con cápsulas, una sola vez por fila.
+ * Sin `data-mk-shared`: hacer viajar nombre y folio al panel costaba la mitad de los frames al abrir.
  */
 export function decorateExpedienteRows(tbody: HTMLTableSectionElement): void {
   for (const tr of tbody.rows) {
     if (!tr.dataset.id || tr.hasAttribute('data-mk-dt-loading')) continue;
+    if (tr.dataset.vcDecorated === '1') continue;
     tr.tabIndex = 0;
-
-    for (const [key, sharedName] of SHARED_CELL_KEYS) {
-      const td = tr.querySelector<HTMLTableCellElement>(`td[data-key="${key}"]`);
-      if (!td) continue;
-
-      td.setAttribute('data-mk-shared', sharedName);
-      if (td.querySelector('[data-vc-shared-wrap]')) continue;
-
-      const wrapper = document.createElement('span');
-      wrapper.dataset.vcSharedWrap = '';
-      wrapper.append(...td.childNodes);
-      td.append(wrapper);
-    }
+    decoratePillCell(tr.querySelector<HTMLTableCellElement>('td[data-key="estado"]'), ESTADO_TONES);
+    decoratePillCell(
+      tr.querySelector<HTMLTableCellElement>('td[data-key="urgencia"]'),
+      URGENCIA_TONES,
+    );
+    tr.dataset.vcDecorated = '1';
   }
 }

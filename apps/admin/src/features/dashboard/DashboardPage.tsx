@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { FlipGroup } from '@yewdiel21/motion-kit/react';
-import { isAttentionRole, ROLE_LABELS, useAuth } from '@/shared/auth/useAuth';
+import { isAttentionRole, useAuth } from '@/shared/auth/useAuth';
 import { Icon } from '@/shared/ui/Icon';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { CustomizeDialog } from './CustomizeDialog';
@@ -39,9 +39,6 @@ export default function DashboardPage() {
 
   const mine = isAttentionRole(user.role);
   const canViewClinical = user.role !== 'recepcion';
-  const roleContext = user.areaNombre
-    ? `${ROLE_LABELS[user.role]} (${user.areaNombre})`
-    : ROLE_LABELS[user.role];
 
   const render: Record<WidgetId, ReactNode> = {
     kpis: (
@@ -61,18 +58,16 @@ export default function DashboardPage() {
   };
 
   const shown = WIDGETS.filter((w) => visible.includes(w.id));
-  const full = shown.filter((w) => w.id === 'kpis');
-  const main = shown.filter((w) => w.column === 'main' && w.id !== 'kpis');
+  const top = shown.filter((w) => w.column === 'top');
+  const main = shown.filter((w) => w.column === 'main');
   const side = shown.filter((w) => w.column === 'side');
   const firstName = capitalize(user.displayName.split(/\s+/)[0] ?? '');
 
   return (
     <>
-      {/* Identidad institucional y contexto de rol/área en la cabecera para evitar
-          un saludo genérico y situar de inmediato al personal en su ámbito operativo. */}
       <PageHeader
-        eyebrow={`Secretaría de las Mujeres · Ahome · ${roleContext}`}
         title={`${greeting()}, ${firstName}`}
+        documentTitle="Tablero"
         subtitle={today()}
         actions={
           <button type="button" className="mk-button mk-button--tonal" onClick={() => setCustomizing(true)}>
@@ -89,31 +84,33 @@ export default function DashboardPage() {
       ) : (
         <FlipGroup root={gridRef} signature={visible.join(',')}>
           <div ref={gridRef} className="grid gap-6">
-            {full.map((w) => (
+            {top.map((w) => (
               <div key={w.id} data-flip-id={w.id}>
                 {render[w.id]}
               </div>
             ))}
-            <div className={`grid gap-6 ${main.length && side.length ? 'xl:grid-cols-[minmax(0,1fr)_24rem]' : ''}`}>
-              {main.length > 0 && (
-                <div className="grid content-start gap-6">
-                  {main.map((w) => (
-                    <div key={w.id} data-flip-id={w.id}>
-                      {render[w.id]}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {side.length > 0 && (
-                <div className={`grid content-start gap-6 ${main.length ? '' : 'md:grid-cols-2 xl:grid-cols-3'}`}>
-                  {side.map((w) => (
-                    <div key={w.id} data-flip-id={w.id}>
-                      {render[w.id]}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {(main.length > 0 || side.length > 0) && (
+              <div className={`grid gap-6 ${main.length && side.length ? 'xl:grid-cols-[minmax(0,1fr)_24rem]' : ''}`}>
+                {main.length > 0 && (
+                  <div className="grid content-start gap-6">
+                    {main.map((w) => (
+                      <div key={w.id} data-flip-id={w.id}>
+                        {render[w.id]}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {side.length > 0 && (
+                  <div className={`grid content-start gap-6 ${main.length ? '' : 'md:grid-cols-2 xl:grid-cols-3'}`}>
+                    {side.map((w) => (
+                      <div key={w.id} data-flip-id={w.id}>
+                        {render[w.id]}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </FlipGroup>
       )}

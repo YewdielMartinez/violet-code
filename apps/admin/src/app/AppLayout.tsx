@@ -129,7 +129,7 @@ export function AppLayout() {
         navStyle={navStyle}
         // Sin `accent`: el activo es neutro (en el riel, el acento morado se encimaba entre botones).
         items={navItems}
-        active={pathname}
+        active={pathname.startsWith('/expedientes') ? '/expedientes' : pathname}
         onPointerOver={preloadFromEvent}
         onFocus={preloadFromEvent}
         onSelect={(path, event) => {
@@ -156,8 +156,7 @@ export function AppLayout() {
       <main className="mk-shell__view">
         {/* Cambio de página lateral (sin jerarquía): cruce suave. key = ruta: sale una página y entra otra. */}
         <ViewTransition key={pathname} enter="page-enter" exit="page-exit" default="none">
-          {/* En dock el contenido usa todo el ancho; en los estilos laterales se limita para leer cómodo. */}
-          <div className={`w-full px-2 py-4 md:px-6 md:py-6 ${navStyle === 'dock' ? '' : 'mx-auto max-w-[96rem]'}`}>
+          <div className="w-full pt-0 pb-6">
             {outlet}
           </div>
         </ViewTransition>

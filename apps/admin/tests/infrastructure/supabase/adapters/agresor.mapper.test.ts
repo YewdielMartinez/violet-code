@@ -27,7 +27,6 @@ const SAMPLE_ROW: AgresorRow = {
   tiene_consumo_droga: true,
   drogas: ['marihuana', 'valor_invalido' as unknown as 'otra'],
   especificacion_droga: 'Consumo ocasional',
-  utilizo_arma_u_objeto: true,
   especificacion_arma: 'Objeto metálico',
   observaciones: 'Antecedentes registrados.',
   activo: true,
@@ -57,7 +56,6 @@ describe('agresor.mapper', () => {
       tieneConsumoDroga: true,
       drogas: ['marihuana'],
       especificacionDroga: 'Consumo ocasional',
-      utilizoArmaUObjeto: true,
       especificacionArma: 'Objeto metálico',
       observaciones: 'Antecedentes registrados.',
       activo: true,
@@ -84,8 +82,7 @@ describe('agresor.mapper', () => {
       tieneConsumoDroga: false,
       drogas: ['marihuana'], // debe anularse porque tieneConsumoDroga es false
       especificacionDroga: 'Detalle',
-      utilizoArmaUObjeto: false,
-      especificacionArma: 'Navaja',
+      especificacionArma: '  ',
       observaciones: '  Seguimiento activo.  ',
     });
 
@@ -107,7 +104,6 @@ describe('agresor.mapper', () => {
       tiene_consumo_droga: false,
       drogas: null,
       especificacion_droga: null,
-      utilizo_arma_u_objeto: false,
       especificacion_arma: null,
       observaciones: 'Seguimiento activo.',
     });
@@ -122,7 +118,6 @@ describe('agresor.mapper', () => {
       tieneConsumoDroga: true,
       drogas: ['cristal', 'cristal', 'otra'],
       especificacionDroga: '  Policonsumo ',
-      utilizoArmaUObjeto: true,
       especificacionArma: '  Corta ',
     });
 
@@ -133,7 +128,6 @@ describe('agresor.mapper', () => {
       tiene_consumo_droga: true,
       drogas: ['cristal', 'otra'],
       especificacion_droga: 'Policonsumo',
-      utilizo_arma_u_objeto: true,
       especificacion_arma: 'Corta',
     });
     expect('ficha_id' in update).toBe(false);

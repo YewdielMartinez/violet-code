@@ -2,23 +2,42 @@ import { createContext, StrictMode, useContext, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { StaffRole, StaffUser } from '@/domain/models/Auth';
+import type { ExpedienteResumen } from '@/domain/models/Persona';
 
-const { createCompleteMock, getCatalogosMock, listAsentamientosMock, toastMock } = vi.hoisted(() => ({
+const {
+  createCompleteMock,
+  verifyByCurpMock,
+  listCatalogoMock,
+  listAsentamientosMock,
+  toastMock,
+  authState,
+} = vi.hoisted(() => ({
   createCompleteMock: vi.fn(),
-  getCatalogosMock: vi.fn(),
+  verifyByCurpMock: vi.fn(),
+  listCatalogoMock: vi.fn(),
   listAsentamientosMock: vi.fn(),
   toastMock: vi.fn(),
+  authState: { user: null as StaffUser | null },
+}));
+
+vi.mock('@/shared/auth/useAuth', () => ({
+  useAuth: () => ({ status: 'authenticated', user: authState.user }),
 }));
 
 vi.mock('gsap', () => ({ gsap: { fromTo: vi.fn() } }));
 vi.mock('@/infrastructure/supabase/adapters/SupabaseExpedienteRepository', () => ({
-  supabaseExpedienteRepository: { list: vi.fn(), verifyByCurp: vi.fn(), registerConsult: vi.fn() },
+  supabaseExpedienteRepository: {
+    list: vi.fn(),
+    verifyByCurp: verifyByCurpMock,
+    registerConsult: vi.fn(),
+  },
 }));
 vi.mock('@/infrastructure/supabase/adapters/SupabaseFichaRepository', () => ({
   supabaseFichaRepository: { createComplete: createCompleteMock, getDetail: vi.fn(), archive: vi.fn(), deactivate: vi.fn() },
 }));
 vi.mock('@/infrastructure/supabase/adapters/SupabaseSepomexRepository', () => ({
-  supabaseSepomexRepository: { getCatalogosFicha: getCatalogosMock, listAsentamientos: listAsentamientosMock },
+  supabaseSepomexRepository: { listCatalogo: listCatalogoMock, listAsentamientos: listAsentamientosMock },
 }));
 
 vi.mock('@yewdiel21/motion-kit/react', () => {
@@ -79,8 +98,8 @@ vi.mock('@yewdiel21/motion-kit/react', () => {
       },
       { Step: MockStep, Counter: () => <span data-mk-counter="">{useContext(StepsCtx) + 1}</span> },
     ),
-    LoadingButton: ({ children, type, form, state }: { children?: ReactNode; type?: 'button' | 'submit'; form?: string; state?: string }) => (
-      <button type={type ?? 'button'} form={form} data-state={state}>{children}</button>
+    LoadingButton: ({ children, type, form, state, disabled }: { children?: ReactNode; type?: 'button' | 'submit'; form?: string; state?: string; disabled?: boolean }) => (
+      <button type={type ?? 'button'} form={form} data-state={state} disabled={disabled}>{children}</button>
     ),
     Select: ({ label, value, options = [], onChange }: { label?: string; value?: string; options?: { value: string; label: string }[]; onChange?: (v: string) => void }) => (
       <select aria-label={label} value={value ?? ''} onChange={(e) => onChange?.(e.target.value)}>
@@ -110,6 +129,19 @@ vi.mock('@yewdiel21/motion-kit/react', () => {
 
 import { NuevaFichaDrawer } from '@/features/expedientes/ficha/NuevaFichaDrawer';
 
+function setTestRole(role: StaffRole) {
+  authState.user = {
+    id: 'emp-1',
+    email: 'test@semujeres.local',
+    displayName: 'Personal de prueba',
+    role,
+    areaId: 1,
+    areaClave: role === 'recepcion' ? 'recepcion' : 'ts',
+    areaNombre: role === 'recepcion' ? 'Recepción' : 'Trabajo Social',
+    activo: true,
+  };
+}
+
 function renderDrawer(props: Partial<Parameters<typeof NuevaFichaDrawer>[0]> = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   const onClose = props.onClose ?? vi.fn();
@@ -118,7 +150,14 @@ function renderDrawer(props: Partial<Parameters<typeof NuevaFichaDrawer>[0]> = {
     ...render(
       <StrictMode>
         <QueryClientProvider client={client}>
-          <NuevaFichaDrawer open={props.open ?? true} seed={props.seed ?? null} onClose={onClose} onCreated={props.onCreated} />
+          <NuevaFichaDrawer
+            open={props.open ?? true}
+            seed={props.seed ?? null}
+            onClose={onClose}
+            onCreated={props.onCreated}
+            onOpenExpediente={props.onOpenExpediente}
+            allowPreRegistroLookup={props.allowPreRegistroLookup}
+          />
         </QueryClientProvider>
       </StrictMode>,
     ),
@@ -132,15 +171,37 @@ function fillStep0() {
   fireEvent.change(screen.getByLabelText(/Servicios solicitados \*/i), { target: { value: '1' } });
 }
 
+const EXISTING_EXPEDIENTE: ExpedienteResumen = {
+  id: 'ficha-existente-1',
+  folio: 'SEM-2026-0001',
+  estado: 'en_seguimiento',
+  creadoEn: '2026-11-20T10:00:00Z',
+  actualizadoEn: '2026-11-25T10:00:00Z',
+  enListaUrgencias: false,
+  persona: {
+    id: 'persona-existente-1',
+    curp: 'MEZA910315MSLGRN04',
+    nombres: 'Adriana',
+    apellidoPaterno: 'Meza',
+    apellidoMaterno: 'Gutiérrez',
+    nombreCompleto: 'Adriana Meza Gutiérrez',
+    sexo: 'M',
+    fechaNacimiento: '1991-03-15',
+    entidadNacimiento: 'SL',
+    celular: '6681000001',
+  },
+};
+
 beforeEach(() => {
+  setTestRole('trabajo_social');
   createCompleteMock.mockReset().mockResolvedValue({ fichaId: 'ficha-99', folio: 'SEM-2026-0099', personaId: 'p-1' });
-  getCatalogosMock.mockReset().mockResolvedValue({
-    areas: [{ id: 1, clave: 'ts', nombre: 'Trabajo Social' }],
-    ocupaciones: [{ id: 2, clave: 'emp', nombre: 'Empleada' }],
-    discapacidades: [], gruposEtnicos: [], religiones: [],
-    parentescos: [{ id: 3, clave: 'hermana', nombre: 'Hermana' }],
-  });
-  // Un asentamiento de Ahome: un CP fuera del catálogo entra en modo "solo código postal".
+  verifyByCurpMock.mockReset().mockImplementation((curp: string) => Promise.resolve({ kind: 'nuevo', curp }));
+  const catalogos: Record<string, { id: number; clave: string; nombre: string }[]> = {
+    area: [{ id: 1, clave: 'ts', nombre: 'Trabajo Social' }],
+    ocupacion: [{ id: 2, clave: 'emp', nombre: 'Empleada' }],
+    parentesco: [{ id: 3, clave: 'hermana', nombre: 'Hermana' }],
+  };
+  listCatalogoMock.mockReset().mockImplementation((nombre: string) => Promise.resolve(catalogos[nombre] ?? []));
   listAsentamientosMock.mockReset().mockResolvedValue([
     {
       id: 1,
@@ -155,13 +216,20 @@ beforeEach(() => {
   toastMock.mockReset();
 });
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  authState.user = null;
+});
 
-describe('NuevaFichaDrawer (validación por paso, navegación y cambios sin guardar)', () => {
+describe('NuevaFichaDrawer (verificación inline de CURP, validación, navegación y cambios sin guardar)', () => {
   it('valida cada paso, enfoca el primer campo inválido y guarda la ficha', async () => {
     const onCreated = vi.fn();
     const { onClose } = renderDrawer({ onCreated });
-    await waitFor(() => expect(getCatalogosMock).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(listCatalogoMock).toHaveBeenCalledWith('area');
+      expect(listCatalogoMock).toHaveBeenCalledWith('ocupacion');
+      expect(listCatalogoMock).toHaveBeenCalledWith('parentesco');
+    });
 
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     const curpInput = screen.getByLabelText(/CURP \*/i);
@@ -198,6 +266,134 @@ describe('NuevaFichaDrawer (validación por paso, navegación y cambios sin guar
     expect(toastMock).toHaveBeenCalledWith('Expediente SEM-2026-0099 registrado.');
     expect(onCreated).toHaveBeenCalledWith('ficha-99');
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('muestra alerta inline de CURP duplicada, bloquea avanzar y permite abrir el expediente existente', async () => {
+    verifyByCurpMock.mockResolvedValue({
+      kind: 'expediente_existente',
+      expediente: EXISTING_EXPEDIENTE,
+    });
+    const onOpenExpediente = vi.fn();
+    const { onClose } = renderDrawer({ onOpenExpediente });
+
+    fireEvent.change(screen.getByLabelText(/CURP \*/i), {
+      target: { value: EXISTING_EXPEDIENTE.persona.curp },
+    });
+
+    await waitFor(() => {
+      expect(verifyByCurpMock).toHaveBeenCalledWith(EXISTING_EXPEDIENTE.persona.curp, true);
+    });
+
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toMatch(/Esta persona ya tiene expediente SEM-2026-0001/i);
+
+    // El botón Siguiente queda bloqueado (RN-02) y el paso de Domicilio sigue oculto.
+    const nextButton = screen.getByRole('button', { name: /Siguiente/i }) as HTMLButtonElement;
+    expect(nextButton.disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Domicilio' }));
+    expect(screen.getByText(/Datos de identidad y servicios solicitados/i).closest('[data-mk-step]')?.hasAttribute('hidden')).toBe(false);
+
+    // No debe exponer la CURP en ningún toast.
+    for (const call of toastMock.mock.calls) {
+      expect(String(call[0])).not.toContain(EXISTING_EXPEDIENTE.persona.curp);
+    }
+
+    fireEvent.click(screen.getByRole('button', { name: /Abrir expediente/i }));
+    expect(onOpenExpediente).toHaveBeenCalledWith(EXISTING_EXPEDIENTE);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('reutiliza existingPersonaId y precarga datos cuando existe persona sin ficha o pre-registro móvil', async () => {
+    verifyByCurpMock.mockResolvedValueOnce({
+      kind: 'persona_sin_ficha',
+      persona: {
+        id: 'persona-padron-1',
+        curp: 'GALA900512MSLNRR01',
+        nombres: 'Laura',
+        apellidoPaterno: 'García',
+        apellidoMaterno: 'Lara',
+        nombreCompleto: 'Laura García Lara',
+        sexo: 'M',
+        fechaNacimiento: '1990-05-12',
+        entidadNacimiento: 'SL',
+        celular: '6681112233',
+      },
+    });
+
+    renderDrawer();
+    fireEvent.change(screen.getByLabelText(/CURP \*/i), { target: { value: 'GALA900512MSLNRR01' } });
+
+    await screen.findByText(/Persona registrada en padrón sin Ficha Única activa/i);
+    expect((screen.getByLabelText(/Nombre\(s\) \*/i) as HTMLInputElement).value).toBe('Laura');
+    expect((screen.getByLabelText(/Apellido paterno \*/i) as HTMLInputElement).value).toBe('García');
+    expect((screen.getByLabelText(/Apellido materno/i) as HTMLInputElement).value).toBe('Lara');
+    expect((screen.getByLabelText(/Teléfono celular/i) as HTMLInputElement).value).toBe('6681112233');
+
+    fireEvent.change(screen.getByLabelText(/Servicios solicitados \*/i), { target: { value: '1' } });
+    fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
+    await waitFor(() => expect(listAsentamientosMock).toHaveBeenCalled());
+    fireEvent.change(screen.getByLabelText(/Código postal/i), { target: { value: '80000' } });
+    await screen.findByText(/sin\s+asentamientos en catálogo local/i);
+    fireEvent.change(screen.getByLabelText(/Calle \*/i), { target: { value: 'Calle 5' } });
+    fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Guardar ficha/i }));
+
+    await waitFor(() => expect(createCompleteMock).toHaveBeenCalledTimes(1));
+    expect(createCompleteMock.mock.calls[0][0].identidad.existingPersonaId).toBe('persona-padron-1');
+
+    cleanup();
+    verifyByCurpMock.mockResolvedValueOnce({
+      kind: 'pre_registro_movil',
+      preRegistro: {
+        preRegistroId: 'pre-1',
+        curp: 'LOPA880720MSLNRR09',
+        nombres: 'Sofía',
+        apellidoPaterno: 'López',
+        apellidoMaterno: 'Paredes',
+        nombreCompleto: 'Sofía López Paredes',
+        sexo: 'M',
+        fechaNacimiento: '1988-07-20',
+        entidadNacimiento: 'SL',
+        celular: '6689990000',
+        personaId: 'persona-movil-1',
+      },
+    });
+
+    renderDrawer();
+    fireEvent.change(screen.getByLabelText(/CURP \*/i), { target: { value: 'LOPA880720MSLNRR09' } });
+    await screen.findByText(/Datos de la app encontrados/i);
+
+    fireEvent.click(screen.getByRole('button', { name: /Usar estos datos/i }));
+    expect((screen.getByLabelText(/Nombre\(s\) \*/i) as HTMLInputElement).value).toBe('Sofía');
+    expect((screen.getByLabelText(/Apellido paterno \*/i) as HTMLInputElement).value).toBe('López');
+    expect(screen.getAllByText('1988-07-20').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Femenino/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Sinaloa \(SL\)/)).toBeTruthy();
+  });
+
+  it('respeta restricciones de recepción al verificar CURP sin mostrar detalles ni permitir abrir expediente', async () => {
+    setTestRole('recepcion');
+    verifyByCurpMock.mockResolvedValueOnce({
+      kind: 'expediente_existente',
+      expediente: {
+        ...EXISTING_EXPEDIENTE,
+        id: '',
+      },
+    });
+
+    renderDrawer({ onOpenExpediente: vi.fn() });
+    fireEvent.change(screen.getByLabelText(/CURP \*/i), {
+      target: { value: EXISTING_EXPEDIENTE.persona.curp },
+    });
+
+    await waitFor(() => {
+      expect(verifyByCurpMock).toHaveBeenCalledWith(EXISTING_EXPEDIENTE.persona.curp, false);
+    });
+
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toMatch(/Esta persona ya tiene expediente SEM-2026-0001/i);
+    expect(screen.queryByRole('button', { name: /Abrir expediente/i })).toBeNull();
+    expect(screen.queryByText(/Adriana Meza Gutiérrez/i)).toBeNull();
   });
 
   it('pide confirmación solo si hay cambios sin guardar y notifica errores al guardar', async () => {

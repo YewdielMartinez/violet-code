@@ -24,16 +24,7 @@ Criterios mínimos verificables para considerar una tarjeta del Kanban como **Li
 
 ---
 
-## 3. DoD Backend `.NET` (`apps/core`, cuando aplique)
-
-- [ ] `dotnet build --no-restore -c Release` y `dotnet test --no-build -c Release` pasan en verde en `apps/core` (incluyendo `VioletCode.ArchitectureTests` y `VioletCode.UnitTests`).
-- [ ] Contratos, DTOs y endpoints alineados con el esquema vigente de Supabase; cambios de contrato avisados al equipo de Admin/Móvil.
-- [ ] Manejo uniforme de errores (sin exponer stack traces, detalles internos ni PII en respuestas HTTP o logs).
-- [ ] Sin credenciales, connection strings ni secretos hardcodeados en código o configuración.
-
----
-
-## 4. DoD Frontend Web (`apps/admin`)
+## 3. DoD Frontend Web (`apps/admin`)
 
 - [ ] Respeta las fronteras hexagonales de [`docs/estandar-frontend-arquitectura.md`](./estandar-frontend-arquitectura.md): `features/`, `hooks/` y `shared/` **no** importan `infrastructure/supabase/client` ni manipulan directamente columnas `snake_case` de la BD.
 - [ ] Sigue [`docs/guia-motion-kit-frontend.md`](./guia-motion-kit-frontend.md):
@@ -45,7 +36,7 @@ Criterios mínimos verificables para considerar una tarjeta del Kanban como **Li
 
 ---
 
-## 5. DoD App Móvil (`apps/mobile`)
+## 4. DoD App Móvil (`apps/mobile`)
 
 - [ ] `./gradlew test assembleDebug --no-daemon` pasa en verde en `apps/mobile`.
 - [ ] Usa los tokens de color sincronizados desde `packages/design-tokens` (`VioletColors.kt`).
@@ -53,7 +44,7 @@ Criterios mínimos verificables para considerar una tarjeta del Kanban como **Li
 
 ---
 
-## 6. DoD Pruebas y Validación
+## 5. DoD Pruebas y Validación
 
 - [ ] Pruebas unitarias en verde para toda lógica nueva de dominio, validaciones (CURP, transiciones de estado, reglas de prioridad) y mappers (`snake_case ↔ camelCase`), siguiendo la estrategia de [`docs/estandar-frontend-arquitectura.md`](./estandar-frontend-arquitectura.md#4-estrategia-de-pruebas).
 - [ ] Smoke test end-to-end del flujo afectado ejecutado contra Supabase local (`supabase db reset` + `seed.sql`) usando las cuentas sintéticas del rol correspondiente (`trabajo.social`, `recepcion`, `psicologia`, `titular`, `umeca`, `usuaria.app`).
@@ -61,16 +52,16 @@ Criterios mínimos verificables para considerar una tarjeta del Kanban como **Li
 
 ---
 
-## 7. DoD Seguridad, Privacidad (LGPDPPSO) y Datos *(no negociable)*
+## 6. DoD Seguridad, Privacidad (LGPDPPSO) y Datos *(no negociable)*
 
 - [ ] **Cero datos reales** de usuarias (nombres, CURP, teléfonos, domicilios, casos clínicos o jurídicos) en código, migraciones, seeds, pruebas, capturas o demos.
 - [ ] **Cero secretos** (`.env`, `service_role` keys, tokens, contraseñas reales) en el repositorio; nuevas variables documentadas únicamente en `.env.example`.
-- [ ] **Cero PII en logs** (consola del navegador, backend `.NET`, Edge/Postgres logs o Logcat).
+- [ ] **Cero PII en logs** (consola del navegador, Edge/Postgres logs o Logcat).
 - [ ] **Resiliencia, concurrencia y sesiones:** cumple [`docs/resiliencia-concurrencia-sesiones.md`](./resiliencia-concurrencia-sesiones.md) (`retry: false` en mutaciones, CAS/bloqueo optimista en actualizaciones concurrentes, sin PII en `localStorage`/`sessionStorage`, fechas en `America/Mazatlan` y manejo estándar de errores `23505`/`42501`/`P0001`).
 
 ---
 
-## 8. DoD Documentación y Cierre
+## 7. DoD Documentación y Cierre
 
 - [ ] Documentación del monorepo actualizada si la tarea cambió flujo operativo, esquema, contratos de API, arquitectura o variables de entorno.
 - [ ] Verificaciones ejecutadas después de la última edición (build, lint, tests, `supabase db reset` según corresponda) y cambios integrados/subidos a la rama acordada.

@@ -7,7 +7,7 @@ describe('navigation permissions by role', () => {
     expect(canAccessPath('umeca', '/')).toBe(true);
     expect(canAccessPath('umeca', '/expedientes')).toBe(false);
     expect(canAccessPath('umeca', '/directorio')).toBe(false);
-    expect(canAccessPath('umeca', '/auditoria')).toBe(false);
+    expect(canAccessPath('umeca', '/usuarios')).toBe(false);
   });
 
   it('limita a recepción a Dashboard, Agenda y Directorio', () => {
@@ -16,15 +16,14 @@ describe('navigation permissions by role', () => {
     expect(canAccessPath('recepcion', '/directorio')).toBe(true);
     expect(canAccessPath('recepcion', '/expedientes')).toBe(false);
     expect(canAccessPath('recepcion', '/solicitudes')).toBe(false);
-    expect(canAccessPath('recepcion', '/auditoria')).toBe(false);
+    expect(canAccessPath('recepcion', '/usuarios')).toBe(false);
   });
 
   it('permite módulos operativos a áreas de atención y bloquea módulos de dirección', () => {
     for (const role of ['trabajo_social', 'psicologia', 'juridico'] as const) {
       expect(canAccessPath(role, '/expedientes')).toBe(true);
       expect(canAccessPath(role, '/solicitudes')).toBe(true);
-      expect(canAccessPath(role, '/canalizaciones')).toBe(true);
-      expect(canAccessPath(role, '/auditoria')).toBe(false);
+      expect(canAccessPath(role, '/intervenciones')).toBe(true);
       expect(canAccessPath(role, '/estadisticas')).toBe(false);
       expect(canAccessPath(role, '/usuarios')).toBe(false);
     }
@@ -32,8 +31,7 @@ describe('navigation permissions by role', () => {
 
   it('permite todas las rutas del panel a titular y subdirección', () => {
     for (const role of ['titular', 'subdireccion'] as const) {
-      expect(getNavigationForRole(role)).toHaveLength(12);
-      expect(canAccessPath(role, '/auditoria')).toBe(true);
+      expect(getNavigationForRole(role)).toHaveLength(8);
       expect(canAccessPath(role, '/estadisticas')).toBe(true);
       expect(canAccessPath(role, '/usuarios')).toBe(true);
     }

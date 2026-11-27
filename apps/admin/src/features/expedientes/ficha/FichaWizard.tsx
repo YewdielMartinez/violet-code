@@ -7,6 +7,7 @@ import '@yewdiel21/motion-kit/css/components/steps';
 import type { DomicilioInput } from '@/domain/models/Domicilio';
 import type { EstudioSocioeconomicoInput } from '@/domain/models/EstudioSocioeconomico';
 import type { CatalogosFicha, FichaIdentidadInput } from '@/domain/models/FichaRegistro';
+import type { ExpedienteResumen } from '@/domain/models/Persona';
 import { Icon } from '@/shared/ui/Icon';
 import { FichaDomicilioStep } from './FichaDomicilioStep';
 import { FichaIdentidadStep } from './FichaIdentidadStep';
@@ -28,6 +29,7 @@ const SUBMIT_LABELS = {
 export function FichaWizardStepper({ step, onSelectStep }: { step: number; onSelectStep: (nextStep: number) => void }) {
   return (
     <Stepper
+      className="vc-ficha-stepper"
       items={FICHA_STEP_ITEMS}
       value={step}
       variant="horizontal"
@@ -44,6 +46,7 @@ interface StepsSectionProps {
   step: number;
   stepError: string | null;
   invalidField: string | null;
+  duplicateExpediente?: ExpedienteResumen | null;
   identidad: FichaIdentidadInput;
   onIdentidadChange: (next: FichaIdentidadInput) => void;
   domicilio: DomicilioInput;
@@ -51,6 +54,9 @@ interface StepsSectionProps {
   estudio: EstudioSocioeconomicoInput;
   onEstudioChange: (next: EstudioSocioeconomicoInput) => void;
   catalogos?: CatalogosFicha;
+  allowPreRegistroLookup?: boolean;
+  onOpenExpediente?: (expediente: ExpedienteResumen) => void;
+  onDuplicateExpedienteChange?: (expediente: ExpedienteResumen | null) => void;
   onNext: () => void;
   onSubmit: () => void;
   onStepAnimated?: (stepIndex: number) => void;
@@ -62,6 +68,7 @@ export function FichaWizardSteps({
   step,
   stepError,
   invalidField,
+  duplicateExpediente,
   identidad,
   onIdentidadChange,
   domicilio,
@@ -69,19 +76,34 @@ export function FichaWizardSteps({
   estudio,
   onEstudioChange,
   catalogos,
+  allowPreRegistroLookup,
+  onOpenExpediente,
+  onDuplicateExpedienteChange,
   onNext,
   onSubmit,
   onStepAnimated,
 }: StepsSectionProps) {
   function handleStepChange(next: number, previous: number) {
+    const reducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const behavior: ScrollBehavior = reducedMotion ? 'auto' : 'smooth';
+
     const scroller = formRef.current?.closest<HTMLElement>('[data-mk-part="body"]');
-    if (scroller) scroller.scrollTop = 0;
+    if (scroller) {
+      if (typeof scroller.scrollTo === 'function') scroller.scrollTo({ top: 0, behavior });
+      else scroller.scrollTop = 0;
+    }
+    if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+      window.scrollTo({ top: 0, behavior });
+    }
 
     const activeEl = formRef.current?.querySelectorAll<HTMLElement>('[data-mk-step]')?.[next];
-    const reducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     if (activeEl && !reducedMotion && next !== previous) {
       const dir = next > previous ? 1 : -1;
-      gsap.fromTo(activeEl, { x: dir * 28 }, { x: 0, duration: 0.28, ease: 'power2.out', clearProps: 'transform' });
+      gsap.fromTo(
+        activeEl,
+        { x: dir * 24, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.26, ease: 'power2.out', clearProps: 'transform,opacity' },
+      );
     }
     onStepAnimated?.(next);
   }
@@ -97,8 +119,8 @@ export function FichaWizardSteps({
         else onSubmit();
       }}
     >
-      <Steps index={step} duration={0.18} onChange={handleStepChange} className="vc-ficha-steps">
-        <div className="mb-4 flex items-center justify-between gap-3 text-xs text-on-surface-variant">
+      <Steps index={step} align="start" duration={0.22} onChange={handleStepChange} className="vc-ficha-steps">
+        <div className="mb-3 flex items-center justify-between gap-3 text-xs text-on-surface-variant">
           <span>
             Paso <Steps.Counter className="font-mono font-semibold text-on-surface" /> de 3
           </span>
@@ -110,7 +132,15 @@ export function FichaWizardSteps({
             <h3 data-mk-step-title="" className="mb-4 text-base font-semibold text-on-surface">
               Datos de identidad y servicios solicitados
             </h3>
-            <FichaIdentidadStep value={identidad} onChange={onIdentidadChange} catalogos={catalogos} invalidField={invalidField} />
+            <FichaIdentidadStep
+              value={identidad}
+              onChange={onIdentidadChange}
+              catalogos={catalogos}
+              invalidField={invalidField}
+              allowPreRegistroLookup={allowPreRegistroLookup}
+              onOpenExpediente={onOpenExpediente}
+              onDuplicateExpedienteChange={onDuplicateExpedienteChange}
+            />
           </div>
         </Steps.Step>
 
@@ -133,7 +163,7 @@ export function FichaWizardSteps({
         </Steps.Step>
       </Steps>
 
-      {stepError ? (
+      {stepError && !duplicateExpediente ? (
         <p role="alert" className="mt-5 rounded-2xl bg-status-danger-bg px-4 py-3 text-sm text-status-danger">
           {stepError}
         </p>
@@ -147,6 +177,7 @@ interface FooterProps {
   step: number;
   isSubmitting: boolean;
   submitError: boolean;
+  canContinue?: boolean;
   onClearSubmitError?: () => void;
   onBack: () => void;
   onCancel: () => void;
@@ -158,6 +189,7 @@ export function FichaWizardFooter({
   step,
   isSubmitting,
   submitError,
+  canContinue = true,
   onClearSubmitError,
   onBack,
   onCancel,
@@ -171,7 +203,7 @@ export function FichaWizardFooter({
       </button>
 
       {step < 2 ? (
-        <button type="button" className="mk-button mk-button--filled" onClick={onNext}>
+        <button type="button" className="mk-button mk-button--filled" onClick={onNext} disabled={!canContinue}>
           <span>Siguiente</span>
           <Icon name="arrow_forward" />
         </button>
@@ -186,6 +218,7 @@ export function FichaWizardFooter({
             if (next === 'idle') onClearSubmitError?.();
           }}
           className="mk-button mk-button--filled"
+          disabled={!canContinue}
         >
           <Icon name="save" />
           <span className="ml-2">Guardar ficha</span>

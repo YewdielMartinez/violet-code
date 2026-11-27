@@ -1,33 +1,33 @@
-import { describe, expect, it } from 'vitest';
-import type { StaffRole } from '@/domain/models/Auth';
+import { describe, expect, it } from "vitest";
+import type { StaffRole } from "@/domain/models/Auth";
 import {
   formatAgresorNombre,
   puedeAccederAgresor,
   validarAgresor,
   type AgresorInput,
   type TipoDroga,
-} from '@/domain/models/Agresor';
+} from "@/domain/models/Agresor";
 
 function baseInput(overrides: Partial<AgresorInput> = {}): AgresorInput {
   return {
-    fichaId: '55555555-5555-4555-8555-555555555501',
-    nombres: 'Roberto',
-    apellidoPaterno: 'Salazar',
-    apellidoMaterno: 'Pineda',
+    fichaId: "55555555-5555-4555-8555-555555555501",
+    nombres: "Roberto",
+    apellidoPaterno: "Salazar",
+    apellidoMaterno: "Pineda",
     ...overrides,
   };
 }
 
-describe('Agresor — permisos y formato', () => {
-  it('permite acceso únicamente a Dirección y áreas de atención', () => {
+describe("Agresor — permisos y formato", () => {
+  it("permite acceso únicamente a Dirección y áreas de atención", () => {
     const allowed: StaffRole[] = [
-      'titular',
-      'subdireccion',
-      'trabajo_social',
-      'psicologia',
-      'juridico',
+      "titular",
+      "subdireccion",
+      "trabajo_social",
+      "psicologia",
+      "juridico",
     ];
-    const denied: (StaffRole | undefined)[] = ['recepcion', 'umeca', undefined];
+    const denied: (StaffRole | undefined)[] = ["recepcion", "umeca", undefined];
 
     for (const role of allowed) {
       expect(puedeAccederAgresor(role)).toBe(true);
@@ -37,58 +37,88 @@ describe('Agresor — permisos y formato', () => {
     }
   });
 
-  it('formatea el nombre completo omitiendo apellidos vacíos o nulos', () => {
+  it("formatea el nombre completo omitiendo apellidos vacíos o nulos", () => {
     expect(
-      formatAgresorNombre({ nombres: 'Roberto', apellidoPaterno: 'Salazar', apellidoMaterno: null }),
-    ).toBe('Roberto Salazar');
+      formatAgresorNombre({
+        nombres: "Roberto",
+        apellidoPaterno: "Salazar",
+        apellidoMaterno: null,
+      }),
+    ).toBe("Roberto Salazar");
     expect(
-      formatAgresorNombre({ nombres: 'Roberto', apellidoPaterno: null, apellidoMaterno: null }),
-    ).toBe('Roberto');
+      formatAgresorNombre({
+        nombres: "Roberto",
+        apellidoPaterno: null,
+        apellidoMaterno: null,
+      }),
+    ).toBe("Roberto");
   });
 });
 
-describe('Agresor — validarAgresor', () => {
-  it('acepta un registro mínimo válido solo con nombre', () => {
-    const result = validarAgresor({ fichaId: 'ficha-1', nombres: 'Persona Demo' });
+describe("Agresor — validarAgresor", () => {
+  it("acepta un registro mínimo válido solo con nombre", () => {
+    const result = validarAgresor({
+      fichaId: "ficha-1",
+      nombres: "Persona Demo",
+    });
     expect(result.valido).toBe(true);
     expect(result.errores).toEqual({});
   });
 
-  it('rechaza nombres vacíos o mayores a 100 caracteres', () => {
-    expect(validarAgresor(baseInput({ nombres: '   ' })).errores.nombres).toBeTruthy();
-    expect(validarAgresor(baseInput({ nombres: 'A'.repeat(101) })).errores.nombres).toBeTruthy();
-    expect(validarAgresor(baseInput({ nombres: 'A'.repeat(100) })).valido).toBe(true);
+  it("rechaza nombres vacíos o mayores a 100 caracteres", () => {
+    expect(
+      validarAgresor(baseInput({ nombres: "   " })).errores.nombres,
+    ).toBeTruthy();
+    expect(
+      validarAgresor(baseInput({ nombres: "A".repeat(101) })).errores.nombres,
+    ).toBeTruthy();
+    expect(validarAgresor(baseInput({ nombres: "A".repeat(100) })).valido).toBe(
+      true,
+    );
   });
 
-  it('valida código postal de 5 dígitos y exclusión mutua con asentamientoId', () => {
-    expect(validarAgresor(baseInput({ codigoPostal: '81200' })).valido).toBe(true);
-    expect(validarAgresor(baseInput({ asentamientoId: 10, codigoPostal: null })).valido).toBe(true);
-
-    expect(validarAgresor(baseInput({ codigoPostal: '8120' })).errores.codigoPostal).toBeTruthy();
-    expect(validarAgresor(baseInput({ codigoPostal: '8120A' })).errores.codigoPostal).toBeTruthy();
+  it("valida código postal de 5 dígitos y exclusión mutua con asentamientoId", () => {
+    expect(validarAgresor(baseInput({ codigoPostal: "81200" })).valido).toBe(
+      true,
+    );
     expect(
-      validarAgresor(baseInput({ asentamientoId: 10, codigoPostal: '81200' })).errores.codigoPostal,
+      validarAgresor(baseInput({ asentamientoId: 10, codigoPostal: null }))
+        .valido,
+    ).toBe(true);
+
+    expect(
+      validarAgresor(baseInput({ codigoPostal: "8120" })).errores.codigoPostal,
+    ).toBeTruthy();
+    expect(
+      validarAgresor(baseInput({ codigoPostal: "8120A" })).errores.codigoPostal,
+    ).toBeTruthy();
+    expect(
+      validarAgresor(baseInput({ asentamientoId: 10, codigoPostal: "81200" }))
+        .errores.codigoPostal,
     ).toBeTruthy();
   });
 
-  it('permite drogas solo cuando tieneConsumoDroga es true', () => {
+  it("permite drogas solo cuando tieneConsumoDroga es true", () => {
     const ok = validarAgresor(
       baseInput({
         tieneConsumoDroga: true,
-        drogas: ['marihuana', 'cristal'],
-        especificacionDroga: 'Consumo eventual',
+        drogas: ["marihuana", "cristal"],
+        especificacionDroga: "Consumo eventual",
       }),
     );
     expect(ok.valido).toBe(true);
 
     const invalidFalse = validarAgresor(
-      baseInput({ tieneConsumoDroga: false, drogas: ['marihuana'] }),
+      baseInput({ tieneConsumoDroga: false, drogas: ["marihuana"] }),
     );
     expect(invalidFalse.valido).toBe(false);
     expect(invalidFalse.errores.drogas).toBeTruthy();
 
     const invalidNull = validarAgresor(
-      baseInput({ tieneConsumoDroga: null, especificacionDroga: 'Otra sustancia' }),
+      baseInput({
+        tieneConsumoDroga: null,
+        especificacionDroga: "Otra sustancia",
+      }),
     );
     expect(invalidNull.valido).toBe(false);
     expect(invalidNull.errores.drogas).toBeTruthy();
@@ -96,38 +126,33 @@ describe('Agresor — validarAgresor', () => {
     const invalidItem = validarAgresor(
       baseInput({
         tieneConsumoDroga: true,
-        drogas: ['desconocida' as TipoDroga],
+        drogas: ["desconocida" as TipoDroga],
       }),
     );
     expect(invalidItem.valido).toBe(false);
     expect(invalidItem.errores.drogas).toBeTruthy();
   });
 
-  it('permite especificacionArma solo cuando utilizoArmaUObjeto es true', () => {
+  it("valida longitud máxima de especificacionArma", () => {
     const ok = validarAgresor(
       baseInput({
-        utilizoArmaUObjeto: true,
-        especificacionArma: 'Objeto punzocortante',
+        especificacionArma: "Objeto punzocortante",
       }),
     );
     expect(ok.valido).toBe(true);
 
-    const invalidFalse = validarAgresor(
-      baseInput({ utilizoArmaUObjeto: false, especificacionArma: 'Arma de fuego' }),
+    const over = validarAgresor(
+      baseInput({ especificacionArma: "x".repeat(251) }),
     );
-    expect(invalidFalse.valido).toBe(false);
-    expect(invalidFalse.errores.especificacionArma).toBeTruthy();
-
-    const invalidSpec = validarAgresor(
-      baseInput({ utilizoArmaUObjeto: null, especificacionArma: 'Detalle' }),
-    );
-    expect(invalidSpec.valido).toBe(false);
-    expect(invalidSpec.errores.especificacionArma).toBeTruthy();
+    expect(over.valido).toBe(false);
+    expect(over.errores.especificacionArma).toBeTruthy();
   });
 
-  it('rechaza observaciones mayores a 5000 caracteres', () => {
-    expect(validarAgresor(baseInput({ observaciones: 'x'.repeat(5000) })).valido).toBe(true);
-    const over = validarAgresor(baseInput({ observaciones: 'x'.repeat(5001) }));
+  it("rechaza observaciones mayores a 5000 caracteres", () => {
+    expect(
+      validarAgresor(baseInput({ observaciones: "x".repeat(5000) })).valido,
+    ).toBe(true);
+    const over = validarAgresor(baseInput({ observaciones: "x".repeat(5001) }));
     expect(over.valido).toBe(false);
     expect(over.errores.observaciones).toBeTruthy();
   });

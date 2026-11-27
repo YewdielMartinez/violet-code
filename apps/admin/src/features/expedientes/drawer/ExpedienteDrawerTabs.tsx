@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { useTabs } from '@yewdiel21/motion-kit/react';
+import { memo, useMemo, useRef, type KeyboardEvent } from 'react';
 import { Icon } from '@/shared/ui/Icon';
 
-export type DrawerTab = 'resumen' | 'agresor' | 'documentos' | 'canalizaciones';
+export type DrawerTab = 'resumen' | 'agresor' | 'documentos' | 'canalizaciones' | 'ordenes' | 'seguimiento' | 'notas';
 
 interface TabDefinition {
   id: DrawerTab;
@@ -16,21 +15,25 @@ const ALL_TABS: readonly TabDefinition[] = [
   { id: 'agresor', label: 'Persona agresora', icon: 'shield_person', sensitive: true },
   { id: 'documentos', label: 'Documentos', icon: 'folder_open', sensitive: true },
   { id: 'canalizaciones', label: 'Canalizaciones', icon: 'alt_route', sensitive: true },
+  { id: 'ordenes', label: 'Órdenes', icon: 'gavel', sensitive: true },
+  // Dirección también las ve (es parte del acceso sensible); el panel de notas le explica que no aplica.
+  { id: 'seguimiento', label: 'Seguimiento', icon: 'timeline', sensitive: true },
+  { id: 'notas', label: 'Notas privadas', icon: 'lock', sensitive: true },
 ];
 
 interface Props {
   activeTab: DrawerTab;
   canAccessSensitiveTabs: boolean;
-  expedienteId: string;
   onChange: (next: DrawerTab) => void;
+  onTabIntent?: (tab: DrawerTab) => void;
 }
 
-/** Pestañas tipo pill chip con indicador deslizante animado mediante `useTabs` de motion-kit. */
-export function ExpedienteDrawerTabs({
+/** Pestañas tipo pill chip con navegación accesible por teclado y transición CSS sin reflow. */
+export const ExpedienteDrawerTabs = memo(function ExpedienteDrawerTabs({
   activeTab,
   canAccessSensitiveTabs,
-  expedienteId,
   onChange,
+  onTabIntent,
 }: Props) {
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -39,27 +42,26 @@ export function ExpedienteDrawerTabs({
     [canAccessSensitiveTabs],
   );
 
-  const tabs = useTabs(
-    listRef,
-    {
-      onSelect: (index) => {
-        const target = visibleTabs[index];
-        if (target) onChange(target.id);
-      },
-    },
-    [visibleTabs.length, expedienteId],
-  );
-
   const activeIndex = Math.max(
     0,
     visibleTabs.findIndex((tab) => tab.id === activeTab),
   );
 
-  useEffect(() => {
-    if (tabs.current && tabs.current.index !== activeIndex) {
-      tabs.current.select(activeIndex);
-    }
-  }, [activeIndex, tabs]);
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    let nextIndex = -1;
+    if (event.key === 'ArrowRight') nextIndex = (activeIndex + 1) % visibleTabs.length;
+    else if (event.key === 'ArrowLeft') nextIndex = (activeIndex - 1 + visibleTabs.length) % visibleTabs.length;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = visibleTabs.length - 1;
+    else return;
+
+    event.preventDefault();
+    const target = visibleTabs[nextIndex];
+    if (!target) return;
+    const buttons = listRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+    buttons?.[nextIndex]?.focus();
+    onChange(target.id);
+  }
 
   return (
     <div
@@ -67,6 +69,7 @@ export function ExpedienteDrawerTabs({
       role="tablist"
       aria-label="Secciones del expediente"
       className="vc-drawer-tabs"
+      onKeyDown={handleKeyDown}
     >
       {visibleTabs.map((tab) => {
         const selected = tab.id === activeTab;
@@ -75,8 +78,10 @@ export function ExpedienteDrawerTabs({
             key={tab.id}
             type="button"
             role="tab"
-            data-mk-tab=""
             aria-selected={selected}
+            tabIndex={selected ? 0 : -1}
+            onPointerEnter={() => onTabIntent?.(tab.id)}
+            onFocus={() => onTabIntent?.(tab.id)}
             onClick={() => onChange(tab.id)}
             className="vc-drawer-tabs__tab"
           >
@@ -85,7 +90,6 @@ export function ExpedienteDrawerTabs({
           </button>
         );
       })}
-      <span data-mk-indicator="" aria-hidden className="vc-drawer-tabs__indicator" />
     </div>
   );
-}
+});

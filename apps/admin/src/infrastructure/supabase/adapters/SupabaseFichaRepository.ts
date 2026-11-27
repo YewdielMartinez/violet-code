@@ -1,14 +1,173 @@
 import { supabase } from '../client';
 import type { Json } from '../database.types';
-import type { DomicilioDetalle } from '@/domain/models/Domicilio';
-import type { EstudioSocioeconomicoDetalle } from '@/domain/models/EstudioSocioeconomico';
-import type { FichaCompletaDetalle, FichaCreateInput } from '@/domain/models/FichaRegistro';
-import { formatFullName, normalizeCurp, type SexoBiologico } from '@/domain/models/Persona';
+import type { DomicilioDetalle, ZonaGeografica } from '@/domain/models/Domicilio';
+import type {
+  EstudioSocioeconomicoDetalle,
+  FrecuenciaIngreso,
+  MaterialVivienda,
+  TipoTrabajo,
+  TipoVivienda,
+} from '@/domain/models/EstudioSocioeconomico';
+import type {
+  EstadoCivil,
+  FichaCompletaDetalle,
+  FichaCreateInput,
+  ServicioMedico,
+} from '@/domain/models/FichaRegistro';
+import { formatFullName, normalizeCurp, type EstadoFicha, type SexoBiologico } from '@/domain/models/Persona';
 import type { CreatedFichaResult, FichaRepository } from '@/domain/ports/FichaRepository';
 
-function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
-  if (Array.isArray(value)) return value[0] ?? null;
-  return value ?? null;
+interface RpcDetallePayload {
+  ficha: {
+    id: string;
+    folio: string;
+    estado: EstadoFicha;
+    registrada_en: string;
+    aviso_privacidad_aceptado_en: string;
+    estado_civil: EstadoCivil | null;
+    ocupacion_nombre: string | null;
+    servicio_medico: ServicioMedico | null;
+    servicio_medico_otro: string | null;
+    tiene_trabajo: boolean | null;
+    numero_hijas: number | null;
+    numero_hijos_hombres: number | null;
+    tiene_embarazo: boolean | null;
+    tiene_denuncia: boolean | null;
+    es_victima_delito: boolean | null;
+  };
+  persona: {
+    id: string;
+    curp: string;
+    nombres: string;
+    apellido_paterno: string;
+    apellido_materno: string | null;
+    sexo: string;
+    fecha_nacimiento: string;
+    entidad_nacimiento: string;
+    celular: string | null;
+  };
+  servicios_solicitados?: { area_id: number; clave: string; nombre: string }[];
+  domicilio_actual?: {
+    id: string;
+    asentamiento_id: number | null;
+    asentamiento_nombre: string | null;
+    codigo_postal: string | null;
+    calle: string | null;
+    numero_exterior: string | null;
+    numero_interior: string | null;
+    referencias: string | null;
+    zona: ZonaGeografica | null;
+  } | null;
+  estudio_actual?: {
+    id: string;
+    fecha_estudio: string;
+    ingreso_mensual_propio: number | null;
+    numero_dependientes: number | null;
+    tiene_apoyo: boolean | null;
+    especificacion_apoyo: string | null;
+    tipo_vivienda: TipoVivienda | null;
+    material: MaterialVivienda | null;
+    material_otro: string | null;
+    servicios: EstudioSocioeconomicoDetalle['servicios'] | null;
+    bienes: EstudioSocioeconomicoDetalle['bienes'] | null;
+    aportantes?: {
+      id: string;
+      nombre: string;
+      parentesco_nombre: string | null;
+      parentesco_otro: string | null;
+      ocupacion_nombre: string | null;
+      ocupacion_otra: string | null;
+      tipo_trabajo: TipoTrabajo | null;
+      monto: number | null;
+      frecuencia: FrecuenciaIngreso | null;
+    }[];
+  } | null;
+}
+
+function mapDetallePayload(raw: RpcDetallePayload): FichaCompletaDetalle {
+  const { ficha, persona } = raw;
+  const domRow = raw.domicilio_actual ?? null;
+  const estRow = raw.estudio_actual ?? null;
+
+  const domicilio: DomicilioDetalle | null = domRow
+    ? {
+        id: domRow.id,
+        asentamientoId: domRow.asentamiento_id,
+        asentamientoNombre: domRow.asentamiento_nombre ?? null,
+        codigoPostal: domRow.codigo_postal ?? null,
+        calle: domRow.calle,
+        numeroExterior: domRow.numero_exterior,
+        numeroInterior: domRow.numero_interior,
+        referencias: domRow.referencias,
+        zona: domRow.zona,
+      }
+    : null;
+
+  const estudio: EstudioSocioeconomicoDetalle | null = estRow
+    ? {
+        id: estRow.id,
+        fechaEstudio: estRow.fecha_estudio,
+        ingresoMensualPropio: estRow.ingreso_mensual_propio,
+        numeroDependientes: estRow.numero_dependientes,
+        tieneApoyo: Boolean(estRow.tiene_apoyo),
+        especificacionApoyo: estRow.especificacion_apoyo,
+        tipoVivienda: estRow.tipo_vivienda,
+        material: estRow.material,
+        materialOtro: estRow.material_otro,
+        servicios: estRow.servicios ?? [],
+        bienes: estRow.bienes ?? [],
+        aportantes: (estRow.aportantes ?? []).map((ap) => ({
+          id: ap.id,
+          nombre: ap.nombre,
+          parentescoNombre: ap.parentesco_nombre ?? ap.parentesco_otro ?? null,
+          ocupacionNombre: ap.ocupacion_nombre ?? ap.ocupacion_otra ?? null,
+          tipoTrabajo: ap.tipo_trabajo,
+          monto: ap.monto,
+          frecuencia: ap.frecuencia,
+        })),
+      }
+    : null;
+
+  const sexo: SexoBiologico = persona.sexo === 'H' ? 'H' : 'M';
+
+  return {
+    id: ficha.id,
+    folio: ficha.folio,
+    estado: ficha.estado,
+    registradaEn: ficha.registrada_en,
+    avisoPrivacidadAceptadoEn: ficha.aviso_privacidad_aceptado_en,
+    estadoCivil: ficha.estado_civil,
+    ocupacionNombre: ficha.ocupacion_nombre ?? null,
+    servicioMedico: ficha.servicio_medico,
+    servicioMedicoOtro: ficha.servicio_medico_otro,
+    tieneTrabajo: ficha.tiene_trabajo,
+    numeroHijas: ficha.numero_hijas,
+    numeroHijosHombres: ficha.numero_hijos_hombres,
+    tieneEmbarazo: ficha.tiene_embarazo,
+    tieneDenuncia: ficha.tiene_denuncia,
+    esVictimaDelito: ficha.es_victima_delito,
+    serviciosSolicitados: (raw.servicios_solicitados ?? [])
+      .map((s) => s.nombre)
+      .filter((name): name is string => Boolean(name)),
+    persona: {
+      id: persona.id,
+      curp: normalizeCurp(persona.curp),
+      nombres: persona.nombres,
+      apellidoPaterno: persona.apellido_paterno,
+      apellidoMaterno: persona.apellido_materno,
+      nombreCompleto: formatFullName(
+        persona.nombres,
+        persona.apellido_paterno,
+        persona.apellido_materno,
+      ),
+      sexo,
+      fechaNacimiento: persona.fecha_nacimiento,
+      entidadNacimiento: persona.entidad_nacimiento,
+      celular: persona.celular,
+    },
+    domicilio,
+    estudio,
+  };
 }
 
 export const supabaseFichaRepository: FichaRepository = {
@@ -40,143 +199,28 @@ export const supabaseFichaRepository: FichaRepository = {
   },
 
   async getDetail(fichaId: string): Promise<FichaCompletaDetalle | null> {
-    const { data: fichaRow, error: fichaError } = await supabase
-      .from('ficha_registro')
-      .select(
-        'id, folio, estado, registrada_en, aviso_privacidad_aceptado_en, estado_civil, servicio_medico, servicio_medico_otro, tiene_trabajo, numero_hijas, numero_hijos_hombres, tiene_embarazo, tiene_denuncia, es_victima_delito, persona!inner(id, curp, nombres, apellido_paterno, apellido_materno, sexo, fecha_nacimiento, entidad_nacimiento, celular), cat_ocupacion(nombre), ficha_servicio_solicitado(cat_area(nombre))',
-      )
-      .eq('id', fichaId)
-      .eq('activo', true)
-      .maybeSingle();
+    const { data, error } = await supabase.rpc('get_expediente_detalle', {
+      p_ficha_id: fichaId,
+      p_incluir_agresores: false,
+    });
 
-    if (fichaError) throw fichaError;
-    if (!fichaRow) return null;
+    if (error) {
+      if (error.code === '23514') return null;
+      throw error;
+    }
 
-    const personaRow = unwrapOne(fichaRow.persona);
-    if (!personaRow) return null;
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      return null;
+    }
 
-    const [domRes, estRes] = await Promise.all([
-      supabase
-        .from('domicilio')
-        .select(
-          'id, asentamiento_id, codigo_postal, calle, numero_exterior, numero_interior, referencias, zona, cat_asentamiento(nombre, codigo_postal)',
-        )
-        .eq('persona_id', personaRow.id)
-        .eq('activo', true)
-        .eq('es_actual', true)
-        .maybeSingle(),
-      supabase
-        .from('estudio_socioeconomico')
-        .select(
-          'id, fecha_estudio, ingreso_mensual_propio, numero_dependientes, tiene_apoyo, especificacion_apoyo, tipo_vivienda, material, material_otro, servicios, bienes, aportante_hogar(id, nombre, tipo_trabajo, monto, frecuencia, activo, parentesco_otro, ocupacion_otra, cat_parentesco(nombre), cat_ocupacion(nombre))',
-        )
-        .eq('ficha_id', fichaRow.id)
-        .eq('activo', true)
-        .eq('es_actual', true)
-        .maybeSingle(),
-    ]);
-
-    if (domRes.error) throw domRes.error;
-    if (estRes.error) throw estRes.error;
-
-    const domRow = domRes.data;
-    const asentamientoRel = domRow ? unwrapOne(domRow.cat_asentamiento) : null;
-    const domicilio: DomicilioDetalle | null = domRow
-      ? {
-          id: domRow.id,
-          asentamientoId: domRow.asentamiento_id,
-          asentamientoNombre: asentamientoRel?.nombre ?? null,
-          codigoPostal: asentamientoRel?.codigo_postal ?? domRow.codigo_postal,
-          calle: domRow.calle,
-          numeroExterior: domRow.numero_exterior,
-          numeroInterior: domRow.numero_interior,
-          referencias: domRow.referencias,
-          zona: domRow.zona,
-        }
-      : null;
-
-    const estRow = estRes.data;
-    const estudio: EstudioSocioeconomicoDetalle | null = estRow
-      ? {
-          id: estRow.id,
-          fechaEstudio: estRow.fecha_estudio,
-          ingresoMensualPropio: estRow.ingreso_mensual_propio,
-          numeroDependientes: estRow.numero_dependientes,
-          tieneApoyo: estRow.tiene_apoyo,
-          especificacionApoyo: estRow.especificacion_apoyo,
-          tipoVivienda: estRow.tipo_vivienda,
-          material: estRow.material,
-          materialOtro: estRow.material_otro,
-          servicios: estRow.servicios ?? [],
-          bienes: estRow.bienes ?? [],
-          aportantes: (estRow.aportante_hogar ?? [])
-            .filter((ap) => ap.activo)
-            .map((ap) => {
-              const parRel = unwrapOne(ap.cat_parentesco);
-              const ocuRel = unwrapOne(ap.cat_ocupacion);
-              return {
-                id: ap.id,
-                nombre: ap.nombre,
-                parentescoNombre: parRel?.nombre ?? ap.parentesco_otro ?? null,
-                ocupacionNombre: ocuRel?.nombre ?? ap.ocupacion_otra ?? null,
-                tipoTrabajo: ap.tipo_trabajo,
-                monto: ap.monto,
-                frecuencia: ap.frecuencia,
-              };
-            }),
-        }
-      : null;
-
-    const ocupacionRel = unwrapOne(fichaRow.cat_ocupacion);
-    const serviciosSolicitados = (fichaRow.ficha_servicio_solicitado ?? [])
-      .map((s) => unwrapOne(s.cat_area)?.nombre)
-      .filter((n): n is string => Boolean(n));
-
-    const sexo: SexoBiologico = personaRow.sexo === 'H' ? 'H' : 'M';
-
-    return {
-      id: fichaRow.id,
-      folio: fichaRow.folio,
-      estado: fichaRow.estado,
-      registradaEn: fichaRow.registrada_en,
-      avisoPrivacidadAceptadoEn: fichaRow.aviso_privacidad_aceptado_en,
-      estadoCivil: fichaRow.estado_civil,
-      ocupacionNombre: ocupacionRel?.nombre ?? null,
-      servicioMedico: fichaRow.servicio_medico,
-      servicioMedicoOtro: fichaRow.servicio_medico_otro,
-      tieneTrabajo: fichaRow.tiene_trabajo,
-      numeroHijas: fichaRow.numero_hijas,
-      numeroHijosHombres: fichaRow.numero_hijos_hombres,
-      tieneEmbarazo: fichaRow.tiene_embarazo,
-      tieneDenuncia: fichaRow.tiene_denuncia,
-      esVictimaDelito: fichaRow.es_victima_delito,
-      serviciosSolicitados,
-      persona: {
-        id: personaRow.id,
-        curp: normalizeCurp(personaRow.curp),
-        nombres: personaRow.nombres,
-        apellidoPaterno: personaRow.apellido_paterno,
-        apellidoMaterno: personaRow.apellido_materno,
-        nombreCompleto: formatFullName(
-          personaRow.nombres,
-          personaRow.apellido_paterno,
-          personaRow.apellido_materno,
-        ),
-        sexo,
-        fechaNacimiento: personaRow.fecha_nacimiento,
-        entidadNacimiento: personaRow.entidad_nacimiento,
-        celular: personaRow.celular,
-      },
-      domicilio,
-      estudio,
-    };
+    return mapDetallePayload(data as unknown as RpcDetallePayload);
   },
 
-  async archive(fichaId: string): Promise<void> {
-    const { error } = await supabase
-      .from('ficha_registro')
-      .update({ estado: 'archivado' })
-      .eq('id', fichaId);
+  async archive(fichaId: string, motivo?: string): Promise<void> {
+    const { error } = await supabase.rpc('archivar_ficha', {
+      p_ficha_id: fichaId,
+      p_motivo: motivo ?? undefined,
+    });
     if (error) throw error;
   },
 

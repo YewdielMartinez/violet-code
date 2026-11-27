@@ -1,44 +1,60 @@
 import { useEffect, useMemo, useRef } from 'react';
 import {
   EmptyState,
-  FlipGroup,
+  FadeContent,
   ImagePreview,
   Skeleton,
-  useCascade,
   type ImagePreviewProps,
   type PreviewImage,
 } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
-import '@yewdiel21/motion-kit/css/components/skeleton';
+import '@yewdiel21/motion-kit/css/components/fade-content';
 import '@yewdiel21/motion-kit/css/components/image-preview';
-import { Icon } from '@/shared/ui/Icon';
-import type { DocumentoAdjunto } from './documentosApi';
-import { DocumentoCard } from './documentos/DocumentoCard';
-import { groupDocumentosByTipo } from './documentos/documentoGrouping';
+import '@yewdiel21/motion-kit/css/components/skeleton';
+import type {
+  DocumentoAdjunto,
+  OrdenProteccionOpcion,
+  TipoDocumento,
+} from './documentosApi';
+import {
+  DOCUMENTO_CHECKLIST_SLOTS,
+  partitionDocumentosPorSlot,
+} from './documentos/documentoGrouping';
+import { DocumentoSlotCard } from './documentos/DocumentoSlotCard';
+
+interface UploadRequest {
+  tipoDocumentoId: number;
+  ordenProteccionId: string | null;
+  descripcion: string | null;
+  file: File;
+  onProgress: (porcentaje: number) => void;
+}
 
 interface DocumentoListProps {
   documentos: DocumentoAdjunto[];
+  tipos: TipoDocumento[];
+  tiposLoading: boolean;
+  ordenes: OrdenProteccionOpcion[];
+  ordenesLoading: boolean;
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
-  onRequestUpload: () => void;
   ordenesLabelById: Map<string, string>;
   activeDocId: string | null;
   archivingDocId: string | null;
   thumbnailsById: Record<string, string>;
   loadingThumbIds: Record<string, boolean>;
+  onUpload: (req: UploadRequest) => Promise<void>;
   onLoadThumbnail: (doc: DocumentoAdjunto) => void;
   onThumbnailError: (docId: string) => void;
   onVer: (doc: DocumentoAdjunto) => void;
   onDescargar: (doc: DocumentoAdjunto) => void;
-  onRequestArchivar: (doc: DocumentoAdjunto) => void;
+  onArchivar: (doc: DocumentoAdjunto) => Promise<void>;
   previewImage: PreviewImage | null;
   onClosePreview: () => void;
 }
 
 const RETRY_ACTIONS = [{ id: 'retry', label: 'Reintentar' }];
-const EMPTY_UPLOAD_ACTIONS = [{ id: 'upload', label: 'Adjuntar documento' }];
-const CASCADE_OPTIONS = { trigger: 'load', duration: 0.42, step: 0.05, once: true } as const;
 
 const IMAGE_PREVIEW_LABELS: NonNullable<ImagePreviewProps['labels']> = {
   close: 'Cerrar vista previa',
@@ -51,37 +67,30 @@ const IMAGE_PREVIEW_LABELS: NonNullable<ImagePreviewProps['labels']> = {
 
 export function DocumentoList({
   documentos,
+  tipos,
+  tiposLoading,
+  ordenes,
+  ordenesLoading,
   isLoading,
   isError,
   onRetry,
-  onRequestUpload,
   ordenesLabelById,
   activeDocId,
   archivingDocId,
   thumbnailsById,
   loadingThumbIds,
+  onUpload,
   onLoadThumbnail,
   onThumbnailError,
   onVer,
   onDescargar,
-  onRequestArchivar,
+  onArchivar,
   previewImage,
   onClosePreview,
 }: DocumentoListProps) {
   const previewRef: NonNullable<ImagePreviewProps['instanceRef']> = useRef(null);
-  const listRef = useRef<HTMLDivElement>(null);
 
-  const grupos = useMemo(() => groupDocumentosByTipo(documentos), [documentos]);
-  const hasDocs = documentos.length > 0;
-  useCascade(listRef, CASCADE_OPTIONS, [hasDocs]);
-
-  const flipSignature = useMemo(
-    () =>
-      documentos
-        .map((doc) => `${doc.id}:${doc.ordenProteccionId ?? ''}:${doc.descripcion ?? ''}`)
-        .join('|'),
-    [documentos],
-  );
+  const docsPorSlot = useMemo(() => partitionDocumentosPorSlot(documentos), [documentos]);
 
   useEffect(() => {
     if (previewImage) {
@@ -105,61 +114,33 @@ export function DocumentoList({
 
   return (
     <div className="grid gap-3">
-      <Skeleton loading={isLoading} shape="card" lines={4} label="Cargando documentos adjuntos">
-        {documentos.length === 0 ? (
-          <div className="rounded-2xl border border-outline-variant bg-surface-container-low p-6">
-            <EmptyState
-              illustration="folder"
-              title="Sin documentos adjuntos"
-              description="Adjunta identificaciones, fotografías, denuncias u oficios para integrar el expediente."
-              actions={EMPTY_UPLOAD_ACTIONS}
-              onAction={onRequestUpload}
-            />
+      <Skeleton loading={isLoading} shape="card" lines={5} label="Cargando documentos adjuntos">
+        <FadeContent blur={6} rise={10} stagger={45} eachChild trigger="load" once>
+          <div className="grid gap-3">
+            {DOCUMENTO_CHECKLIST_SLOTS.map((slot) => (
+              <DocumentoSlotCard
+                key={slot.key}
+                slot={slot}
+                docs={docsPorSlot[slot.key]}
+                tipos={tipos}
+                tiposLoading={tiposLoading}
+                ordenes={ordenes}
+                ordenesLoading={ordenesLoading}
+                ordenesLabelById={ordenesLabelById}
+                activeDocId={activeDocId}
+                archivingDocId={archivingDocId}
+                thumbnailsById={thumbnailsById}
+                loadingThumbIds={loadingThumbIds}
+                onUpload={onUpload}
+                onLoadThumbnail={onLoadThumbnail}
+                onThumbnailError={onThumbnailError}
+                onVer={onVer}
+                onDescargar={onDescargar}
+                onArchivar={onArchivar}
+              />
+            ))}
           </div>
-        ) : (
-          <FlipGroup root={listRef} signature={flipSignature}>
-            <div ref={listRef} className="grid gap-5">
-              {grupos.map((group) => (
-                <section key={group.key} aria-label={group.title} className="grid gap-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
-                      <Icon name={group.icon} className="text-[16px] text-primary" />
-                      <span>{group.title}</span>
-                    </h3>
-                    <span className="rounded-full bg-surface-container px-2 py-0.5 font-mono text-[11px] text-on-surface-variant">
-                      {group.items.length}
-                    </span>
-                  </div>
-
-                  <ul
-                    className="grid gap-3 sm:grid-cols-2"
-                    aria-label={`Documentos de ${group.title}`}
-                  >
-                    {group.items.map((doc) => (
-                      <DocumentoCard
-                        key={doc.id}
-                        doc={doc}
-                        ordenLabel={
-                          doc.ordenProteccionId
-                            ? (ordenesLabelById.get(doc.ordenProteccionId) ?? null)
-                            : null
-                        }
-                        thumbnailUrl={thumbnailsById[doc.id] ?? null}
-                        loadingThumbnail={Boolean(loadingThumbIds[doc.id])}
-                        busy={activeDocId === doc.id || archivingDocId === doc.id}
-                        onLoadThumbnail={() => onLoadThumbnail(doc)}
-                        onThumbnailError={() => onThumbnailError(doc.id)}
-                        onVer={() => onVer(doc)}
-                        onDescargar={() => onDescargar(doc)}
-                        onRequestArchivar={() => onRequestArchivar(doc)}
-                      />
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
-          </FlipGroup>
-        )}
+        </FadeContent>
       </Skeleton>
 
       {previewImage ? (

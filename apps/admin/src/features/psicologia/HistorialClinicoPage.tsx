@@ -118,13 +118,22 @@ function HistorialClinico({ fichaId, empleadoId }: { fichaId: string; empleadoId
   return (
     <div className="mx-auto w-full max-w-7xl">
       <PageHeader
-        eyebrow="Psicología · Información confidencial"
         title="Historial clínico"
-        subtitle={data ? `Expediente ${data.folio}` : undefined}
-        actions={
-          <Link to={`/expedientes?expediente=${encodeURIComponent(fichaId)}`} className="mk-button mk-button--text">
-            <Icon name="arrow_back" /> Volver al expediente
+        subtitle={data ? `Expediente ${data.folio} · Psicología` : 'Psicología'}
+        leading={
+          <Link
+            to={`/expedientes?expediente=${encodeURIComponent(fichaId)}`}
+            aria-label="Volver al expediente"
+            title="Volver al expediente"
+            className="grid size-9 shrink-0 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <Icon name="arrow_back" />
           </Link>
+        }
+        actions={
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-tertiary-container px-3 py-1 text-xs font-medium text-on-tertiary-container">
+            <Icon name="lock" className="text-sm" /> Información confidencial
+          </span>
         }
       />
 

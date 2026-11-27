@@ -1,13 +1,6 @@
-import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import {
-  DataTable,
-  EmptyState,
-  Skeleton,
-  toast,
-  type DataAction,
-  type DataTableProps,
-} from '@yewdiel21/motion-kit/react';
+import { useCallback, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { DataTable, EmptyState, Skeleton, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/data-table';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/filter-builder';
@@ -15,75 +8,44 @@ import '@yewdiel21/motion-kit/css/components/menu';
 import '@yewdiel21/motion-kit/css/components/pagination';
 import '@yewdiel21/motion-kit/css/components/select';
 import '@yewdiel21/motion-kit/css/components/skeleton';
-import { Icon } from '@/shared/ui/Icon';
 import { PageHeader } from '@/shared/ui/PageHeader';
+import { ToolbarPrimaryButton } from '@/shared/ui/Toolbar';
 import {
   DESTINO_LABELS,
   ESTADO_DERIVACION_LABELS,
-  ESTADOS_DERIVACION,
+  extraerMensajeErrorDerivacion,
   useDerivaciones,
   useUpdateEstadoDerivacion,
+  validarTransicionDerivacion,
   type EstadoDerivacion,
 } from './api';
-import { NuevaDerivacionDialog } from './NuevaDerivacionDialog';
-
-type EstadoFilter = 'todos' | EstadoDerivacion;
-
-interface DerivacionRow extends Record<string, unknown> {
-  id: string;
-  folio: string;
-  usuariaNombre: string;
-  origenLabel: string;
-  destinoLabel: string;
-  detalleDestino: string;
-  estadoLabel: string;
-  fechaDerivacion: string;
-}
-
-const ESTADO_OPTIONS = ESTADOS_DERIVACION.map((e) => ({
-  value: ESTADO_DERIVACION_LABELS[e],
-  label: ESTADO_DERIVACION_LABELS[e],
-}));
-
-const COLUMNS: DataTableProps<DerivacionRow>['columns'] = [
-  { key: 'folio', label: 'Folio', sortable: true, searchable: true },
-  { key: 'usuariaNombre', label: 'Usuaria', sortable: true, searchable: true },
-  { key: 'origenLabel', label: 'Origen', sortable: true },
-  { key: 'destinoLabel', label: 'Destino', sortable: true, searchable: true },
-  { key: 'detalleDestino', label: 'Área / Institución', searchable: true },
-  {
-    key: 'estadoLabel',
-    label: 'Estado',
-    type: 'select',
-    filterable: true,
-    options: ESTADO_OPTIONS,
-  },
-  { key: 'fechaDerivacion', label: 'Fecha', sortable: true },
-];
-
-const ROW_ACTIONS: DataAction[] = [
-  { id: 'en_proceso', label: 'Marcar en proceso' },
-  { id: 'concluida', label: 'Marcar concluida' },
-  { id: 'cancelada', label: 'Cancelar canalización', danger: true },
-];
-
-const RETRY_ACTION = [{ id: 'retry', label: 'Reintentar' }];
-
-const QUICK_FILTERS: { id: EstadoFilter; label: string }[] = [
-  { id: 'todos', label: 'Todas' },
-  { id: 'pendiente', label: 'Pendientes' },
-  { id: 'en_proceso', label: 'En proceso' },
-  { id: 'concluida', label: 'Concluidas' },
-  { id: 'cancelada', label: 'Canceladas' },
-];
+import { CanalizacionDrawer } from './CanalizacionDrawer';
+import { CanalizacionEstadoMenu } from './CanalizacionEstadoMenu';
+import { CanalizacionFormDialog } from './CanalizacionFormDialog';
+import {
+  CANALIZACIONES_COLUMNS,
+  CANALIZACIONES_ROW_ACTIONS,
+  QUICK_FILTERS,
+  RETRY_ACTION,
+  decorateCanalizacionRows,
+  type DerivacionRow,
+  type EstadoFilter,
+} from './canalizacionesTableConfig';
 
 /**
  * Módulo de Canalizaciones (`RF-08`, `RN-03`, `RN-11`).
- * Muestra derivaciones internas y externas filtrables por estado en URL Search Params.
+ * Tabla a ancho completo (`reflow`), detalle en panel lateral al pulsar una fila y alta en un
+ * panel lateral; el filtro de estado vive en la barra de la pantalla.
  */
 export default function CanalizacionesPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const createTriggerRef = useRef<HTMLButtonElement>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
+  const originRef = useRef<HTMLElement | null>(null);
 
   const rawEstado = searchParams.get('estado');
   const estadoFilter: EstadoFilter = QUICK_FILTERS.some((f) => f.id === rawEstado)
@@ -93,33 +55,38 @@ export default function CanalizacionesPage() {
   const { data, isLoading, isError, refetch } = useDerivaciones();
   const updateEstado = useUpdateEstadoDerivacion();
 
-  function setEstadoFilter(next: EstadoFilter) {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        if (next === 'todos') params.delete('estado');
-        else params.set('estado', next);
-        return params;
-      },
-      { replace: true },
-    );
-  }
+  const setEstadoFilter = useCallback(
+    (next: EstadoFilter) => {
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          if (next === 'todos') params.delete('estado');
+          else params.set('estado', next);
+          return params;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
 
   const counts = useMemo<Record<EstadoFilter, number>>(() => {
     const list = data ?? [];
+    const count = (e: EstadoDerivacion) => list.filter((d) => d.estado === e).length;
     return {
       todos: list.length,
-      pendiente: list.filter((d) => d.estado === 'pendiente').length,
-      en_proceso: list.filter((d) => d.estado === 'en_proceso').length,
-      concluida: list.filter((d) => d.estado === 'concluida').length,
-      cancelada: list.filter((d) => d.estado === 'cancelada').length,
+      pendiente: count('pendiente'),
+      en_proceso: count('en_proceso'),
+      concluida: count('concluida'),
+      cancelada: count('cancelada'),
     };
   }, [data]);
 
-  const rows: DerivacionRow[] = useMemo(() => {
-    const list =
-      estadoFilter === 'todos' ? (data ?? []) : (data ?? []).filter((d) => d.estado === estadoFilter);
+  const byId = useMemo(() => new Map((data ?? []).map((item) => [item.id, item])), [data]);
+  const selected = selectedId ? (byId.get(selectedId) ?? null) : null;
 
+  const rows: DerivacionRow[] = useMemo(() => {
+    const list = estadoFilter === 'todos' ? (data ?? []) : (data ?? []).filter((d) => d.estado === estadoFilter);
     return list.map((d) => ({
       id: d.id,
       folio: d.folio,
@@ -132,53 +99,111 @@ export default function CanalizacionesPage() {
     }));
   }, [data, estadoFilter]);
 
-  async function handleRowAction(action: string, row: DerivacionRow) {
-    if (action !== 'en_proceso' && action !== 'concluida' && action !== 'cancelada') return;
-    try {
-      await updateEstado.mutateAsync({ id: row.id, estado: action });
-      toast(`Canalización actualizada a ${ESTADO_DERIVACION_LABELS[action]}.`);
-    } catch {
-      toast('No se pudo actualizar el estado de la canalización.', { tone: 'error' });
-    }
-  }
+  const handleUpdateEstado = useCallback(
+    async (id: string, next: EstadoDerivacion) => {
+      const current = byId.get(id);
+      const errMsg = current ? validarTransicionDerivacion(current.estado, next) : null;
+      if (errMsg) {
+        toast(errMsg, { tone: 'error' });
+        return;
+      }
+      setUpdatingId(id);
+      try {
+        await updateEstado.mutateAsync({ id, estado: next });
+        toast(`Canalización actualizada a ${ESTADO_DERIVACION_LABELS[next]}.`, { tone: 'success' });
+      } catch (err) {
+        toast(extraerMensajeErrorDerivacion(err, 'No se pudo actualizar el estado de la canalización.'), {
+          tone: 'error',
+        });
+        throw err;
+      } finally {
+        setUpdatingId(null);
+      }
+    },
+    [byId, updateEstado],
+  );
+
+  const openDetail = useCallback((id: string, origin: HTMLElement | null) => {
+    originRef.current = origin;
+    setSelectedId(id);
+  }, []);
+
+  const rowElement = useCallback(
+    (id: string) => tableRef.current?.querySelector<HTMLElement>(`tbody tr[data-id="${CSS.escape(id)}"]`) ?? null,
+    [],
+  );
+
+  const handleRowAction = useCallback(
+    (action: string, row: DerivacionRow) => {
+      if (action === 'ver') {
+        openDetail(row.id, rowElement(row.id));
+        return;
+      }
+      if (action !== 'en_proceso' && action !== 'concluida' && action !== 'cancelada') return;
+      void handleUpdateEstado(row.id, action).catch(() => {});
+    },
+    [handleUpdateEstado, openDetail, rowElement],
+  );
+
+  const handleTableClick = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest('button, a, input, label, [data-mk-dt-actions], [data-mk-dt-row-menu]')) return;
+      if (window.getSelection()?.toString()) return;
+      const rowEl = target.closest<HTMLTableRowElement>('tbody tr[data-id]');
+      if (!rowEl || rowEl.hasAttribute('data-mk-dt-loading') || !rowEl.dataset.id) return;
+      openDetail(rowEl.dataset.id, rowEl);
+    },
+    [openDetail],
+  );
+
+  const handleTableKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      const target = event.target;
+      if (
+        !(target instanceof HTMLTableRowElement) ||
+        !target.matches('tbody tr[data-id]') ||
+        target.hasAttribute('data-mk-dt-loading') ||
+        !target.dataset.id
+      ) {
+        return;
+      }
+      event.preventDefault();
+      openDetail(target.dataset.id, target);
+    },
+    [openDetail],
+  );
+
+  const closeDetail = useCallback(() => {
+    setSelectedId(null);
+    originRef.current = null;
+  }, []);
+
+  const openExpediente = useCallback(
+    (fichaId: string) => navigate(`/expedientes/${encodeURIComponent(fichaId)}`),
+    [navigate],
+  );
 
   return (
-    <>
+    <div className="grid gap-4">
       <PageHeader
-        eyebrow="Secretaría de las Mujeres · Ahome · Canalizaciones"
         title="Canalizaciones"
-        subtitle="Derivaciones internas entre áreas y canalizaciones a instituciones externas."
         actions={
-          <button
-            type="button"
-            className="mk-button mk-button--filled"
-            onClick={() => setDialogOpen(true)}
-          >
-            <Icon name="alt_route" />
-            <span className="ml-2">Nueva canalización</span>
-          </button>
+          <>
+            <CanalizacionEstadoMenu value={estadoFilter} counts={counts} onChange={setEstadoFilter} />
+            <ToolbarPrimaryButton
+              ref={createTriggerRef}
+              label="Nueva canalización"
+              icon="alt_route"
+              showLabel
+              aria-haspopup="dialog"
+              onClick={() => setCreating(true)}
+            />
+          </>
         }
       />
-
-      <div role="group" aria-label="Filtrar canalizaciones por estado" className="mb-4 flex flex-wrap gap-2">
-        {QUICK_FILTERS.map((f) => {
-          const active = estadoFilter === f.id;
-          return (
-            <button
-              key={f.id}
-              type="button"
-              aria-pressed={active}
-              onClick={() => setEstadoFilter(f.id)}
-              className={`mk-chip mk-chip--filter ${
-                active ? 'bg-secondary-container text-on-secondary-container' : ''
-              }`}
-            >
-              <span>{f.label}</span>
-              <span className="ml-1.5 font-mono text-xs opacity-75">{counts[f.id]}</span>
-            </button>
-          );
-        })}
-      </div>
 
       {isError ? (
         <div className="rounded-3xl bg-surface-container-low p-10">
@@ -187,26 +212,42 @@ export default function CanalizacionesPage() {
             title="No se pudieron cargar las canalizaciones"
             description="Verifica tu conexión y permisos en Supabase."
             actions={RETRY_ACTION}
-            onAction={() => refetch()}
+            onAction={() => void refetch()}
           />
         </div>
       ) : (
-        <Skeleton loading={isLoading} shape="card" lines={6} label="Cargando canalizaciones">
-          <DataTable<DerivacionRow>
-            caption="Historial de canalizaciones"
-            rows={rows}
-            columns={COLUMNS}
-            actions={ROW_ACTIONS}
-            onAction={handleRowAction}
-            pageSize={10}
-            search="Buscar por folio, usuaria o destino…"
-            emptyTitle="Sin canalizaciones registradas"
-            emptyDescription="Usa «Nueva canalización» para derivar un expediente a otra área o institución."
-          />
-        </Skeleton>
+        <div ref={tableRef} className="vc-canalizaciones-table min-w-0">
+          <Skeleton loading={isLoading} shape="card" lines={6} label="Cargando canalizaciones">
+            <DataTable<DerivacionRow>
+              caption="Historial de canalizaciones"
+              rows={rows}
+              columns={CANALIZACIONES_COLUMNS}
+              actions={CANALIZACIONES_ROW_ACTIONS}
+              onAction={handleRowAction}
+              onClick={handleTableClick}
+              onKeyDown={handleTableKeyDown}
+              onRender={decorateCanalizacionRows}
+              reflow="auto"
+              reflowAt={640}
+              pageSize={10}
+              search="Buscar por folio, usuaria o destino…"
+              emptyTitle="Sin canalizaciones registradas"
+              emptyDescription="Usa «Nueva canalización» para derivar un expediente a otra área o institución."
+            />
+          </Skeleton>
+        </div>
       )}
 
-      <NuevaDerivacionDialog open={dialogOpen} onOpenChange={setDialogOpen} />
-    </>
+      <CanalizacionDrawer
+        derivacion={selected}
+        anchor={originRef}
+        updatingId={updatingId}
+        onUpdateEstado={handleUpdateEstado}
+        onOpenExpediente={openExpediente}
+        onClose={closeDetail}
+      />
+
+      <CanalizacionFormDialog open={creating} onOpenChange={setCreating} anchor={createTriggerRef} />
+    </div>
   );
 }

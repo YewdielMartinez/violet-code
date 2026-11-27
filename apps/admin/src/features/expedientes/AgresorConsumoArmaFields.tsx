@@ -30,7 +30,6 @@ export interface ConsumoArmaValues {
   tieneConsumoDroga: boolean | null;
   drogas: TipoDroga[];
   especificacionDroga: string;
-  utilizoArmaUObjeto: boolean | null;
   especificacionArma: string;
   observaciones: string;
 }
@@ -57,26 +56,17 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
     onPatch({ drogas: next });
   }
 
-  function handleArma(next: boolean | null) {
-    onPatch(
-      next === true
-        ? { utilizoArmaUObjeto: true }
-        : { utilizoArmaUObjeto: next, especificacionArma: '' },
-    );
-  }
-
   const consumoActivo = values.tieneConsumoDroga === true;
-  const armaActiva = values.utilizoArmaUObjeto === true;
 
   return (
-    <div className="grid gap-4">
-      <fieldset className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-4">
-        <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+    <div className="grid gap-5">
+      <fieldset className="grid gap-4 rounded-2xl border border-outline-variant bg-surface-container-low p-5">
+        <legend className="px-1 text-sm font-semibold uppercase tracking-wide text-on-surface-variant">
           Consumo de sustancias
         </legend>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="text-sm font-medium text-on-surface">¿Presenta consumo de drogas?</span>
+          <span className="text-base font-medium text-on-surface">¿Presenta consumo de drogas?</span>
           <AgresorRadioGroup
             variant="pill"
             label="¿Presenta consumo de drogas?"
@@ -88,7 +78,7 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
 
         <AnimatedReveal show={consumoActivo}>
           <div className="grid gap-3 pt-1">
-            <span className="text-xs font-medium text-on-surface-variant">
+            <span className="text-sm font-medium text-on-surface-variant">
               Sustancias detectadas (selecciona una o más)
             </span>
             <div className="flex flex-wrap gap-2" role="group" aria-label="Tipos de drogas">
@@ -100,20 +90,20 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
                     type="button"
                     aria-pressed={checked}
                     onClick={() => handleToggleDroga(droga)}
-                    className="mk-chip mk-chip--filter transition-transform duration-150 active:scale-95 motion-reduce:transition-none"
+                    className="mk-chip mk-chip--filter px-3.5 py-1.5 text-sm transition-transform duration-150 active:scale-95 motion-reduce:transition-none"
                   >
-                    <Icon name={checked ? 'check' : 'add'} className="text-[16px]" />
+                    <Icon name={checked ? 'check' : 'add'} className="text-[18px]" />
                     <span>{DROGA_LABELS[droga]}</span>
                   </button>
                 );
               })}
             </div>
             {errores.drogas ? (
-              <p role="alert" className="text-xs text-status-danger">{errores.drogas}</p>
+              <p role="alert" className="text-sm text-status-danger">{errores.drogas}</p>
             ) : null}
 
             <div className="grid gap-1">
-              <label className="text-xs font-medium text-on-surface-variant">
+              <label className="text-sm font-medium text-on-surface-variant">
                 Especificación de droga (opcional)
               </label>
               <label className="mk-field">
@@ -126,7 +116,7 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
                 />
               </label>
               {errores.especificacionDroga ? (
-                <p role="alert" className="text-xs text-status-danger">
+                <p role="alert" className="text-sm text-status-danger">
                   {errores.especificacionDroga}
                 </p>
               ) : null}
@@ -135,59 +125,42 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
         </AnimatedReveal>
       </fieldset>
 
-      <fieldset className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-4">
-        <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+      <fieldset className="grid gap-4 rounded-2xl border border-outline-variant bg-surface-container-low p-5">
+        <legend className="px-1 text-sm font-semibold uppercase tracking-wide text-on-surface-variant">
           Uso de arma u objeto
         </legend>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="text-sm font-medium text-on-surface">
-            ¿Utilizó arma u objeto en la agresión?
-          </span>
-          <AgresorRadioGroup
-            variant="pill"
-            label="¿Utilizó arma u objeto en la agresión?"
-            items={TRI_STATE_ITEMS}
-            value={boolToTriState(values.utilizoArmaUObjeto)}
-            onChange={(val) => handleArma(triStateToBool(val))}
-          />
+        <div className="grid gap-1">
+          <label className="text-sm font-medium text-on-surface-variant">
+            Especificación del arma u objeto (opcional)
+          </label>
+          <label className="mk-field">
+            <input
+              type="text"
+              maxLength={250}
+              value={values.especificacionArma}
+              placeholder="Describe brevemente el objeto o arma"
+              onChange={(e) => onPatch({ especificacionArma: e.target.value })}
+            />
+          </label>
+          {errores.especificacionArma ? (
+            <p role="alert" className="text-sm text-status-danger">
+              {errores.especificacionArma}
+            </p>
+          ) : null}
         </div>
-
-        <AnimatedReveal show={armaActiva}>
-          <div className="grid gap-3 pt-1">
-            <div className="grid gap-1">
-              <label className="text-xs font-medium text-on-surface-variant">
-                Especificación del arma u objeto
-              </label>
-              <label className="mk-field">
-                <input
-                  type="text"
-                  maxLength={250}
-                  value={values.especificacionArma}
-                  placeholder="Describe brevemente el objeto o arma"
-                  onChange={(e) => onPatch({ especificacionArma: e.target.value })}
-                />
-              </label>
-              {errores.especificacionArma ? (
-                <p role="alert" className="text-xs text-status-danger">
-                  {errores.especificacionArma}
-                </p>
-              ) : null}
-            </div>
-          </div>
-        </AnimatedReveal>
       </fieldset>
 
       <div className="grid gap-1">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-medium text-on-surface-variant">Observaciones</label>
-          <span className="font-mono text-xs text-on-surface-variant">
+          <label className="text-sm font-medium text-on-surface-variant">Observaciones</label>
+          <span className="font-mono text-sm font-medium text-on-surface-variant">
             {values.observaciones.length}/5000
           </span>
         </div>
         <label className="mk-field w-full">
           <textarea
-            rows={3}
+            rows={4}
             maxLength={5000}
             value={values.observaciones}
             onChange={(e) => onPatch({ observaciones: e.target.value })}
@@ -196,7 +169,7 @@ export function AgresorConsumoArmaFields({ values, errores, onPatch }: Props) {
           />
         </label>
         {errores.observaciones ? (
-          <p role="alert" className="text-xs text-status-danger">{errores.observaciones}</p>
+          <p role="alert" className="text-sm text-status-danger">{errores.observaciones}</p>
         ) : null}
       </div>
     </div>

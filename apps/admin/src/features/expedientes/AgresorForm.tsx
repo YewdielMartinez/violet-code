@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { LoadingButton, Select, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/loading-button';
 import '@yewdiel21/motion-kit/css/components/select';
-import { Icon } from '@/shared/ui/Icon';
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard';
 import { UnsavedChangesDialog } from '@/shared/ui/UnsavedChangesDialog';
 import {
@@ -55,7 +54,6 @@ function buildInitialState(initial?: Agresor | null): FormState {
     tieneConsumoDroga: initial?.tieneConsumoDroga ?? null,
     drogas: initial?.drogas ?? [],
     especificacionDroga: initial?.especificacionDroga ?? '',
-    utilizoArmaUObjeto: initial?.utilizoArmaUObjeto ?? null,
     especificacionArma: initial?.especificacionArma ?? '',
     observaciones: initial?.observaciones ?? '',
   };
@@ -137,8 +135,7 @@ export function AgresorForm({
       codigoPostal: form.asentamientoId !== null ? null : form.codigoPostal,
       drogas: form.tieneConsumoDroga === true ? form.drogas : null,
       especificacionDroga: form.tieneConsumoDroga === true ? form.especificacionDroga : null,
-      utilizoArmaUObjeto: form.utilizoArmaUObjeto,
-      especificacionArma: form.utilizoArmaUObjeto === true ? form.especificacionArma : null,
+      especificacionArma: form.especificacionArma,
       actualizadoEnEsperado: initial?.actualizadoEn,
     };
 
@@ -176,14 +173,14 @@ export function AgresorForm({
   return (
     <form onSubmit={handleSubmit} className="contents" noValidate>
       <AgresorDialog.Body>
-        <div className="grid gap-4">
-          <fieldset className="grid gap-3 rounded-2xl border border-outline-variant bg-surface-container-low p-4 sm:grid-cols-2">
-            <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+        <div className="grid gap-5">
+          <fieldset className="grid gap-4 rounded-2xl border border-outline-variant bg-surface-container-low p-5 sm:grid-cols-2">
+            <legend className="px-1 text-sm font-semibold uppercase tracking-wide text-on-surface-variant">
               Identificación y vínculo
             </legend>
 
             <div className="grid gap-1 sm:col-span-2">
-              <label className="text-xs font-medium text-on-surface-variant">Nombre(s) *</label>
+              <label className="text-sm font-medium text-on-surface-variant">Nombre(s) *</label>
               <label className="mk-field">
                 <input
                   type="text"
@@ -197,12 +194,12 @@ export function AgresorForm({
                 />
               </label>
               {errores.nombres ? (
-                <p role="alert" className="text-xs text-status-danger">{errores.nombres}</p>
+                <p role="alert" className="text-sm text-status-danger">{errores.nombres}</p>
               ) : null}
             </div>
 
             <div className="grid gap-1">
-              <label className="text-xs font-medium text-on-surface-variant">Apellido paterno</label>
+              <label className="text-sm font-medium text-on-surface-variant">Apellido paterno</label>
               <label className="mk-field">
                 <input
                   type="text"
@@ -214,7 +211,7 @@ export function AgresorForm({
             </div>
 
             <div className="grid gap-1">
-              <label className="text-xs font-medium text-on-surface-variant">Apellido materno</label>
+              <label className="text-sm font-medium text-on-surface-variant">Apellido materno</label>
               <label className="mk-field">
                 <input
                   type="text"
@@ -226,10 +223,11 @@ export function AgresorForm({
             </div>
 
             <div className="grid gap-1">
-              <span className="text-xs font-medium text-on-surface-variant">
+              <span className="text-sm font-medium text-on-surface-variant">
                 Parentesco con la usuaria
               </span>
               <Select
+                size="lg"
                 label="Parentesco"
                 options={parentescoOptions}
                 value={form.parentescoId ? String(form.parentescoId) : ''}
@@ -238,8 +236,9 @@ export function AgresorForm({
             </div>
 
             <div className="grid gap-1">
-              <span className="text-xs font-medium text-on-surface-variant">Ocupación</span>
+              <span className="text-sm font-medium text-on-surface-variant">Ocupación</span>
               <Select
+                size="lg"
                 label="Ocupación"
                 options={ocupacionOptions}
                 value={form.ocupacionId ? String(form.ocupacionId) : ''}
@@ -249,7 +248,7 @@ export function AgresorForm({
 
             <AnimatedReveal show={mostrarParentescoOtro} className="sm:col-span-2">
               <div className="grid gap-1 pt-1">
-                <label className="text-xs font-medium text-on-surface-variant">
+                <label className="text-sm font-medium text-on-surface-variant">
                   Especifica el parentesco
                 </label>
                 <label className="mk-field">
@@ -265,7 +264,7 @@ export function AgresorForm({
 
             <AnimatedReveal show={mostrarOcupacionOtra} className="sm:col-span-2">
               <div className="grid gap-1 pt-1">
-                <label className="text-xs font-medium text-on-surface-variant">
+                <label className="text-sm font-medium text-on-surface-variant">
                   Especifica la ocupación
                 </label>
                 <label className="mk-field">
@@ -310,7 +309,6 @@ export function AgresorForm({
           }}
           className="mk-button mk-button--primary"
         >
-          <Icon name="save" />
           <span>{isEditing ? 'Guardar cambios' : 'Registrar persona agresora'}</span>
         </LoadingButton>
       </AgresorDialog.Footer>

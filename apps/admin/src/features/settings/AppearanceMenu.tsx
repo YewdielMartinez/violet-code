@@ -1,7 +1,9 @@
-import { Menu, ThemePicker } from '@yewdiel21/motion-kit/react';
+import type { CSSProperties } from 'react';
+import { Menu, ThemePicker, useTheme } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/menu';
 import '@yewdiel21/motion-kit/css/components/theme-picker';
 import { NAV_STYLES, setNavStyle, THEME_CHOICES, useNavStyle } from '@/app/preferences';
+import { CUSTOM_THEMES, registerCustomThemes } from '@/app/theme';
 import { Icon } from '@/shared/ui/Icon';
 import { ThemeModeSelector } from '@/shared/ui/ThemeModeSelector';
 
@@ -11,6 +13,12 @@ import { ThemeModeSelector } from '@/shared/ui/ThemeModeSelector';
  */
 export function AppearanceMenu({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const navStyle = useNavStyle();
+  const { id: activeTheme, setTheme } = useTheme();
+
+  function selectCustomTheme(id: string) {
+    registerCustomThemes();
+    setTheme(id);
+  }
 
   return (
     <Menu.Root open={open} onOpenChange={onOpenChange} closeOnSelect={false}>
@@ -21,7 +29,24 @@ export function AppearanceMenu({ open, onOpenChange }: { open: boolean; onOpenCh
             Apariencia
           </p>
 
-          <ThemePicker themes={THEME_CHOICES} labels={{ group: 'Color del tema' }} />
+          {/* ThemePicker de motion-kit 0.20.3 solo renderiza presets en THEMES; envolvemos un único
+              .mk-theme-picker para integrar los temas personalizados en la misma rejilla de swatches. */}
+          <div className="mk-theme-picker" role="group" aria-label="Color del tema">
+            <ThemePicker unstyled className="contents" themes={THEME_CHOICES} labels={{ group: 'Color del tema' }} />
+            {CUSTOM_THEMES.map((theme) => (
+              <button
+                key={theme.id}
+                type="button"
+                className="mk-swatch"
+                data-mk-swatch={theme.id}
+                aria-pressed={activeTheme === theme.id}
+                aria-label={theme.label}
+                title={theme.label}
+                style={{ '--mk-swatch': theme.swatch } as CSSProperties}
+                onClick={() => selectCustomTheme(theme.id)}
+              />
+            ))}
+          </div>
 
           <section className="grid gap-3">
             <h3 className="text-sm text-on-surface-variant">Modo</h3>

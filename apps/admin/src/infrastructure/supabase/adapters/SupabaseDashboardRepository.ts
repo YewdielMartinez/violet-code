@@ -11,6 +11,12 @@ import type {
 } from '@/domain/models/Dashboard';
 import type { DashboardRepository } from '@/domain/ports/DashboardRepository';
 
+const AREA_LABELS: Record<string, string> = {
+  trabajo_social: 'Trabajo Social',
+  psicologia: 'Psicología',
+  juridico: 'Jurídico',
+};
+
 function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
   if (Array.isArray(value)) return value[0] ?? null;
   return value ?? null;
@@ -29,26 +35,20 @@ function localDayKey(date: Date): string {
 
 export const supabaseDashboardRepository: DashboardRepository = {
   async getRecentActivity(limit = 8): Promise<AuditEvent[]> {
-    const { data, error } = await supabase
-      .from('bitacora_acceso')
-      .select('id, creado_en, accion, tabla_afectada, registro_id, empleado(nombre), usuario_externo(nombre)')
-      .order('creado_en', { ascending: false })
-      .limit(limit);
+    const { data, error } = await supabase.rpc('get_bitacora', {
+      p_limite: limit,
+    });
 
     if (error) throw error;
 
-    return (data ?? []).map((row) => {
-      const emp = unwrapOne(row.empleado);
-      const ext = unwrapOne(row.usuario_externo);
-      return {
-        id: row.id,
-        creadoEn: row.creado_en,
-        accion: row.accion,
-        tablaAfectada: row.tabla_afectada,
-        actorNombre: emp?.nombre ?? ext?.nombre ?? null,
-        registroId: row.registro_id,
-      };
-    });
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      creadoEn: row.creado_en,
+      accion: row.accion,
+      tablaAfectada: row.tabla_afectada,
+      actorNombre: row.actor_nombre ?? null,
+      registroId: row.registro_id ?? null,
+    }));
   },
 
   async getAlertsSummary(): Promise<AlertsSummary> {
@@ -100,66 +100,46 @@ export const supabaseDashboardRepository: DashboardRepository = {
   },
 
   async getAlerts(estado?: EstadoAlerta, limit = 8): Promise<AlertaItem[]> {
-    let query = supabase
-      .from('alerta')
-      .select(
-        'id, creado_en, estado, prioridad, origen, persona(nombres, apellido_paterno), cat_asentamiento(nombre), atendida_por_emp:empleado!alerta_atendida_por_fkey(nombre)',
-      )
-      .eq('activo', true)
-      .order('prioridad', { ascending: true })
-      .order('creado_en', { ascending: false })
-      .limit(limit);
+    const { data, error } = await supabase.rpc('get_cola_alertas', {
+      p_estados: estado ? [estado] : ['nueva', 'tomada'],
+      p_limite: limit,
+    });
 
-    if (estado) {
-      query = query.eq('estado', estado);
-    } else {
-      query = query.neq('estado', 'atendida');
-    }
-
-    const { data, error } = await query;
     if (error) throw error;
 
-    return (data ?? []).map((row) => {
-      const persona = unwrapOne(row.persona);
-      const asent = unwrapOne(row.cat_asentamiento);
-      const emp = unwrapOne(row.atendida_por_emp);
-      return {
-        id: row.id,
-        creadoEn: row.creado_en,
-        estado: row.estado,
-        prioridad: row.prioridad,
-        origen: row.origen,
-        usuariaNombre: persona ? fullName(persona.nombres, persona.apellido_paterno) : null,
-        asentamiento: asent?.nombre ?? null,
-        atendidaPorNombre: emp?.nombre ?? null,
-      };
-    });
+    return (data ?? []).map((row) => ({
+      id: row.alerta_id,
+      creadoEn: row.creado_en,
+      estado: row.estado,
+      prioridad: row.prioridad,
+      origen: row.origen,
+      usuariaNombre: row.nombre_completo ?? null,
+      asentamiento: row.asentamiento_nombre ?? null,
+      atendidaPorNombre: row.atendida_por_nombre ?? null,
+    }));
   },
 
   async getCasesSummary(userId: string): Promise<CasesSummary> {
-    const [fichasRes, urgenciasRes] = await Promise.all([
-      supabase.from('ficha_registro').select('id, estado, creado_por').eq('activo', true).limit(300),
-      supabase.from('vista_lista_urgencias').select('ficha_id').limit(300),
+    // Solo conteos (HEAD + count exact): no descarga filas y no se trunca en N registros.
+    const countFichas = () =>
+      supabase.from('ficha_registro').select('id', { count: 'exact', head: true }).eq('activo', true);
+
+    const [openRes, followUpRes, mineRes, urgenciasRes] = await Promise.all([
+      countFichas().eq('estado', 'abierto'),
+      countFichas().eq('estado', 'en_seguimiento'),
+      countFichas().eq('creado_por', userId).not('estado', 'in', '(cerrado,archivado)'),
+      supabase.from('vista_lista_urgencias').select('ficha_id', { count: 'exact', head: true }),
     ]);
 
-    if (fichasRes.error) throw fichasRes.error;
-    if (urgenciasRes.error) throw urgenciasRes.error;
-
-    let open = 0;
-    let inFollowUp = 0;
-    let mine = 0;
-
-    for (const row of fichasRes.data ?? []) {
-      if (row.estado === 'abierto') open++;
-      if (row.estado === 'en_seguimiento') inFollowUp++;
-      if (row.creado_por === userId && row.estado !== 'cerrado' && row.estado !== 'archivado') mine++;
+    for (const res of [openRes, followUpRes, mineRes, urgenciasRes]) {
+      if (res.error) throw res.error;
     }
 
     return {
-      open,
-      inFollowUp,
-      urgencias: (urgenciasRes.data ?? []).length,
-      mine,
+      open: openRes.count ?? 0,
+      inFollowUp: followUpRes.count ?? 0,
+      urgencias: urgenciasRes.count ?? 0,
+      mine: mineRes.count ?? 0,
     };
   },
 
@@ -204,57 +184,50 @@ export const supabaseDashboardRepository: DashboardRepository = {
     startOfToday.setHours(0, 0, 0, 0);
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
+    const endPlus30Days = new Date(startOfToday);
+    endPlus30Days.setDate(endPlus30Days.getDate() + 30);
 
-    const { data, error } = await supabase
-      .from('cita')
-      .select('id, programada_en, estado, cat_area(nombre), persona(nombres, apellido_paterno)')
-      .eq('activo', true)
-      .gte('programada_en', startOfToday.toISOString())
-      .not('estado', 'in', '("cancelada","reagendada")')
-      .order('programada_en', { ascending: true })
-      .limit(50);
+    const { data, error } = await supabase.rpc('get_agenda', {
+      p_desde: startOfToday.toISOString(),
+      p_hasta: endPlus30Days.toISOString(),
+      p_estados: ['agendada', 'confirmada', 'asistio', 'no_asistio'],
+      p_limite: 50,
+    });
 
     if (error) throw error;
 
     const now = new Date();
     const rows = data ?? [];
     const today = rows.filter((c) => new Date(c.programada_en) <= endOfToday).length;
-    const next = rows.find((c) => new Date(c.programada_en) >= now && c.estado !== 'asistio' && c.estado !== 'no_asistio');
-    const nextArea = next ? unwrapOne(next.cat_area)?.nombre ?? null : null;
-    const nextPersona = next ? unwrapOne(next.persona) : null;
+    const next = rows.find(
+      (c) => new Date(c.programada_en) >= now && c.estado !== 'asistio' && c.estado !== 'no_asistio',
+    );
 
     return {
       today,
       nextAt: next?.programada_en ?? null,
-      nextArea,
-      nextUsuaria: nextPersona ? fullName(nextPersona.nombres, nextPersona.apellido_paterno) : null,
+      nextArea: next ? (AREA_LABELS[next.area_clave] ?? next.area_clave) : null,
+      nextUsuaria: next?.nombre_completo ?? null,
     };
   },
 
   async getAppointments(fromIsoDate: string, toIsoDate: string): Promise<CitaItem[]> {
-    const { data, error } = await supabase
-      .from('cita')
-      .select('id, programada_en, estado, prioridad, cat_area(clave, nombre), persona(nombres, apellido_paterno)')
-      .eq('activo', true)
-      .gte('programada_en', `${fromIsoDate}T00:00:00`)
-      .lte('programada_en', `${toIsoDate}T23:59:59.999`)
-      .order('programada_en', { ascending: true })
-      .limit(200);
+    const { data, error } = await supabase.rpc('get_agenda', {
+      p_desde: `${fromIsoDate}T00:00:00`,
+      p_hasta: `${toIsoDate}T23:59:59.999`,
+      p_limite: 200,
+    });
 
     if (error) throw error;
 
-    return (data ?? []).map((row) => {
-      const area = unwrapOne(row.cat_area);
-      const persona = unwrapOne(row.persona);
-      return {
-        id: row.id,
-        programadaEn: row.programada_en,
-        estado: row.estado,
-        prioridad: row.prioridad,
-        areaClave: area?.clave ?? null,
-        areaNombre: area?.nombre ?? 'Área',
-        usuariaNombre: persona ? fullName(persona.nombres, persona.apellido_paterno) : 'Usuaria',
-      };
-    });
+    return (data ?? []).map((row) => ({
+      id: row.cita_id,
+      programadaEn: row.programada_en,
+      estado: row.estado,
+      prioridad: row.prioridad ?? null,
+      areaClave: row.area_clave ?? null,
+      areaNombre: AREA_LABELS[row.area_clave] ?? 'Área',
+      usuariaNombre: row.nombre_completo || 'Usuaria',
+    }));
   },
 };

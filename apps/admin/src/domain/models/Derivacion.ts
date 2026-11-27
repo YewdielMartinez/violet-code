@@ -109,3 +109,29 @@ export function validateDerivacion(input: DerivacionCreateInput): string | null 
 
   return null;
 }
+
+const VALID_TRANSITIONS: Record<EstadoDerivacion, readonly EstadoDerivacion[]> = {
+  pendiente: ['en_proceso', 'cancelada'],
+  en_proceso: ['concluida', 'cancelada'],
+  concluida: [],
+  cancelada: [],
+};
+
+/**
+ * Valida si una derivación puede cambiar de `actual` a `siguiente`:
+ * - `pendiente` -> `en_proceso` | `cancelada`
+ * - `en_proceso` -> `concluida` | `cancelada`
+ * - `concluida` y `cancelada` son estados terminales.
+ */
+export function validarTransicionDerivacion(
+  actual: EstadoDerivacion,
+  siguiente: EstadoDerivacion,
+): string | null {
+  if (actual === siguiente) {
+    return 'La derivación ya se encuentra en ese estado.';
+  }
+  if (!VALID_TRANSITIONS[actual].includes(siguiente)) {
+    return `Transición de estado no permitida: ${ESTADO_DERIVACION_LABELS[actual]} -> ${ESTADO_DERIVACION_LABELS[siguiente]}.`;
+  }
+  return null;
+}

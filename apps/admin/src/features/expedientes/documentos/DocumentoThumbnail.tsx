@@ -28,12 +28,11 @@ export function DocumentoThumbnail({
         type="button"
         disabled={busy}
         onClick={onVer}
-        className="flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-xl bg-surface-container text-on-surface-variant transition-colors hover:bg-surface-container-high motion-reduce:transition-none"
+        aria-label={`Abrir PDF ${doc.nombreArchivo} en nueva pestaña`}
+        className="flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl bg-surface-container text-on-surface-variant transition-colors hover:bg-surface-container-high motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
-        <Icon name="picture_as_pdf" className="text-[32px] text-primary" />
-        <span className="rounded-full bg-surface-container-high px-2 py-0.5 font-mono text-[11px] font-medium text-on-surface">
-          PDF · Abrir
-        </span>
+        <Icon name="picture_as_pdf" className="text-[24px] text-primary" />
+        <span className="font-mono text-[10px] font-semibold text-on-surface">PDF</span>
       </button>
     );
   }
@@ -45,7 +44,7 @@ export function DocumentoThumbnail({
         disabled={busy}
         onClick={onVer}
         aria-label={`Ampliar vista previa de ${doc.nombreArchivo}`}
-        className="relative h-28 w-full overflow-hidden rounded-xl bg-surface-container"
+        className="group relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-surface-container focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         <img
           src={thumbnailUrl}
@@ -54,25 +53,32 @@ export function DocumentoThumbnail({
           onError={onThumbnailError}
           className="size-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
         />
-        <span className="absolute right-2 bottom-2 inline-flex items-center gap-1 rounded-full bg-surface/90 px-2 py-0.5 text-[11px] font-medium text-on-surface backdrop-blur-xs">
-          <Icon name="zoom_in" className="text-[14px]" />
-          <span>Ver</span>
-        </span>
       </button>
     );
   }
 
-  return (
-    <div className="flex h-28 w-full flex-col items-center justify-center gap-2 rounded-xl bg-surface-container px-3 text-center">
-      <Icon name="image" className="text-[28px] text-primary" />
-      <button
-        type="button"
-        disabled={busy || loadingThumbnail}
-        onClick={onLoadThumbnail}
-        className="mk-button mk-button--tonal mk-button--sm"
+  if (loadingThumbnail) {
+    return (
+      <div
+        role="status"
+        aria-label={`Cargando miniatura de ${doc.nombreArchivo}`}
+        className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-surface-container animate-pulse motion-reduce:animate-none"
       >
-        <span>{loadingThumbnail ? 'Cargando…' : 'Cargar miniatura'}</span>
-      </button>
-    </div>
+        <Icon name="image" className="text-[22px] text-on-surface-variant" />
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={onLoadThumbnail}
+      aria-label={`Cargar miniatura de ${doc.nombreArchivo}`}
+      className="flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl bg-surface-container text-on-surface-variant transition-colors hover:bg-surface-container-high motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <Icon name="image" className="text-[20px] text-primary" />
+      <span className="text-[10px] font-medium">Cargar</span>
+    </button>
   );
 }

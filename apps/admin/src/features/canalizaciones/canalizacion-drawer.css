@@ -1,0 +1,134 @@
+/* Panel lateral de detalle de una canalización: misma línea visual que el de Expediente. */
+
+.mk-dialog.vc-canalizacion-dialog[data-mk-placement='side'] {
+  width: min(560px, calc(100vw - 16px));
+}
+
+.mk-dialog.vc-canalizacion-dialog > [data-mk-part='header'] {
+  display: grid;
+  /* El kit deja justify-content: space-between (pensado para flex); en grid encogería la columna. */
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: stretch;
+  gap: 14px;
+  padding: 16px 24px 12px;
+}
+
+.mk-dialog.vc-canalizacion-dialog > [data-mk-part='body'] {
+  padding: 8px 24px 28px;
+}
+
+/* Sin blur del fondo: desenfocar toda la página en cada frame cuesta caro. */
+.mk-dialog.vc-canalizacion-dialog::backdrop {
+  backdrop-filter: none;
+}
+
+/* El ghost del cierre se desenfoca con blur(32px) aunque animateContent sea false: se anula. */
+.vc-canalizacion-dialog[data-mk-ghost] [data-mk-part] {
+  filter: none !important;
+}
+
+.mk-dialog.vc-canalizacion-dialog[data-mk-fade] > [data-mk-scroll-viewport],
+.mk-dialog.vc-canalizacion-form-dialog[data-mk-fade] > [data-mk-scroll-viewport] {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+@media (max-width: 679px) {
+  .mk-dialog.vc-canalizacion-dialog[data-mk-placement='side'] {
+    inset: 0 0 0 auto;
+    width: min(560px, 94vw);
+    height: 100dvh;
+    border-radius: var(--mk-dialog-radius) 0 0 var(--mk-dialog-radius);
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+}
+
+/* Panel lateral de alta de una canalización (Dialog side + morph desde el botón) */
+.mk-dialog.vc-canalizacion-form-dialog[data-mk-placement='side'] {
+  width: min(520px, calc(100vw - 16px));
+}
+
+.mk-dialog.vc-canalizacion-form-dialog::backdrop {
+  backdrop-filter: none;
+}
+
+.vc-canalizacion-form-dialog[data-mk-ghost] [data-mk-part] {
+  filter: none !important;
+}
+
+.mk-dialog.vc-canalizacion-form-dialog > [data-mk-part='header'] {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 24px 14px;
+}
+
+.mk-dialog.vc-canalizacion-form-dialog > [data-mk-part='body'] {
+  padding: 20px 24px 28px;
+}
+
+.mk-dialog.vc-canalizacion-form-dialog > [data-mk-part='footer'] {
+  padding: 16px 24px;
+}
+
+@media (max-width: 679px) {
+  .mk-dialog.vc-canalizacion-form-dialog[data-mk-placement='side'] {
+    inset: 0 0 0 auto;
+    width: min(520px, 94vw);
+    height: 100dvh;
+    border-radius: var(--mk-dialog-radius) 0 0 var(--mk-dialog-radius);
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+}
+
+/* Campos amplios y legibles (>= 50 px, texto base 16 px, igual que NuevaFichaDrawer). */
+.vc-canalizacion-form .mk-field :is(input, textarea, select) {
+  min-height: 50px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background-color: var(--md-sys-color-surface-container-low);
+  box-shadow: inset 0 0 0 1px var(--md-sys-color-outline-variant);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.vc-canalizacion-form .mk-field textarea {
+  min-height: 120px;
+}
+
+.vc-canalizacion-form .mk-field :is(input, textarea, select):focus-visible {
+  box-shadow: inset 0 0 0 2px var(--md-sys-color-primary);
+}
+
+.vc-canalizacion-form .mk-field :is(input, textarea, select)[aria-invalid='true'] {
+  background-color: var(--vc-status-danger-bg);
+  color: var(--vc-status-danger);
+  box-shadow: inset 0 0 0 1.5px var(--vc-status-danger);
+}
+
+.vc-canalizacion-form .mk-select {
+  display: block;
+  width: 100%;
+}
+
+.vc-canalizacion-form [data-mk-select-trigger] {
+  width: 100%;
+  min-height: 50px;
+  height: auto;
+  padding: 10px 14px 10px 16px;
+  border-radius: 14px;
+  background: var(--md-sys-color-surface-container-low);
+  box-shadow: inset 0 0 0 1px var(--md-sys-color-outline-variant);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* Filas clicables en la tabla de canalizaciones */
+.vc-canalizaciones-table [data-mk-dt-table] tbody tr[data-id]:not([data-mk-dt-loading]) {
+  cursor: pointer;
+}
+
+.vc-canalizaciones-table [data-mk-dt-table] tbody tr[data-id]:not([data-mk-dt-loading]):focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}

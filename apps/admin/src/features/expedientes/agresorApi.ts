@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AgresorInput } from '@/domain/models/Agresor';
+import type { AgresorInput, CatalogoOpcion } from '@/domain/models/Agresor';
 import type { TablaConsultaAgresor } from '@/domain/ports/AgresorRepository';
 import { supabaseAgresorRepository } from '@/infrastructure/supabase/adapters/SupabaseAgresorRepository';
+import { catalogoQueryOptions } from './api';
 
 export type {
   Agresor,
@@ -75,19 +76,24 @@ export function useRegistrarConsultaTabAgresor(fichaId: string) {
   }, [fichaId, mutate]);
 }
 
+/** El formulario de agresor muestra los catálogos en orden de id (la caché compartida viene por nombre). */
+function sortById(rows: CatalogoOpcion[]): CatalogoOpcion[] {
+  return [...rows].sort((a, b) => a.id - b.id);
+}
+
 export function useParentescos() {
   return useQuery({
-    queryKey: ['catalogos', 'parentesco'],
-    queryFn: () => supabaseAgresorRepository.listarParentescos(),
+    ...catalogoQueryOptions('parentesco'),
     staleTime: CATALOG_STALE_TIME_MS,
+    select: sortById,
   });
 }
 
 export function useOcupaciones() {
   return useQuery({
-    queryKey: ['catalogos', 'ocupacion'],
-    queryFn: () => supabaseAgresorRepository.listarOcupaciones(),
+    ...catalogoQueryOptions('ocupacion'),
     staleTime: CATALOG_STALE_TIME_MS,
+    select: sortById,
   });
 }
 

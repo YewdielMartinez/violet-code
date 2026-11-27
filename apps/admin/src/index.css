@@ -20,6 +20,7 @@
 @import '@yewdiel21/motion-kit/css/themes/neogreen' layer(motion-kit);
 @import '@yewdiel21/motion-kit/css/themes/black' layer(motion-kit);
 @import '@yewdiel21/motion-kit/css/themes/oled' layer(motion-kit);
+@import './app/themes/salmverse.css' layer(motion-kit);
 @import 'tailwindcss';
 
 @theme inline {
@@ -79,8 +80,8 @@ html {
 /* ── Blanco profundo en modo claro ──────────────────────────────────────────
    Los temas de motion-kit tiñen las superficies claras con su color. Para un sistema
    institucional usamos blanco puro y grises neutros; el color queda solo en acentos.
-   Aplica a cualquier tema, solo cuando el modo resuelto es claro. */
-:root[data-mk-mode='light'] {
+   Aplica a los temas integrados en modo claro; Salmverse conserva su superficie crema (#fff5e4). */
+:root[data-mk-mode='light']:not([data-mk-theme='salmverse']) {
   --md-sys-color-background: #ffffff;
   --md-sys-color-surface: #ffffff;
   --md-sys-color-surface-bright: #ffffff;
@@ -93,7 +94,7 @@ html {
 }
 
 @media (prefers-color-scheme: light) {
-  :root:not([data-mk-mode='dark']) {
+  :root:not([data-mk-mode='dark']):not([data-mk-theme='salmverse']) {
     --md-sys-color-background: #ffffff;
     --md-sys-color-surface: #ffffff;
     --md-sys-color-surface-bright: #ffffff;
@@ -232,6 +233,19 @@ body {
   gap: 16px;
 }
 
+.mk-menu.vc-filter-menu {
+  min-width: 240px;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 10px;
+}
+
+.mk-menu.vc-filter-menu [data-mk-item] {
+  min-height: 46px;
+  padding: 0 16px;
+  gap: 14px;
+  border-radius: 20px;
+}
+
 /* Calendario compacto (widget de Agenda en columna lateral): días bajos y un punto en los días con citas,
    en lugar de los chips de evento (que en 24rem de ancho se cortan en "+1 más"). */
 .mk-calendar.vc-calendar-compact {
@@ -285,4 +299,92 @@ body {
 
 html.vc-icons-loading .mk-icon {
   color: transparent;
+}
+
+/* Tablas operativas: letra más grande y cómoda para personas mayores */
+.vc-expediente-table,
+.vc-canalizaciones-table {
+  --mk-dt-font-size: 1rem;
+  --mk-dt-head-size: 0.875rem;
+  --mk-dt-cell-padding-x: 1.125rem;
+}
+
+:is(.vc-expediente-table, .vc-canalizaciones-table) [data-mk-dt-table] tbody td {
+  padding-block: 0.875rem;
+  line-height: 1.45;
+}
+
+:is(.vc-expediente-table, .vc-canalizaciones-table) [data-mk-dt-table] thead th {
+  padding-block: 0.75rem;
+  font-weight: 600;
+}
+
+:is(.vc-expediente-table, .vc-canalizaciones-table) [data-mk-dt-table] td[data-key='folio'] {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+:is(.vc-expediente-table, .vc-canalizaciones-table) [data-mk-dt-table] td:is([data-key='nombreCompleto'], [data-key='usuariaNombre']) {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Cápsulas visuales de estado y prioridad en DataTable */
+.vc-dt-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.vc-dt-pill__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: currentColor;
+  flex: none;
+}
+
+.vc-dt-pill--success {
+  background: var(--vc-status-success-bg);
+  color: var(--vc-status-success);
+}
+
+.vc-dt-pill--warning {
+  background: var(--vc-status-warning-bg);
+  color: var(--vc-status-warning);
+}
+
+.vc-dt-pill--info {
+  background: var(--vc-status-info-bg);
+  color: var(--vc-status-info);
+}
+
+.vc-dt-pill--danger {
+  background: var(--vc-status-danger-bg);
+  color: var(--vc-status-danger);
+}
+
+.vc-dt-pill--neutral {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Diálogos de alto rendimiento: evita backdrop blur, ghost blur y mask-image en viewport. */
+.mk-dialog.vc-perf-dialog::backdrop {
+  backdrop-filter: none;
+}
+
+.mk-dialog.vc-perf-dialog[data-mk-ghost] [data-mk-part] {
+  filter: none !important;
+}
+
+.mk-dialog.vc-perf-dialog[data-mk-fade] > [data-mk-scroll-viewport] {
+  -webkit-mask-image: none;
+  mask-image: none;
 }

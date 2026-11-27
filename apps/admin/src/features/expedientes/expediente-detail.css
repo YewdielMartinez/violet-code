@@ -1,0 +1,156 @@
+/* Microinteracciones y transiciones de pestañas en /expedientes/:id.
+   Usa únicamente transform + opacity para mantener 60 FPS sin reflows en cambio de sección. */
+
+.vc-detail-tabs {
+  position: relative;
+  display: flex;
+  min-width: max-content;
+  align-items: center;
+  gap: 6px;
+  contain: layout style;
+}
+
+.vc-detail-tabs__indicator {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: 999px;
+  background: var(--md-sys-color-primary);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, width;
+  transition:
+    transform 320ms var(--mk-ease-nav-move),
+    width 320ms var(--mk-ease-nav-move),
+    opacity 160ms ease;
+}
+
+.vc-detail-tabs__indicator--instant {
+  transition: none;
+}
+
+.vc-detail-tabs__tab {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px;
+  border-radius: 999px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 1rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    transform 160ms var(--mk-ease-click);
+}
+
+.vc-detail-tabs__tab:hover:not([aria-selected='true']) {
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+}
+
+.vc-detail-tabs__tab:active {
+  transform: scale(0.97);
+}
+
+.vc-detail-tabs__tab[aria-selected='true'] {
+  color: var(--md-sys-color-on-primary);
+}
+
+/* Respaldo cuando el indicador no se ha medido (p. ej. jsdom o primer instante sin ancho). */
+.vc-detail-tabs:not([data-indicator-ready]) .vc-detail-tabs__tab[aria-selected='true'] {
+  background: var(--md-sys-color-primary);
+}
+
+.vc-detail-tabs__tab:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.vc-detail-tabs[data-tab-animated='true']
+  .vc-detail-tabs__tab[aria-selected='true']
+  .vc-detail-tabs__icon {
+  animation: vc-tab-icon-pop 300ms var(--mk-ease-pop);
+}
+
+@keyframes vc-tab-icon-pop {
+  0% {
+    transform: scale(0.84);
+  }
+  65% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.vc-tab-panel--enter-right {
+  animation: vc-tab-enter-right 260ms var(--mk-ease-sheet) both;
+}
+
+.vc-tab-panel--enter-left {
+  animation: vc-tab-enter-left 260ms var(--mk-ease-sheet) both;
+}
+
+.vc-tab-panel--reveal {
+  animation: vc-tab-reveal 180ms ease-out both;
+}
+
+@keyframes vc-tab-enter-right {
+  from {
+    opacity: 0;
+    transform: translate3d(18px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes vc-tab-enter-left {
+  from {
+    opacity: 0;
+    transform: translate3d(-18px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes vc-tab-reveal {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc-detail-tabs__indicator,
+  .vc-detail-tabs__tab {
+    transition: none;
+  }
+
+  .vc-detail-tabs__tab:active {
+    transform: none;
+  }
+
+  .vc-detail-tabs[data-tab-animated='true']
+    .vc-detail-tabs__tab[aria-selected='true']
+    .vc-detail-tabs__icon,
+  .vc-tab-panel--enter-right,
+  .vc-tab-panel--enter-left,
+  .vc-tab-panel--reveal {
+    animation: none;
+  }
+}

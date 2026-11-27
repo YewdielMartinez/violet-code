@@ -8,6 +8,7 @@ import {
   createIdentidadFromPreRegistro,
   type FichaIdentidadInput,
 } from '@/domain/models/FichaRegistro';
+import type { ExpedienteResumen } from '@/domain/models/Persona';
 import type { PreRegistroMovil } from '@/domain/models/PreRegistroMovil';
 import { useCreateFicha } from '../api';
 import {
@@ -34,6 +35,7 @@ export function useFichaForm() {
   const [step, setStep] = useState(0);
   const [stepError, setStepError] = useState<string | null>(null);
   const [invalidField, setInvalidField] = useState<string | null>(null);
+  const [duplicateExpediente, setDuplicateExpediente] = useState<ExpedienteResumen | null>(null);
   const [identidad, setIdentidadRaw] = useState<FichaIdentidadInput>(() =>
     createIdentidadFromPreRegistro(null),
   );
@@ -84,6 +86,7 @@ export function useFichaForm() {
     setStep(0);
     setStepError(null);
     setInvalidField(null);
+    setDuplicateExpediente(null);
   }, []);
 
   const goToStep = useCallback((nextStep: number) => {
@@ -93,6 +96,15 @@ export function useFichaForm() {
   }, []);
 
   function goNext(onInvalid?: (field: string) => void): boolean {
+    if (step === 0 && duplicateExpediente) {
+      setStepError(
+        `Esta persona ya tiene expediente ${duplicateExpediente.folio}. Ábrelo en lugar de crear uno nuevo (RN-02).`,
+      );
+      setInvalidField('curp');
+      onInvalid?.('curp');
+      return false;
+    }
+
     const failure =
       step === 0
         ? validateStepIdentidad(identidad)
@@ -120,6 +132,16 @@ export function useFichaForm() {
   }
 
   async function submit(onInvalid?: (field: string, invalidStep: number) => void) {
+    if (duplicateExpediente) {
+      setStep(0);
+      setStepError(
+        `Esta persona ya tiene expediente ${duplicateExpediente.folio}. Ábrelo en lugar de crear uno nuevo (RN-02).`,
+      );
+      setInvalidField('curp');
+      onInvalid?.('curp', 0);
+      return null;
+    }
+
     const checks = [
       validateStepIdentidad(identidad),
       validateStepDomicilio(domicilio),
@@ -174,6 +196,8 @@ export function useFichaForm() {
     stepError,
     setStepError,
     invalidField,
+    duplicateExpediente,
+    setDuplicateExpediente,
     isDirty,
     identidad,
     setIdentidad,

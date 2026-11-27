@@ -24,17 +24,17 @@ function InfoFieldCard({ label, value, mono = false, fullWidth = false }: FieldC
 
   return (
     <div
-      className={`rounded-2xl border border-outline-variant bg-surface-container-lowest px-4 py-3 ${
+      className={`rounded-2xl border border-outline-variant bg-surface-container-lowest px-4 py-3.5 ${
         fullWidth ? 'sm:col-span-2' : ''
       }`}
     >
-      <p className="text-xs text-on-surface-variant">{label}</p>
+      <p className="text-sm font-medium text-on-surface-variant">{label}</p>
       {clean ? (
-        <p className={`mt-1 text-sm font-medium text-on-surface ${mono ? 'font-mono' : ''}`}>
+        <p className={`mt-1 text-base font-medium text-on-surface ${mono ? 'font-mono' : ''}`}>
           {clean}
         </p>
       ) : (
-        <p className="mt-1 text-sm text-on-surface-variant/70">Sin registrar</p>
+        <p className="mt-1 text-base text-on-surface-variant">Sin registrar</p>
       )}
     </div>
   );
@@ -81,13 +81,13 @@ export function FichaDetalleResumen({ expediente }: Props) {
 
   return (
     <section aria-label="Datos adicionales" className="grid gap-3">
-      <h4 className="text-sm font-medium text-on-surface">Datos adicionales</h4>
+      <h4 className="text-base font-semibold text-on-surface">Datos adicionales</h4>
 
       <Skeleton loading={isLoading} shape="card" lines={5} label="Cargando detalle">
         {detail ? (
           <div className="grid gap-5">
             <section aria-label="Identificación">
-              <p className="mb-2 text-[11px] font-semibold tracking-wider text-on-surface-variant uppercase">
+              <p className="mb-2 text-sm font-semibold tracking-wider text-on-surface-variant uppercase">
                 IDENTIFICACIÓN
               </p>
               <div className="grid gap-2.5 sm:grid-cols-2">
@@ -115,7 +115,7 @@ export function FichaDetalleResumen({ expediente }: Props) {
             </section>
 
             <section aria-label="Domicilio">
-              <p className="mb-2 text-[11px] font-semibold tracking-wider text-on-surface-variant uppercase">
+              <p className="mb-2 text-sm font-semibold tracking-wider text-on-surface-variant uppercase">
                 DOMICILIO
               </p>
               <div className="grid gap-2.5 sm:grid-cols-2">
@@ -130,7 +130,7 @@ export function FichaDetalleResumen({ expediente }: Props) {
             </section>
 
             <section aria-label="Estudio socioeconómico">
-              <p className="mb-2 text-[11px] font-semibold tracking-wider text-on-surface-variant uppercase">
+              <p className="mb-2 text-sm font-semibold tracking-wider text-on-surface-variant uppercase">
                 ESTUDIO SOCIOECONÓMICO
               </p>
               <div className="grid gap-2.5 sm:grid-cols-2">
@@ -158,8 +158,8 @@ export function FichaDetalleResumen({ expediente }: Props) {
                 />
                 <InfoFieldCard label="Material de vivienda" value={materialLabel} />
 
-                <div className="rounded-2xl border border-outline-variant bg-surface-container-lowest px-4 py-3 sm:col-span-2">
-                  <p className="text-xs text-on-surface-variant">
+                <div className="rounded-2xl border border-outline-variant bg-surface-container-lowest px-4 py-3.5 sm:col-span-2">
+                  <p className="text-sm font-medium text-on-surface-variant">
                     Aportantes del hogar
                     {detail.estudio && detail.estudio.aportantes.length > 0
                       ? ` (${detail.estudio.aportantes.length})`
@@ -170,7 +170,7 @@ export function FichaDetalleResumen({ expediente }: Props) {
                       {detail.estudio.aportantes.map((ap) => (
                         <li
                           key={ap.id}
-                          className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface-container-low px-3 py-2 text-xs"
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface-container-low px-4 py-3 text-base"
                         >
                           <span className="font-medium text-on-surface">
                             {ap.nombre}
@@ -184,14 +184,14 @@ export function FichaDetalleResumen({ expediente }: Props) {
                       ))}
                     </ul>
                   ) : (
-                    <p className="mt-1 text-sm text-on-surface-variant/70">Sin registrar</p>
+                    <p className="mt-1 text-base text-on-surface-variant">Sin registrar</p>
                   )}
                 </div>
               </div>
             </section>
           </div>
         ) : (
-          <p className="rounded-2xl border border-outline-variant bg-surface-container-lowest px-4 py-3 text-sm text-on-surface-variant/70">
+          <p className="rounded-2xl border border-outline-variant bg-surface-container-lowest px-4 py-3.5 text-base text-on-surface-variant">
             Sin registrar
           </p>
         )}

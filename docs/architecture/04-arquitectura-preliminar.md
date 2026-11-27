@@ -1,6 +1,7 @@
 # 04 · Arquitectura preliminar
 
-> Estado: **PRELIMINAR — no cerrada**. Decisiones marcadas como `Propuesta` hasta validarse en reunión y registrarse como ADR `Aceptada`.
+> [!WARNING]
+> **DEPRECADO / SUPERADO (2026-11-26):** Este documento recoge la propuesta preliminar previa a la adopción oficial de **Supabase (PostgreSQL 17, RLS RBAC+ABAC, RPCs, Auth, Storage y Realtime)**. El componente `apps/core` (`ASP.NET Core Web API` / `EF Core`) fue retirado del monorepo. Consulta la arquitectura vigente en [ADR-0003](../adr/0003-arquitectura-hexagonal-admin-supabase.md) y [esquema-y-rpcs.md](../../supabase/doc-supabase/esquema-y-rpcs.md).
 
 ## 1. Vista de contexto
 

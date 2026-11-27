@@ -45,7 +45,9 @@ Este documento define la forma estándar de trabajar servicios, RPCs y contratos
 ### 3.2 Plantilla obligatoria de un RPC
 Todo RPC debe cumplir:
 - `language plpgsql`, `security definer` y `set search_path = public`.
-- Validación explícita de `auth.uid()` y rol activo en `public.empleado` (`errcode = '42501'` si no tiene permiso).
+- **Validación RBAC centralizada** con `if not public.tiene_permiso('<clave>') then raise ... using errcode = '42501'` (nunca validar con `e.rol in (...)` escrito a mano).
+  - **Excepciones fuera de `empleado.rol`:** UMECA valida con `public.es_umeca()` y la usuaria de la app móvil valida propiedad por `auth.uid()`.
+- **Filtros ABAC en el `where`:** las reglas por fila (`area_id = public.auth_area_id()`, Recepción solo TS y Psicología, `activo`, etc.) se aplican en el `where` de cada consulta.
 - Validaciones de negocio antes de escribir (`errcode = '23514'` para datos inválidos, `errcode = '23505'` para duplicados/conflictos) con mensajes claros en español.
 - **Alias obligatorio en todas las tablas (`p.id`, `f.persona_id`, `d.es_actual`)** para evitar errores de `column reference "..." is ambiguous` cuando el RPC usa `RETURNS TABLE`.
 - Privilegios mínimos: `revoke execute ... from public, anon;` y `grant execute ... to authenticated;`.
@@ -63,19 +65,14 @@ as $$
 declare
   v_actor_id uuid := auth.uid();
 begin
-  -- 1. Validar actor y rol activo
-  if v_actor_id is null or not exists (
-    select 1
-    from public.empleado e
-    where e.id = v_actor_id
-      and e.activo
-      and e.rol in ('titular', 'subdireccion', 'trabajo_social')
-  ) then
+  -- 1. Validar permiso RBAC centralizado (ya exige empleado activo y auth.uid())
+  if not public.tiene_permiso('expediente.escribir') then
     raise exception 'Sin permiso para realizar esta operación' using errcode = '42501';
   end if;
 
   -- 2. Validar entrada y reglas de negocio (23514 / 23505)
   -- 3. Ejecutar consultas o escrituras usando alias en TODAS las tablas
+  --    y aplicando filtros ABAC (area_id = public.auth_area_id(), activo, etc.) en el WHERE
 end;
 $$;
 

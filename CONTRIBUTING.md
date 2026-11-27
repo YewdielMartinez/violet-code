@@ -7,7 +7,7 @@ Equipo de 7. El jurado evalúa "participación equilibrada": **cada quien hace c
 | Área | Personas | Responsable | Carpeta |
 |---|---|---|---|
 | Front (Administración) | 2 | Yewdiel (líder de front) | `apps/admin`, `packages/design-tokens` |
-| Datos y Backend (Supabase / Core) | 2 | _por asignar_ | `supabase/`, `apps/core` |
+| Datos y Backend (Supabase) | 2 | _por asignar_ | `supabase/` |
 | Móvil (Android) | 2 | _por asignar_ | `apps/mobile` |
 | Producto, docs, seguridad y pitch | 1 | _por asignar_ | `docs/` |
 
@@ -22,7 +22,7 @@ Ajustar nombres aquí cuando se definan. Cada área es responsable de probar los
 
 ## Commits
 
-[Conventional Commits](https://www.conventionalcommits.org/es/) en español con el área como scope (`admin`, `supabase`, `mobile`, `core`, `docs`):
+[Conventional Commits](https://www.conventionalcommits.org/es/) en español con el área como scope (`admin`, `supabase`, `mobile`, `docs`):
 
 ```
 feat(supabase): agrega RPC para consulta de pre-registro por CURP
@@ -46,10 +46,9 @@ docs(adr): documenta arquitectura hexagonal en admin
 
 1. **`apps/admin`:** `npm run lint -w @violet-code/admin` y `npm run build -w @violet-code/admin` en verde (y pruebas unitarias con Vitest cuando aplique).
 2. **`supabase/`:** `npx supabase db reset` sin errores y `npx supabase test db` en verde.
-3. **`apps/core`:** `cd apps/core && dotnet test` en verde.
-4. **`apps/mobile`:** compilación y pruebas locales sin errores.
-5. Si cambias el contrato de BD/RPCs o API, avisa a Admin y Móvil al subir a `develop`.
-6. Si tomas una decisión de arquitectura importante, agrega un ADR en `docs/adr/`.
+3. **`apps/mobile`:** compilación y pruebas locales sin errores.
+4. Si cambias el contrato de BD/RPCs, avisa a Admin y Móvil al subir a `develop`.
+5. Si tomas una decisión de arquitectura importante, agrega un ADR en `docs/adr/`.
 
 ## Reglas de datos y entorno (no negociables)
 

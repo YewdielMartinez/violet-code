@@ -43,7 +43,7 @@ const DIRECTION_ONLY: readonly StaffRole[] = ['titular', 'subdireccion'];
 export const NAVIGATION: NavPage[] = [
   {
     path: '/',
-    label: 'Dashboard',
+    label: 'Tablero',
     icon: 'space_dashboard',
     ready: true,
     mobile: true,
@@ -54,7 +54,7 @@ export const NAVIGATION: NavPage[] = [
     label: 'Solicitudes',
     title: 'Solicitudes y alertas',
     icon: 'notifications_active',
-    ready: false,
+    ready: true,
     mobile: true,
     allowedRoles: ATTENTION_AND_DIRECTION,
   },
@@ -66,35 +66,7 @@ export const NAVIGATION: NavPage[] = [
     mobile: true,
     allowedRoles: ATTENTION_AND_DIRECTION,
   },
-  {
-    path: '/casos',
-    label: 'Casos',
-    title: 'Gestión de casos',
-    icon: 'account_tree',
-    ready: false,
-    allowedRoles: ATTENTION_AND_DIRECTION,
-  },
-  {
-    path: '/profesionales',
-    label: 'Profesionales',
-    icon: 'groups',
-    ready: false,
-    allowedRoles: DIRECTION_ONLY,
-  },
-  {
-    path: '/intervenciones',
-    label: 'Intervenciones',
-    icon: 'clinical_notes',
-    ready: false,
-    allowedRoles: ATTENTION_AND_DIRECTION,
-  },
-  {
-    path: '/canalizaciones',
-    label: 'Canalizaciones',
-    icon: 'alt_route',
-    ready: true,
-    allowedRoles: ATTENTION_AND_DIRECTION,
-  },
+  //QUITE EL MENU DE INTERVENCIONES 
   {
     path: '/agenda',
     label: 'Agenda',
@@ -126,13 +98,6 @@ export const NAVIGATION: NavPage[] = [
     ready: false,
     allowedRoles: DIRECTION_ONLY,
   },
-  {
-    path: '/auditoria',
-    label: 'Auditoría',
-    icon: 'policy',
-    ready: false,
-    allowedRoles: DIRECTION_ONLY,
-  },
 ];
 
 export const ALL_PAGES = NAVIGATION;
@@ -147,6 +112,9 @@ export function canAccessPath(role: StaffRole | undefined, pathname: string): bo
   if (matchPath(HISTORIAL_CLINICO_PATH, pathname)) return puedeAccederHistorialClinico(role);
   if (pathname === '/expedientes/nuevo') {
     return role === 'titular' || role === 'subdireccion' || role === 'trabajo_social';
+  }
+  if (pathname.startsWith('/expedientes/')) {
+    return ATTENTION_AND_DIRECTION.includes(role);
   }
   const page = NAVIGATION.find((item) => item.path === pathname);
   if (!page) return role !== 'umeca';

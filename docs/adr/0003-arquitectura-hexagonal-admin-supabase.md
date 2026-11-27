@@ -54,8 +54,7 @@ violet-code/
 │   │       └── shared/
 │   │           └── ui/                         # Componentes visuales reutilizables basados en motion-kit
 │   │
-│   ├── mobile/                                 # App Android (Kotlin + Jetpack Compose, MVVM)
-│   └── core/                                   # API .NET (módulos auxiliares / referencia de dominio)
+│   └── mobile/                                 # App Android (Kotlin + Jetpack Compose, MVVM)
 │
 ├── packages/
 │   └── design-tokens/                          # Fuente única de color y tokens Material 3 (Web + Android)
@@ -129,7 +128,7 @@ Todo cambio que toque `apps/admin` o `supabase/` debe cumplir las siguientes reg
 ### Positivas
 - **Trabajo en paralelo:** Frontend puede definir un modelo y puerto en `domain/` y avanzar pantallas con un adaptador *fake* mientras se termina una migración o RPC.
 - **Seguridad tipada de punta a punta:** Si una columna o RPC cambia en PostgreSQL, `gen:types` + `tsc -b` detectan el desajuste en el adaptador en tiempo de compilación, sin romper componentes visuales.
-- **Sustituibilidad:** Si algún flujo requiere pasar por una Edge Function o por `apps/core` (.NET), solo se reemplaza el adaptador secundario sin reescribir `domain/`, `hooks/` ni `features/`.
+- **Sustituibilidad:** Si algún flujo requiere pasar por una Edge Function o por otro servicio HTTP externo, solo se reemplaza el adaptador secundario sin reescribir `domain/`, `hooks/` ni `features/`.
 
 ### Costos / Mitigación
 - Introduce una capa explícita de mapeo (`snake_case` → `camelCase`) por repositorio. Se mitiga manteniendo modelos concisos orientados a los casos de uso del MVP y evitando abstracciones genéricas innecesarias.
