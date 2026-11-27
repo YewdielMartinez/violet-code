@@ -1,51 +1,49 @@
 -- =====================================================================
--- 66_orden_proteccion_seguimiento.sql
--- Cada cambio de estado de una orden de protección debe aparecer en el
--- área de seguimiento del expediente (pestaña «Seguimiento» = línea de
--- tiempo, RPC get_linea_tiempo).
+-- 70_orden_proteccion_nota_seguimiento.sql
+-- DELTA sobre 65_historial_ordenes_proteccion.sql (tabla
+-- orden_proteccion_evento + trigger + backfill + get_linea_tiempo).
+-- Agrega la nota (y el usuario) del cambio de estado de una orden de
+-- protección y la muestra en Seguimiento (pestaña = get_linea_tiempo).
 --
 -- Qué contiene:
---   1. Tabla append-only public.orden_proteccion_evento (mismo patrón que
---      canalizacion_evento): estado anterior -> nuevo, nota, usuario y fecha.
---      RLS SELECT con expediente.ver; sin INSERT/UPDATE/DELETE directos.
---   2. Columna transitoria orden_proteccion.nota_cambio_estado: la web la
---      envía en el mismo UPDATE que cambia el estado; el trigger la copia
---      al evento y la limpia (nunca queda almacenada en la orden).
---   3. Triggers en orden_proteccion:
---        - AFTER INSERT: evento inicial (estado_anterior = null).
---        - BEFORE UPDATE: evento cuando estado cambia (y limpia la nota).
---      Así el evento se registra aunque el cambio llegue por PostgREST
---      (update directo), sin depender de un RPC.
---   4. Backfill: un evento inicial por cada orden existente.
---   5. get_linea_tiempo(p_ficha_id): misma firma y permisos; agrega los
---      cambios de estado de órdenes (tipo 'orden_proteccion', título
---      «Orden de protección: <anterior> → <nuevo>») y calcula el título del
---      alta con el estado inicial de la orden, no el actual.
+--   1. orden_proteccion_evento.nota (<= 1000) + índice de creado_por +
+--      lectura con expediente.ver (RLS SELECT; sigue append-only: sin
+--      INSERT/UPDATE/DELETE directos).
+--   2. Columna transitoria orden_proteccion.nota_cambio_estado (<= 1000):
+--      la web la envía en el mismo UPDATE que cambia el estado; el trigger
+--      la copia al evento y la limpia (nunca queda en la orden).
+--   3. Triggers (reemplazan al AFTER INSERT OR UPDATE OF estado de 65; el
+--      evento se registra una sola vez, sin duplicados):
+--        - AFTER INSERT: evento inicial (estado_anterior = null), igual
+--          que en 65.
+--        - BEFORE UPDATE: evento cuando cambia el estado, con la nota, y
+--          limpia nota_cambio_estado.
+--      Ambos usan registrar_evento_orden_proteccion() (redefinida).
+--   4. Sin backfill: ya lo hizo 65.
+--   5. get_linea_tiempo(p_ficha_id): idéntica a la de 65 salvo el detalle
+--      de los cambios de estado: «Por <empleado> — <nota>» solo para
+--      Dirección, Jurídico y Trabajo Social. Los títulos no cambian
+--      («Orden de protección registrada · <estado>» y
+--      «Orden de protección: <anterior> → <nuevo>»).
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
--- 1. Tabla public.orden_proteccion_evento (append-only)
+-- 1. orden_proteccion_evento: nota + lectura con permiso
 -- ---------------------------------------------------------------------
-create table if not exists public.orden_proteccion_evento (
-  id                  uuid primary key default gen_random_uuid(),
-  orden_proteccion_id uuid not null references public.orden_proteccion (id) on delete restrict,
-  estado_anterior     public.estado_orden_proteccion,
-  estado_nuevo        public.estado_orden_proteccion not null,
-  nota                text check (nota is null or char_length(btrim(nota)) <= 1000),
-  creado_por          uuid references public.empleado (id) on delete restrict,
-  creado_en           timestamptz not null default now()
-);
+alter table public.orden_proteccion_evento
+  add column if not exists nota text;
 
-create index if not exists orden_proteccion_evento_orden_creado_idx
-  on public.orden_proteccion_evento (orden_proteccion_id, creado_en asc);
+alter table public.orden_proteccion_evento
+  drop constraint if exists orden_proteccion_evento_nota_check;
+
+alter table public.orden_proteccion_evento
+  add constraint orden_proteccion_evento_nota_check
+  check (nota is null or char_length(btrim(nota)) <= 1000);
 
 create index if not exists orden_proteccion_evento_creado_por_idx
   on public.orden_proteccion_evento (creado_por);
 
-revoke all on table public.orden_proteccion_evento from public, anon, authenticated;
 grant select on table public.orden_proteccion_evento to authenticated;
-
-alter table public.orden_proteccion_evento enable row level security;
 
 drop policy if exists orden_proteccion_evento_select on public.orden_proteccion_evento;
 
@@ -67,59 +65,34 @@ alter table public.orden_proteccion
   check (nota_cambio_estado is null or char_length(btrim(nota_cambio_estado)) <= 1000);
 
 -- ---------------------------------------------------------------------
--- 3. Triggers de registro de eventos
+-- 3. Triggers: un solo registro por alta / cambio de estado
 -- ---------------------------------------------------------------------
-create or replace function public.orden_proteccion_evento_alta()
+create or replace function public.registrar_evento_orden_proteccion()
 returns trigger
 language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_actor_id uuid;
 begin
-  insert into public.orden_proteccion_evento (
-    orden_proteccion_id,
-    estado_anterior,
-    estado_nuevo,
-    nota,
-    creado_por,
-    creado_en
-  ) values (
-    new.id,
-    null,
-    new.estado,
-    null,
-    coalesce(
-      (select e.id from public.empleado e where e.id = auth.uid()),
-      new.creado_por
-    ),
-    new.creado_en
-  );
-  return null;
-end;
-$$;
+  select e.id into v_actor_id from public.empleado e where e.id = auth.uid();
 
-revoke all on function public.orden_proteccion_evento_alta() from public, anon, authenticated;
+  if tg_op = 'INSERT' then
+    insert into public.orden_proteccion_evento (orden_id, estado_anterior, estado_nuevo, creado_por, creado_en)
+    values (new.id, null, new.estado, v_actor_id, new.creado_en);
+    return null; -- AFTER INSERT
+  end if;
 
-create or replace function public.orden_proteccion_evento_estado()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
+  -- BEFORE UPDATE
   if new.estado is distinct from old.estado then
-    insert into public.orden_proteccion_evento (
-      orden_proteccion_id,
-      estado_anterior,
-      estado_nuevo,
-      nota,
-      creado_por
-    ) values (
+    insert into public.orden_proteccion_evento (orden_id, estado_anterior, estado_nuevo, nota, creado_por)
+    values (
       new.id,
       old.estado,
       new.estado,
       nullif(btrim(coalesce(new.nota_cambio_estado, '')), ''),
-      (select e.id from public.empleado e where e.id = auth.uid())
+      v_actor_id
     );
   end if;
 
@@ -129,46 +102,22 @@ begin
 end;
 $$;
 
-revoke all on function public.orden_proteccion_evento_estado() from public, anon, authenticated;
+revoke execute on function public.registrar_evento_orden_proteccion() from public, anon, authenticated;
 
-drop trigger if exists orden_proteccion_evento_alta on public.orden_proteccion;
-create trigger orden_proteccion_evento_alta
+drop trigger if exists orden_proteccion_evento_trg on public.orden_proteccion;
+drop trigger if exists orden_proteccion_evento_alta_trg on public.orden_proteccion;
+
+create trigger orden_proteccion_evento_alta_trg
   after insert on public.orden_proteccion
-  for each row execute function public.orden_proteccion_evento_alta();
+  for each row execute function public.registrar_evento_orden_proteccion();
 
-drop trigger if exists orden_proteccion_evento_estado on public.orden_proteccion;
-create trigger orden_proteccion_evento_estado
+create trigger orden_proteccion_evento_trg
   before update on public.orden_proteccion
-  for each row execute function public.orden_proteccion_evento_estado();
+  for each row execute function public.registrar_evento_orden_proteccion();
 
 -- ---------------------------------------------------------------------
--- 4. Backfill: evento inicial para las órdenes existentes
--- ---------------------------------------------------------------------
-insert into public.orden_proteccion_evento (
-  orden_proteccion_id,
-  estado_anterior,
-  estado_nuevo,
-  nota,
-  creado_por,
-  creado_en
-)
-select
-  op.id,
-  null::public.estado_orden_proteccion,
-  op.estado,
-  null,
-  op.creado_por,
-  op.creado_en
-from public.orden_proteccion op
-where not exists (
-  select 1
-  from public.orden_proteccion_evento oe
-  where oe.orden_proteccion_id = op.id
-);
-
--- ---------------------------------------------------------------------
--- 5. get_linea_tiempo(p_ficha_id): agrega cambios de estado de órdenes
---    (misma firma, mismos permisos y filtros ABAC que la migración 54).
+-- 5. get_linea_tiempo(): misma función que 65; cambia solo el detalle de
+--    los cambios de estado de la orden (usuario y nota).
 -- ---------------------------------------------------------------------
 create or replace function public.get_linea_tiempo(p_ficha_id uuid)
 returns table (
@@ -355,67 +304,42 @@ begin
 
     union all
 
-    -- Alta de la orden: el título refleja el estado con el que se registró.
-    select op.creado_en                                               as fecha,
-           'orden_proteccion'::text                                   as tipo,
-           null::text                                                 as area,
-           (
-             'Orden de protección · '
-             || coalesce(
-                  (
-                    select oe0.estado_nuevo::text
-                    from public.orden_proteccion_evento oe0
-                    where oe0.orden_proteccion_id = op.id
-                      and oe0.estado_anterior is null
-                    order by oe0.creado_en asc, oe0.id asc
-                    limit 1
-                  ),
-                  op.estado::text
-                )
-           )::text                                                    as titulo,
-           case
-             when v_es_direccion or v_rol in ('juridico', 'trabajo_social') then
-               nullif(btrim(concat_ws(' — ', nullif(btrim(op.numero_oficio), ''), nullif(btrim(op.autoridad_emisora), ''))), '')
-             else null
-           end                                                        as detalle,
-           op.id                                                      as referencia_id
-    from public.orden_proteccion op
-    where op.ficha_id = p_ficha_id
-      and op.activo
-
-    union all
-
-    -- Cambios de estado de la orden: anterior -> nuevo, usuario y nota.
+    -- Órdenes de protección: registro y cada cambio de estado
     select oe.creado_en                                               as fecha,
            'orden_proteccion'::text                                   as tipo,
            null::text                                                 as area,
            (
-             'Orden de protección: '
-             || oe.estado_anterior::text
-             || ' → '
-             || oe.estado_nuevo::text
+             case
+               when oe.estado_anterior is null
+                 then 'Orden de protección registrada · ' || oe.estado_nuevo::text
+               else 'Orden de protección: ' || oe.estado_anterior::text || ' → ' || oe.estado_nuevo::text
+             end
            )::text                                                    as titulo,
            case
              when v_es_direccion or v_rol in ('juridico', 'trabajo_social') then
-               nullif(
-                 btrim(
-                   concat_ws(
-                     ' — ',
-                     case when emp.nombre is not null then 'Por ' || emp.nombre end,
-                     nullif(btrim(oe.nota), '')
+               case
+                 when oe.estado_anterior is null then
+                   nullif(btrim(concat_ws(' — ', nullif(btrim(op.numero_oficio), ''), nullif(btrim(op.autoridad_emisora), ''))), '')
+                 else
+                   nullif(
+                     btrim(
+                       concat_ws(
+                         ' — ',
+                         case when emp.nombre is not null then 'Por ' || emp.nombre end,
+                         nullif(btrim(oe.nota), '')
+                       )
+                     ),
+                     ''
                    )
-                 ),
-                 ''
-               )
+               end
              else null
            end                                                        as detalle,
            oe.id                                                      as referencia_id
     from public.orden_proteccion_evento oe
-    join public.orden_proteccion op   on op.id  = oe.orden_proteccion_id
-    left join public.empleado emp     on emp.id = oe.creado_por
+    join public.orden_proteccion op on op.id = oe.orden_id
+    left join public.empleado emp   on emp.id = oe.creado_por
     where op.ficha_id = p_ficha_id
       and op.activo
-      and oe.estado_anterior is not null
 
     union all
 

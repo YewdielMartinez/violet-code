@@ -46,7 +46,7 @@ export const supabaseOrdenProteccionRepository: OrdenProteccionRepository = {
   async actualizar(id: string, input: OrdenProteccionInput): Promise<OrdenProteccion> {
     let query = supabase
       .from('orden_proteccion')
-      // TODO: sin cast cuando database.types.ts incluya `nota_cambio_estado` (migración 66).
+      // TODO: sin cast cuando database.types.ts incluya `nota_cambio_estado` (migración 70).
       .update(toOrdenProteccionUpdate(input) as OrdenProteccionUpdateTyped)
       .eq('id', id)
       .eq('activo', true);

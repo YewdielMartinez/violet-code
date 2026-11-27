@@ -1,5 +1,5 @@
 -- =====================================================================
--- 65_editar_actividad_preventiva.sql (RF-16)
+-- 69_editar_actividad_preventiva.sql (RF-16)
 -- Qué contiene:
 --   1. get_actividades_preventivas: nueva columna de salida
 --      `actualizado_en` (la UI la devuelve como token de bloqueo

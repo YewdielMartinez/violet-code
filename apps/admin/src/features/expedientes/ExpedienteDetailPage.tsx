@@ -16,6 +16,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { EmptyState, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import { puedeAccederHistorialClinico } from '@/domain/models/FichaRegistro';
+import { puedeVerNotasPrivadas } from '@/domain/models/NotaPrivada';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
 import { useAuth } from '@/shared/auth/useAuth';
 import { Icon } from '@/shared/ui/Icon';
@@ -80,6 +81,8 @@ interface TabDefinition {
   icon: string;
   sensitive: boolean;
   historialOnly?: boolean;
+  /** Notas de TS/Jurídico (Psicología las ve dentro del Historial clínico). */
+  notasOnly?: boolean;
 }
 
 const ALL_TABS: readonly TabDefinition[] = [
@@ -89,7 +92,7 @@ const ALL_TABS: readonly TabDefinition[] = [
   { id: 'canalizaciones', label: 'Canalizaciones', icon: 'alt_route', sensitive: true },
   { id: 'ordenes', label: 'Órdenes de Protección', icon: 'gavel', sensitive: true },
   { id: 'seguimiento', label: 'Seguimiento', icon: 'history', sensitive: true },
-  { id: 'notas', label: 'Notas privadas', icon: 'lock', sensitive: true },
+  { id: 'notas', label: 'Notas privadas', icon: 'lock', sensitive: true, notasOnly: true },
   {
     id: 'historial',
     label: 'Historial clínico',
@@ -273,6 +276,7 @@ export default function ExpedienteDetailPage() {
 
   const canAccessSensitiveTabs = puedeAccederAgresor(user?.role);
   const canAccessHistorial = puedeAccederHistorialClinico(user?.role);
+  const canAccessNotas = puedeVerNotasPrivadas(user?.role);
 
   const consultedIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -295,7 +299,9 @@ export default function ExpedienteDetailPage() {
   }
 
   const activeTab: DrawerTab =
-    !canAccessSensitiveTabs || (localTab === 'historial' && !canAccessHistorial)
+    !canAccessSensitiveTabs ||
+    (localTab === 'historial' && !canAccessHistorial) ||
+    (localTab === 'notas' && !canAccessNotas)
       ? 'resumen'
       : localTab;
   const activeExpedienteId = expediente?.id ?? null;
@@ -376,9 +382,10 @@ export default function ExpedienteDetailPage() {
     () =>
       ALL_TABS.filter((tab) => {
         if (tab.historialOnly) return canAccessHistorial;
+        if (tab.notasOnly) return canAccessSensitiveTabs && canAccessNotas;
         return !tab.sensitive || canAccessSensitiveTabs;
       }),
-    [canAccessSensitiveTabs, canAccessHistorial],
+    [canAccessSensitiveTabs, canAccessHistorial, canAccessNotas],
   );
 
   const selectTab = useCallback(
@@ -496,11 +503,15 @@ export default function ExpedienteDetailPage() {
             label: 'Cargando línea de tiempo',
             node: <ExpedienteTimeline key={expediente.id} fichaId={expediente.id} />,
           },
-          {
-            id: 'notas',
-            label: 'Cargando notas privadas',
-            node: <NotasPrivadasPanel key={expediente.id} fichaId={expediente.id} />,
-          },
+          ...(canAccessNotas
+            ? [
+                {
+                  id: 'notas' as const,
+                  label: 'Cargando notas privadas',
+                  node: <NotasPrivadasPanel key={expediente.id} fichaId={expediente.id} />,
+                },
+              ]
+            : []),
           ...(canAccessHistorial
             ? [
                 {
@@ -518,7 +529,7 @@ export default function ExpedienteDetailPage() {
             : []),
         ] as const)
         : [],
-    [expediente, canAccessHistorial],
+    [expediente, canAccessHistorial, canAccessNotas],
   );
 
   return (
@@ -536,26 +547,25 @@ export default function ExpedienteDetailPage() {
               <span>Expedientes</span>
             </button>
 
-            {expediente ? (
-              <>
-                <button
-                  type="button"
-                  className="mk-button mk-button--tonal min-h-11 px-4 text-base"
-                  onClick={() => void handleCopyFolio()}
-                >
-                  <Icon name="content_copy" />
-                  <span>Copiar folio</span>
-                </button>
-                <button
-                  type="button"
-                  className="mk-button mk-button--tonal min-h-11 px-4 text-base"
-                  onClick={() => void handleCopyCurp()}
-                >
-                  <Icon name="badge" />
-                  <span>Copiar CURP</span>
-                </button>
-              </>
-            ) : null}
+            {/* Siempre presentes (deshabilitados mientras carga) para que la barra no cambie de estructura al llegar los datos. */}
+            <button
+              type="button"
+              className="mk-button mk-button--tonal min-h-11 px-4 text-base"
+              disabled={!expediente}
+              onClick={() => void handleCopyFolio()}
+            >
+              <Icon name="content_copy" />
+              <span>Copiar folio</span>
+            </button>
+            <button
+              type="button"
+              className="mk-button mk-button--tonal min-h-11 px-4 text-base"
+              disabled={!expediente}
+              onClick={() => void handleCopyCurp()}
+            >
+              <Icon name="badge" />
+              <span>Copiar CURP</span>
+            </button>
           </>
         }
       />

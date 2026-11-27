@@ -2,8 +2,19 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HistorialClinico, HistorialClinicoVersion } from '@/domain/models/HistorialClinico';
+import type { NotaPrivada } from '@/domain/models/NotaPrivada';
 
-const { useAuthMock, useHistorialMock, useVersionesMock, guardarMutateMock, toastMock } = vi.hoisted(() => ({
+const {
+  useAuthMock,
+  useHistorialMock,
+  useVersionesMock,
+  guardarMutateMock,
+  toastMock,
+  useNotasMock,
+  crearNotaMock,
+} = vi.hoisted(() => ({
+  useNotasMock: vi.fn(),
+  crearNotaMock: vi.fn(),
   useAuthMock: vi.fn(),
   useHistorialMock: vi.fn(),
   useVersionesMock: vi.fn(),
@@ -17,6 +28,14 @@ vi.mock('@/features/expedientes/api', () => ({
   useHistorialClinico: useHistorialMock,
   useGuardarHistorialClinico: () => ({ mutateAsync: guardarMutateMock, isPending: false }),
   handleExpedienteMutationError: vi.fn(),
+}));
+
+vi.mock('@/features/intervenciones/api', () => ({
+  useNotasPrivadas: useNotasMock,
+  useCrearNotaPrivada: () => ({ mutateAsync: crearNotaMock, isPending: false }),
+  useActualizarNotaPrivada: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useArchivarNotaPrivada: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  traducirErrorIntervencion: (_err: unknown, fallback: string) => fallback,
 }));
 
 vi.mock('@/features/expedientes/historialClinicoApi', () => ({
@@ -72,8 +91,19 @@ const VERSIONES = [
   version({}),
 ];
 
+const NOTA_PSICOLOGIA: NotaPrivada = {
+  id: 'nota-1',
+  fichaId: 'ficha-1',
+  areaId: 2,
+  areaNombre: 'Psicología',
+  contenido: 'Reforzar estrategias de contención',
+  creadoEn: '2026-11-27T10:00:00Z',
+  actualizadoEn: '2026-11-27T10:00:00Z',
+  creadoPor: 'emp-1',
+};
+
 function renderPanel(role: string, estado: 'abierto' | 'archivado' = 'abierto') {
-  useAuthMock.mockReturnValue({ status: 'authenticated', user: { id: 'u', role } });
+  useAuthMock.mockReturnValue({ status: 'authenticated', user: { id: 'u', role, areaId: 2, areaNombre: 'Psicología' } });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
@@ -89,6 +119,13 @@ describe('HistorialClinicoPanel', () => {
     toastMock.mockReset();
     useHistorialMock.mockReset().mockReturnValue({
       data: HISTORIAL,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    crearNotaMock.mockReset();
+    useNotasMock.mockReset().mockReturnValue({
+      data: [NOTA_PSICOLOGIA],
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
@@ -175,5 +212,46 @@ describe('HistorialClinicoPanel', () => {
     expect(verCambios.getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByText('Antes')).toBeTruthy();
     expect(screen.getByText('Después')).toBeTruthy();
+  });
+
+  describe('notas privadas de Psicología', () => {
+    it('Psicología las ve dentro del historial clínico y puede agregar una', async () => {
+      crearNotaMock.mockResolvedValue({ ...NOTA_PSICOLOGIA, id: 'nota-2' });
+      renderPanel('psicologia');
+
+      expect(screen.getByRole('region', { name: 'Notas privadas' })).toBeTruthy();
+      expect(screen.getByText('Reforzar estrategias de contención')).toBeTruthy();
+      expect(useNotasMock).toHaveBeenCalledWith('ficha-1', true);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Agregar nota' }));
+      fireEvent.change(screen.getByLabelText('Nueva nota'), { target: { value: 'Sesión de seguimiento' } });
+      fireEvent.click(screen.getByRole('button', { name: /Guardar nota/ }));
+
+      await waitFor(() => expect(crearNotaMock).toHaveBeenCalledTimes(1));
+      expect(crearNotaMock.mock.calls[0][0]).toEqual({
+        fichaId: 'ficha-1',
+        areaId: 2,
+        contenido: 'Sesión de seguimiento',
+      });
+    });
+
+    it('Psicología ve las notas aunque el historial aún no exista', () => {
+      useHistorialMock.mockReturnValue({ data: null, isLoading: false, isError: false, refetch: vi.fn() });
+      renderPanel('psicologia');
+      expect(screen.getByText('Reforzar estrategias de contención')).toBeTruthy();
+    });
+
+    it('Titular y Subdirección no ven nada de las notas de Psicología (ni se consultan)', () => {
+      for (const role of ['titular', 'subdireccion']) {
+        useNotasMock.mockClear();
+        const view = renderPanel(role);
+        expect(screen.queryByRole('region', { name: 'Notas privadas' })).toBeNull();
+        expect(screen.queryByText('Notas privadas')).toBeNull();
+        expect(screen.queryByText('Reforzar estrategias de contención')).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Agregar nota' })).toBeNull();
+        for (const call of useNotasMock.mock.calls) expect(call[1]).toBe(false);
+        view.unmount();
+      }
+    });
   });
 });

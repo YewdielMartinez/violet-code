@@ -19,7 +19,9 @@
 @import '@yewdiel21/motion-kit/css/themes/black' layer(motion-kit);
 @import '@yewdiel21/motion-kit/css/themes/oled' layer(motion-kit);
 @import './app/themes/salmverse.css' layer(motion-kit);
-/* Modo oscuro negro puro para blue/pink/red/black (debe ir DESPUÉS de los temas de motion-kit). */
+/* Contraste AA del tema blue en modo claro (outline) y modo oscuro negro puro para blue/pink/red/black;
+   ambos deben ir DESPUÉS de los temas de motion-kit. */
+@import './app/themes/blue-contrast.css' layer(motion-kit);
 @import './app/themes/dark-black.css' layer(motion-kit);
 @import 'tailwindcss';
 
@@ -128,8 +130,8 @@ body {
   --vc-status-success-bg: #e3f4eb;
   --vc-status-warning: #8f5b0c;
   --vc-status-warning-bg: #fdf1da;
-  --vc-status-info: #2d5f94;
-  --vc-status-info-bg: #e5effa;
+  --vc-status-info: #1f4e8c;
+  --vc-status-info-bg: #e3edfa;
   --vc-status-danger: #b42336;
   --vc-status-danger-bg: #fde8eb;
 }
@@ -139,7 +141,7 @@ body {
   --vc-status-success-bg: #173325;
   --vc-status-warning: #ecc06f;
   --vc-status-warning-bg: #362812;
-  --vc-status-info: #8bb8ea;
+  --vc-status-info: #a3c2e8;
   --vc-status-info-bg: #182a3f;
   --vc-status-danger: #f28b96;
   --vc-status-danger-bg: #3d1820;
@@ -151,7 +153,7 @@ body {
     --vc-status-success-bg: #173325;
     --vc-status-warning: #ecc06f;
     --vc-status-warning-bg: #362812;
-    --vc-status-info: #8bb8ea;
+    --vc-status-info: #a3c2e8;
     --vc-status-info-bg: #182a3f;
     --vc-status-danger: #f28b96;
     --vc-status-danger-bg: #3d1820;

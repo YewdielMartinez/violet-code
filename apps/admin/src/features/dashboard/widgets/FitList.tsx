@@ -1,7 +1,31 @@
-import { useRef, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { FlipGroup } from '@yewdiel21/motion-kit/react';
 import { Link } from 'react-router-dom';
 import { listColumns, rowsThatFit, useElementBox, useWidgetBox } from './box';
+
+/** Selector que no coincide con nada: FlipGroup no captura ni anima mientras la lista aún se está acomodando. */
+const NO_FLIP = '[data-flip-pending]';
+
+/**
+ *  cuando la lista ya se midió y pintó con su tamaño real. Los cambios de capacidad de la primera carga
+ * (estimación → medida real) no son un reacomodo que merezca animarse: FLIP del kit lee estilos calculados de
+ * cada ítem. Sin medidas (jsdom, oculto) nunca se activa.
+ */
+function useSettled(measured: boolean) {
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    if (!measured || settled) return;
+    let second = 0;
+    const first = requestAnimationFrame(() => {
+      second = requestAnimationFrame(() => setSettled(true));
+    });
+    return () => {
+      cancelAnimationFrame(first);
+      cancelAnimationFrame(second);
+    };
+  }, [measured, settled]);
+  return settled;
+}
 
 /** Alto reservado al enlace «+N más» cuando la lista no cabe completa. */
 const MORE_HEIGHT = 32;
@@ -47,6 +71,7 @@ export function FitList<T>({
 }: FitListProps<T>) {
   const [areaRef, measured] = useElementBox<HTMLDivElement>();
   const listRef = useRef<HTMLUListElement>(null);
+  const settled = useSettled(measured !== null);
   const widget = useWidgetBox();
   const w = measured?.w ?? widget.w;
   const h = measured?.h ?? Math.max(rowHeight, widget.h - reserve);
@@ -70,7 +95,7 @@ export function FitList<T>({
 
   return (
     <div ref={areaRef} className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-hidden">
-      <FlipGroup root={listRef} signature={shown.map(getKey).join(',')}>
+      <FlipGroup root={listRef} selector={settled ? undefined : NO_FLIP} signature={shown.map(getKey).join(',')}>
         <ul ref={listRef} aria-label={label} style={style}>
           {shown.map((item) => (
             <li key={getKey(item)} data-flip-id={getKey(item)} className="min-w-0">

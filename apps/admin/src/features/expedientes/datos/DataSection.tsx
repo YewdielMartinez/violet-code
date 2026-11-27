@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { LoadingButton } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/loading-button';
 import { Icon } from '@/shared/ui/Icon';
+import { useEditScroll } from './useEditScroll';
 import './datos.css';
 
 /** Debe coincidir con `--vc-sec-duration` en `datos.css`. */
@@ -74,6 +75,9 @@ function useEditPresence(active: boolean): Presence {
   return state;
 }
 
+/** Menús desplegables abiertos: Escape los cierra a ellos primero, no a la edición. */
+const OPEN_POPUP_SELECTOR = '[role="listbox"], [role="menu"]';
+
 const FIRST_FIELD_SELECTOR =
   'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled]), [role="combobox"]:not([disabled])';
 
@@ -82,6 +86,8 @@ interface DataSectionProps {
   title: string;
   /** Complemento para el nombre accesible del botón (ej. «domicilio» da «Editar domicilio»). */
   editLabel?: string;
+  /** Texto del botón de entrada a la edición (por defecto «Editar»; p. ej. «Cambiar»). */
+  editText?: string;
   canEdit: boolean;
   editing: boolean;
   onStartEdit: () => void;
@@ -101,6 +107,7 @@ interface DataSectionProps {
 export function DataSection({
   title,
   editLabel,
+  editText = 'Editar',
   canEdit,
   editing,
   onStartEdit,
@@ -109,9 +116,24 @@ export function DataSection({
   children,
 }: DataSectionProps) {
   const { mounted, expanded, settled } = useEditPresence(editing);
+  const sectionRef = useRef<HTMLElement>(null);
   const editPaneRef = useRef<HTMLDivElement>(null);
   const editButtonRef = useRef<HTMLButtonElement>(null);
   const wasEditingRef = useRef(false);
+
+  // Mueve el scroll para que el formulario quede a la vista y lo devuelve al terminar.
+  useEditScroll({ anchorRef: sectionRef, editing, ready: settled, settleMs: TRANSITION_MS });
+
+  // Escape cancela la edición pulsando el «Cancelar» del formulario (respeta su estado: deshabilitado al guardar).
+  function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
+    if (!editing || event.key !== 'Escape' || event.defaultPrevented) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.matches('[aria-expanded="true"]') || target?.closest(OPEN_POPUP_SELECTOR)) return;
+    const cancel = editPaneRef.current?.querySelector<HTMLButtonElement>('[data-vc-cancel]');
+    event.preventDefault();
+    event.stopPropagation();
+    if (cancel && !cancel.disabled) cancel.click();
+  }
 
   // Foco al primer campo cuando el formulario ya es visible.
   useEffect(() => {
@@ -134,7 +156,13 @@ export function DataSection({
   }, [editing]);
 
   return (
-    <section aria-label={title} className="vc-sec" data-editing={editing ? 'true' : 'false'}>
+    <section
+      ref={sectionRef}
+      aria-label={title}
+      className="vc-sec"
+      data-editing={editing ? 'true' : 'false'}
+      onKeyDown={handleKeyDown}
+    >
       <header className="vc-sec__head">
         <div className="vc-sec__title-wrap">
           <h4 className="vc-sec__title">{title}</h4>
@@ -148,6 +176,10 @@ export function DataSection({
               </span>
             ) : null}
           </span>
+          {/* Anuncia el modo de edición a lectores de pantalla sin mover el foco. */}
+          <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            {editing ? `Editando ${title}` : ''}
+          </span>
         </div>
 
         {canEdit ? (
@@ -155,13 +187,13 @@ export function DataSection({
             ref={editButtonRef}
             type="button"
             className="mk-button mk-button--tonal mk-button--sm vc-sec__edit"
-            aria-label={editLabel ? `Editar ${editLabel}` : undefined}
+            aria-label={editLabel ? `${editText} ${editLabel}` : undefined}
             aria-hidden={editing ? true : undefined}
             tabIndex={editing ? -1 : undefined}
             disabled={editing}
             onClick={onStartEdit}
           >
-            Editar
+            {editText}
           </button>
         ) : null}
       </header>
@@ -269,6 +301,7 @@ export function SectionFormFooter({ pending, saved, onCancel, submitLabel }: Sec
         type="button"
         disabled={pending || saved}
         onClick={onCancel}
+        data-vc-cancel=""
         className="mk-button mk-button--text"
       >
         Cancelar

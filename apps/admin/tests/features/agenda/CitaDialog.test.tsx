@@ -491,7 +491,8 @@ describe('CitaDialog · crear', () => {
     await screen.findByRole('radio', { name: 'Psicología', ...HIDDEN });
     expect(screen.getByRole('radio', { name: 'Trabajo Social', ...HIDDEN })).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Jurídico', ...HIDDEN })).toBeTruthy();
-    expect(screen.getByText(/inicio de la CURP/)).toBeTruthy();
+    expect(screen.getByText(/caracteres del nombre, apellidos, CURP o folio/)).toBeTruthy();
+    expect(screen.getByPlaceholderText('Buscar por nombre, CURP o folio…')).toBeTruthy();
   });
 
   it('Jurídico solo ve Jurídico (preseleccionada)', async () => {
@@ -602,6 +603,55 @@ describe('CitaDialog · crear', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  it('busca por folio enviando el término tal cual (con guiones y mayúsculas) y muestra el folio en el resultado', async () => {
+    login('recepcion', null);
+    buscarPersonasMock.mockResolvedValue([{ ...MARIA, folio: 'SEM-2026-9091' }]);
+    renderDialog({ kind: 'crear', fecha: DIA });
+
+    const input = await screen.findByRole('combobox', { name: 'Persona', ...HIDDEN });
+    fireEvent.change(input, { target: { value: '  SEM-2026-9091 ' } });
+    const opcion = await screen.findByRole('option', { name: /María Meza/, ...HIDDEN }, { timeout: 3000 });
+    expect(buscarPersonasMock).toHaveBeenCalledTimes(1);
+    expect(buscarPersonasMock).toHaveBeenCalledWith('SEM-2026-9091', 10);
+    expect(opcion.textContent).toContain('SEM-2026-9091');
+  });
+
+  it('un folio parcial de 4 dígitos ya cumple el mínimo de búsqueda', async () => {
+    login('recepcion', null);
+    buscarPersonasMock.mockResolvedValue([MARIA]);
+    renderDialog({ kind: 'crear', fecha: DIA });
+
+    const input = await screen.findByRole('combobox', { name: 'Persona', ...HIDDEN });
+    fireEvent.change(input, { target: { value: '9091' } });
+    await screen.findByRole('option', { name: /María Meza/, ...HIDDEN }, { timeout: 3000 });
+    expect(buscarPersonasMock).toHaveBeenCalledWith('9091', 10);
+  });
+
+  it('«Listo» del selector de fecha cierra solo el selector, no el diálogo de la cita', async () => {
+    login('recepcion', null);
+    const { onClose } = renderDialog({ kind: 'crear', fecha: DIA });
+
+    const abrir = await screen.findByRole('button', { name: 'Abrir calendario', ...HIDDEN }, { timeout: 3000 });
+    fireEvent.click(abrir);
+    const listo = await screen.findByText('Listo', { selector: 'button', ...HIDDEN });
+    const parent = listo.closest('dialog.mk-dialog:not(.mk-dt-popover)');
+    expect(parent).toBeTruthy();
+    const parentClicks = vi.fn();
+    parent?.addEventListener('click', parentClicks);
+    const parentClose = vi.fn();
+    const onMkClose = (e: Event) => {
+      if (e.target === parent) parentClose();
+    };
+    document.addEventListener('mk:close', onMkClose);
+
+    fireEvent.click(listo);
+    document.removeEventListener('mk:close', onMkClose);
+
+    expect(parentClicks).not.toHaveBeenCalled();
+    expect(parentClose).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('«Cita obligatoria (UMECA)» agenda con origen umeca', async () => {
     login('recepcion', null);
     buscarPersonasMock.mockResolvedValue([MARIA]);
@@ -616,5 +666,47 @@ describe('CitaDialog · crear', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Agendar cita', ...HIDDEN }));
 
     await waitFor(() => expect(crearMock).toHaveBeenCalledWith(expect.objectContaining({ personaId: 'p9', origen: 'umeca' })));
+  });
+});
+
+describe('CitaDialog · Escape en el campo Persona', () => {
+  const MARIA = {
+    personaId: 'p9',
+    fichaId: 'f1',
+    folio: 'SEM-2026-0001',
+    nombreCompleto: 'María Meza',
+    curpEnmascarada: 'MEZA91****MSLGRN04',
+    celular: '6671234567',
+  };
+
+  beforeEach(() => {
+    buscarPersonasMock.mockResolvedValue([MARIA]);
+  });
+
+  // El Dialog del kit es un <dialog> nativo: Escape lo cierra por el evento `cancel`, que el
+  // navegador omite si el keydown se marca con preventDefault. jsdom no simula `cancel`, así que
+  // se verifica que el keydown no quede cancelado (fireEvent devuelve false si lo está).
+  it('con la lista cerrada, Escape no se consume y deja que el diálogo se cierre', async () => {
+    login('recepcion', null);
+    renderDialog({ kind: 'crear', fecha: DIA });
+
+    const input = await screen.findByRole('combobox', { name: 'Persona', ...HIDDEN });
+    fireEvent.focus(input);
+    expect(input.getAttribute('aria-expanded')).toBe('false');
+    expect(fireEvent.keyDown(input, { key: 'Escape' })).toBe(true);
+  });
+
+  it('con la lista abierta, Escape cierra solo la lista y no el diálogo', async () => {
+    login('recepcion', null);
+    const { onClose } = renderDialog({ kind: 'crear', fecha: DIA });
+
+    const input = await screen.findByRole('combobox', { name: 'Persona', ...HIDDEN });
+    fireEvent.change(input, { target: { value: 'Mar' } });
+    await screen.findByRole('option', { name: /María Meza/, ...HIDDEN }, { timeout: 3000 });
+    expect(input.getAttribute('aria-expanded')).toBe('true');
+
+    expect(fireEvent.keyDown(input, { key: 'Escape' })).toBe(false);
+    expect(input.getAttribute('aria-expanded')).toBe('false');
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

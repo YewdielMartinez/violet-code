@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { WidgetSize } from '@/features/dashboard/layout';
@@ -214,8 +214,8 @@ describe('WidgetShell (celda y modo personalizar)', () => {
     expect(screen.getByText('contenido')).toBeTruthy();
   });
 
-  it('en edición ofrece asa de arrastre, flechas, tamaños admitidos y ocultar', () => {
-    const h = handlers();
+  it('en edición ofrece asa de arrastre, flechas, tamaños admitidos y ocultar', async () => {
+    const h = { ...handlers(), onHandlePointerDown: vi.fn() };
     const { container } = render(
       <WidgetShell id="alerts" size="l" index={1} count={3} editing {...h}>
         <p>contenido</p>
@@ -229,10 +229,22 @@ describe('WidgetShell (celda y modo personalizar)', () => {
     expect(container.querySelector('.vc-cell > .vc-cell__lift > .vc-cell__controls')).toBeTruthy();
     expect(container.querySelector('.vc-cell__inner')?.hasAttribute('inert')).toBe(true);
 
-    const select = screen.getByRole('combobox', { name: 'Tamaño de Alertas por atender' }) as HTMLSelectElement;
+    // Selector del sistema (Select del kit): se monta escalonado; antes muestra la píldora estática con el valor.
+    expect(screen.getByText('Grande 2×2')).toBeTruthy();
+    const trigger = await screen.findByRole('button', { name: 'Tamaño de Alertas por atender: Grande 2×2' });
+    const select = container.querySelector<HTMLSelectElement>('.vc-size-select select')!;
     expect(Array.from(select.options).map((o) => o.value)).toEqual([...widgetDef('alerts').sizes]);
-    fireEvent.change(select, { target: { value: 'xl' } });
-    expect(h.onResize).toHaveBeenCalledWith('alerts', 'xl');
+    expect(Array.from(select.options).map((o) => o.text)).toContain('Panel completo 4×2');
+    expect(h.onResize).not.toHaveBeenCalled();
+    // Elegir una opción dispara el mismo handler de cambio de tamaño.
+    fireEvent.click(trigger);
+    fireEvent.click(await screen.findByRole('menuitemradio', { name: 'Panel completo 4×2' }));
+    await waitFor(() => expect(h.onResize).toHaveBeenCalledWith('alerts', 'xl'));
+    // El puntero sobre el selector no inicia un arrastre: solo el asa lo hace.
+    fireEvent.pointerDown(trigger);
+    expect(h.onHandlePointerDown).not.toHaveBeenCalled();
+    fireEvent.pointerDown(container.querySelector('[data-vc-handle]')!);
+    expect(h.onHandlePointerDown).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'Mover Alertas por atender antes' }));
     fireEvent.click(screen.getByRole('button', { name: 'Mover Alertas por atender después' }));

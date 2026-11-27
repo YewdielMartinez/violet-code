@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ComponentType } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { ALL_PAGES } from './navigation';
+import { BootBar } from './BootBar';
 import { queryClient } from './queryClient';
 import {
   ActividadesPage,
@@ -59,18 +60,32 @@ function hasStoredSupabaseSession(): boolean {
 
 /**
  * Arranque en paralelo: sin esto la carga en frío era serial (chunk de RequireAuth → validar sesión
- * en su useEffect → chunk de AppLayout → chunk de la página). Aquí, al evaluar el entry, se pide la
- * sesión y se descargan el guard, el layout y la página de la URL actual a la vez.
+ * en su useEffect → chunk de AppLayout → chunk de la página). Aquí, al evaluar el entry, se descargan
+ * el guard, el layout y la página de la URL actual a la vez.
  * RequireAuth/LoginPage siguen llamando a refreshSession() si el estado es 'checking', pero
  * refreshSession() reutiliza la promesa en curso (y al resolverse el estado ya no es 'checking'),
  * así que la sesión se valida una sola vez.
+ *
+ * Rutas públicas (/login, /aviso-de-privacidad): se precarga SOLO su página; la sesión se valida
+ * únicamente si hay token guardado (si no, no hay nada que validar y se evita traer el cliente de
+ * Supabase antes de tiempo: LoginPage lo importa de todos modos al renderizar).
  */
 function warmStart() {
   if (typeof window === 'undefined') return;
-  void import('@/shared/auth/session').then((m) => m.refreshSession());
   const path = window.location.pathname;
-  if (path === '/login' || path === '/aviso-de-privacidad') return;
+  const hasSession = hasStoredSupabaseSession();
+  if (path === '/login' || path === '/aviso-de-privacidad') {
+    preloadPage(path);
+    if (hasSession) void import('@/shared/auth/session').then((m) => m.refreshSession());
+    return;
+  }
+  void import('@/shared/auth/session').then((m) => m.refreshSession());
   void loadRequireAuth();
+  // Sin sesión guardada el guard redirigirá a /login: se precarga esa pantalla en lugar del layout y la página pedida.
+  if (!hasSession) {
+    preloadPage('/login');
+    return;
+  }
   void loadAppLayout();
   preloadPage(path);
 
@@ -125,14 +140,17 @@ const READY: Record<string, ComponentType> = {
   '/usuarios': UsuariosPage,
 };
 
-// Sin esqueleto: las páginas ya están precargadas; si alguna tarda, no se muestra un parpadeo intermedio.
-const pageFallback = null;
+// Las páginas se precargan, así que normalmente no se ve: si una tarda, aparece (tras 150 ms) una barra fija
+// en el borde superior, que no ocupa espacio y por tanto no desplaza el contenido cuando llega la página.
+const pageFallback = <BootBar late />;
+// Arranque: ocupa el lugar de la barra estática de index.html para que no desaparezca al montar React.
+const bootFallback = <BootBar />;
 
 export const router = createBrowserRouter([
   {
     path: '/login',
     element: (
-      <Suspense fallback={null}>
+      <Suspense fallback={bootFallback}>
         <LoginPage />
       </Suspense>
     ),
@@ -140,16 +158,16 @@ export const router = createBrowserRouter([
   {
     path: '/aviso-de-privacidad',
     element: (
-      <Suspense fallback={null}>
+      <Suspense fallback={bootFallback}>
         <PrivacyNoticePage />
       </Suspense>
     ),
   },
   {
     element: (
-      <Suspense fallback={null}>
+      <Suspense fallback={bootFallback}>
         <RequireAuth>
-          <Suspense fallback={null}>
+          <Suspense fallback={bootFallback}>
             <AppLayout />
           </Suspense>
         </RequireAuth>

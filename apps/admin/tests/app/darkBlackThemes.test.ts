@@ -49,6 +49,11 @@ describe.each(['salmverse', 'blue', 'pink', 'red', 'black', 'oled'])('modo oscur
     expect(p.surface).toBe('#000000');
   });
 
+  it('outline (bordes, placeholders) cumple 4.5:1 sobre el fondo y los contenedores neutros del tema', () => {
+    if (theme === 'oled') return; // paleta propia del kit (no usa dark-black.css): su outline #6e6e6e es solo no textual
+    for (const c of containers) expect(cr(p.outline, p[c])).toBeGreaterThanOrEqual(4.5);
+  });
+
   it('contrasta: texto principal AAA, secundario AA sobre todas las superficies, acento AA', () => {
     expect(cr(p['on-surface'], p.background)).toBeGreaterThanOrEqual(7);
     for (const c of containers) expect(cr(p['on-surface-variant'], p[c])).toBeGreaterThanOrEqual(4.5);

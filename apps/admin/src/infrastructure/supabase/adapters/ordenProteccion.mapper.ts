@@ -24,7 +24,7 @@ export type OrdenProteccionInsertRow = Database['public']['Tables']['orden_prote
 /** Tipo generado del `UPDATE` (aún sin `nota_cambio_estado`: ver TODO). */
 export type OrdenProteccionUpdateTyped = Database['public']['Tables']['orden_proteccion']['Update'];
 // TODO: quitar el `&` y el cast del repositorio cuando se regenere database.types.ts
-// (la migración 66 agrega la columna transitoria `nota_cambio_estado`).
+// (la migración 70 agrega la columna transitoria `nota_cambio_estado`).
 /** `nota_cambio_estado`: el trigger la copia a `orden_proteccion_evento` y la limpia. */
 export type OrdenProteccionUpdateRow = OrdenProteccionUpdateTyped & {
   nota_cambio_estado?: string | null;

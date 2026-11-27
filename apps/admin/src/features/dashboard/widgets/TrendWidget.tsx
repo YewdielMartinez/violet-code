@@ -3,6 +3,7 @@ import '@yewdiel21/motion-kit/css/components/chart';
 import { useAlertsSummary } from '../api';
 import { clamp, useElementBox, useWidgetBox } from './box';
 import { Sparkline } from './Sparkline';
+import { useWhenVisible } from './useWhenVisible';
 import { WidgetCard, WidgetEmpty, WidgetSkeleton } from './shared';
 
 const dayLabel = (iso: string) =>
@@ -18,9 +19,37 @@ interface Body {
   closed: number;
 }
 
+/**
+ * Gráfica de barras. Se monta recién cuando su área es visible y el navegador está libre (la animación de
+ * entrada del kit y su pintura son caras en la primera carga); mientras tanto, el esqueleto de gráfica.
+ */
+function TrendChart({ days, w, fallbackHeight }: { days: Body['days']; w: number; fallbackHeight: number }) {
+  const [chartRef, area] = useElementBox<HTMLDivElement>();
+  const ready = useWhenVisible(chartRef);
+  const plotHeight = clamp((area?.h ?? fallbackHeight) - X_AXIS, 72, 420);
+
+  return (
+    <div ref={chartRef} className="min-h-0 min-w-0 flex-1 overflow-hidden">
+      {ready ? (
+        <Chart
+          type="bar"
+          label="Alertas recibidas por día"
+          labels={days.map((d) => dayLabel(d.date))}
+          series={[{ name: 'Alertas', values: days.map((d) => d.count) }]}
+          barStyle="pill"
+          barWidth={w >= 900 ? 44 : 28}
+          axis={plotHeight >= 120}
+          height={plotHeight}
+        />
+      ) : (
+        <WidgetSkeleton variant="chart" />
+      )}
+    </div>
+  );
+}
+
 function TrendBody({ days, closed }: Body) {
   const { w, h } = useWidgetBox();
-  const [chartRef, area] = useElementBox<HTMLDivElement>();
   const total = days.reduce((sum, d) => sum + d.count, 0);
   const peak = days.reduce((best, d) => (d.count > best.count ? d : best), days[0]);
   const average = days.length ? Math.round((total / days.length) * 10) / 10 : 0;
@@ -41,8 +70,6 @@ function TrendBody({ days, closed }: Body) {
       </div>
     );
   }
-
-  const plotHeight = clamp((area?.h ?? h - (stacked ? 64 : 0)) - X_AXIS, 72, 420);
 
   const stats = (
     <div className={side ? 'flex w-40 shrink-0 flex-col justify-center gap-3' : 'flex shrink-0 items-end gap-4'}>
@@ -78,18 +105,7 @@ function TrendBody({ days, closed }: Body) {
   return (
     <div className={`flex h-full min-h-0 gap-4 ${side ? 'flex-row' : 'flex-col'}`}>
       {stats}
-      <div ref={chartRef} className="min-h-0 min-w-0 flex-1 overflow-hidden">
-        <Chart
-          type="bar"
-          label="Alertas recibidas por día"
-          labels={days.map((d) => dayLabel(d.date))}
-          series={[{ name: 'Alertas', values: days.map((d) => d.count) }]}
-          barStyle="pill"
-          barWidth={w >= 900 ? 44 : 28}
-          axis={plotHeight >= 120}
-          height={plotHeight}
-        />
-      </div>
+      <TrendChart days={days} w={w} fallbackHeight={h - (stacked ? 64 : 0)} />
     </div>
   );
 }

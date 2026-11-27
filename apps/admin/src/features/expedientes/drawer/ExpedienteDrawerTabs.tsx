@@ -17,6 +17,8 @@ interface TabDefinition {
   icon: string;
   sensitive: boolean;
   historialOnly?: boolean;
+  /** Notas de TS/Jurídico (Psicología las ve dentro del Historial clínico). */
+  notasOnly?: boolean;
 }
 
 const ALL_TABS: readonly TabDefinition[] = [
@@ -26,7 +28,7 @@ const ALL_TABS: readonly TabDefinition[] = [
   { id: 'canalizaciones', label: 'Canalizaciones', icon: 'alt_route', sensitive: true },
   { id: 'ordenes', label: 'Órdenes de Protección', icon: 'gavel', sensitive: true },
   { id: 'seguimiento', label: 'Seguimiento', icon: 'history', sensitive: true },
-  { id: 'notas', label: 'Notas privadas', icon: 'lock', sensitive: true },
+  { id: 'notas', label: 'Notas privadas', icon: 'lock', sensitive: true, notasOnly: true },
   {
     id: 'historial',
     label: 'Historial clínico',
@@ -40,6 +42,7 @@ interface Props {
   activeTab: DrawerTab;
   canAccessSensitiveTabs: boolean;
   canAccessHistorial?: boolean;
+  canAccessNotas?: boolean;
   onChange: (next: DrawerTab) => void;
   onTabIntent?: (tab: DrawerTab) => void;
 }
@@ -49,6 +52,7 @@ export const ExpedienteDrawerTabs = memo(function ExpedienteDrawerTabs({
   activeTab,
   canAccessSensitiveTabs,
   canAccessHistorial = false,
+  canAccessNotas = true,
   onChange,
   onTabIntent,
 }: Props) {
@@ -58,9 +62,10 @@ export const ExpedienteDrawerTabs = memo(function ExpedienteDrawerTabs({
     () =>
       ALL_TABS.filter((tab) => {
         if (tab.historialOnly) return canAccessHistorial;
+        if (tab.notasOnly) return canAccessSensitiveTabs && canAccessNotas;
         return !tab.sensitive || canAccessSensitiveTabs;
       }),
-    [canAccessSensitiveTabs, canAccessHistorial],
+    [canAccessSensitiveTabs, canAccessHistorial, canAccessNotas],
   );
 
   const activeIndex = Math.max(

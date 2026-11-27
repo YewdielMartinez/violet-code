@@ -1,10 +1,7 @@
 import type { RefObject } from 'react';
 import { gsap } from 'gsap';
-import { DateTimePicker, LoadingButton, Stepper, Steps } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/date-time-picker';
-import '@yewdiel21/motion-kit/css/components/range-calendar';
-import '@yewdiel21/motion-kit/css/components/time-field';
-import '@yewdiel21/motion-kit/css/components/popover';
+import { LoadingButton, Stepper, Steps } from '@yewdiel21/motion-kit/react';
+import { DialogSafeDateTimePicker } from '@/shared/ui/DialogSafeDateTimePicker';
 import '@yewdiel21/motion-kit/css/components/loading-button';
 import '@yewdiel21/motion-kit/css/components/stepper';
 import '@yewdiel21/motion-kit/css/components/steps';
@@ -280,7 +277,7 @@ export function ActividadWizardSteps({
                   data-ficha-invalid={invalidField === 'programadaEn' || undefined}
                 >
                   <span className={labelClass('programadaEn')}>Fecha y hora *</span>
-                  <DateTimePicker
+                  <DialogSafeDateTimePicker
                     label="Fecha y hora de la actividad"
                     value={value.cuando}
                     minuteStep={15}

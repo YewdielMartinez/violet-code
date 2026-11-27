@@ -30,9 +30,14 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
 | `urgencias.ver` | `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `recepcion` |
 | `historial_clinico.acceder` | `titular`, `subdireccion`, `psicologia` (lectura: `get_historial_clinico`, `get_historial_clinico_versiones`) |
 | `historial_clinico.escribir` | `psicologia` únicamente (`guardar_historial_clinico`) |
+| `nota_psicologia.acceder` | `psicologia` únicamente (leer y escribir las notas privadas de Psicología en `nota_area`; Dirección y demás roles, nunca) |
 | `orden_proteccion.escribir` | `titular`, `subdireccion`, `juridico`, `trabajo_social` |
 | `alerta.atender` | `titular`, `subdireccion`, `juridico` (`es_linea_24_7()`) |
 | `alerta.ver_cola` | `titular`, `subdireccion`, `juridico`, `trabajo_social`, `psicologia` |
+
+### Sincronía con la pantalla «Mi perfil»
+- `get_mi_perfil()` calcula los permisos efectivos recorriendo `public.permisos_catalogo()` y conservando las claves con `tiene_permiso(<clave>) = true`.
+- **Cuando una migración agregue o quite una clave en `tiene_permiso()`, debe redefinir `permisos_catalogo()` en la misma migración** (y, en el front, agregar la etiqueta en `apps/admin/src/features/perfil/permisos.ts`). `supabase/tests/72_mi_perfil.test.sql` falla si el catálogo y el `case` de `tiene_permiso()` difieren.
 
 ### Cómo escalar a permisos granulares sin reescribir RLS
 - Hoy `tiene_permiso(p_permiso)` resuelve las capacidades en un `CASE` por rol sin costo de joins adicionales.
@@ -44,9 +49,9 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
 
 | Actor | Origen en BD | Alcance operativo principal |
 |---|---|---|
-| `titular` / `subdireccion` (`es_direccion()`) | `empleado` | Supervisión global, catálogos, cuentas, directorio, bitácora, línea 24/7, expedientes, informes y lectura de todas las `nota_area` (sin crear ni editar). |
+| `titular` / `subdireccion` (`es_direccion()`) | `empleado` | Supervisión global, catálogos, cuentas, directorio, bitácora, línea 24/7, expedientes, informes y lectura de las `nota_area` de Trabajo Social y Jurídico (sin crear ni editar); **nunca** las de Psicología (migración 71). |
 | `trabajo_social` | `empleado` | Alta/edición de `persona`, `ficha_registro`, `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar`, precarga de `pre_registro`, agenda de TS y Psicología, atenciones de TS y órdenes de protección. |
-| `psicologia` | `empleado` | Lectura de Ficha Única, `historial_clinico` propio, `atencion` y `nota_area` de Psicología, su agenda (`cita`) y cola de alertas. |
+| `psicologia` | `empleado` | Lectura de Ficha Única, `historial_clinico` propio, `atencion` y `nota_area` de Psicología (exclusivas de este rol), su agenda (`cita`) y cola de alertas. |
 | `juridico` | `empleado` | Lectura de Ficha Única, su agenda directa (`cita`, puede crear/reagendar en su área), `atencion` y `nota_area` de Jurídico, `orden_proteccion` y línea 24/7 (`alerta`). |
 | `recepcion` | `empleado` | Creación y gestión de `cita` de `trabajo_social`, `psicologia` y `juridico`. Sin acceso a `ficha_registro`, `agresor`, `atencion`, `nota_area` ni `bitacora_acceso`. *(Nota: actualmente lee `persona` directo; se restringe sin CURP en B-08.)* |
 | `umeca` | `usuario_externo` | Sin acceso directo a tablas operativas. Consulta únicamente mediante el RPC `get_umeca_citas()` (audita cada lectura en `bitacora_acceso`). |
@@ -70,7 +75,7 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
 *(Regla transversal de archivado — migración `63`: `orden_proteccion`, `documento` y la subida en `storage.objects` requieren `ficha_editable(ficha_id)`, rechazando con `42501` cuando `ficha_registro.estado = 'archivado'`.)*
 | `cita` | S / I / U (todas) | S (`ts`+`psic`) / U (`ts`; sin I) | S / I / U (`psic`) | S / I / U (`jur`) | S / I / U (`ts`+`psic`+`jur`) | RPC `get_umeca_citas()` | — |
 | `atencion` | S / I / U (todas) | S / I / U (`ts`) | S / I / U (`psic`) | S / I / U (`jur`) | — | — | — |
-| `nota_area` | S (todas) | S / I / U (`ts`) | S / I / U (`psic`) | S / I / U (`jur`) | — | — | — |
+| `nota_area` | S (solo TS y Jur; Psicología no) | S / I / U (`ts`) | S / I / U (`psic`) | S / I / U (`jur`) | — | — | — |
 | `historial_clinico` | S | — | S / I / U | — | — | — | — |
 | `derivacion` | S / I / U | S / I / U | S (propia/destino) / I / U | S (propia/destino) / I / U | — | — | — |
 | `actividad_preventiva`, `actividad_empleado` | S / I / U | S / I / U | S / I / U | S / I / U | S | — | — |

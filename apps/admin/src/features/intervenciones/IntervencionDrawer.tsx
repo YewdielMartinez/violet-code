@@ -4,6 +4,8 @@ import '@yewdiel21/motion-kit/css/components/drawer';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/skeleton';
 import { ESTADO_CITA_LABELS, type AgendaItem } from '@/domain/models/Cita';
+import { puedeVerNotasPrivadas } from '@/domain/models/NotaPrivada';
+import { useAuth } from '@/shared/auth/useAuth';
 import { Icon } from '@/shared/ui/Icon';
 import { ExpedienteTimeline } from './ExpedienteTimeline';
 import { NotasPrivadasPanel } from './NotasPrivadasPanel';
@@ -38,7 +40,10 @@ function IntervencionDrawerBody({ cita, canRegister, permiteAgendar, areaId, onD
   const [tab, setTab] = useState<Tab>(canRegister ? 'hoja' : 'timeline');
   const contextoQuery = useContextoHoja(cita.personaId);
   const contexto = contextoQuery.data;
-  const tabs = canRegister ? TABS : TABS.filter((t) => t.id !== 'hoja');
+  const { user } = useAuth();
+  // Las notas de Psicología viven en su Historial clínico: la pestaña no aplica a ese rol.
+  const puedeNotas = puedeVerNotasPrivadas(user?.role);
+  const tabs = TABS.filter((t) => (t.id === 'hoja' ? canRegister : t.id === 'notas' ? puedeNotas : true));
 
   if (contextoQuery.isLoading) {
     return <Skeleton loading shape="card" lines={5} label="Cargando expediente" />;
@@ -94,7 +99,7 @@ function IntervencionDrawerBody({ cita, canRegister, permiteAgendar, areaId, onD
           />
         ) : null}
         {tab === 'timeline' ? <ExpedienteTimeline fichaId={contexto.fichaId} /> : null}
-        {tab === 'notas' ? <NotasPrivadasPanel fichaId={contexto.fichaId} /> : null}
+        {tab === 'notas' && puedeNotas ? <NotasPrivadasPanel fichaId={contexto.fichaId} /> : null}
       </div>
     </div>
   );

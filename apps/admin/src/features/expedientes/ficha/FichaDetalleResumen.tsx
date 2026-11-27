@@ -104,7 +104,7 @@ export function FichaDetalleResumen({ expediente }: Props) {
     <section aria-label="Datos adicionales" className="vc-datos-adicionales">
       <Skeleton loading={isLoading} shape="card" lines={5} label="Cargando detalle">
         {detail ? (
-          <div className="grid gap-8">
+          <div className="vc-sec-group grid gap-8">
             <DataSection
               title="Identificación y ficha"
               editLabel="identificación y ficha"

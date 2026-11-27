@@ -1,0 +1,107 @@
+/* Notas privadas de Psicología dentro del Historial clínico.
+   Reutiliza el sistema `vc-hc-*` (tipografía, campos, formulario y animaciones de `historial-clinico.css`);
+   aquí solo viven los bloques propios de las notas. Solo transform y opacity; color con tokens del tema;
+   todo se anula con prefers-reduced-motion. */
+
+.vc-hc-notes {
+  --vc-hc-ease: var(--mk-ease-sheet, cubic-bezier(0.22, 1, 0.36, 1));
+  display: grid;
+  gap: 18px;
+  padding-top: 24px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.vc-hc-notes__lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.vc-hc-notes__lock-icon {
+  flex: none;
+  font-size: 18px;
+  color: var(--md-sys-color-primary);
+}
+
+.vc-hc-notes__composer {
+  animation: vc-hc-rise 320ms var(--vc-hc-ease) backwards;
+}
+
+.vc-hc-notes__list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ── Nota ───────────────────────────────────────────────────────────────────────── */
+.vc-hc-note {
+  display: grid;
+  gap: 10px;
+  padding: 18px 22px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container-lowest);
+  transition:
+    border-color 200ms ease,
+    transform 200ms var(--mk-ease-click, ease-out);
+  animation: vc-hc-rise 380ms var(--vc-hc-ease) backwards;
+  animation-delay: calc(var(--i, 0) * 55ms + 60ms);
+}
+
+@media (hover: hover) {
+  .vc-hc-note:hover {
+    border-color: var(--md-sys-color-outline);
+    transform: translate3d(0, -1px, 0);
+  }
+}
+
+.vc-hc-note__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.vc-hc-note__text {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.65;
+  color: var(--md-sys-color-on-surface);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.vc-hc-note__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.vc-hc-note__edit {
+  display: grid;
+  gap: 16px;
+}
+
+.vc-hc-note .vc-hc-note__danger {
+  color: var(--md-sys-color-error);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc-hc-notes__composer,
+  .vc-hc-note {
+    animation: none;
+    transition: none;
+  }
+}

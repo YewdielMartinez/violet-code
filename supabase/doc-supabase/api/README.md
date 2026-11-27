@@ -117,6 +117,13 @@ En la base de datos **no se renombran** las tablas ni las columnas ya creadas; u
 | `actualizar_estado_actividad` | Marca realizada/cancelada o reabre (pendiente) | `actividad.registrar` | Tit, Sub, TS, Psi, Jur | Escritura |
 | `actualizar_actividad_preventiva` | Edita una actividad pendiente y su personal | `actividad.registrar` | Tit, Sub, TS, Psi, Jur | Escritura |
 
+### Mi perfil → [`perfil.md`](./perfil.md)
+
+| RPC | Qué hace | Permiso | Roles | Tipo |
+|---|---|---|---|---|
+| `get_mi_perfil` | Perfil propio con rol, área/dependencia y permisos efectivos | `auth.uid()` | Tit, Sub, TS, Psi, Jur, Rec, UMECA | Lectura |
+| `actualizar_mi_perfil` | Edita nombre y teléfono propios (no rol, área, activo ni correo) | `auth.uid()` | Tit, Sub, TS, Psi, Jur, Rec, UMECA | Escritura |
+
 ### Informes y auditoría → [`informes.md`](./informes.md)
 
 | RPC | Qué hace | Permiso | Roles | Tipo |
@@ -173,6 +180,7 @@ En la base de datos **no se renombran** las tablas ni las columnas ya creadas; u
 | `get_actividades_preventivas` | ✅ | ✅ | ✅ | ✅ | ✅ | — | — |
 | `actualizar_estado_actividad` | ✅ | ✅ | ✅ | ✅ | — | — | — |
 | `actualizar_actividad_preventiva` | ✅ | ✅ | ✅ | ✅ | — | — | — |
+| `get_mi_perfil` / `actualizar_mi_perfil` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — |
 | `get_informe` | ✅ | ⚠️ su área | ⚠️ su área | ⚠️ su área | — | — | — |
 | `get_bitacora` | ✅ | — | — | — | — | — | — |
 | `get_mapa_calor_asentamiento` | ✅ | ✅ | ✅ | ✅ | — | — | — |

@@ -19,6 +19,7 @@ import { Dialog } from "@yewdiel21/motion-kit/react";
 import "@yewdiel21/motion-kit/css/components/dialog";
 import type { StaffRole } from "@/domain/models/Auth";
 import { puedeAccederHistorialClinico } from "@/domain/models/FichaRegistro";
+import { puedeVerNotasPrivadas } from "@/domain/models/NotaPrivada";
 import type { ExpedienteResumen } from "@/domain/models/Persona";
 import { puedeAccederAgresor } from "./agresorApi";
 import { ExpedienteContactoSection } from "./drawer/ExpedienteContactoSection";
@@ -251,6 +252,7 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
 }: Props) {
   const canAccessSensitiveTabs = puedeAccederAgresor(userRole);
   const canAccessHistorial = puedeAccederHistorialClinico(userRole);
+  const canAccessNotas = puedeVerNotasPrivadas(userRole);
   const hostRef = useRef<HTMLDivElement>(null);
   const bodyInnerRef = useRef<HTMLDivElement>(null);
 
@@ -300,7 +302,9 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
   }
 
   const activeTab: DrawerTab =
-    !canAccessSensitiveTabs || (localTab === "historial" && !canAccessHistorial)
+    !canAccessSensitiveTabs ||
+    (localTab === "historial" && !canAccessHistorial) ||
+    (localTab === "notas" && !canAccessNotas)
       ? "resumen"
       : localTab;
   const activeExpedienteId = (expediente ?? displayed)?.id ?? null;
@@ -561,6 +565,7 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
                   activeTab={activeTab}
                   canAccessSensitiveTabs={canAccessSensitiveTabs}
                   canAccessHistorial={canAccessHistorial}
+                  canAccessNotas={canAccessNotas}
                   onChange={selectTab}
                   onTabIntent={handleTabIntent}
                 />
@@ -638,7 +643,9 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
                   </LazyTabPanel>
                 ) : null}
 
-                {canAccessSensitiveTabs && visitedTabs.includes("notas") ? (
+                {canAccessSensitiveTabs &&
+                canAccessNotas &&
+                visitedTabs.includes("notas") ? (
                   <LazyTabPanel
                     active={activeTab === "notas"}
                     contentReady={contentReady}

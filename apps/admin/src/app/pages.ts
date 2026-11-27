@@ -42,6 +42,8 @@ function loadOnce(loader: () => Promise<unknown>) {
 }
 
 const ROUTE_LOADERS: Record<string, () => Promise<unknown>> = {
+  '/login': loadLogin,
+  '/aviso-de-privacidad': loadPrivacyNotice,
   '/': loadDashboard,
   '/directorio': loadDirectory,
   '/expedientes': loadExpedientes,

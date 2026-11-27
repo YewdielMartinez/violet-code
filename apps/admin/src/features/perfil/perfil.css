@@ -1,0 +1,123 @@
+/* Sección «Cuenta» de Configuración: va en el cuerpo de un diálogo (una columna), con tipografía legible. */
+.vc-perfil {
+  min-width: 0;
+}
+
+/* En el diálogo las tarjetas de datos van en una sola columna aunque el viewport sea ancho. */
+.vc-perfil .vc-dato-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.vc-perfil__hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 24px;
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.vc-perfil__avatar {
+  display: grid;
+  width: 60px;
+  height: 60px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.vc-perfil__name {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--md-sys-color-on-surface);
+  overflow-wrap: anywhere;
+}
+
+.vc-perfil__email {
+  margin: 4px 0 0;
+  font-size: 1rem;
+  color: var(--md-sys-color-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.vc-perfil .vc-chip {
+  min-height: 32px;
+  padding: 0 14px;
+  font-size: 0.9375rem;
+}
+
+.vc-perfil .vc-card-label {
+  font-size: 0.8125rem;
+}
+
+.vc-perfil__groups {
+  display: grid;
+  gap: 18px;
+}
+
+.vc-perfil__group-title {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.vc-perfil__hint {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* «Ver permisos»: la lista agrupada se despliega con colapso de altura (grid-rows), cerrada por defecto. */
+.vc-perfil__perm-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vc-perfil__collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 280ms var(--mk-ease-sheet, cubic-bezier(0.22, 1, 0.36, 1)),
+    opacity 200ms ease;
+}
+
+.vc-perfil__collapse[data-open='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.vc-perfil__collapse-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.vc-perfil__collapse[data-open='true'] .vc-perfil__collapse-inner {
+  padding-top: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc-perfil__collapse {
+    transition: none;
+  }
+}
+
+.vc-perfil__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+}

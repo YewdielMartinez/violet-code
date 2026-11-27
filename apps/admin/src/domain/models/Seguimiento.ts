@@ -3,7 +3,7 @@ import type { HojaSeguimientoCopia } from './HojaSeguimiento';
 
 export type PrioridadNivel = Database['public']['Enums']['prioridad_nivel'];
 
-/** Tipos que hoy devuelve `get_linea_tiempo` (migración 66). */
+/** Tipos que hoy devuelve `get_linea_tiempo` (migración 70). */
 export const TIPOS_EVENTO_CONOCIDOS = [
   'registro',
   'archivo',

@@ -1,0 +1,34 @@
+/* Barra de carga de arranque (ver BootBar.tsx). Es `position: fixed`: no ocupa espacio ni causa CLS.
+   index.html la incluye dentro de #root para pintarla en cuanto llega este CSS, antes de que cargue el JS. */
+.vc-boot {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 9999;
+  height: 3px;
+  overflow: hidden;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--md-sys-color-primary, #850e35) 16%, transparent);
+}
+.vc-boot::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: var(--md-sys-color-primary, #850e35);
+  animation: vc-boot 1.1s ease-in-out infinite;
+}
+/* Navegación interna: aparece tras ~150 ms para que un chunk ya precargado no provoque parpadeo. */
+.vc-boot--late {
+  opacity: 0;
+  animation: vc-boot-show 1ms 150ms forwards;
+}
+@keyframes vc-boot {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(250%); }
+}
+@keyframes vc-boot-show {
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vc-boot::after { animation: none; width: 100%; opacity: 0.5; }
+}

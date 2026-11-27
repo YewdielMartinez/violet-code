@@ -1,0 +1,10 @@
+/* Tema "blue" (modo claro): ajustes de contraste WCAG AA sobre la paleta de motion-kit.
+   El kit deja `outline` (#727687) en 4.28:1 sobre el fondo y 3.67:1 sobre las superficies tintadas, por debajo de 4.5:1
+   para placeholders, bordes de campos y etiquetas que lo usan como texto. Se oscurece solo ese rol (#5f6375: >=4.6:1 sobre
+   todas las superficies claras del tema). El resto de pares clave (primary, primary-container, secondary-container,
+   tertiary) ya supera 4.5:1 y no se toca.
+   Se importa DESPUÉS de los temas de motion-kit (misma capa) con el mismo selector, por lo que gana por orden.
+   Modo oscuro: lo cubre dark-black.css (mismos selectores, mayor especificidad). */
+[data-mk-theme="blue"] {
+  --md-sys-color-outline: #5f6375;
+}

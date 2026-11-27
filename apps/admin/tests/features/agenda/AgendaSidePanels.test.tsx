@@ -216,7 +216,7 @@ describe('usePorConfirmar + PorConfirmarList', () => {
 });
 
 describe('useUrgencias + UrgenciasList', () => {
-  it('renderiza folio, nombre, área, enlace al expediente y teléfono', () => {
+  it('renderiza folio, nombre, área y enlace al expediente, sin acción de llamar', () => {
     useListaUrgenciasMock.mockReturnValue(queryOk([urgencia('1'), urgencia('2', { celular: null })]));
     renderUi(<UrgenciasHarness areaId={2} />);
 
@@ -226,15 +226,15 @@ describe('useUrgencias + UrgenciasList', () => {
     expect(screen.getAllByText('Trabajo social')).toHaveLength(2);
     const link = screen.getByRole('link', { name: /Abrir expediente SM-1/ });
     expect(link.getAttribute('href')).toBe('/expedientes/f-1');
-    expect(screen.getByRole('link', { name: /Llamar a Urgente 1/ }).getAttribute('href')).toBe('tel:6679876543');
-    expect(screen.getByLabelText('Sin celular registrado')).toBeTruthy();
+    expect(screen.queryByRole('link', { name: /Llamar/ })).toBeNull();
+    expect(screen.queryByLabelText('Sin celular registrado')).toBeNull();
     expect(screen.getByTestId('count').textContent).toBe('2');
   });
 
-  it('rotula la acción de llamar y la antigüedad de la prioridad', () => {
+  it('rotula la antigüedad de la prioridad y no ofrece llamar', () => {
     useListaUrgenciasMock.mockReturnValue(queryOk([urgencia('1')]));
     renderUi(<UrgenciasHarness />);
-    expect(screen.getByText('Llamar')).toBeTruthy();
+    expect(screen.queryByText('Llamar')).toBeNull();
     expect(screen.getByText(/Desde/)).toBeTruthy();
   });
 

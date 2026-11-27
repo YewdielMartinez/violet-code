@@ -1,21 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Calendar } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/calendar';
-import { useAppointments, type CitaItem, type EstadoCita } from '../api';
+import { getAgendaRange, useAppointments, type CitaItem, type EstadoCita } from '../api';
 import { clamp, useWidgetBox } from './box';
 import { dayAndTime, isoDate, timeOf } from './format';
 import { FitList } from './FitList';
 import { WidgetCard, WidgetEmpty, WidgetSkeleton } from './shared';
-
-function getAgendaRange() {
-  const now = new Date();
-  return {
-    from: isoDate(new Date(now.getFullYear(), now.getMonth(), 1)),
-    to: isoDate(new Date(now.getFullYear(), now.getMonth() + 1, 0)),
-    today: isoDate(now),
-  };
-}
+import { useWhenVisible } from './useWhenVisible';
 
 const ESTADO_LABEL: Record<EstadoCita, string> = {
   agendada: 'Agendada',
@@ -55,6 +47,30 @@ function CitaRow({ c, showDay }: { c: CitaItem; showDay: boolean }) {
 
 function ColumnLabel({ children }: { children: string }) {
   return <p className="mb-2 shrink-0 text-xs font-medium text-on-surface-variant">{children}</p>;
+}
+
+/** Calendario del mes: se monta cuando es visible y el navegador está libre (su primera pintura es costosa). */
+function MonthCalendar({ events, style }: { events: BodyProps['events']; style: CSSProperties }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const ready = useWhenVisible(ref);
+  return (
+    <div ref={ref} className="min-h-0 min-w-0 flex-1 overflow-hidden">
+      {ready ? (
+        <Calendar
+          view="month"
+          hideViews
+          locale="es-MX"
+          firstDay={1}
+          maxEvents={1}
+          events={events}
+          className="vc-calendar-compact"
+          style={style}
+        />
+      ) : (
+        <WidgetSkeleton variant="chart" />
+      )}
+    </div>
+  );
 }
 
 interface BodyProps {
@@ -117,20 +133,7 @@ function AgendaBody({ events, todays, upcoming }: BodyProps) {
           {todayList}
         </div>
       ) : null}
-      {calendar ? (
-        <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
-          <Calendar
-            view="month"
-            hideViews
-            locale="es-MX"
-            firstDay={1}
-            maxEvents={1}
-            events={events}
-            className="vc-calendar-compact"
-            style={calendarStyle}
-          />
-        </div>
-      ) : null}
+      {calendar ? <MonthCalendar events={events} style={calendarStyle} /> : null}
       {three ? (
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <ColumnLabel>Próximas citas</ColumnLabel>
@@ -160,7 +163,7 @@ function AgendaBody({ events, todays, upcoming }: BodyProps) {
  * cuando la celda es lo bastante alta. Privacidad (LGPDPPSO): solo hora, área y estado.
  */
 export function AgendaWidget() {
-  const [{ from, to, today }] = useState(getAgendaRange);
+  const [{ from, to, today }] = useState(() => getAgendaRange());
   const { data, isLoading, isError, refetch } = useAppointments(from, to);
 
   const { events, todays, upcoming } = useMemo(() => {

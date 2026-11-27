@@ -246,3 +246,33 @@
     animation-delay: 0ms !important;
   }
 }
+
+/* Selector de tamaño de la celda (Select del kit en compacto, forma de píldora como el resto de la barra). */
+.vc-size-select {
+  --mk-select-height: 36px;
+  --mk-select-radius: 999px;
+  --mk-select-padding: 0 0.45rem 0 0.9rem;
+  --mk-select-font-size: 0.8125rem;
+  --mk-select-bg: var(--md-sys-color-surface);
+  --mk-select-menu-min-width: 11rem;
+  position: relative;
+  min-width: 0;
+  flex: 1 1 0;
+  margin-inline: 0.25rem;
+}
+
+.vc-size-select > .mk-select {
+  display: block;
+  width: 100%;
+}
+
+.vc-size-select__pending {
+  display: flex;
+  height: 36px;
+  align-items: center;
+  border-radius: 999px;
+  background: var(--md-sys-color-surface);
+  padding: 0 0.9rem;
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.8125rem;
+}

@@ -1,12 +1,9 @@
 import { useEffect, type ReactNode } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { EmptyState } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/empty-state';
 import { refreshSession } from '@/shared/auth/session';
 import { useAuth } from '@/shared/auth/useAuth';
+import { Icon } from '@/shared/ui/Icon';
 import { canAccessPath } from './navigation';
-
-const BACK_HOME = [{ id: 'home', label: 'Volver al inicio' }];
 
 /** Protege las rutas del panel validando sesión en Supabase Auth y permisos por rol. */
 export function RequireAuth({ children }: { children: ReactNode }) {
@@ -34,13 +31,22 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     return (
       <div className="mx-auto max-w-2xl py-16">
         <div className="rounded-3xl bg-surface-container-low p-10">
-          <EmptyState
-            illustration="error"
-            title="Acceso restringido"
-            description="Tu rol actual no tiene permisos para acceder a este módulo."
-            actions={BACK_HOME}
-            onAction={() => navigate('/', { replace: true })}
-          />
+          {/* Marcado propio (no EmptyState del kit): el guard va en la ruta crítica de TODO el panel y el
+              barril de motion-kit arrastraría GSAP (~61 kB gzip) y más CSS solo para este caso raro. */}
+          <div role="alert" className="flex flex-col items-center gap-3 text-center">
+            <Icon name="lock" className="text-5xl text-error" />
+            <h2 className="text-xl font-semibold text-on-surface">Acceso restringido</h2>
+            <p className="max-w-md text-on-surface-variant">
+              Tu rol actual no tiene permisos para acceder a este módulo.
+            </p>
+            <button
+              type="button"
+              className="mt-2 rounded-full bg-primary px-6 py-2.5 font-medium text-on-primary"
+              onClick={() => navigate('/', { replace: true })}
+            >
+              Volver al inicio
+            </button>
+          </div>
         </div>
       </div>
     );

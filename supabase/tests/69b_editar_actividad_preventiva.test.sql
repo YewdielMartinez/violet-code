@@ -1,6 +1,6 @@
 -- =====================================================================
--- 65_editar_actividad_preventiva.test.sql (pgTAP · RF-16)
--- Pruebas para migración 20261128002400_65_editar_actividad_preventiva.sql:
+-- 69b_editar_actividad_preventiva.test.sql (pgTAP · RF-16)
+-- Pruebas para migración 20261128002800_69_editar_actividad_preventiva.sql:
 --   - Permisos: anon, recepcion y umeca rechazados (42501).
 --   - Edición de una actividad pendiente: campos, trim y valores nulos.
 --   - Reemplazo del personal participante (baja lógica y reactivación).

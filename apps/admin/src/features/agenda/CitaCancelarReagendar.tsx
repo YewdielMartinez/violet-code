@@ -1,9 +1,5 @@
 import { useId, type FormEvent } from 'react';
-import { DateTimePicker } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/date-time-picker';
-import '@yewdiel21/motion-kit/css/components/range-calendar';
-import '@yewdiel21/motion-kit/css/components/time-field';
-import '@yewdiel21/motion-kit/css/components/popover';
+import { DialogSafeDateTimePicker } from '@/shared/ui/DialogSafeDateTimePicker';
 import { Icon } from '@/shared/ui/Icon';
 
 const TEXTAREA_CLASS =
@@ -84,7 +80,7 @@ export function ReagendarPanel({
       </p>
       <div className="grid gap-1.5">
         <span className="text-sm font-medium text-on-surface">Nueva fecha y hora *</span>
-        <DateTimePicker
+        <DialogSafeDateTimePicker
           label="Nueva fecha y hora"
           value={cuando}
           minuteStep={15}

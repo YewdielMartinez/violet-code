@@ -61,7 +61,8 @@
     </noscript>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Barra de carga de arranque (src/app/BootBar.tsx + boot.css): se pinta en cuanto llega el CSS, antes del JS. -->
+    <div id="root"><div class="vc-boot" role="progressbar" aria-label="Cargando"></div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
