@@ -41,7 +41,7 @@ export function validateStepIdentidad(input: FichaIdentidadInput): StepValidatio
   if (input.servicioMedico === 'otro' && !input.servicioMedicoOtro.trim()) {
     return { error, field: 'servicioMedicoOtro' };
   }
-  if (input.serviciosSolicitadosAreaIds.length === 0) {
+  if (input.serviciosSolicitadosAreaIds.length === 0 && !input.serviciosSolicitadosOtro.trim()) {
     return { error, field: 'serviciosSolicitadosAreaIds' };
   }
   return { error, field: 'avisoPrivacidadAceptado' };

@@ -109,6 +109,8 @@ export interface FichaIdentidadInput {
   tieneDenuncia: boolean;
   esVictimaDelito: boolean;
   serviciosSolicitadosAreaIds: number[];
+  /** Servicio fuera del catálogo de áreas (texto libre, no genera canalización). */
+  serviciosSolicitadosOtro: string;
   avisoPrivacidadAceptado: boolean;
 }
 
@@ -144,6 +146,7 @@ export interface FichaCompletaDetalle {
   consumoAlcohol: ConsumoAlcohol | null;
   serviciosSolicitados: string[];
   serviciosSolicitadosAreaIds: number[];
+  serviciosSolicitadosOtro: string | null;
   persona: PersonaResumen & {
     escolaridad: EscolaridadNivel | null;
     discapacidad: string | null;
@@ -186,6 +189,7 @@ export interface FichaUpdateInput {
   especificacionDroga?: string | null;
   consumoAlcohol?: ConsumoAlcohol | null;
   serviciosSolicitadosAreaIds?: number[] | null;
+  serviciosSolicitadosOtro?: string | null;
   camposSinDato?: CampoSinDatoFicha[] | null;
 }
 
@@ -209,6 +213,7 @@ export interface FichaActualizada {
   especificacionDroga: string | null;
   consumoAlcohol: ConsumoAlcohol | null;
   serviciosSolicitadosAreaIds: number[];
+  serviciosSolicitadosOtro: string | null;
   actualizadoEn: string;
 }
 
@@ -217,6 +222,10 @@ export interface CambiarPrioridadExpedienteResult {
   prioridad: PrioridadNivel;
   prioridadActualizadaEn: string;
 }
+
+/** Valor de la opción «Otro (especifica)» en el selector de servicios solicitados. */
+export const SERVICIO_SOLICITADO_OTRO = 'otro';
+export const SERVICIO_SOLICITADO_OTRO_LABEL = 'Otro (especifica)';
 
 export const INITIAL_FICHA_IDENTIDAD: FichaIdentidadInput = {
   existingPersonaId: null,
@@ -241,6 +250,7 @@ export const INITIAL_FICHA_IDENTIDAD: FichaIdentidadInput = {
   tieneDenuncia: false,
   esVictimaDelito: false,
   serviciosSolicitadosAreaIds: [],
+  serviciosSolicitadosOtro: '',
   avisoPrivacidadAceptado: true,
 };
 
@@ -293,8 +303,8 @@ export function validateFichaIdentidad(input: FichaIdentidadInput): string | nul
   if (input.servicioMedico === 'otro' && !input.servicioMedicoOtro.trim()) {
     return 'Especifica el servicio médico cuando selecciones «Otro».';
   }
-  if (input.serviciosSolicitadosAreaIds.length === 0) {
-    return 'Selecciona al menos un área o servicio solicitado.';
+  if (input.serviciosSolicitadosAreaIds.length === 0 && !input.serviciosSolicitadosOtro.trim()) {
+    return 'Selecciona al menos un área o especifica otro servicio solicitado.';
   }
   if (!input.avisoPrivacidadAceptado) {
     return 'Es obligatorio registrar la aceptación del Aviso de Privacidad (RNF-04).';
