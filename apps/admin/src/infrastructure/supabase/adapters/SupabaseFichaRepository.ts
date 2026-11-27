@@ -224,6 +224,14 @@ export const supabaseFichaRepository: FichaRepository = {
     if (error) throw error;
   },
 
+  async reopen(fichaId: string, motivo: string): Promise<EstadoFicha> {
+    const { data, error } = await supabase
+      .rpc('reabrir_ficha', { p_ficha_id: fichaId, p_motivo: motivo })
+      .single();
+    if (error) throw error;
+    return data.estado;
+  },
+
   async deactivate(fichaId: string): Promise<void> {
     const { error } = await supabase
       .from('ficha_registro')
