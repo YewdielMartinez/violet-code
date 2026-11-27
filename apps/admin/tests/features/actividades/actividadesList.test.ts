@@ -3,19 +3,17 @@ import {
   FILTROS_INICIALES,
   TAB_ESTADO,
   aIsoMazatlan,
-  agruparActividadesPorDia,
   construirFiltrosServidor,
   diaMazatlan,
+  fechaCortaActividad,
   filtrarActividades,
   hayFiltrosActivos,
   horaActividad,
   mensajeError,
+  ordenarActividades,
   ubicacionActividad,
 } from '@/features/actividades/actividadesList';
 import { act } from './fixtures';
-
-// Jueves 3 dic 2026, 10:00 en Mazatlán (UTC-7).
-const AHORA = new Date('2026-12-03T17:00:00Z');
 
 describe('construirFiltrosServidor', () => {
   it('cada pestaña pide su estado al servidor; «Todas» no filtra', () => {
@@ -72,13 +70,6 @@ describe('filtrarActividades', () => {
     expect(filtrarActividades([vencida], { ...FILTROS_INICIALES, tab: 'realizadas' })).toEqual([]);
   });
 
-  it('busca por institución o lugar sin distinguir mayúsculas ni acentos', () => {
-    const todas = { ...FILTROS_INICIALES, tab: 'todas' as const };
-    expect(filtrarActividades(items, { ...todas, busqueda: 'JUAREZ' }).map((a) => a.id)).toEqual(['1']);
-    expect(filtrarActividades(items, { ...todas, busqueda: 'ahome' }).map((a) => a.id)).toEqual(['1']);
-    expect(filtrarActividades(items, { ...todas, busqueda: 'nada' })).toEqual([]);
-  });
-
   it('filtra por tipo de institución', () => {
     const todas = { ...FILTROS_INICIALES, tab: 'todas' as const };
     expect(filtrarActividades(items, { ...todas, tipoInstitucion: 'empresa_privada' }).map((a) => a.id)).toEqual(['2']);
@@ -86,29 +77,25 @@ describe('filtrarActividades', () => {
 });
 
 describe('hayFiltrosActivos', () => {
-  it('ignora la pestaña y detecta búsqueda, institución y fechas', () => {
+  it('ignora la pestaña y detecta institución y fechas', () => {
     expect(hayFiltrosActivos({ ...FILTROS_INICIALES, tab: 'canceladas' })).toBe(false);
-    expect(hayFiltrosActivos({ ...FILTROS_INICIALES, busqueda: 'x' })).toBe(true);
     expect(hayFiltrosActivos({ ...FILTROS_INICIALES, tipoInstitucion: 'escuela' })).toBe(true);
     expect(hayFiltrosActivos({ ...FILTROS_INICIALES, desde: '2026-12-01' })).toBe(true);
     expect(hayFiltrosActivos({ ...FILTROS_INICIALES, hasta: '2026-12-01' })).toBe(true);
   });
 });
 
-describe('agruparActividadesPorDia', () => {
+describe('ordenarActividades', () => {
   it('pone primero lo pendiente (próximo a lejano), luego lo realizado y lo cancelado (reciente a antiguo)', () => {
-    const grupos = agruparActividadesPorDia(
-      [
-        act('lejana', '2026-12-20T17:00:00Z'),
-        act('realizada-vieja', '2026-11-01T17:00:00Z', { estado: 'realizada' }),
-        act('hoy-tarde', '2026-12-03T22:00:00Z'),
-        act('manana', '2026-12-04T17:00:00Z'),
-        act('realizada-reciente', '2026-12-02T17:00:00Z', { estado: 'realizada' }),
-        act('cancelada', '2026-12-01T17:00:00Z', { estado: 'cancelada' }),
-      ],
-      AHORA,
-    );
-    expect(grupos.map((g) => g.items[0].id)).toEqual([
+    const orden = ordenarActividades([
+      act('lejana', '2026-12-20T17:00:00Z'),
+      act('realizada-vieja', '2026-11-01T17:00:00Z', { estado: 'realizada' }),
+      act('hoy-tarde', '2026-12-03T22:00:00Z'),
+      act('manana', '2026-12-04T17:00:00Z'),
+      act('realizada-reciente', '2026-12-02T17:00:00Z', { estado: 'realizada' }),
+      act('cancelada', '2026-12-01T17:00:00Z', { estado: 'cancelada' }),
+    ]);
+    expect(orden.map((a) => a.id)).toEqual([
       'hoy-tarde',
       'manana',
       'lejana',
@@ -116,34 +103,17 @@ describe('agruparActividadesPorDia', () => {
       'realizada-vieja',
       'cancelada',
     ]);
-    expect(grupos.map((g) => g.estado)).toEqual(['pendiente', 'pendiente', 'pendiente', 'realizada', 'realizada', 'cancelada']);
-    expect(grupos[0].etiqueta).toBe('Hoy');
-    expect(grupos[1].etiqueta).toBe('Mañana');
-    expect(grupos[2].etiqueta).toBe('Domingo 20 de diciembre');
   });
 
   it('las pendientes vencidas quedan arriba, antes de las próximas', () => {
-    const grupos = agruparActividadesPorDia(
-      [act('proxima', '2026-12-05T17:00:00Z'), act('vencida', '2026-11-28T17:00:00Z')],
-      AHORA,
-    );
-    expect(grupos.map((g) => g.items[0].id)).toEqual(['vencida', 'proxima']);
+    const orden = ordenarActividades([act('proxima', '2026-12-05T17:00:00Z'), act('vencida', '2026-11-28T17:00:00Z')]);
+    expect(orden.map((a) => a.id)).toEqual(['vencida', 'proxima']);
   });
 
-  it('agrupa por día y estado, y ordena por hora dentro del día', () => {
-    const grupos = agruparActividadesPorDia(
-      [
-        act('noche', '2026-12-04T01:00:00Z'),
-        act('tarde', '2026-12-03T22:00:00Z'),
-        act('temprano', '2026-12-03T15:00:00Z', { estado: 'realizada' }),
-        act('tarde-2', '2026-12-03T20:00:00Z'),
-      ],
-      AHORA,
-    );
-    expect(grupos.map((g) => [g.estado, g.items.map((a) => a.id)])).toEqual([
-      ['pendiente', ['tarde-2', 'tarde', 'noche']],
-      ['realizada', ['temprano']],
-    ]);
+  it('no modifica la lista original', () => {
+    const original = [act('b', '2026-12-05T17:00:00Z'), act('a', '2026-12-01T17:00:00Z')];
+    ordenarActividades(original);
+    expect(original.map((a) => a.id)).toEqual(['b', 'a']);
   });
 });
 
@@ -151,6 +121,7 @@ describe('formatos de fecha en Mazatlán', () => {
   it('toma el día y la hora de Mazatlán aunque el navegador esté en otra zona', () => {
     expect(diaMazatlan('2026-12-04T01:00:00Z')).toBe('2026-12-03');
     expect(horaActividad('2026-12-03T17:30:00Z')).toBe('10:30');
+    expect(fechaCortaActividad('2026-12-04T01:00:00Z')).toBe('03 dic 2026');
   });
 
   it('convierte la hora de pared a ISO con UTC-7', () => {

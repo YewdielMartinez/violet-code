@@ -15,6 +15,7 @@ import {
   NuevaFichaPage,
   ActividadFormPage,
   PendingModulePage,
+  PrivacyNoticePage,
   UsuarioFormPage,
   UsuariosPage,
   preloadPage,
@@ -68,7 +69,7 @@ function warmStart() {
   if (typeof window === 'undefined') return;
   void import('@/shared/auth/session').then((m) => m.refreshSession());
   const path = window.location.pathname;
-  if (path === '/login') return;
+  if (path === '/login' || path === '/aviso-de-privacidad') return;
   void loadRequireAuth();
   void loadAppLayout();
   preloadPage(path);
@@ -133,6 +134,14 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <LoginPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/aviso-de-privacidad',
+    element: (
+      <Suspense fallback={null}>
+        <PrivacyNoticePage />
       </Suspense>
     ),
   },

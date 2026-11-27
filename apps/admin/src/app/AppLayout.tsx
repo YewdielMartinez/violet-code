@@ -16,7 +16,7 @@ import { useLocation, useNavigate, useOutlet } from 'react-router-dom';
 import { Nav } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/nav';
 import { useAuth } from '@/shared/auth/useAuth';
-import { BrandMark, BrandName } from '@/shared/ui/BrandMark';
+import { BrandMark } from '@/shared/ui/BrandMark';
 import { Icon } from '@/shared/ui/Icon';
 import { getMobilePaths, getNavigationForRole } from './navigation';
 import { useNavStyle } from './preferences';
@@ -146,8 +146,9 @@ export function AppLayout() {
             onClick={() => navigate('/')}
             aria-label={`${APP_NAME}, ir al inicio`}
           >
-            {/* Marca propia en lugar de .mk-nav__icon: el logo SVG no es un glifo de Material Symbols. */}
-            <BrandMark size={36} className="shrink-0" />
+            {/* Marca de la app en lugar de .mk-nav__icon (no es un glifo de Material Symbols). El riel y "magnify"
+                solo muestran la marca (el kit oculta .mk-nav__name) y la reducen vía .vc-brand-mark en src/index.css. */}
+            <BrandMark size={36} />
             <span className="mk-nav__name">{APP_NAME}</span>
           </button>
         }

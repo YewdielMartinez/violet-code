@@ -252,7 +252,7 @@ afterEach(() => {
 });
 
 describe('ExpedienteDetailPage', () => {
-  it('renderiza identidad, resumen, acciones de gestión y registra consulta una sola vez en StrictMode', async () => {
+  it('renderiza identidad, resumen y registra consulta una sola vez en StrictMode', async () => {
     renderDetailPage();
 
     expect(await screen.findByRole('heading', { name: 'Adriana Meza Gutiérrez' })).toBeTruthy();
@@ -264,7 +264,8 @@ describe('ExpedienteDetailPage', () => {
     expect(within(identityCard).getByText('Prioritario')).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'Llamar' })).toBeNull();
     expect(screen.getByTestId('ficha-resumen')).toBeTruthy();
-    expect(screen.getByTestId('ficha-gestion')).toBeTruthy();
+    // La zona de gestión ya no vive en la pestaña Datos (archivar/desarchivar está en el menú del listado).
+    expect(screen.queryByTestId('ficha-gestion')).toBeNull();
 
     await waitFor(() => {
       expect(registerConsultMock).toHaveBeenCalledTimes(1);
@@ -272,7 +273,7 @@ describe('ExpedienteDetailPage', () => {
     expect(registerConsultMock).toHaveBeenCalledWith(SAMPLE_EXPEDIENTE.id);
   });
 
-  it('oculta las pestañas sensibles y acciones de gestión para recepción y UMECA', async () => {
+  it('oculta las pestañas sensibles para recepción y UMECA', async () => {
     for (const role of ['recepcion', 'umeca'] as const) {
       cleanup();
       useAuthMock.mockReturnValue({ status: 'authenticated', user: makeUser(role) });
@@ -286,7 +287,6 @@ describe('ExpedienteDetailPage', () => {
       expect(screen.queryByRole('tab', { name: /Órdenes/i })).toBeNull();
       expect(screen.queryByRole('tab', { name: /Seguimiento/i })).toBeNull();
       expect(screen.queryByRole('tab', { name: /Notas privadas/i })).toBeNull();
-      expect(screen.queryByTestId('ficha-gestion')).toBeNull();
     }
   });
 

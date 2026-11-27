@@ -8,11 +8,11 @@ import '@yewdiel21/motion-kit/css/components/pill-button';
 import { AuthError, login, refreshSession } from '@/shared/auth/session';
 import { useAuth } from '@/shared/auth/useAuth';
 import { PasswordField } from './PasswordField';
-import { BrandMark, BrandName } from '@/shared/ui/BrandMark';
+import { BrandMark } from '@/shared/ui/BrandMark';
 import { useDocumentTitle } from '@/shared/ui/PageHeader';
 import { ThemeToggleButton } from '@/shared/ui/ThemeToggleButton';
 import { LoginHero } from './LoginHero';
-import { PrivacyNoticeDialog } from './PrivacyNoticeDialog';
+import { PrivacyNoticeLink } from './PrivacyNoticeLink';
 
 type LoadingState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -156,13 +156,6 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-full flex-col overflow-hidden bg-background">
-
-      {/* Acento de color muy suave: el morado se usa con moderación. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-40 -right-40 size-[36rem] rounded-full bg-primary opacity-[0.07] blur-3xl"
-      />
-
       <header className="relative flex items-center justify-between gap-4 px-6 py-6 sm:px-10">
         <div className="flex items-center gap-3">
           <BrandMark size={36} />
@@ -170,7 +163,7 @@ export default function LoginPage() {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggleButton variant="header" />
-          <PrivacyNoticeDialog />
+          <PrivacyNoticeLink />
         </div>
       </header>
 

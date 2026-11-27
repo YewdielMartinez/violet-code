@@ -18,10 +18,18 @@ describe('FichaRegistro (validaciones RNF-04 y precarga móvil)', () => {
       curp: 'GALA900512MSLNRR01',
       nombres: 'Laura',
       apellidoPaterno: 'García',
+      estadoCivil: 'soltero' as const,
+      ocupacionId: 2,
+      escolaridad: 'primaria' as const,
       serviciosSolicitadosAreaIds: [1],
       avisoPrivacidadAceptado: false,
     };
     expect(validateFichaIdentidad(base)).toMatch(/Aviso de Privacidad/i);
+
+    // Estado civil, ocupación y escolaridad son obligatorios.
+    expect(validateFichaIdentidad({ ...base, estadoCivil: '' })).toMatch(/estado civil/i);
+    expect(validateFichaIdentidad({ ...base, ocupacionId: null })).toMatch(/ocupación/i);
+    expect(validateFichaIdentidad({ ...base, escolaridad: '' })).toMatch(/escolaridad/i);
 
     expect(
       validateFichaIdentidad({
