@@ -979,6 +979,11 @@ isOneToOne: false
               "actualizado_en": string,"estado": Database["public"]['Enums']["estado_ficha"],"ficha_id": string
             }[]
                            },
+"reabrir_ficha":
+{ Args: { "p_ficha_id": string,"p_motivo"?: string }; Returns: {
+              "actualizado_en": string,"estado": Database["public"]['Enums']["estado_ficha"],"ficha_id": string
+            }[]
+                           },
 "area_id_por_clave":
 { Args: { "p_clave": string }; Returns: number
                            },

@@ -182,6 +182,22 @@ export function useArchiveFicha() {
   });
 }
 
+export function useReopenFicha() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ fichaId, motivo }: { fichaId: string; motivo: string }) =>
+      supabaseFichaRepository.reopen(fichaId, motivo),
+    onSuccess: (estado, { fichaId }) => {
+      // Refleja el nuevo estado (abierto / en seguimiento) al instante; la invalidación reconcilia con el servidor.
+      queryClient.setQueriesData<ExpedienteResumen[]>(
+        { queryKey: ['expedientes', 'list'] },
+        (list) => list?.map((item) => (item.id === fichaId ? { ...item, estado } : item)),
+      );
+      void queryClient.invalidateQueries({ queryKey: ['expedientes'] });
+    },
+  });
+}
+
 export function useDeactivateFicha() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -23,7 +23,10 @@ import '@yewdiel21/motion-kit/css/components/select';
 import '@yewdiel21/motion-kit/css/components/skeleton';
 import { preloadPage } from '@/app/pages';
 import { ArchivarExpedienteDialog } from './ArchivarExpedienteDialog';
+import { DesarchivarExpedienteDialog } from './DesarchivarExpedienteDialog';
 import { useArchiveExpediente } from './ficha/useArchiveExpediente';
+import { useReopenExpediente } from './ficha/useReopenExpediente';
+import { isSupervisor } from '@/domain/models/Auth';
 import { useAuth } from '@/shared/auth/useAuth';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { ToolbarPrimaryButton } from '@/shared/ui/Toolbar';
@@ -42,6 +45,7 @@ import {
   RETRY_ACTION,
   ROW_ACTIONS,
   ROW_ACTIONS_WITH_ARCHIVE,
+  ROW_ACTIONS_WITH_ARCHIVE_AND_REOPEN,
   decorateExpedienteRows,
   formatTableDate,
   type ExpedienteRow,
@@ -52,7 +56,7 @@ interface TableSectionProps {
   isLoading: boolean;
   rows: ExpedienteRow[];
   actions: DataAction[];
-  /** Ids ya archivados: su menú no ofrece «Archivar expediente». */
+  /** Ids ya archivados: su menú ofrece «Desarchivar» en vez de «Archivar». */
   archivedIds: ReadonlySet<string>;
   emptyDescription: string;
   onRowAction: (action: string, row: ExpedienteRow) => void;
@@ -71,26 +75,31 @@ const ExpedientesTableSection = memo(function ExpedientesTableSection({
   onTableClick,
   onTableKeyDown,
 }: TableSectionProps) {
-  // El menú de filas es un único panel compartido: al abrirlo se oculta «Archivar» si la fila ya está archivada.
-  function syncArchiveItem(event: MouseEvent<HTMLDivElement>) {
+  // El menú de filas es un único panel compartido: al abrirlo se muestra «Archivar» o «Desarchivar»
+  // según el estado de la fila.
+  function syncArchiveItems(event: MouseEvent<HTMLDivElement>) {
     const target = event.target;
     if (!(target instanceof Element)) return;
     const trigger = target.closest('[data-mk-dt-row-menu]');
     if (!trigger) return;
     const rowId = trigger.closest<HTMLTableRowElement>('tr')?.dataset.id;
-    const item = event.currentTarget.querySelector<HTMLElement>(
-      '[data-mk-dt-panel="menu"] [data-mk-value="archive"]',
-    );
-    if (!item) return;
-    const hide = rowId ? archivedIds.has(rowId) : false;
-    item.hidden = hide;
-    item.style.display = hide ? 'none' : '';
+    const archived = rowId ? archivedIds.has(rowId) : false;
+    const setVisible = (value: string, visible: boolean) => {
+      const item = event.currentTarget.querySelector<HTMLElement>(
+        `[data-mk-dt-panel="menu"] [data-mk-value="${value}"]`,
+      );
+      if (!item) return;
+      item.hidden = !visible;
+      item.style.display = visible ? '' : 'none';
+    };
+    setVisible('archive', !archived);
+    setVisible('reopen', archived);
   }
 
   return (
     <div
       onPointerOver={() => preloadPage('/expedientes/preview')}
-      onClickCapture={syncArchiveItem}
+      onClickCapture={syncArchiveItems}
     >
       <Skeleton loading={isLoading} shape="card" lines={6} label="Cargando expedientes">
         <DataTable<ExpedienteRow>
@@ -134,9 +143,16 @@ export default function ExpedientesPage() {
 
   const canCreateExpediente = user ? canLookupPreRegistro(user.role) : false;
   // Mismo criterio que la zona de gestión del detalle (`FichaGestionAcciones`).
-  const rowActions = canCreateExpediente ? ROW_ACTIONS_WITH_ARCHIVE : ROW_ACTIONS;
+  // Desarchivar (`expediente.reabrir`) solo lo permite titular y subdirección.
+  const rowActions = !canCreateExpediente
+    ? ROW_ACTIONS
+    : isSupervisor(user?.role)
+      ? ROW_ACTIONS_WITH_ARCHIVE_AND_REOPEN
+      : ROW_ACTIONS_WITH_ARCHIVE;
   const { archive, isArchiving } = useArchiveExpediente();
+  const { reopen, isReopening } = useReopenExpediente();
   const [archiveTarget, setArchiveTarget] = useState<ExpedienteResumen | null>(null);
+  const [reopenTarget, setReopenTarget] = useState<ExpedienteResumen | null>(null);
 
   const setQuickFilter = useCallback(
     (next: QuickFilter) => {
@@ -222,6 +238,7 @@ export default function ExpedientesPage() {
       if (!match) return;
       if (action === 'open') openExpediente(match);
       else if (action === 'archive' && match.estado !== 'archivado') setArchiveTarget(match);
+      else if (action === 'reopen' && match.estado === 'archivado') setReopenTarget(match);
     },
     [byId, openExpediente],
   );
@@ -235,6 +252,12 @@ export default function ExpedientesPage() {
     if (!archiveTarget) return;
     const ok = await archive(archiveTarget);
     if (ok) setArchiveTarget(null);
+  }
+
+  async function handleConfirmReopen(motivo: string) {
+    if (!reopenTarget) return;
+    const ok = await reopen(reopenTarget, motivo);
+    if (ok) setReopenTarget(null);
   }
 
   const handleTableClick = useCallback(
@@ -344,6 +367,12 @@ export default function ExpedientesPage() {
         busy={isArchiving}
         onCancel={() => setArchiveTarget(null)}
         onConfirm={() => void handleConfirmArchive()}
+      />
+      <DesarchivarExpedienteDialog
+        folio={reopenTarget?.folio ?? null}
+        busy={isReopening}
+        onCancel={() => setReopenTarget(null)}
+        onConfirm={(motivo) => void handleConfirmReopen(motivo)}
       />
 
     </>
