@@ -208,7 +208,7 @@ interface PreRegistroRow {
 
 | Permiso               | Roles        | Tipo      | Bitácora                     | Migración                        |
 | --------------------- | ------------ | --------- | ---------------------------- | -------------------------------- |
-| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por triggers (`'crear'`) | `_10_`, actualizada hasta `_58_` |
+| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por triggers (`'crear'`) | `_10_`, actualizada hasta `_59_` |
 
 **Llamada**
 
@@ -288,6 +288,7 @@ interface CrearFichaPayload {
 
 - Resuelve la persona por `existingPersonaId` o por CURP; si no existe, la crea.
 - Si la persona ya tiene una ficha "trunca" (sin estudio ni registros hijos) la **reutiliza** con `update`; nunca borra.
+- Si se omiten o van vacíos `tieneTrabajo`, `tieneEmbarazo`, `tieneDenuncia`, `esVictimaDelito`, `numeroHijas` o `numeroHijosHombres`, se guardan como `null` ("sin dato", nunca `false` ni `0`).
 - El folio `SEM-AAAA-NNNN` lo genera la base.
 - Si había un `pre_registro` con la misma CURP, el trigger lo liga a la persona.
 
@@ -618,7 +619,7 @@ const { data, error } = await supabase
 
 | Permiso               | Roles        | Tipo      | Bitácora                                            | Migración              |
 | --------------------- | ------------ | --------- | --------------------------------------------------- | ---------------------- |
-| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí (`ficha_registro` + `ficha_servicio_solicitado`) | `_35_`, `_57_`, `_58_` |
+| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí (`ficha_registro` + `ficha_servicio_solicitado`) | `_35_`, `_57_`, `_58_`, `_59_` |
 
 **Llamada**
 
@@ -638,8 +639,9 @@ const { data, error } = await supabase
 - No modifica `folio`, `persona_id`, `estado`, `aviso_privacidad_aceptado_en`, `registrada_en` ni `activo`.
 - Si se pasa `p_servicios_solicitados_area_ids` con áreas válidas, sincroniza y registra altas/bajas en `bitacora_acceso` (`ficha_servicio_solicitado`); `[]` los limpia todos y `null` los conserva.
 - `p_drogas` acepta `TipoDroga[]` (`'no_consume'` es exclusivo) y `p_consumo_alcohol` usa `ConsumoAlcohol`.
+- `p_campos_sin_dato?: string[]` permite regresar a `null` ("sin dato") los campos permitidos (`estado_civil`, `ocupacion_id`, `tiene_trabajo`, `numero_hijas`, `numero_hijos_hombres`, `servicio_medico`, `tiene_embarazo`, `tiene_denuncia`, `es_victima_delito`, `drogas`, `consumo_alcohol`).
 - `42501`: rol sin `expediente.escribir`.
-- `23514`: expediente archivado (`"Reabre el expediente para editarlo"`), área inexistente o inconsistencia de drogas/`servicio_medico_otro`.
+- `23514`: expediente archivado (`"Reabre el expediente para editarlo"`), área/campo en `p_campos_sin_dato` inválido o inconsistencia de drogas/`servicio_medico_otro`.
 - `23505`: `p_actualizado_en` viejo (`"Este registro fue modificado por otra persona. Recarga los datos."`).
 
 ---

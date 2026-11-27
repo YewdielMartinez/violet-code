@@ -1,12 +1,12 @@
 # `crear_ficha_completa`
 
-- **Migración:** [`20261128001600_58_consumo_como_lista.sql`](../../migrations/20261128001600_58_consumo_como_lista.sql) *(actualiza `_10_`, `_11_`, `_12_`, `_13_`, `_18_`, `_57_`)*
+- **Migración:** [`20261128001700_59_casillas_sin_dato.sql`](../../migrations/20261128001700_59_casillas_sin_dato.sql) *(actualiza `_10_`, `_11_`, `_12_`, `_13_`, `_18_`, `_57_`, `_58_`)*
 - **Permiso RBAC:** `tiene_permiso('expediente.escribir')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`.
 
 ## 1. Entrada (`p_payload jsonb`)
 Objeto con tres secciones:
-- `identidad`: `curp`, `nombres`, `apellidoPaterno`, `apellidoMaterno`, `celular`, `escolaridad`, `discapacidad`, `grupoEtnico`, `religion`, `estadoCivil`, `ocupacionId`, `ocupacionOtra`, `tieneTrabajo`, `numeroHijas`, `numeroHijosHombres`, `servicioMedico`, `servicioMedicoOtro`, `tieneEmbarazo`, `tieneDenuncia`, `esVictimaDelito`, `drogas` (`tipo_droga[]`; `'no_consume'` es exclusivo), `especificacionDroga` (solo cuando hay consumo distinto de `'no_consume'`), `consumoAlcohol` (`'no_consume' | 'ocasional' | 'frecuente'`), `serviciosSolicitadosAreaIds` (opcional; puede omitirse, ser `null` o `[]`), `avisoPrivacidadAceptado` (`true`).
+- `identidad`: `curp`, `nombres`, `apellidoPaterno`, `apellidoMaterno`, `celular`, `escolaridad`, `discapacidad`, `grupoEtnico`, `religion`, `estadoCivil`, `ocupacionId`, `ocupacionOtra`, `tieneTrabajo` (`boolean | null`), `numeroHijas` (`number | null`), `numeroHijosHombres` (`number | null`), `servicioMedico`, `servicioMedicoOtro`, `tieneEmbarazo` (`boolean | null`), `tieneDenuncia` (`boolean | null`), `esVictimaDelito` (`boolean | null`), `drogas` (`tipo_droga[]`; `'no_consume'` es exclusivo), `especificacionDroga` (solo cuando hay consumo distinto de `'no_consume'`), `consumoAlcohol` (`'no_consume' | 'ocasional' | 'frecuente'`), `serviciosSolicitadosAreaIds` (opcional; puede omitirse, ser `null` o `[]`), `avisoPrivacidadAceptado` (`true`). Omisión o vacío en casillas e hijos se guarda como `null` ("sin dato", nunca `false` ni `0`).
 - `domicilio`: `asentamientoId` o `codigoPostalForaneo`, `calle`, `numeroExterior`, `numeroInterior`, `referencias`, `zona`.
 - `estudio`: `ingresoMensualPropio`, `numeroDependientes`, `tieneApoyo`, `especificacionApoyo`, `tipoVivienda`, `material`, `materialOtro`, `servicios` (`servicio_vivienda[]`), `bienes` (`bien_vivienda[]`), `aportantes[]` (`nombre` opcional; si se envía no vacío, máximo 150 caracteres).
 
