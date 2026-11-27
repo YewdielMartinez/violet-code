@@ -21,6 +21,12 @@ interface AccountRepository {
      * `registrar_mi_perfil`. Devuelve `true` si la cuenta ya tiene perfil al terminar.
      */
     suspend fun ensureProfile(): AccountResult<Boolean>
+
+    /**
+     * Datos que la usuaria capturó al registrarse (`get_mi_pre_registro`), sin nada del expediente.
+     * `Success(null)` si la cuenta aún no tiene perfil. Solo en memoria: no se guarda en el teléfono.
+     */
+    suspend fun getMyProfile(): AccountResult<UserProfile?>
 }
 
 /** Botón de ayuda (RF-18). El servidor decide prioridad, persona y límite de envíos. */

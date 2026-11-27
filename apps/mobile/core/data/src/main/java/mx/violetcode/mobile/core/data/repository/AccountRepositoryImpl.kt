@@ -23,7 +23,10 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
+import mx.violetcode.mobile.core.data.mapper.MiPreRegistroDto
+import mx.violetcode.mobile.core.data.mapper.toDomain
 import mx.violetcode.mobile.core.data.supabase.toAccountFailure
+import mx.violetcode.mobile.core.domain.account.UserProfile
 import mx.violetcode.mobile.core.domain.account.AccountFailure
 import mx.violetcode.mobile.core.domain.account.AccountRepository
 import mx.violetcode.mobile.core.domain.account.AccountResult
@@ -137,6 +140,23 @@ internal class AccountRepositoryImpl(
             AccountResult.Failure(e.toAccountFailure())
         }
     }
+
+    override suspend fun getMyProfile(): AccountResult<UserProfile?> {
+        val user = client.auth.currentUserOrNull() ?: return AccountResult.Failure(AccountFailure.NotSignedIn)
+        return try {
+            var row = fetchPreRegistro()
+            if (row == null) {
+                // Registro pendiente de confirmar por correo: se completa y se vuelve a leer.
+                if ((ensureProfile() as? AccountResult.Success)?.value == true) row = fetchPreRegistro()
+            }
+            AccountResult.Success(row?.toDomain(user.email))
+        } catch (e: Exception) {
+            AccountResult.Failure(e.toAccountFailure())
+        }
+    }
+
+    private suspend fun fetchPreRegistro(): MiPreRegistroDto? =
+        client.postgrest.rpc("get_mi_pre_registro").decodeList<MiPreRegistroDto>().firstOrNull()
 
     /** Borra del `user_metadata` los datos del registro ya consumidos (la CURP no debe quedarse ahí). */
     private suspend fun clearPendingProfileData() {

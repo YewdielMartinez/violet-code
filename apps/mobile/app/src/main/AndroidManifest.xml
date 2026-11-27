@@ -14,7 +14,7 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@style/Theme.VioletCode">
 
         <!--
             Sin intent-filter propio: se entra por uno de los dos alias de abajo.

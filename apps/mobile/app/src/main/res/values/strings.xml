@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Nombre visible en el teléfono. Pendiente D-09: nombre neutro/discreto. -->
-    <string name="app_name">Violet Code</string>
+    <string name="app_name">SIA-SEMUJERES</string>
     <!-- Nombre del ícono cuando el modo discreto está activo. No debe mencionar la app real. -->
     <string name="disguise_app_name">Calculadora</string>
 </resources>

@@ -1,4 +1,4 @@
-# Violet Code Mobile
+# SIA-SEMUJERES Mobile
 
 App Android de la usuaria. Kotlin + Jetpack Compose + Material 3. **Clean Architecture + MVVM**, inyección con **Koin**, directorio **offline-first** con Room.
 
@@ -51,12 +51,12 @@ DirectorioScreen ──collect── DirectorioViewModel ──► ObserveDirect
 
 ## Tema
 
-`core/designsystem/.../theme/VioletColors.kt` lo **genera** `npm run tokens` (mismo color que el panel web). No editar a mano.
+`core/designsystem/.../theme/VioletColors.kt` lo **genera** `npm run tokens` desde `apps/admin/src/app/themes/salmverse.css` (tema por defecto del panel: burdeos `#850E35` y blanco en claro; negro puro `#000000` con superficies neutras y acentos rosa en oscuro). No editar a mano. Sin color dinámico (Material You): la paleta de marca siempre aplica. El fondo de ventana y de la pantalla de arranque (`res/values*/themes.xml`, `colors.xml`) usa blanco / negro.
 Tailwind no aplica en Android nativo (Compose no usa CSS); la consistencia con el panel viene de los mismos tokens.
 
 ## Línea de diseño y microinteracciones
 
-La app comparte la línea del panel web: los colores salen del tema `purple` de `@yewdiel21/motion-kit` (claro y oscuro) y el movimiento imita su vocabulario (`dist/css/tokens.css`). Todo vive en `core:designsystem`; las pantallas no definen curvas ni duraciones sueltas.
+La app comparte la línea del panel web: los colores salen del tema `salmverse` del panel (claro y oscuro) y el movimiento imita su vocabulario (`dist/css/tokens.css`). Todo vive en `core:designsystem`; las pantallas no definen curvas ni duraciones sueltas.
 
 | Pieza (`core:designsystem`) | Qué hace | Equivalente en motion-kit |
 |---|---|---|
@@ -65,7 +65,7 @@ La app comparte la línea del panel web: los colores salen del tema `purple` de 
 | `Modifier.fadeInOnAppear(index)` | Aparición con fade + ascenso de 16 dp, 60 ms de retraso por índice (máx. 8 pasos), una sola vez por elemento | `fade-content` (sin desenfoque) |
 | `HoldToConfirmButton` | Botón circular: mantener ~1 s llena un anillo; soltar antes lo regresa; al completar vibra y llama `onConfirm`. Con TalkBack basta el doble toque (acción semántica `onClick`) | `hold-confirm` |
 | `ThemeModeSwitch` | Interruptor claro/oscuro con sol que gira hacia luna en la perilla | `glass-switch` con `icons="theme"` |
-| `VioletTheme(themeMode)` + `ThemeMode` | Claro / oscuro / sistema sobre `VioletLightScheme` / `VioletDarkScheme`; tipografía DM Sans | temas `purple`, `--mk-font` |
+| `VioletTheme(themeMode)` + `ThemeMode` | Claro / oscuro / sistema sobre `VioletLightScheme` / `VioletDarkScheme`; tipografía DM Sans | tema `salmverse`, `--mk-font` |
 
 Detalles:
 
@@ -90,6 +90,15 @@ Detalles:
 - **Refugios (`categoria = 'refugio'`) nunca muestran ni esperan domicilio:** la BD lo prohíbe con un `CHECK`; el mapper lo descarta otra vez, la lectura de Room lo ignora y la tarjeta tampoco lo pinta (con prueba en `DirectoryMappersTest`).
 - **RLS:** `directorio_institucion_select` es `to authenticated using (activo or es_empleado_activo())` y `supabase/doc-supabase/api/app-movil.md` indica que `anon` no lee tablas. Sin sesión, `refresh()` falla con `Unauthorized` (401/403); la pantalla muestra lo guardado y, si no hay nada, los números nacionales de `EmergencyFallback` (911 y 089, sin domicilio) con un aviso para iniciar sesión. Para ver el directorio completo antes de registrarse haría falta una migración **nueva** (las aplicadas no se editan) con `grant select` a `anon` y una política `to anon using (activo)`: es un catálogo público.
 - La línea de apoyo que se ofrece en el Violentómetro sale de este mismo directorio (`ObserveSupportHotlineUseCase`: primero `linea_apoyo`; si no hay, la primera de emergencia).
+
+- **Refresco al iniciar sesión:** `DirectorioViewModel` observa `ObserveSessionUseCase` y vuelve a pedir el directorio cuando la sesión pasa a autenticada (ya no hace falta pulsar «Actualizar»).
+
+## Cuenta y «Mi perfil»
+
+- **Navegación:** Ajustes, Mi perfil, Iniciar sesión y Crear cuenta no son pestañas; la barra superior muestra una flecha «Volver» (`VioletApp.kt`), y el botón/gesto «atrás» del sistema usa la pila del `NavHost`. Tocar la pestaña Inicio también regresa.
+- **Entrada:** Ajustes → tarjeta de cuenta (avatar con iniciales + nombre → «Mi perfil»; sin sesión, «Iniciar sesión / Crear cuenta»). Inicio saluda «Hola, <primer nombre>» con sesión.
+- **Datos:** RPC `get_mi_pre_registro()` (migración 27; la usuaria no puede leer `pre_registro` directo) + correo de la sesión. `get_mi_estado_app()` (migración 45) no trae nombre. Solo en memoria, sin Room. CURP se muestra `ABCD******NN` y celular `******1234` (`ProfileMasking`, core:domain). El estado es siempre el neutro «Cuenta activa»: nunca se revela si hay expediente ligado.
+- **Cerrar sesión:** botón en Mi perfil con confirmación (`SignOutUseCase`); al terminar regresa a Inicio.
 
 ## Violentómetro (Orientación, RF-26 / 26.1)
 
@@ -124,8 +133,8 @@ Para que, si alguien revisa el teléfono, la app no se vea. **Ajustes** (engrane
 **Pruebas** (`./gradlew test`): `CalculatorEngineTest` (calculadora y detección del candidato a PIN), `PinTest` (hash, verificación, formato, retraso y bloqueo), `ViolentometroTest`, `ViolentometroColorsTest`, `OrientacionViewModelTest`, `DirectoryMappersTest`, `ObserveSupportHotlineUseCaseTest`.
 
 **Probar en el emulador**
-1. `./gradlew :app:installDebug` y abrir «Violet Code». Ajustes (engrane) → Modo discreto → crear PIN (p. ej. 1234).
+1. `./gradlew :app:installDebug` y abrir «SIA-SEMUJERES». Ajustes (engrane) → Modo discreto → crear PIN (p. ej. 1234).
 2. Ir al inicio del emulador: el ícono ahora es «Calculadora». Abrirla, calcular `2+3=` (da 5), escribir `1234` y `=`: se abre la app.
 3. Pulsar **Salir rápido**: vuelve la calculadora. Mandar la app a segundo plano y regresar: pide PIN. En «Recientes» aparece «Calculadora» con la pantalla en blanco.
 4. Equivocarse 5 veces con el PIN: aunque luego se escriba bien, no abre hasta pasar 30 s.
-5. Ajustes → desactivar: vuelve el ícono «Violet Code».
+5. Ajustes → desactivar: vuelve el ícono «SIA-SEMUJERES».

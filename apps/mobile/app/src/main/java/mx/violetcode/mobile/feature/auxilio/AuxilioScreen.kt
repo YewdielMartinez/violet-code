@@ -249,12 +249,3 @@ private fun Countdown(secondsLeft: Int, onCancel: () -> Unit) {
         Text("Cancelar", style = MaterialTheme.typography.titleLarge)
     }
 }
-
-/** Mensajes genéricos: no detallan datos del servidor. */
-private fun AccountFailure.helpMessage(): String = when (this) {
-    AccountFailure.NotSignedIn -> "Tu sesión terminó. Inicia sesión para enviar la alerta."
-    AccountFailure.Network -> "No hay conexión. La alerta no se envió."
-    AccountFailure.AlertLimitReached -> "Ya enviaste varias alertas en la última hora."
-    AccountFailure.ProfileMissing -> "Tu cuenta aún no está lista. Inicia sesión de nuevo e inténtalo."
-    else -> "No se pudo enviar la alerta."
-}

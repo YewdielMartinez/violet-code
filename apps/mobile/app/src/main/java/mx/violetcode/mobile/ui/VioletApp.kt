@@ -9,6 +9,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Home
@@ -54,6 +55,7 @@ import mx.violetcode.mobile.feature.directorio.DirectorioScreen
 import mx.violetcode.mobile.feature.inicio.InicioScreen
 import mx.violetcode.mobile.feature.orientacion.OrientacionScreen
 import mx.violetcode.mobile.feature.ajustes.AjustesScreen
+import mx.violetcode.mobile.feature.perfil.PerfilScreen
 
 /** Rutas de cuenta (no son pestañas de la barra inferior). */
 private const val ROUTE_LOGIN = "login"
@@ -61,6 +63,9 @@ private const val ROUTE_REGISTRO = "registro"
 
 /** Ajustes de seguridad (modo discreto). Fuera de la barra inferior: se abre desde la barra superior. */
 private const val ROUTE_AJUSTES = "ajustes"
+
+/** «Mi perfil» (con sesión). Se abre desde la tarjeta de cuenta de Ajustes; no es pestaña. */
+private const val ROUTE_PERFIL = "perfil"
 
 private enum class Destination(
     val route: String,
@@ -95,6 +100,14 @@ fun VioletApp(
         }
     }
 
+    // Fuera de las pestañas hay que poder volver: flecha de la barra superior (el botón/gesto «atrás» del sistema
+    // ya lo hace el NavHost). Si por alguna razón no hay a dónde regresar, se va a Inicio.
+    val currentRoute = current?.destination?.route
+    val showBack = currentRoute != null && Destination.entries.none { it.route == currentRoute }
+    fun goBack() {
+        if (!nav.popBackStack()) navigateTab(Destination.Inicio.route)
+    }
+
     // Cambio de pestaña = navegación lateral: solo desvanecer, corto (sin deslizar).
     val reducedMotion = rememberReducedMotion()
     val enterFade = if (reducedMotion) EnterTransition.None
@@ -105,7 +118,15 @@ fun VioletApp(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Violet Code", fontWeight = FontWeight.SemiBold) },
+                title = { Text("SIA-SEMUJERES", fontWeight = FontWeight.SemiBold) },
+                // Rutas fuera de la barra inferior (Ajustes, Mi perfil, Login, Registro): flecha para volver.
+                navigationIcon = {
+                    if (showBack) {
+                        IconButton(onClick = ::goBack) {
+                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Volver")
+                        }
+                    }
+                },
                 actions = {
                     IconButton(onClick = { nav.navigate(ROUTE_AJUSTES) { launchSingleTop = true } }) {
                         Icon(Icons.Outlined.Settings, contentDescription = "Ajustes")
@@ -163,7 +184,15 @@ fun VioletApp(
             }
             composable(Destination.Orientacion.route) { OrientacionScreen(onHelp = { navigateTab(Destination.Auxilio.route) }) }
             composable(Destination.Directorio.route) { DirectorioScreen() }
-            composable(ROUTE_AJUSTES) { AjustesScreen() }
+            composable(ROUTE_AJUSTES) {
+                AjustesScreen(
+                    onOpenProfile = { nav.navigate(ROUTE_PERFIL) { launchSingleTop = true } },
+                    onLogin = { nav.navigate(ROUTE_LOGIN) { launchSingleTop = true } },
+                    onRegister = { nav.navigate(ROUTE_REGISTRO) { launchSingleTop = true } },
+                )
+            }
+            // Tras cerrar sesión (o si la sesión caduca) se regresa a Inicio.
+            composable(ROUTE_PERFIL) { PerfilScreen(onSignedOut = { navigateTab(Destination.Inicio.route) }) }
             // Cuenta (RF-33): fuera de la barra inferior. Al terminar se regresa a la pantalla previa (Auxilio).
             composable(ROUTE_LOGIN) {
                 LoginScreen(

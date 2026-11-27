@@ -41,6 +41,7 @@ import mx.violetcode.mobile.core.designsystem.component.VioletMessageCard
 import mx.violetcode.mobile.core.designsystem.motion.fadeInOnAppear
 import mx.violetcode.mobile.core.domain.disguise.PinPolicy
 import mx.violetcode.mobile.disguise.DisguiseController
+import mx.violetcode.mobile.feature.perfil.AccountCard
 import org.koin.compose.koinInject
 
 /**
@@ -48,7 +49,12 @@ import org.koin.compose.koinInject
  * Esta pantalla solo se ve con la app desbloqueada; la calculadora nunca la muestra.
  */
 @Composable
-fun AjustesScreen(controller: DisguiseController = koinInject()) {
+fun AjustesScreen(
+    onOpenProfile: () -> Unit,
+    onLogin: () -> Unit,
+    onRegister: () -> Unit,
+    controller: DisguiseController = koinInject(),
+) {
     val enabled by controller.enabled.collectAsState()
     var dialog by remember { mutableStateOf<Dialog?>(null) }
     var neutralSite by remember { mutableStateOf(controller.neutralSiteOnExit) }
@@ -65,11 +71,18 @@ fun AjustesScreen(controller: DisguiseController = koinInject()) {
             modifier = Modifier.semantics { heading() }.fadeInOnAppear(index = 0),
         )
 
+        AccountCard(
+            onOpenProfile = onOpenProfile,
+            onLogin = onLogin,
+            onRegister = onRegister,
+            modifier = Modifier.fadeInOnAppear(index = 1),
+        )
+
         notice?.let { VioletMessageCard(it) }
 
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-            modifier = Modifier.fillMaxWidth().fadeInOnAppear(index = 1),
+            modifier = Modifier.fillMaxWidth().fadeInOnAppear(index = 2),
         ) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 SwitchRow(
@@ -96,7 +109,7 @@ fun AjustesScreen(controller: DisguiseController = koinInject()) {
         if (!enabled) {
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                modifier = Modifier.fillMaxWidth().fadeInOnAppear(index = 2),
+                modifier = Modifier.fillMaxWidth().fadeInOnAppear(index = 3),
             ) {
                 Column(Modifier.padding(16.dp)) {
                     SwitchRow(

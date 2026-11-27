@@ -80,7 +80,7 @@ class MainActivity : ComponentActivity() {
                         statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { darkTheme },
                         navigationBarStyle = SystemBarStyle.auto(
                             lightScrim = Color.argb(0xe6, 0xFF, 0xFF, 0xFF),
-                            darkScrim = Color.argb(0x80, 0x1b, 0x1b, 0x1b),
+                            darkScrim = Color.argb(0x80, 0x00, 0x00, 0x00),
                         ) { darkTheme },
                     )
                     onDispose {}

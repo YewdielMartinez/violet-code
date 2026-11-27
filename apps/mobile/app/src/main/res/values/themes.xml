@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema de la ventana (antes de que Compose pinte): fondo blanco, igual que el tema claro salmverse. -->
+    <style name="Theme.VioletCode.Base" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:colorBackground">@color/window_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <style name="Theme.VioletCode" parent="Theme.VioletCode.Base" />
+</resources>

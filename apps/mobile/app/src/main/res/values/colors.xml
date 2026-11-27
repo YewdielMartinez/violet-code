@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fondo de la ventana y de la pantalla de arranque: igual al tema por defecto del panel (salmverse). -->
+    <color name="brand_primary">#850E35</color>
+    <color name="window_background">#FFFFFF</color>
+</resources>

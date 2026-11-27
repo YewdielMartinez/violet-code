@@ -23,17 +23,27 @@ internal class AlertRepositoryImpl(private val client: SupabaseClient) : AlertRe
         if (row == null) AccountResult.Failure(AccountFailure.Unexpected)
         else AccountResult.Success(AlertReceipt(row.alertaId))
     } catch (e: PostgrestRestException) {
-        // SQLSTATE 23514 para "sin perfil" y para "límite alcanzado": se distinguen por el texto.
-        val text = e.message.orEmpty()
-        AccountResult.Failure(
-            when {
-                text.contains("límite", ignoreCase = true) -> AccountFailure.AlertLimitReached
-                text.contains("perfil", ignoreCase = true) -> AccountFailure.ProfileMissing
-                else -> e.toAccountFailure()
-            },
-        )
+        AccountResult.Failure(e.toAlertFailure())
     } catch (e: Exception) {
         AccountResult.Failure(e.toAccountFailure())
+    }
+}
+
+/**
+ * SQLSTATE 23514 sirve para "sin perfil" y para "límite alcanzado" (3 alertas por hora): se distinguen por
+ * el texto del RPC. Cualquier otro error se traduce a un motivo genérico.
+ */
+internal fun PostgrestRestException.toAlertFailure(): AccountFailure =
+    alertFailureFor(message) ?: toAccountFailure()
+
+/** Clasifica el texto del error de `enviar_alerta`; `null` si no es ninguno de los casos conocidos. */
+internal fun alertFailureFor(message: String?): AccountFailure? {
+    val text = message.orEmpty()
+    return when {
+        text.contains("límite", ignoreCase = true) || text.contains("limite", ignoreCase = true) ->
+            AccountFailure.AlertLimitReached
+        text.contains("perfil", ignoreCase = true) -> AccountFailure.ProfileMissing
+        else -> null
     }
 }
 

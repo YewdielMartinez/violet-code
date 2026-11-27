@@ -27,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import mx.violetcode.mobile.core.designsystem.motion.fadeInOnAppear
 import mx.violetcode.mobile.core.designsystem.motion.pressScale
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.androidx.compose.koinViewModel
 import java.time.LocalTime
 
 /**
@@ -47,8 +50,12 @@ fun InicioScreen(
     onEmergency: () -> Unit,
     onOrientacion: () -> Unit,
     onDirectorio: () -> Unit,
+    viewModel: InicioViewModel = koinViewModel(),
 ) {
-    val greeting = remember { greetingForNow() }
+    val firstName by viewModel.firstName.collectAsStateWithLifecycle()
+    val timeGreeting = remember { greetingForNow() }
+    // Con sesión: «Hola, <nombre>» (solo el primer nombre, discreto). Sin sesión: saludo por hora.
+    val greeting = firstName?.let { "Hola, $it" } ?: timeGreeting
 
     Column(
         modifier = Modifier

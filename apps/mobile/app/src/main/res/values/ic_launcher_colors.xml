@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Fondo del ícono adaptable (mobile-app-assets-kit). -->
-    <color name="ic_launcher_background">#FAF2E7</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
     <!-- Ícono neutro del modo discreto («Calculadora»). -->
     <color name="ic_calculator_background">#37474F</color>
 </resources>

@@ -24,6 +24,7 @@ private class FakeAccounts(
     override suspend fun signIn(email: String, password: String) = AccountResult.Success(Unit)
     override suspend fun signOut() = Unit
     override suspend fun ensureProfile(): AccountResult<Boolean> = AccountResult.Success(profileReady)
+    override suspend fun getMyProfile(): AccountResult<UserProfile?> = AccountResult.Success(null)
 }
 
 private class FakeAlerts : AlertRepository {

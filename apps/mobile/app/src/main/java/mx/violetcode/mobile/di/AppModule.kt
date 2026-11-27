@@ -1,6 +1,7 @@
 package mx.violetcode.mobile.di
 
 import mx.violetcode.mobile.core.domain.usecase.ObserveDirectoryUseCase
+import mx.violetcode.mobile.core.domain.usecase.ObserveMyProfileUseCase
 import mx.violetcode.mobile.core.domain.usecase.ObserveSessionUseCase
 import mx.violetcode.mobile.core.domain.usecase.ObserveSupportHotlineUseCase
 import mx.violetcode.mobile.core.domain.usecase.RefreshDirectoryUseCase
@@ -15,6 +16,8 @@ import mx.violetcode.mobile.disguise.DisguiseController
 import mx.violetcode.mobile.disguise.DisguiseStore
 import mx.violetcode.mobile.core.domain.disguise.PinGate
 import mx.violetcode.mobile.feature.directorio.DirectorioViewModel
+import mx.violetcode.mobile.feature.inicio.InicioViewModel
+import mx.violetcode.mobile.feature.perfil.PerfilViewModel
 import mx.violetcode.mobile.feature.orientacion.OrientacionViewModel
 import mx.violetcode.mobile.preferences.ThemePreferences
 import org.koin.android.ext.koin.androidContext
@@ -39,11 +42,14 @@ val appModule = module {
     factoryOf(::SignInUseCase)
     factoryOf(::SignOutUseCase)
     factoryOf(::ObserveSessionUseCase)
+    factoryOf(::ObserveMyProfileUseCase)
     factoryOf(::SendHelpAlertUseCase)
 
     viewModelOf(::RegistroViewModel)
     viewModelOf(::LoginViewModel)
     viewModelOf(::AyudaViewModel)
+    viewModelOf(::PerfilViewModel)
+    viewModelOf(::InicioViewModel)
 
     // Violentómetro (solo en memoria) y línea de apoyo del directorio.
     factoryOf(::ObserveSupportHotlineUseCase)
