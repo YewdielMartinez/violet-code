@@ -1,0 +1,248 @@
+/* Cuadrícula del tablero. Cada widget ocupa una celda de N columnas × M filas (data-cs / data-rs).
+   Las columnas dependen del ANCHO DEL TABLERO (container query), no de la ventana: con el menú lateral
+   abierto o cerrado el contenido útil cambia y la cuadrícula se adapta sola.
+     < 36rem  → 1 columna  ·  ≥ 36rem → 2 columnas  ·  ≥ 64rem → 4 columnas
+   Las filas tienen alto fijo: así cada widget mide su espacio y lo llena (lista con más filas, gráfica más alta). */
+
+.vc-dash {
+  container: vc-dash / inline-size;
+}
+
+.vc-dash,
+.vc-edit-panel {
+  /* Curva del kit para todo el movimiento del tablero. */
+  --vc-ease: var(--mk-ease-quint, cubic-bezier(0.23, 1, 0.32, 1));
+  --vc-primary-line: color-mix(in srgb, var(--md-sys-color-primary) 55%, transparent);
+}
+
+.vc-dash__grid {
+  /* offsetParent de las celdas: el arrastre mide sus cajas sin pasar por transformaciones. */
+  position: relative;
+  --vc-row: clamp(11.5rem, 19vh, 14rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: var(--vc-row);
+  grid-auto-flow: row dense;
+  gap: 1rem;
+}
+
+.vc-cell {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  grid-column: span 1;
+}
+
+.vc-cell[data-rs='2'] {
+  grid-row: span 2;
+}
+
+.vc-cell__inner {
+  height: 100%;
+  min-height: 0;
+  border-radius: 1.5rem;
+  /* El borde discontinuo siempre existe (transparente) para poder desvanecerlo al entrar/salir de edición. */
+  outline: 2px dashed transparent;
+  outline-offset: -2px;
+  transition:
+    opacity 0.3s var(--vc-ease),
+    outline-color 0.3s var(--vc-ease);
+}
+
+.vc-cell__inner section {
+  transition: border-color 0.3s var(--vc-ease);
+}
+
+@container vc-dash (min-width: 36rem) {
+  .vc-dash__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .vc-cell[data-cs='2'],
+  .vc-cell[data-cs='4'] {
+    grid-column: span 2;
+  }
+}
+
+@container vc-dash (min-width: 64rem) {
+  .vc-dash__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .vc-cell[data-cs='4'] {
+    grid-column: span 4;
+  }
+}
+
+/* Entrada escalonada de la primera pintura: solo opacidad y desplazamiento. Los widgets que aparecen
+   después entran con FLIP (fundido + escala) desde WidgetGrid. */
+@media (prefers-reduced-motion: no-preference) {
+  .vc-dash__grid[data-initial] > .vc-cell {
+    animation: vc-cell-in 0.42s var(--vc-ease) backwards;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+}
+
+@keyframes vc-cell-in {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+
+/* Ocultar: la celda se desvanece y se encoge un poco antes de salir (luego los vecinos cierran el hueco). */
+.vc-dash__grid > .vc-cell[data-leaving] {
+  pointer-events: none;
+  animation: vc-cell-out 0.18s var(--vc-ease) forwards;
+}
+
+@keyframes vc-cell-out {
+  to {
+    opacity: 0;
+    scale: 0.94;
+  }
+}
+
+/* ── Modo personalizar ───────────────────────────────────────────────────────────────────────────
+   Entrar/salir sin saltos: el borde discontinuo se desvanece, el contenido se atenúa y los controles
+   suben con fundido (transiciones de opacity/translate, sin layout). */
+.vc-cell[data-editing] .vc-cell__inner {
+  opacity: 0.72;
+  outline-color: var(--vc-primary-line);
+}
+
+.vc-cell[data-editing] .vc-cell__inner section {
+  border-color: transparent;
+}
+
+.vc-cell__controls {
+  transition:
+    opacity 0.24s var(--vc-ease),
+    translate 0.24s var(--vc-ease);
+}
+
+.vc-cell__controls[data-state='pre'],
+.vc-cell__controls[data-state='out'] {
+  opacity: 0;
+  translate: 0 10px;
+}
+
+.vc-edit-panel {
+  /* Por encima de la cuadrícula: al entrar/salir, las celdas se deslizan por debajo del panel. */
+  position: relative;
+  z-index: 1;
+  transition:
+    opacity 0.24s var(--vc-ease),
+    translate 0.24s var(--vc-ease);
+}
+
+.vc-edit-panel[data-state='pre'],
+.vc-edit-panel[data-state='out'] {
+  opacity: 0;
+  translate: 0 -8px;
+}
+
+/* ── Arrastre ────────────────────────────────────────────────────────────────────────────────────
+   Tres capas por celda: la celda (su lugar en la cuadrícula; los vecinos la animan con FLIP), el hueco
+   (`__slot`, muestra dónde caerá con el tamaño real del widget) y la capa levantada (`__lift`), que sigue
+   al puntero con translate/rotate escritos desde JS. Todo es transform/opacity; will-change solo mientras dura. */
+.vc-cell__slot {
+  position: absolute;
+  inset: 0;
+  border-radius: 1.5rem;
+  border: 2px dashed var(--vc-primary-line);
+  background: color-mix(in srgb, var(--md-sys-color-primary-container) 40%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s var(--vc-ease);
+}
+
+.vc-cell[data-dragging] .vc-cell__slot {
+  opacity: 1;
+}
+
+.vc-cell__lift {
+  position: relative;
+  height: 100%;
+  border-radius: 1.5rem;
+  transition: scale 0.2s var(--vc-ease);
+}
+
+/* Sombra elevada en un pseudo-elemento: solo cambia su opacidad (no se anima box-shadow). */
+.vc-cell__lift::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow:
+    var(--mk-shadow, 0 18px 40px rgb(0 0 0 / 0.18)),
+    0 0 0 1.5px var(--vc-primary-line);
+  transition: opacity 0.2s var(--vc-ease);
+}
+
+.vc-cell[data-lifted],
+.vc-cell[data-settling] {
+  z-index: 30;
+}
+
+/* Contexto de apilamiento solo mientras está levantado: así la sombra (z-index -1) queda detrás del
+   widget y, en reposo, los menús y tooltips de los widgets siguen pudiendo salir de su celda. */
+.vc-cell[data-lifted] .vc-cell__lift,
+.vc-cell[data-settling] .vc-cell__lift {
+  isolation: isolate;
+}
+
+.vc-cell[data-lifted] .vc-cell__lift {
+  scale: 1.02;
+}
+
+.vc-cell[data-lifted] .vc-cell__lift::before {
+  opacity: 1;
+}
+
+.vc-cell[data-lifted] .vc-cell__inner {
+  opacity: 1;
+}
+
+.vc-cell[data-dragging] .vc-cell__lift,
+.vc-cell[data-settling] .vc-cell__lift {
+  will-change: translate, rotate, scale;
+}
+
+/* Al soltar: la capa vuelve al hueco con la curva del kit. */
+.vc-cell[data-settling] .vc-cell__lift {
+  transition:
+    translate 0.28s var(--vc-ease),
+    rotate 0.28s var(--vc-ease),
+    scale 0.28s var(--vc-ease);
+}
+
+.vc-dash__grid[data-sorting] {
+  cursor: grabbing;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.vc-dash__grid[data-sorting] [data-vc-handle] {
+  cursor: grabbing;
+}
+
+[data-vc-handle] {
+  touch-action: none;
+  user-select: none;
+}
+
+/* Menos movimiento: sin transiciones ni animaciones (el arrastre sigue funcionando, instantáneo). */
+@media (prefers-reduced-motion: reduce) {
+  .vc-edit-panel,
+  .vc-dash *,
+  .vc-dash *::before,
+  .vc-dash *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+  }
+}

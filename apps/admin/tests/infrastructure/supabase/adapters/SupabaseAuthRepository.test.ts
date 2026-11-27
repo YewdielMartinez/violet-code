@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mapUmecaCitaRow } from '@/infrastructure/supabase/adapters/SupabaseAuthRepository';
+import { mapAuthErrorMessage, mapUmecaCitaRow } from '@/infrastructure/supabase/adapters/SupabaseAuthRepository';
 
 const BASE = {
   cita_id: 'c1',
@@ -30,5 +30,17 @@ describe('mapUmecaCitaRow (get_umeca_citas)', () => {
       areaClave: null,
       areaNombre: null,
     });
+  });
+});
+
+describe('mapAuthErrorMessage', () => {
+  it('explica en español una cuenta sin confirmar', () => {
+    expect(mapAuthErrorMessage(400, 'Email not confirmed')).toMatch(/aún no ha sido confirmado/i);
+  });
+
+  it('explica credenciales incorrectas, rate limit y cuenta bloqueada', () => {
+    expect(mapAuthErrorMessage(400, 'Invalid login credentials')).toBe('Correo o contraseña incorrectos.');
+    expect(mapAuthErrorMessage(429, '')).toMatch(/demasiados intentos/i);
+    expect(mapAuthErrorMessage(400, 'User is banned')).toMatch(/desactivada/i);
   });
 });

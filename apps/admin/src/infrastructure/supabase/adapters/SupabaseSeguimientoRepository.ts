@@ -21,8 +21,8 @@ import type { SeguimientoRepository } from '@/domain/ports/SeguimientoRepository
 import {
   DOMICILIO_SELECT,
   NOTA_SELECT,
-  isEventType,
   mapDomicilioRow,
+  mapEventType,
   mapNotaRow,
   mapTipoAtencionRow,
 } from './seguimiento.mapper';
@@ -114,20 +114,20 @@ export const supabaseSeguimientoRepository: SeguimientoRepository = {
 
     if (error) throw error;
 
-    return (data ?? []).flatMap((row) =>
-      isEventType(row.tipo)
-        ? [
-            {
-              fecha: row.fecha,
-              tipo: row.tipo,
-              area: row.area ?? null,
-              titulo: row.titulo,
-              detalle: row.detalle ?? null,
-              referenciaId: row.referencia_id,
-            },
-          ]
-        : [],
-    );
+    return (data ?? []).flatMap((row) => {
+      const tipo = mapEventType(row.tipo);
+      if (!tipo) return [];
+      return [
+        {
+          fecha: row.fecha,
+          tipo,
+          area: row.area ?? null,
+          titulo: row.titulo,
+          detalle: row.detalle ?? null,
+          referenciaId: row.referencia_id,
+        },
+      ];
+    });
   },
 
   async listarTiposAtencion(areaId: number): Promise<TipoAtencion[]> {

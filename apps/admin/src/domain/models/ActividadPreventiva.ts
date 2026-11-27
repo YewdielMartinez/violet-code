@@ -53,6 +53,8 @@ export interface ActividadPreventivaItem {
   realizadaEn: string | null;
   canceladaMotivo: string | null;
   observacionesCierre: string | null;
+  /** Última modificación (`actualizado_en`): token de bloqueo optimista al editar. `null` si el servidor no lo envía. */
+  actualizadoEn: string | null;
 }
 
 export interface ActividadPreventivaFilters {

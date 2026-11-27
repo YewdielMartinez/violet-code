@@ -5,6 +5,7 @@ import {
   mapOrdenProteccionRow,
   toOrdenProteccionInsert,
   toOrdenProteccionUpdate,
+  type OrdenProteccionUpdateTyped,
   traducirErrorOrdenProteccion,
 } from './ordenProteccion.mapper';
 
@@ -45,7 +46,8 @@ export const supabaseOrdenProteccionRepository: OrdenProteccionRepository = {
   async actualizar(id: string, input: OrdenProteccionInput): Promise<OrdenProteccion> {
     let query = supabase
       .from('orden_proteccion')
-      .update(toOrdenProteccionUpdate(input))
+      // TODO: sin cast cuando database.types.ts incluya `nota_cambio_estado` (migración 66).
+      .update(toOrdenProteccionUpdate(input) as OrdenProteccionUpdateTyped)
       .eq('id', id)
       .eq('activo', true);
 

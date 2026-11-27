@@ -1,13 +1,12 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { GlassSwitch, LoadingButton, MultiSelect, Select, toast } from '@yewdiel21/motion-kit/react';
+import { GlassSwitch, MultiSelect, Select, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
 import '@yewdiel21/motion-kit/css/components/glass-switch';
-import '@yewdiel21/motion-kit/css/components/loading-button';
 import '@yewdiel21/motion-kit/css/components/menu';
 import '@yewdiel21/motion-kit/css/components/multi-select';
 import '@yewdiel21/motion-kit/css/components/select';
-import { DROGA_LABELS, TIPOS_DROGA, type TipoDroga } from '@/domain/models/Agresor';
+import { validarConsumoDrogas, type TipoDroga } from '@/domain/models/ConsumoDrogas';
 import { INITIAL_DOMICILIO_INPUT, type DomicilioInput } from '@/domain/models/Domicilio';
 import {
   INITIAL_ESTUDIO_INPUT,
@@ -24,6 +23,7 @@ import {
   type FichaCompletaDetalle,
   type ServicioMedico,
 } from '@/domain/models/FichaRegistro';
+import { FormInlineError, SectionFormFooter, describeMutationError } from '../datos/DataSection';
 import {
   handleExpedienteMutationError,
   useActualizarDomicilio,
@@ -34,8 +34,7 @@ import {
 import { FichaDomicilioStep } from './FichaDomicilioStep';
 import { FichaSocioeconomicoStep } from './FichaSocioeconomicoStep';
 import { validateStepDomicilio, validateStepEstudio } from './fichaValidation';
-
-const SAVE_LABELS = { loading: 'Guardando…', success: 'Guardado', error: 'Error al guardar' };
+import { ConsumoDrogasSelector } from '../shared/ConsumoDrogasSelector';
 
 const ESTADO_CIVIL_OPTIONS = Object.entries(ESTADO_CIVIL_LABELS).map(([value, label]) => ({
   value,
@@ -49,10 +48,6 @@ const CONSUMO_ALCOHOL_OPTIONS = Object.entries(CONSUMO_ALCOHOL_LABELS).map(([val
   value,
   label,
 }));
-const DROGA_OPTIONS: { value: TipoDroga; label: string }[] = [
-  { value: 'no_consume', label: DROGA_LABELS.no_consume },
-  ...TIPOS_DROGA.map((value) => ({ value, label: DROGA_LABELS[value] })),
-];
 
 interface FormProps {
   detail: FichaCompletaDetalle;
@@ -104,6 +99,8 @@ export function FichaDatosEditForm({ detail, onCancel, onSaved }: FormProps) {
   const { data: catalogos } = useCatalogosFicha(true);
   const actualizar = useActualizarFicha(detail.id);
   const [draft, setDraft] = useState<FichaDatosDraft>(() => buildFichaDraft(detail));
+  const [saved, setSaved] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const areaOptions = useMemo(
     () => (catalogos?.areas ?? []).map((a) => ({ value: String(a.id), label: a.nombre })),
@@ -114,41 +111,37 @@ export function FichaDatosEditForm({ detail, onCancel, onSaved }: FormProps) {
     [catalogos?.ocupaciones],
   );
 
-  function handleDrogasChange(nextRaw: string[]) {
-    const next = nextRaw as TipoDroga[];
-    const hadNoConsume = draft.drogas.includes('no_consume');
-    const hasNoConsume = next.includes('no_consume');
-
-    if (hasNoConsume && !hadNoConsume) {
-      setDraft({ ...draft, drogas: ['no_consume'], especificacionDroga: '' });
-      return;
-    }
-    const filtered = hasNoConsume && next.length > 1 ? next.filter((d) => d !== 'no_consume') : next;
-    setDraft({ ...draft, drogas: filtered });
+  function failValidation(message: string) {
+    setFormError(message);
+    toast(message, { tone: 'error' });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (draft.servicioMedico === 'otro' && !draft.servicioMedicoOtro.trim()) {
-      toast('Especifica el servicio médico cuando selecciones «Otro».', { tone: 'error' });
-      return;
+      return failValidation('Especifica el servicio médico cuando selecciones «Otro».');
     }
 
     const hijas = draft.numeroHijas.trim() ? Number(draft.numeroHijas) : null;
     const hijos = draft.numeroHijosHombres.trim() ? Number(draft.numeroHijosHombres) : null;
     if (hijas !== null && (!Number.isInteger(hijas) || hijas < 0 || hijas > 30)) {
-      toast('El número de hijas debe estar entre 0 y 30.', { tone: 'error' });
-      return;
+      return failValidation('El número de hijas debe estar entre 0 y 30.');
     }
     if (hijos !== null && (!Number.isInteger(hijos) || hijos < 0 || hijos > 30)) {
-      toast('El número de hijos debe estar entre 0 y 30.', { tone: 'error' });
+      return failValidation('El número de hijos debe estar entre 0 y 30.');
+    }
+    const consumoErrores = validarConsumoDrogas(draft);
+    if (consumoErrores.drogas || consumoErrores.especificacionDroga) {
+      toast(consumoErrores.drogas ?? consumoErrores.especificacionDroga ?? 'Revisa el consumo de drogas.', {
+        tone: 'error',
+      });
       return;
     }
     if (draft.serviciosSolicitadosAreaIds.length === 0) {
-      toast('Selecciona al menos un servicio solicitado.', { tone: 'error' });
-      return;
+      return failValidation('Selecciona al menos un servicio solicitado.');
     }
 
+    setFormError(null);
     try {
       await actualizar.mutateAsync({
         fichaId: detail.id,
@@ -164,14 +157,17 @@ export function FichaDatosEditForm({ detail, onCancel, onSaved }: FormProps) {
         tieneEmbarazo: draft.tieneEmbarazo,
         tieneDenuncia: draft.tieneDenuncia,
         esVictimaDelito: draft.esVictimaDelito,
-        drogas: draft.drogas.length > 0 ? draft.drogas : null,
-        especificacionDroga: draft.drogas.includes('otra') ? draft.especificacionDroga : '',
+        // Opcional: `[]` / `''` limpian el valor guardado (null lo conservaría en el RPC).
+        drogas: draft.drogas,
+        especificacionDroga: draft.drogas.includes('otra') ? draft.especificacionDroga.trim() : '',
         consumoAlcohol: draft.consumoAlcohol || null,
         serviciosSolicitadosAreaIds: draft.serviciosSolicitadosAreaIds,
       });
+      setSaved(true);
       toast('Ficha actualizada.', { tone: 'success' });
       onSaved();
     } catch (err) {
+      setFormError(describeMutationError(err, 'No se pudieron guardar los datos de la ficha.'));
       handleExpedienteMutationError(
         err,
         queryClient,
@@ -184,7 +180,7 @@ export function FichaDatosEditForm({ detail, onCancel, onSaved }: FormProps) {
   return (
     <form
       onSubmit={(e) => void handleSubmit(e)}
-      className="vc-ficha-form grid gap-4 rounded-2xl border border-outline-variant bg-surface-container-lowest p-5"
+      className="vc-ficha-form vc-sec-form"
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
@@ -295,44 +291,24 @@ export function FichaDatosEditForm({ detail, onCancel, onSaved }: FormProps) {
         </label>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="grid gap-2">
-          <span className="vc-ficha-label">Consumo de sustancias</span>
-          <MultiSelect
-            size="lg"
-            label="Consumo de sustancias"
-            placeholder="Selecciona…"
-            options={DROGA_OPTIONS}
-            value={draft.drogas}
-            onChange={handleDrogasChange}
-          />
-        </div>
-        <div className="grid gap-2">
-          <span className="vc-ficha-label">Servicios solicitados *</span>
-          <MultiSelect
-            size="lg"
-            label="Servicios solicitados *"
-            placeholder="Selecciona una o más áreas…"
-            options={areaOptions}
-            value={draft.serviciosSolicitadosAreaIds.map(String)}
-            onChange={(vals) =>
-              setDraft({ ...draft, serviciosSolicitadosAreaIds: vals.map(Number) })
-            }
-          />
-        </div>
-      </div>
+      <ConsumoDrogasSelector
+        drogas={draft.drogas}
+        especificacionDroga={draft.especificacionDroga}
+        onChange={(patch) => setDraft((prev) => ({ ...prev, ...patch }))}
+        label="Consumo de drogas"
+      />
 
-      {draft.drogas.includes('otra') ? (
-        <label className="mk-field">
-          <span className="mk-field__label">Especificación de sustancia</span>
-          <input
-            type="text"
-            maxLength={150}
-            value={draft.especificacionDroga}
-            onChange={(e) => setDraft({ ...draft, especificacionDroga: e.target.value })}
-          />
-        </label>
-      ) : null}
+      <div className="grid gap-2">
+        <span className="vc-ficha-label">Servicios solicitados *</span>
+        <MultiSelect
+          size="lg"
+          label="Servicios solicitados *"
+          placeholder="Selecciona una o más áreas…"
+          options={areaOptions}
+          value={draft.serviciosSolicitadosAreaIds.map(String)}
+          onChange={(vals) => setDraft({ ...draft, serviciosSolicitadosAreaIds: vals.map(Number) })}
+        />
+      </div>
 
       <div className="grid gap-3 rounded-2xl bg-surface-container-low p-4 sm:grid-cols-2 sm:gap-x-6">
         <GlassSwitch
@@ -361,25 +337,14 @@ export function FichaDatosEditForm({ detail, onCancel, onSaved }: FormProps) {
         </GlassSwitch>
       </div>
 
-      <div className="flex flex-wrap justify-end gap-2">
-        <button
-          type="button"
-          disabled={actualizar.isPending}
-          onClick={onCancel}
-          className="mk-button mk-button--text"
-        >
-          Cancelar
-        </button>
-        <LoadingButton
-          type="submit"
-          state={actualizar.isPending ? 'loading' : 'idle'}
-          labels={SAVE_LABELS}
-          disabled={actualizar.isPending}
-          className="mk-button mk-button--filled"
-        >
-          Guardar cambios
-        </LoadingButton>
-      </div>
+      <FormInlineError message={formError} />
+
+      <SectionFormFooter
+        pending={actualizar.isPending}
+        saved={saved}
+        onCancel={onCancel}
+        submitLabel="Guardar cambios"
+      />
     </form>
   );
 }
@@ -404,16 +369,20 @@ export function FichaDomicilioEditForm({ detail, onCancel, onSaved }: FormProps)
   const actualizar = useActualizarDomicilio(detail.id);
   const [draft, setDraft] = useState<DomicilioInput>(() => buildDomicilioDraft(detail));
   const [invalidField, setInvalidField] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const failure = validateStepDomicilio(draft);
     if (failure) {
       setInvalidField(failure.field);
+      setFormError(failure.error);
       toast(failure.error, { tone: 'error' });
       return;
     }
     setInvalidField(null);
+    setFormError(null);
 
     try {
       await actualizar.mutateAsync({
@@ -427,9 +396,11 @@ export function FichaDomicilioEditForm({ detail, onCancel, onSaved }: FormProps)
         referencias: draft.referencias,
         zona: draft.zona || null,
       });
+      setSaved(true);
       toast('Domicilio actualizado.', { tone: 'success' });
       onSaved();
     } catch (err) {
+      setFormError(describeMutationError(err, 'No se pudo actualizar el domicilio.'));
       handleExpedienteMutationError(
         err,
         queryClient,
@@ -440,7 +411,7 @@ export function FichaDomicilioEditForm({ detail, onCancel, onSaved }: FormProps)
   }
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="grid gap-4">
+    <form onSubmit={(e) => void handleSubmit(e)} className="vc-ficha-form vc-sec-form">
       <FichaDomicilioStep
         value={draft}
         onChange={(next) => {
@@ -450,25 +421,14 @@ export function FichaDomicilioEditForm({ detail, onCancel, onSaved }: FormProps)
         invalidField={invalidField}
       />
 
-      <div className="flex flex-wrap justify-end gap-2">
-        <button
-          type="button"
-          disabled={actualizar.isPending}
-          onClick={onCancel}
-          className="mk-button mk-button--text"
-        >
-          Cancelar
-        </button>
-        <LoadingButton
-          type="submit"
-          state={actualizar.isPending ? 'loading' : 'idle'}
-          labels={SAVE_LABELS}
-          disabled={actualizar.isPending}
-          className="mk-button mk-button--filled"
-        >
-          Guardar domicilio
-        </LoadingButton>
-      </div>
+      <FormInlineError message={formError} />
+
+      <SectionFormFooter
+        pending={actualizar.isPending}
+        saved={saved}
+        onCancel={onCancel}
+        submitLabel="Guardar domicilio"
+      />
     </form>
   );
 }
@@ -507,16 +467,20 @@ export function FichaEstudioEditForm({ detail, onCancel, onSaved }: FormProps) {
   const registrar = useRegistrarEstudio(detail.id);
   const [draft, setDraft] = useState<EstudioSocioeconomicoInput>(() => buildEstudioDraft(detail));
   const [invalidField, setInvalidField] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const failure = validateStepEstudio(draft);
     if (failure) {
       setInvalidField(failure.field);
+      setFormError(failure.error);
       toast(failure.error, { tone: 'error' });
       return;
     }
     setInvalidField(null);
+    setFormError(null);
 
     try {
       await registrar.mutateAsync({
@@ -545,9 +509,11 @@ export function FichaEstudioEditForm({ detail, onCancel, onSaved }: FormProps) {
           frecuencia: ap.frecuencia || null,
         })),
       });
+      setSaved(true);
       toast('Estudio socioeconómico actualizado.', { tone: 'success' });
       onSaved();
     } catch (err) {
+      setFormError(describeMutationError(err, 'No se pudo guardar el estudio socioeconómico.'));
       handleExpedienteMutationError(
         err,
         queryClient,
@@ -558,7 +524,7 @@ export function FichaEstudioEditForm({ detail, onCancel, onSaved }: FormProps) {
   }
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="grid gap-4">
+    <form onSubmit={(e) => void handleSubmit(e)} className="vc-ficha-form vc-sec-form">
       <FichaSocioeconomicoStep
         value={draft}
         onChange={(next) => {
@@ -569,25 +535,14 @@ export function FichaEstudioEditForm({ detail, onCancel, onSaved }: FormProps) {
         invalidField={invalidField}
       />
 
-      <div className="flex flex-wrap justify-end gap-2">
-        <button
-          type="button"
-          disabled={registrar.isPending}
-          onClick={onCancel}
-          className="mk-button mk-button--text"
-        >
-          Cancelar
-        </button>
-        <LoadingButton
-          type="submit"
-          state={registrar.isPending ? 'loading' : 'idle'}
-          labels={SAVE_LABELS}
-          disabled={registrar.isPending}
-          className="mk-button mk-button--filled"
-        >
-          Guardar estudio
-        </LoadingButton>
-      </div>
+      <FormInlineError message={formError} />
+
+      <SectionFormFooter
+        pending={registrar.isPending}
+        saved={saved}
+        onCancel={onCancel}
+        submitLabel="Guardar estudio"
+      />
     </form>
   );
 }

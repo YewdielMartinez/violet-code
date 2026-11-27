@@ -1,6 +1,6 @@
 # RPC: `public.get_actividades_preventivas`
 
-- **Versión:** [`20261127001000_41`](../../migrations/20261127001000_41_actividad_estado.sql)
+- **Versión:** [`20261128002400_65`](../../migrations/20261128002400_65_editar_actividad_preventiva.sql)
 - **Migración:** `supabase/migrations/20261126001600_26_rpc_actividades_preventivas.sql`
 - **Permiso RBAC:** `public.tiene_permiso('actividad.ver')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico`, `recepcion`
@@ -45,6 +45,7 @@ Arreglo de actividades activas ordenadas por `programada_en DESC, creado_en DESC
 | `realizada_en` | `timestamptz` | Momento en que se marcó realizada (`null` si no lo está) |
 | `cancelada_motivo` | `text` | Motivo de cancelación (opcional) |
 | `observaciones_cierre` | `text` | Observaciones al marcarla realizada (opcional) |
+| `actualizado_en` | `timestamptz` | Última modificación; token de bloqueo optimista para `actualizar_actividad_preventiva` |
 
 ## 3. Reglas ABAC y efectos secundarios
 - Valida `public.tiene_permiso('actividad.ver')` (permite a todo empleado activo incluyendo `recepcion`; rechaza `anon`, UMECA y empleados inactivos).

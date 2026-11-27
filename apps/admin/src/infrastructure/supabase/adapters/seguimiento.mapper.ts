@@ -2,7 +2,12 @@ import type { Database } from '../database.types';
 import type { DomicilioDetalle } from '@/domain/models/Domicilio';
 import type { TipoAtencion } from '@/domain/models/HojaSeguimiento';
 import type { NotaPrivada } from '@/domain/models/NotaPrivada';
-import type { TipoEventoLineaTiempo } from '@/domain/models/Seguimiento';
+import {
+  esTipoEventoConocido,
+  normalizarTipoEvento,
+  type TipoEventoConocido,
+  type TipoEventoLineaTiempo,
+} from '@/domain/models/Seguimiento';
 
 type Tables = Database['public']['Tables'];
 type NotaRow = Tables['nota_area']['Row'] & { cat_area?: { nombre: string } | null };
@@ -24,18 +29,17 @@ export const NOTA_SELECT =
 export const DOMICILIO_SELECT =
   'id, asentamiento_id, codigo_postal, calle, numero_exterior, numero_interior, referencias, zona, cat_asentamiento(nombre, codigo_postal)';
 
-const EVENT_TYPES: ReadonlySet<string> = new Set<TipoEventoLineaTiempo>([
-  'registro',
-  'cita',
-  'atencion',
-  'derivacion',
-  'orden_proteccion',
-  'alerta',
-]);
+/**
+ * Normaliza el `tipo` del RPC: conocido → tal cual; futuro desconocido → `'otro'` (render genérico);
+ * notas privadas → `null` (se descarta). Nunca registra el contenido del evento.
+ */
+export function mapEventType(raw: string): TipoEventoLineaTiempo | null {
+  return normalizarTipoEvento(raw);
+}
 
-/** `true` solo para los tipos conocidos; un tipo desconocido se descarta en lugar de reetiquetarse. */
-export function isEventType(raw: string): raw is TipoEventoLineaTiempo {
-  return EVENT_TYPES.has(raw);
+/** `true` solo para los tipos conocidos. */
+export function isEventType(raw: string): raw is TipoEventoConocido {
+  return esTipoEventoConocido(raw);
 }
 
 export function mapNotaRow(row: NotaRow): NotaPrivada {

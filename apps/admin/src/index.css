@@ -1,4 +1,4 @@
-/* Orden: motion-kit (tokens + controles base) → tema "purple" de motion-kit → Tailwind.
+/* Orden: motion-kit (tokens + controles base) → temas de motion-kit → Tailwind.
    El CSS de cada componente de motion-kit se importa en el archivo que lo usa
    (ej. `import '@yewdiel21/motion-kit/css/components/data-table'`), así solo viaja
    en el chunk de esa ruta. NO importar '@yewdiel21/motion-kit/css' completo (~650 KB).
@@ -12,15 +12,15 @@
 @import '@yewdiel21/motion-kit/css/tokens' layer(motion-kit);
 @import '@yewdiel21/motion-kit/css/controls' layer(motion-kit);
 @import '@yewdiel21/motion-kit/css/effects' layer(motion-kit);
-@import '@yewdiel21/motion-kit/css/themes/purple' layer(motion-kit);
 /* Temas ofrecidos en Configuración → Apariencia (ver THEME_CHOICES en src/app/preferences.ts). */
 @import '@yewdiel21/motion-kit/css/themes/blue' layer(motion-kit);
 @import '@yewdiel21/motion-kit/css/themes/pink' layer(motion-kit);
 @import '@yewdiel21/motion-kit/css/themes/red' layer(motion-kit);
-@import '@yewdiel21/motion-kit/css/themes/neogreen' layer(motion-kit);
 @import '@yewdiel21/motion-kit/css/themes/black' layer(motion-kit);
 @import '@yewdiel21/motion-kit/css/themes/oled' layer(motion-kit);
 @import './app/themes/salmverse.css' layer(motion-kit);
+/* Modo oscuro negro puro para blue/pink/red/black (debe ir DESPUÉS de los temas de motion-kit). */
+@import './app/themes/dark-black.css' layer(motion-kit);
 @import 'tailwindcss';
 
 @theme inline {

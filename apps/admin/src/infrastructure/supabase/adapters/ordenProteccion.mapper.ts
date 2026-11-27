@@ -21,7 +21,14 @@ export type OrdenProteccionRow = Pick<
 >;
 
 export type OrdenProteccionInsertRow = Database['public']['Tables']['orden_proteccion']['Insert'];
-export type OrdenProteccionUpdateRow = Database['public']['Tables']['orden_proteccion']['Update'];
+/** Tipo generado del `UPDATE` (aún sin `nota_cambio_estado`: ver TODO). */
+export type OrdenProteccionUpdateTyped = Database['public']['Tables']['orden_proteccion']['Update'];
+// TODO: quitar el `&` y el cast del repositorio cuando se regenere database.types.ts
+// (la migración 66 agrega la columna transitoria `nota_cambio_estado`).
+/** `nota_cambio_estado`: el trigger la copia a `orden_proteccion_evento` y la limpia. */
+export type OrdenProteccionUpdateRow = OrdenProteccionUpdateTyped & {
+  nota_cambio_estado?: string | null;
+};
 
 function normalizeNullableText(value: string | null | undefined): string | null {
   const trimmed = value?.trim() ?? '';
@@ -68,6 +75,7 @@ export function toOrdenProteccionInsert(input: OrdenProteccionInput): OrdenProte
 }
 
 export function toOrdenProteccionUpdate(input: OrdenProteccionInput): OrdenProteccionUpdateRow {
+  const nota = normalizeNullableText(input.notaCambioEstado);
   return {
     agresor_id: input.agresorId || null,
     numero_oficio: normalizeNullableText(input.numeroOficio),
@@ -75,6 +83,7 @@ export function toOrdenProteccionUpdate(input: OrdenProteccionInput): OrdenProte
     fecha_emision: input.fechaEmision.trim(),
     fecha_vigencia: normalizeNullableText(input.fechaVigencia),
     estado: input.estado,
+    ...(nota ? { nota_cambio_estado: nota } : {}),
   };
 }
 

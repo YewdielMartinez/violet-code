@@ -84,9 +84,9 @@ Al crear o cambiar una orden vigente, un trigger sube a `alta` las alertas `nuev
 
 | Leer                                        | Crear / editar             |
 | ------------------------------------------- | -------------------------- |
-| `historial_clinico.acceder` (Tit, Sub, Psi) | Solo RPC (`42501` directo) |
+| `historial_clinico.acceder` (Tit, Sub, Psi) lectura; `historial_clinico.escribir` (solo Psi) escritura | Solo RPC (`42501` directo) |
 
-Una sola fila por ficha (`ficha_id` único). Para leer y guardar usa las RPC [`get_historial_clinico` y `guardar_historial_clinico`](./expedientes.md#guardar_historial_clinico-y-get_historial_clinico) (registran `'ver'` en bitácora, validan RN-01 y aplican bloqueo optimista).
+Una sola fila por ficha (`ficha_id` único). Para leer y guardar usa las RPC [`get_historial_clinico` y `guardar_historial_clinico`](./expedientes.md#guardar_historial_clinico-y-get_historial_clinico) (registran `'ver'` en bitácora, validan RN-01 y aplican bloqueo optimista). El histórico de cambios (`historial_clinico_version`, append-only) se lee con [`get_historial_clinico_versiones`](../rpcs/get_historial_clinico_versiones.md).
 
 ### `nota_area`
 

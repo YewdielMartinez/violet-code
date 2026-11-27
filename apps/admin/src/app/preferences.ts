@@ -57,4 +57,4 @@ export function useNavStyle() {
 }
 
 /** Temas de motion-kit ofrecidos en Apariencia (cada uno importado en index.css). */
-export const THEME_CHOICES = ['purple', 'blue', 'pink', 'red', 'neogreen', 'black', 'oled'];
+export const THEME_CHOICES = ['blue', 'pink', 'red', 'black', 'oled'];

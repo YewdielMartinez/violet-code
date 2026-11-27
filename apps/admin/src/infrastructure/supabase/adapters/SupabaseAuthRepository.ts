@@ -8,7 +8,7 @@ function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
   return value ?? null;
 }
 
-function mapAuthErrorMessage(status: number | undefined, raw: string): string {
+export function mapAuthErrorMessage(status: number | undefined, raw: string): string {
   const lower = raw.toLowerCase();
   if (status === 429 || lower.includes('rate limit') || lower.includes('too many')) {
     return 'Demasiados intentos. Espera un minuto.';
@@ -17,7 +17,10 @@ function mapAuthErrorMessage(status: number | undefined, raw: string): string {
     return 'Correo o contraseña incorrectos.';
   }
   if (lower.includes('email not confirmed')) {
-    return 'Tu cuenta aún no ha sido confirmada.';
+    return 'Tu correo aún no ha sido confirmado. Pide a la administración de SEMUJERES que active tu cuenta.';
+  }
+  if (lower.includes('user is banned') || lower.includes('banned')) {
+    return 'Tu cuenta está desactivada. Contacta a la administración.';
   }
   return raw || 'No se pudo iniciar sesión con Supabase.';
 }

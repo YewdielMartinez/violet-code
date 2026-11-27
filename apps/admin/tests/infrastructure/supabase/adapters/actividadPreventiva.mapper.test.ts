@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   mapActividadRow,
   mapParticipantes,
+  toActualizarActividadArgs,
   toActualizarEstadoArgs,
   toRegistrarPayload,
 } from '@/infrastructure/supabase/adapters/actividadPreventiva.mapper';
@@ -32,6 +33,7 @@ const ROW = {
   realizada_en: null,
   cancelada_motivo: null,
   observaciones_cierre: null,
+  actualizado_en: '2026-11-26T11:00:00.123456+00:00',
 };
 
 describe('actividadPreventiva.mapper', () => {
@@ -61,6 +63,48 @@ describe('actividadPreventiva.mapper', () => {
       realizadaEn: null,
       canceladaMotivo: null,
       observacionesCierre: null,
+      actualizadoEn: '2026-11-26T11:00:00.123456+00:00',
+    });
+  });
+
+  it('si el servidor aún no manda actualizado_en queda en null', () => {
+    const sin = { ...ROW } as Record<string, unknown>;
+    delete sin.actualizado_en;
+    expect(mapActividadRow(sin as unknown as Parameters<typeof mapActividadRow>[0]).actualizadoEn).toBeNull();
+  });
+
+  it('arma los argumentos de actualizar_actividad_preventiva: mismo payload que el alta + bloqueo optimista', () => {
+    expect(
+      toActualizarActividadArgs({
+        actividadId: 'a1',
+        actualizadoEn: '2026-11-26T11:00:00.123456+00:00',
+        titulo: '  Taller  ',
+        tipoActividadId: 2,
+        tipoInstitucion: 'escuela',
+        nivelEducativo: 'primaria',
+        sede: ' Sede ',
+        direccion: '   ',
+        asentamientoId: 5,
+        programadaEn: '2026-12-10T10:00:00-07:00',
+        numeroAsistentes: 0,
+        participantesIds: ['e1'],
+      }),
+    ).toEqual({
+      p_actividad_id: 'a1',
+      p_actualizado_en: '2026-11-26T11:00:00.123456+00:00',
+      p_payload: {
+        titulo: 'Taller',
+        tipo_actividad_id: 2,
+        tipo_institucion: 'escuela',
+        nivel_educativo: 'primaria',
+        sede: 'Sede',
+        direccion: null,
+        referencias: null,
+        asentamiento_id: 5,
+        programada_en: '2026-12-10T10:00:00-07:00',
+        numero_asistentes: 0,
+        participantes_ids: ['e1'],
+      },
     });
   });
 

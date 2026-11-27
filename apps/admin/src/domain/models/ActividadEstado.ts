@@ -35,6 +35,8 @@ export function esVencida(item: Pick<ActividadPreventivaItem, 'estado' | 'progra
 
 /** Acciones válidas desde un estado (solo con `actividad.registrar`). */
 export interface AccionesActividad {
+  /** Editar los datos (solo pendientes, `actualizar_actividad_preventiva`). */
+  editar: boolean;
   realizar: boolean;
   cancelar: boolean;
   reabrir: boolean;
@@ -42,6 +44,7 @@ export interface AccionesActividad {
 
 export function accionesActividad(estado: EstadoActividad, puedeRegistrar: boolean): AccionesActividad {
   return {
+    editar: puedeRegistrar && estado === 'pendiente',
     realizar: puedeRegistrar && estado === 'pendiente',
     cancelar: puedeRegistrar && estado === 'pendiente',
     reabrir: puedeRegistrar && estado !== 'pendiente',

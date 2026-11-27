@@ -106,4 +106,52 @@ describe('supabaseHistorialClinicoRepository', () => {
       }),
     ).rejects.toMatchObject({ code: '23505' });
   });
+
+  it('lista versiones vía get_historial_clinico_versiones y las mapea', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'ver-2',
+          historial_clinico_id: 'hc-1',
+          ficha_id: 'ficha-1',
+          version: 2,
+          antecedentes_familiares: null,
+          antecedentes_personales: null,
+          motivo_consulta: 'Motivo B',
+          observaciones_iniciales: null,
+          tiene_atencion_psicologica_previa: false,
+          campos_modificados: ['observaciones_iniciales', 'motivo_consulta', 'columna_desconocida'],
+          creado_por: 'emp-1',
+          creado_por_nombre: ' Psicóloga Uno ',
+          creado_en: '2026-11-27T11:00:00Z',
+        },
+      ],
+      error: null,
+    });
+
+    const versiones = await supabaseHistorialClinicoRepository.versiones('ficha-1');
+    expect(rpcMock).toHaveBeenCalledWith('get_historial_clinico_versiones', { p_ficha_id: 'ficha-1' });
+    expect(versiones).toEqual([
+      {
+        id: 'ver-2',
+        historialClinicoId: 'hc-1',
+        fichaId: 'ficha-1',
+        version: 2,
+        motivoConsulta: 'Motivo B',
+        antecedentesPersonales: null,
+        antecedentesFamiliares: null,
+        tieneAtencionPsicologicaPrevia: false,
+        observacionesIniciales: null,
+        camposModificados: ['motivoConsulta', 'observacionesIniciales'],
+        creadoPor: 'emp-1',
+        creadoPorNombre: 'Psicóloga Uno',
+        creadoEn: '2026-11-27T11:00:00Z',
+      },
+    ]);
+
+    rpcMock.mockResolvedValueOnce({ data: null, error: { code: '42501', message: 'x' } });
+    await expect(supabaseHistorialClinicoRepository.versiones('ficha-1')).rejects.toMatchObject({
+      code: '42501',
+    });
+  });
 });

@@ -78,6 +78,12 @@ export function aIsoMazatlan(date: Date): string {
   );
 }
 
+/** Inversa de `aIsoMazatlan`: la fecha cuya hora de pared (del navegador) es la que marcaba el reloj de Mazatlán en `iso`. */
+export function deIsoMazatlan(iso: string): Date {
+  const wall = new Date(new Date(iso).getTime() - 7 * 60 * 60 * 1000);
+  return new Date(wall.getUTCFullYear(), wall.getUTCMonth(), wall.getUTCDate(), wall.getUTCHours(), wall.getUTCMinutes());
+}
+
 /** Mensaje legible de un error de Supabase (los `RAISE` del backend ya vienen en español). */
 export function mensajeError(error: unknown, fallback: string): string {
   if (error && typeof error === 'object') {

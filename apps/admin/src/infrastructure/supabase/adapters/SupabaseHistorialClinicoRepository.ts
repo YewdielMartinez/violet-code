@@ -1,7 +1,12 @@
 import { supabase } from '../client';
 import type { Database } from '../database.types';
 import { mapSupabaseError } from './errors';
-import type { HistorialClinico, HistorialClinicoGuardarInput } from '@/domain/models/HistorialClinico';
+import { mapHistorialClinicoVersionRow, type HistorialClinicoVersionRow } from './historialClinico.mapper';
+import type {
+  HistorialClinico,
+  HistorialClinicoGuardarInput,
+  HistorialClinicoVersion,
+} from '@/domain/models/HistorialClinico';
 import type { HistorialClinicoRepository } from '@/domain/ports/HistorialClinicoRepository';
 
 type RpcFunctions = Database['public']['Functions'];
@@ -20,6 +25,20 @@ function mapHistorialRow(row: GetHistorialRow | GuardarHistorialRow): HistorialC
     creadoEn: 'creado_en' in row ? (row.creado_en ?? null) : null,
     actualizadoEn: row.actualizado_en,
   };
+}
+
+/**
+ * `get_historial_clinico_versiones` (migración 67) aún no está en `database.types.ts`: se tipa aquí la
+ * llamada. TODO: retirar este cast y usar `supabase.rpc(...)` directo al regenerar los tipos.
+ */
+function rpcVersiones(fichaId: string) {
+  const client = supabase as unknown as {
+    rpc: (
+      fn: 'get_historial_clinico_versiones',
+      args: { p_ficha_id: string },
+    ) => PromiseLike<{ data: HistorialClinicoVersionRow[] | null; error: Error | null }>;
+  };
+  return client.rpc('get_historial_clinico_versiones', { p_ficha_id: fichaId });
 }
 
 function toOptionalRpcText(value: string | null | undefined): string | undefined {
@@ -55,5 +74,11 @@ export const supabaseHistorialClinicoRepository: HistorialClinicoRepository = {
       throw new Error('El servidor no devolvió el historial clínico guardado.');
     }
     return mapHistorialRow(row);
+  },
+
+  async versiones(fichaId: string): Promise<HistorialClinicoVersion[]> {
+    const { data, error } = await rpcVersiones(fichaId);
+    if (error) throw mapSupabaseError(error);
+    return (data ?? []).map(mapHistorialClinicoVersionRow);
   },
 };

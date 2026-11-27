@@ -29,19 +29,3 @@ export const supabase = createClient<Database>(url, anonKey, {
 });
 
 export type SupabaseClient = typeof supabase;
-
-/**
- * Cliente efímero SIN sesión persistida, para dar de alta cuentas de Auth (`signUp`) desde el panel sin
- * reemplazar la sesión de quien administra. Usa otra `storageKey` para no tocar la sesión del cliente principal.
- * Los perfiles (`empleado` / `usuario_externo`) se escriben siempre con el cliente principal (RLS `cuentas.gestionar`).
- */
-export function createIsolatedAuthClient() {
-  return createClient<Database>(url as string, anonKey as string, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-      storageKey: 'vc-alta-cuenta',
-    },
-  });
-}

@@ -28,7 +28,8 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
 | `seguimiento.registrar` | `trabajo_social`, `psicologia`, `juridico` |
 | `seguimiento.corregir` | `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico` *(ABAC en B-04: lo propio y el mismo día para áreas; cualquiera para Dirección)* |
 | `urgencias.ver` | `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `recepcion` |
-| `historial_clinico.acceder` | `titular`, `subdireccion`, `psicologia` |
+| `historial_clinico.acceder` | `titular`, `subdireccion`, `psicologia` (lectura: `get_historial_clinico`, `get_historial_clinico_versiones`) |
+| `historial_clinico.escribir` | `psicologia` únicamente (`guardar_historial_clinico`) |
 | `orden_proteccion.escribir` | `titular`, `subdireccion`, `juridico`, `trabajo_social` |
 | `alerta.atender` | `titular`, `subdireccion`, `juridico` (`es_linea_24_7()`) |
 | `alerta.ver_cola` | `titular`, `subdireccion`, `juridico`, `trabajo_social`, `psicologia` |
@@ -70,7 +71,7 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
 | `cita` | S / I / U (todas) | S (`ts`+`psic`) / U (`ts`; sin I) | S / I / U (`psic`) | S / I / U (`jur`) | S / I / U (`ts`+`psic`+`jur`) | RPC `get_umeca_citas()` | — |
 | `atencion` | S / I / U (todas) | S / I / U (`ts`) | S / I / U (`psic`) | S / I / U (`jur`) | — | — | — |
 | `nota_area` | S (todas) | S / I / U (`ts`) | S / I / U (`psic`) | S / I / U (`jur`) | — | — | — |
-| `historial_clinico` | S / I / U | — | S / I / U | — | — | — | — |
+| `historial_clinico` | S | — | S / I / U | — | — | — | — |
 | `derivacion` | S / I / U | S / I / U | S (propia/destino) / I / U | S (propia/destino) / I / U | — | — | — |
 | `actividad_preventiva`, `actividad_empleado` | S / I / U | S / I / U | S / I / U | S / I / U | S | — | — |
 | `pre_registro` | S / U | S / U | — | — | — | — | S / I / U (propia) |

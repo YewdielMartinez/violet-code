@@ -2,19 +2,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dialog,
   EmptyState,
-  HoldConfirm,
   Skeleton,
   toast,
 } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
 import '@yewdiel21/motion-kit/css/components/empty-state';
-import '@yewdiel21/motion-kit/css/components/hold-confirm';
 import '@yewdiel21/motion-kit/css/components/skeleton';
 import { useAuth } from '@/shared/auth/useAuth';
 import type { EstadoFicha } from '@/domain/models/Persona';
 import { formatErrorEscrituraExpediente } from '@/features/expedientes/api';
 import { DeferredDialogContent, DialogFormSkeleton } from '@/shared/ui/DeferredDialogContent';
 import { Icon } from '@/shared/ui/Icon';
+import { ArchivarOrdenDialog } from './ArchivarOrdenDialog';
 import { OrdenProteccionForm } from './OrdenProteccionForm';
 import {
   ESTADO_ORDEN_LABELS,
@@ -60,6 +59,7 @@ export function OrdenesProteccionPanel({ fichaId, estado }: OrdenesProteccionPan
   const [formOpen, setFormOpen] = useState(false);
   const [formMounted, setFormMounted] = useState(false);
   const [editingOrden, setEditingOrden] = useState<OrdenProteccion | null>(null);
+  const [ordenPorArchivar, setOrdenPorArchivar] = useState<OrdenProteccion | null>(null);
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
   const anchorRef = useRef<HTMLElement | null>(null);
   const formOpenRef = useRef(false);
@@ -155,6 +155,7 @@ export function OrdenesProteccionPanel({ fichaId, estado }: OrdenesProteccionPan
         actualizadoEnEsperado: orden.actualizadoEn,
       });
       toast('Orden de protección archivada.', { tone: 'success' });
+      setOrdenPorArchivar(null);
     } catch (err) {
       toast(
         formatErrorEscrituraExpediente(
@@ -175,18 +176,17 @@ export function OrdenesProteccionPanel({ fichaId, estado }: OrdenesProteccionPan
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm sm:text-base text-on-surface-variant">
-            Órdenes de protección del expediente. Si existe al menos una vigente, las alertas de la persona escalan a prioridad alta (RN-17).
+            Órdenes de protección del expediente. Si existe al menos una vigente, las alertas de la persona escalan a prioridad alta.
           </p>
         </div>
 
         {canWrite ? (
           <button
             type="button"
-            className="mk-button mk-button--filled"
+            className="mk-button mk-button--primary"
             onClick={(e) => openForm(null, e.currentTarget)}
           >
-            <Icon name="gavel" />
-            <span className="ml-1.5">Nueva orden</span>
+            Nueva orden
           </button>
         ) : null}
       </div>
@@ -269,18 +269,14 @@ export function OrdenesProteccionPanel({ fichaId, estado }: OrdenesProteccionPan
                           >
                             Editar
                           </button>
-                          <HoldConfirm
-                            duration={900}
-                            resetAfter={1600}
-                            holdingLabel="Archivando…"
-                            doneLabel="Archivada"
+                          <button
+                            type="button"
+                            className="mk-button mk-button--tonal"
                             disabled={desactivarMutation.isPending}
-                            onConfirm={() => {
-                              void handleArchivar(orden);
-                            }}
+                            onClick={() => setOrdenPorArchivar(orden)}
                           >
                             Archivar
-                          </HoldConfirm>
+                          </button>
                         </div>
                       ) : null}
                     </div>
@@ -307,9 +303,8 @@ export function OrdenesProteccionPanel({ fichaId, estado }: OrdenesProteccionPan
                               onClick={() => {
                                 void handleAbrirCopia(doc.id, doc.rutaStorage, doc.nombreArchivo);
                               }}
-                              className="mk-button mk-button--text mk-button--sm inline-flex items-center gap-1"
+                              className="mk-button mk-button--text mk-button--sm"
                             >
-                              <Icon name="description" className="text-base" />
                               <span className="max-w-48 truncate">{doc.nombreArchivo}</span>
                             </button>
                           ))}
@@ -323,6 +318,16 @@ export function OrdenesProteccionPanel({ fichaId, estado }: OrdenesProteccionPan
           )}
         </Skeleton>
       )}
+
+      <ArchivarOrdenDialog
+        open={ordenPorArchivar !== null}
+        oficio={ordenPorArchivar?.numeroOficio ?? null}
+        busy={desactivarMutation.isPending}
+        onCancel={() => setOrdenPorArchivar(null)}
+        onConfirm={() => {
+          if (ordenPorArchivar) void handleArchivar(ordenPorArchivar);
+        }}
+      />
 
       <Dialog.Root
         open={formOpen}

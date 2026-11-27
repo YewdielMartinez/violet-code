@@ -104,4 +104,20 @@ describe('OrdenProteccion (RF-17 / RN-17)', () => {
     expect(puedeEscribirOrdenesProteccion('recepcion')).toBe(false);
     expect(puedeEscribirOrdenesProteccion('umeca')).toBe(false);
   });
+
+  it('valida el largo de la nota del cambio de estado (opcional)', () => {
+    const base = {
+      fichaId: 'ficha-1',
+      numeroOficio: 'OF-1',
+      autoridadEmisora: 'Juzgado',
+      fechaEmision: '2026-11-20',
+      fechaVigencia: null,
+      estado: 'vencida' as const,
+    };
+    expect(validarOrdenProteccion({ ...base, notaCambioEstado: 'Venció el plazo' }).valido).toBe(true);
+    expect(validarOrdenProteccion({ ...base, notaCambioEstado: null }).valido).toBe(true);
+    const larga = validarOrdenProteccion({ ...base, notaCambioEstado: 'x'.repeat(1001) });
+    expect(larga.valido).toBe(false);
+    expect(larga.errores.notaCambioEstado).toMatch(/1000/);
+  });
 });

@@ -88,7 +88,7 @@ const ALL_TABS: readonly TabDefinition[] = [
   { id: 'documentos', label: 'Documentos', icon: 'folder_open', sensitive: true },
   { id: 'canalizaciones', label: 'Canalizaciones', icon: 'alt_route', sensitive: true },
   { id: 'ordenes', label: 'Órdenes de Protección', icon: 'gavel', sensitive: true },
-  { id: 'seguimiento', label: 'Seguimiento', icon: 'timeline', sensitive: true },
+  { id: 'seguimiento', label: 'Seguimiento', icon: 'history', sensitive: true },
   { id: 'notas', label: 'Notas privadas', icon: 'lock', sensitive: true },
   {
     id: 'historial',

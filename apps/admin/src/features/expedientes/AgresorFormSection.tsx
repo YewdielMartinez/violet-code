@@ -4,7 +4,6 @@ import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/skeleton';
 import { DeferredDialogContent, DialogFormSkeleton } from '@/shared/ui/DeferredDialogContent';
 import type { EstadoFicha } from '@/domain/models/Persona';
-import { Icon } from '@/shared/ui/Icon';
 import {
   useAgresores,
   useAsentamientosAhome,
@@ -146,11 +145,8 @@ export function AgresorFormSection({ fichaId, estado }: Props) {
       <div className="grid gap-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <p className="text-base font-semibold text-on-surface">
+            <p className="text-lg font-semibold text-on-surface">
               Personas agresoras registradas ({agresores?.length ?? 0})
-            </p>
-            <p className="text-sm text-on-surface-variant">
-              Acceso auditado en bitácora (RF-05 / RF-22)
             </p>
           </div>
 
@@ -159,14 +155,13 @@ export function AgresorFormSection({ fichaId, estado }: Props) {
               className="mk-button mk-button--primary"
               onClick={handleStartCreate}
             >
-              <Icon name="person_add" />
-              <span>Agregar persona agresora</span>
+              Agregar persona agresora
             </AgresorDialog.Trigger>
           ) : null}
         </div>
 
         {isArchivado ? (
-          <p className="rounded-xl border border-outline-variant bg-surface-container-low px-3.5 py-2 text-xs font-medium text-on-surface-variant">
+          <p className="rounded-xl border border-outline-variant bg-surface-container-low px-4 py-2.5 text-sm font-medium text-on-surface-variant">
             Expediente archivado: solo consulta
           </p>
         ) : null}

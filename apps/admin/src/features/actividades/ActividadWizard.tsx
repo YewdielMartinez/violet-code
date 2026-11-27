@@ -17,6 +17,7 @@ import {
 } from '@/domain/models/ActividadPreventiva';
 import { ROLE_LABELS, type StaffRole } from '@/domain/models/Auth';
 import type { AsentamientoSepomex } from '@/domain/models/Domicilio';
+import { useScrollToTopOnStep } from '@/shared/hooks/useScrollToTopOnStep';
 import { Icon } from '@/shared/ui/Icon';
 import { useEmpleadosParticipantes, useTiposActividad } from './api';
 import { ColoniaSearchField } from './ColoniaSearchField';
@@ -38,7 +39,16 @@ const TIPOS_INSTITUCION = Object.keys(TIPO_INSTITUCION_LABELS) as TipoInstitucio
 const NIVELES = Object.keys(NIVEL_EDUCATIVO_LABELS) as NivelEducativo[];
 const CHIP_ON = 'bg-secondary-container text-on-secondary-container';
 
-export function ActividadWizardStepper({ step, onSelectStep }: { step: number; onSelectStep: (next: number) => void }) {
+export function ActividadWizardStepper({
+  step,
+  onSelectStep,
+  editing = false,
+}: {
+  step: number;
+  onSelectStep: (next: number) => void;
+  /** Edición de una actividad existente (dentro del diálogo de detalle). */
+  editing?: boolean;
+}) {
   return (
     <Stepper
       className="vc-ficha-stepper"
@@ -46,7 +56,7 @@ export function ActividadWizardStepper({ step, onSelectStep }: { step: number; o
       value={step}
       variant="horizontal"
       linear
-      label="Pasos de la nueva actividad"
+      label={editing ? 'Pasos de la edición de la actividad' : 'Pasos de la nueva actividad'}
       onChange={onSelectStep}
     />
   );
@@ -55,6 +65,8 @@ export function ActividadWizardStepper({ step, onSelectStep }: { step: number; o
 interface StepsProps {
   formId: string;
   formRef: RefObject<HTMLFormElement | null>;
+  /** Elemento cuyo inicio se muestra al cambiar de paso (por defecto el formulario; en la página, la tarjeta con el stepper). */
+  scrollAnchorRef?: RefObject<HTMLElement | null>;
   step: number;
   stepError: string | null;
   invalidField: ActividadCampo | null;
@@ -62,6 +74,8 @@ interface StepsProps {
   onChange: (next: ActividadFormValue) => void;
   asentamientos: readonly AsentamientoSepomex[];
   asentamientosLoading: boolean;
+  /** Edición: «Guardar cambios» está disponible en cualquier paso, así que Enter guarda en lugar de avanzar. */
+  editing?: boolean;
   onNext: () => void;
   onSubmit: () => void;
   onStepAnimated?: (stepIndex: number) => void;
@@ -70,6 +84,7 @@ interface StepsProps {
 export function ActividadWizardSteps({
   formId,
   formRef,
+  scrollAnchorRef,
   step,
   stepError,
   invalidField,
@@ -77,6 +92,7 @@ export function ActividadWizardSteps({
   onChange,
   asentamientos,
   asentamientosLoading,
+  editing = false,
   onNext,
   onSubmit,
   onStepAnimated,
@@ -96,11 +112,10 @@ export function ActividadWizardSteps({
     );
   }
 
+  useScrollToTopOnStep(step, scrollAnchorRef ?? formRef);
+
   function handleStepChange(next: number, previous: number) {
     const reducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
-      window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
-    }
     const activeEl = formRef.current?.querySelectorAll<HTMLElement>('[data-mk-step]')?.[next];
     if (activeEl && !reducedMotion && next !== previous) {
       const dir = next > previous ? 1 : -1;
@@ -122,7 +137,7 @@ export function ActividadWizardSteps({
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
-        if (step < ACTIVIDAD_LAST_STEP) onNext();
+        if (!editing && step < ACTIVIDAD_LAST_STEP) onNext();
         else onSubmit();
       }}
     >
@@ -274,8 +289,8 @@ export function ActividadWizardSteps({
                     onChange={(cuando) => update('cuando', cuando)}
                   />
                   <span className="text-xs text-on-surface-variant">
-                    Hora de Mazatlán. Se registra como pendiente; si la fecha ya pasó, ciérrala como realizada desde su
-                    detalle.
+                    Hora de Mazatlán. {editing ? 'La actividad sigue pendiente' : 'Se registra como pendiente'}; si la fecha ya pasó,
+                    ciérrala como realizada desde su detalle.
                   </span>
                 </div>
               </section>

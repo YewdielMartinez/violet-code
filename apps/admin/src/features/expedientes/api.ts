@@ -8,6 +8,7 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query';
 import { toast } from '@yewdiel21/motion-kit/react';
+import { lineaTiempoQueryKey } from '@/features/seguimiento/queryKeys';
 import type { AgresorInput } from '@/domain/models/Agresor';
 import type { PrioridadNivel } from '@/domain/models/Cita';
 import type { DomicilioUpdateInput } from '@/domain/models/Domicilio';
@@ -191,6 +192,7 @@ export function useArchiveFicha() {
           list?.map((item) => (item.id === fichaId ? { ...item, estado: 'archivado' } : item)),
       );
       void queryClient.invalidateQueries({ queryKey: ['expedientes'] });
+      void queryClient.invalidateQueries({ queryKey: lineaTiempoQueryKey(fichaId) });
     },
   });
 }
@@ -207,6 +209,7 @@ export function useReopenFicha() {
         (list) => list?.map((item) => (item.id === fichaId ? { ...item, estado } : item)),
       );
       void queryClient.invalidateQueries({ queryKey: ['expedientes'] });
+      void queryClient.invalidateQueries({ queryKey: lineaTiempoQueryKey(fichaId) });
     },
   });
 }

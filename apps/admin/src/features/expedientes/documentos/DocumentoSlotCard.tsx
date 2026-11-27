@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react';
-import { Attachment, FlipGroup, type AttachmentProps } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/attachment';
+import { FlipGroup, type AttachmentProps } from '@yewdiel21/motion-kit/react';
+import { FileDropzone } from '@/shared/ui/FileDropzone';
 import { Icon } from '@/shared/ui/Icon';
 import { AnimatedReveal } from '../agresor/AnimatedReveal';
 import {
@@ -13,7 +13,6 @@ import type { ChecklistSlotMeta } from './documentoGrouping';
 import { DocumentoCard } from './DocumentoCard';
 import { DocumentoSlotDetails } from './DocumentoSlotDetails';
 import { useSlotUpload, type SlotUploadRequest } from './useSlotUpload';
-import './documentos.css';
 
 interface DocumentoSlotCardProps {
   readOnly?: boolean;
@@ -74,7 +73,6 @@ export function DocumentoSlotCard({
   const attachmentLabels = useMemo<NonNullable<AttachmentProps['labels']>>(
     () => ({
       choose: `Adjuntar ${slot.title}`,
-      drop: 'o arrastra JPG, PNG o PDF (máx. 10 MB)',
       remove: 'Quitar archivo',
       list: `Archivo seleccionado para ${slot.title}`,
       uploading: 'Subiendo…',
@@ -123,13 +121,12 @@ export function DocumentoSlotCard({
 
       {!readOnly ? (
         <div className="grid gap-1.5">
-          <Attachment
-            className="vc-doc-slot-attachment"
+          <FileDropzone
+            compact
             accept={ACCEPT_ARCHIVOS}
             multiple={false}
             maxFiles={1}
             maxSize={TAMANO_MAXIMO_BYTES}
-            hint=""
             labels={attachmentLabels}
             uploads={upload.uploads}
             instanceRef={upload.attachmentRef}

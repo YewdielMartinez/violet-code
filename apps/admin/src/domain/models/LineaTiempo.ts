@@ -2,7 +2,11 @@ import { ESTADO_CITA_LABELS } from './Cita';
 import { DESTINO_LABELS, ESTADO_DERIVACION_LABELS } from './Derivacion';
 import { ESTADO_ORDEN_LABELS } from './OrdenProteccion';
 import { ESTADO_FICHA_LABELS } from './Persona';
-import type { LineaTiempoEvento, TipoEventoLineaTiempo } from './Seguimiento';
+import {
+  normalizarTipoEvento,
+  type LineaTiempoEvento,
+  type TipoEventoLineaTiempo,
+} from './Seguimiento';
 
 /** Estado visual de un evento (compatible con `TimelineStatus` de motion-kit). */
 export type EstadoEventoVista = 'done' | 'current' | 'upcoming' | 'error';
@@ -19,32 +23,55 @@ export interface LineaTiempoVista {
   meta?: string;
 }
 
-/** Tipos que puede devolver `get_linea_tiempo`; nunca incluye notas privadas ni historial clínico (`RF-25`). */
+/**
+ * Tipos que puede devolver `get_linea_tiempo` (más `otro` para tipos futuros); nunca incluye notas
+ * privadas ni historial clínico (`RF-25`). El orden es el de los chips de filtro.
+ */
 export const TIPOS_LINEA_TIEMPO: readonly TipoEventoLineaTiempo[] = [
   'cita',
   'atencion',
   'derivacion',
+  'canalizacion_evento',
   'orden_proteccion',
   'alerta',
   'registro',
+  'archivo',
+  'reapertura',
+  'otro',
 ];
 
 export const TIPO_EVENTO_LABELS: Record<TipoEventoLineaTiempo, string> = {
   registro: 'Registro',
+  archivo: 'Archivo',
+  reapertura: 'Reaperturas',
   cita: 'Citas',
   atencion: 'Atenciones',
   derivacion: 'Derivaciones',
+  canalizacion_evento: 'Canalizaciones',
   orden_proteccion: 'Órdenes de protección',
   alerta: 'Alertas',
+  otro: 'Otros eventos',
 };
 
-const TIPO_ICON: Record<TipoEventoLineaTiempo, string> = {
-  registro: 'R',
-  cita: 'C',
-  atencion: 'A',
-  derivacion: 'D',
-  orden_proteccion: 'OP',
-  alerta: '!',
+/** Icono Material Symbols Rounded del punto de la línea de tiempo (el CSS le da la fuente de iconos). */
+export const TIPO_ICON: Record<TipoEventoLineaTiempo, string> = {
+  registro: 'description',
+  archivo: 'archive',
+  reapertura: 'autorenew',
+  cita: 'event',
+  atencion: 'clinical_notes',
+  derivacion: 'alt_route',
+  canalizacion_evento: 'alt_route',
+  orden_proteccion: 'gavel',
+  alerta: 'sos',
+  otro: 'circle',
+};
+
+/** Estado visual por defecto (sin estado crudo en el título) de los tipos que no dependen de él. */
+const ESTADO_POR_TIPO: Partial<Record<TipoEventoLineaTiempo, EstadoEventoVista>> = {
+  atencion: 'done',
+  archivo: 'done',
+  reapertura: 'current',
 };
 
 /** Valores crudos de enums que el RPC concatena en `titulo` y su etiqueta legible. */
@@ -72,10 +99,13 @@ export function humanizarTitulo(titulo: string): string {
   return titulo.replace(TOKEN_REGEX, (token) => TOKEN_LABELS[token] ?? token);
 }
 
-/** Extrae el estado crudo del título: tras el último « · » o entre paréntesis al final (alertas). */
+/** Extrae el estado crudo del título: tras el último « · », tras « → » o entre paréntesis al final (alertas). */
 export function estadoCrudoDesdeTitulo(titulo: string): string | null {
   const paren = /\(([a-z_]+)\)\s*$/.exec(titulo);
   if (paren) return paren[1];
+  // Cambios de estado: «Orden de protección: vigente → vencida» (estado nuevo tras la flecha).
+  const flecha = /→\s*([a-z_]+)\s*$/.exec(titulo);
+  if (flecha) return flecha[1];
   const idx = titulo.lastIndexOf(' · ');
   if (idx < 0) return null;
   const tail = titulo.slice(idx + 3).trim();
@@ -104,7 +134,8 @@ const ESTADO_POR_VALOR: Record<string, EstadoEventoVista> = {
 
 /** Deriva el color/estado del punto de la línea de tiempo según tipo, estado y fecha. */
 export function estadoEventoVista(evento: LineaTiempoEvento, now: Date): EstadoEventoVista {
-  if (evento.tipo === 'atencion') return 'done';
+  const fijo = ESTADO_POR_TIPO[evento.tipo];
+  if (fijo) return fijo;
   const estado = estadoCrudoDesdeTitulo(evento.titulo);
   if (evento.tipo === 'cita' && (estado === 'agendada' || estado === 'confirmada')) {
     return Date.parse(evento.fecha) > now.getTime() ? 'upcoming' : 'current';
@@ -122,9 +153,20 @@ export function ordenarLineaTiempo(eventos: readonly LineaTiempoEvento[]): Linea
 }
 
 /**
- * Mapper puro: filtra por tipos permitidos (y por los seleccionados), ordena del más reciente
- * al más antiguo y produce eventos legibles. Descarta cualquier tipo desconocido por defensa
- * en profundidad: las notas privadas nunca llegan a la línea de tiempo (`RN-09`).
+ * Normaliza el tipo de cada evento: tipos conocidos intactos, tipos futuros → `otro` (render
+ * genérico) y notas privadas descartadas por defensa en profundidad (`RN-09`).
+ */
+function normalizarEventos(eventos: readonly LineaTiempoEvento[]): LineaTiempoEvento[] {
+  return eventos.flatMap((e) => {
+    const tipo = normalizarTipoEvento(e.tipo);
+    return tipo ? [tipo === e.tipo ? e : { ...e, tipo }] : [];
+  });
+}
+
+/**
+ * Mapper puro: normaliza tipos, filtra por los seleccionados, ordena del más reciente al más
+ * antiguo y produce eventos legibles. Los tipos futuros se muestran genéricos; las notas privadas
+ * nunca llegan a la línea de tiempo (`RN-09`).
  */
 export function mapLineaTiempo(
   eventos: readonly LineaTiempoEvento[],
@@ -132,9 +174,7 @@ export function mapLineaTiempo(
   now: Date,
 ): LineaTiempoVista[] {
   return ordenarLineaTiempo(
-    eventos.filter(
-      (e) => TIPOS_LINEA_TIEMPO.includes(e.tipo) && (!tipos || tipos.size === 0 || tipos.has(e.tipo)),
-    ),
+    normalizarEventos(eventos).filter((e) => !tipos || tipos.size === 0 || tipos.has(e.tipo)),
   ).map((e) => ({
     id: `${e.tipo}-${e.referenciaId}`,
     tipo: e.tipo,
@@ -156,8 +196,6 @@ export function contarPorTipo(
     TipoEventoLineaTiempo,
     number
   >;
-  for (const e of eventos) {
-    if (e.tipo in base) base[e.tipo] += 1;
-  }
+  for (const e of normalizarEventos(eventos)) base[e.tipo] += 1;
   return base;
 }

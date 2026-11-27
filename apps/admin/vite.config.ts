@@ -3,10 +3,12 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { themeHeadScript } from '@yewdiel21/motion-kit/theme';
 import { fileURLToPath, URL } from 'node:url';
+import { retiredThemeHeadScript } from './src/app/retiredThemes.ts';
 
 /**
  * Inserta el script de tema de motion-kit en <head>: aplica tema y modo (claro/oscuro) guardados
  * ANTES del primer pintado, sin destello. Misma clave que src/app/theme.ts.
+ * Antes migra temas retirados (purple, neogreen) guardados en localStorage a salmverse.
  */
 function motionKitTheme(): Plugin {
   return {
@@ -14,7 +16,9 @@ function motionKitTheme(): Plugin {
     transformIndexHtml: () => [
       {
         tag: 'script',
-        children: themeHeadScript({ default: 'salmverse', mode: 'system', storageKey: 'vc-theme' }),
+        children:
+          retiredThemeHeadScript('vc-theme') +
+          themeHeadScript({ default: 'salmverse', mode: 'system', storageKey: 'vc-theme' }),
         injectTo: 'head-prepend',
       },
     ],

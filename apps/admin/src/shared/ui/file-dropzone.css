@@ -1,0 +1,157 @@
+/* FileDropzone: enlaza el Attachment de motion-kit a los roles del tema (--md-sys-color-*).
+   El CSS del kit es monocromo (icono invertido con el color del texto, borde neutro): en claro
+   se ve crema/gris con un círculo casi negro y no refleja el tema elegido. Aquí se usan los roles
+   del tema activo, así cambian solos con tema (salmverse, blue, black, oled…) y modo claro/oscuro.
+   Especificidad (0,3,0)+ para ganarle al CSS del kit sin depender del orden de carga. */
+
+.mk-attachment.vc-dropzone {
+  --vc-dz-accent: var(--md-sys-color-primary);
+  --mk-attachment-radius: 16px;
+}
+
+.mk-attachment.vc-dropzone [data-mk-attachment-drop] {
+  border-color: var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s var(--mk-ease-press, ease);
+}
+
+.mk-attachment.vc-dropzone [data-mk-attachment-drop]:hover,
+.mk-attachment.vc-dropzone [data-mk-attachment-drop][data-mk-dragging] {
+  border-color: var(--vc-dz-accent);
+  background: color-mix(in srgb, var(--vc-dz-accent) 7%, var(--md-sys-color-surface-container-low));
+}
+
+/* Arrastrando encima: el borde se resalta y aparece un halo suave del color primario. */
+.mk-attachment.vc-dropzone [data-mk-attachment-drop][data-mk-dragging] {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--vc-dz-accent) 18%, transparent);
+}
+
+.mk-attachment.vc-dropzone [data-mk-attachment-drop] [data-mk-part='icon'] {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  transition:
+    translate 0.4s cubic-bezier(0.38, 0.49, 0, 2),
+    background-color 0.2s ease,
+    color 0.2s ease,
+    scale 0.25s var(--mk-ease-press, ease);
+}
+
+.mk-attachment.vc-dropzone [data-mk-attachment-drop]:is(:hover, [data-mk-dragging]) [data-mk-part='icon'] {
+  background: var(--vc-dz-accent);
+  color: var(--md-sys-color-on-primary);
+}
+
+.mk-attachment.vc-dropzone [data-mk-attachment-drop][data-mk-dragging] [data-mk-part='icon'] {
+  scale: 1.12;
+}
+
+.mk-attachment.vc-dropzone [data-mk-attachment-drop] strong {
+  color: var(--vc-dz-accent);
+}
+
+.mk-attachment.vc-dropzone [data-mk-attachment-drop] small {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.mk-attachment.vc-dropzone[data-mk-disabled] [data-mk-attachment-drop] {
+  border-color: var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-low);
+  box-shadow: none;
+}
+
+/* Archivos agregados */
+.mk-attachment.vc-dropzone [data-mk-attachment-item] {
+  background: var(--md-sys-color-surface-container-lowest);
+  box-shadow: inset 0 0 0 1px var(--md-sys-color-outline-variant);
+}
+
+.mk-attachment.vc-dropzone [data-mk-attachment-item] [data-mk-part='thumb'] {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+.mk-attachment.vc-dropzone [data-mk-attachment-item][data-mk-status='complete'] [data-mk-part='thumb'] {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  animation: vc-dropzone-check-pop 0.45s cubic-bezier(0.38, 0.49, 0, 1.8);
+}
+
+.mk-attachment.vc-dropzone [data-mk-attachment-item][data-mk-status='complete'] {
+  animation: vc-dropzone-item-settle 0.4s ease;
+}
+
+.mk-attachment.vc-dropzone [data-mk-attachment-item][data-mk-status='error'] {
+  box-shadow: inset 0 0 0 1px var(--md-sys-color-error);
+}
+
+@keyframes vc-dropzone-check-pop {
+  0% {
+    transform: scale(0.82);
+  }
+  60% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes vc-dropzone-item-settle {
+  from {
+    box-shadow: inset 0 0 0 1.5px var(--md-sys-color-primary);
+  }
+}
+
+/* Variante compacta: una fila con icono pequeño y texto a la izquierda. */
+.mk-attachment.vc-dropzone.vc-dropzone--compact {
+  gap: 0.5rem;
+}
+
+.mk-attachment.vc-dropzone--compact [data-mk-attachment-drop] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.25rem 0.75rem;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.mk-attachment.vc-dropzone--compact [data-mk-attachment-drop]:hover,
+.mk-attachment.vc-dropzone--compact [data-mk-attachment-drop][data-mk-dragging] {
+  background: color-mix(in srgb, var(--vc-dz-accent) 7%, var(--md-sys-color-surface-container-lowest));
+}
+
+.mk-attachment.vc-dropzone--compact [data-mk-attachment-drop] [data-mk-part='icon'] {
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 0;
+}
+
+.mk-attachment.vc-dropzone--compact [data-mk-attachment-drop] small {
+  flex-basis: 100%;
+  padding-left: 2.75rem;
+  font-size: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-attachment.vc-dropzone [data-mk-attachment-drop],
+  .mk-attachment.vc-dropzone [data-mk-attachment-drop] [data-mk-part='icon'],
+  .mk-attachment.vc-dropzone [data-mk-attachment-item],
+  .mk-attachment.vc-dropzone [data-mk-attachment-item] [data-mk-part='thumb'] {
+    transition: none;
+    animation: none !important;
+    transform: none !important;
+    translate: none !important;
+    scale: none !important;
+  }
+}

@@ -1,16 +1,31 @@
-import { useRef, useState, type ReactNode } from 'react';
-import { FlipGroup } from '@yewdiel21/motion-kit/react';
-import { isAttentionRole, useAuth } from '@/shared/auth/useAuth';
+import { useState, type ReactNode } from 'react';
+import { isAttentionRole, useAuth, type StaffUser } from '@/shared/auth/useAuth';
 import { Icon } from '@/shared/ui/Icon';
 import { PageHeader } from '@/shared/ui/PageHeader';
-import { CustomizeDialog } from './CustomizeDialog';
-import { useVisibleWidgets, WIDGETS, type WidgetId } from './layout';
+import './dashboard.css';
+import { MOTION } from './flip';
+import {
+  moveItemBy,
+  reorderVisible,
+  resetLayout,
+  setItemSize,
+  setItemVisible,
+  updateLayout,
+  useDashboardLayout,
+  visibleItems,
+  widgetDef,
+  type LayoutItem,
+  type WidgetId,
+  type WidgetSize,
+} from './layout';
 import { UmecaHomeView } from './UmecaHomeView';
+import { usePresence } from './usePresence';
+import { WidgetGrid } from './WidgetGrid';
 import { AgendaWidget } from './widgets/AgendaWidget';
 import { AlertsWidget } from './widgets/AlertsWidget';
 import { CasesWidget } from './widgets/CasesWidget';
 import { DirectoryWidget } from './widgets/DirectoryWidget';
-import { KpisWidget } from './widgets/KpisWidget';
+import { KpiAlertsWidget, KpiCitasWidget, KpiExpedientesWidget, KpiUrgentesWidget } from './widgets/KpiWidgets';
 import { SecurityWidget } from './widgets/SecurityWidget';
 import { TrendWidget } from './widgets/TrendWidget';
 
@@ -28,40 +43,81 @@ function capitalize(word: string): string {
 const today = () =>
   new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-export default function DashboardPage() {
-  const { user } = useAuth();
-  const [customizing, setCustomizing] = useState(false);
-  const gridRef = useRef<HTMLDivElement>(null);
-  const visible = useVisibleWidgets(user?.id ?? 'anon', user?.role ?? 'recepcion');
+function StaffDashboard({ user }: { user: StaffUser }) {
+  const items = useDashboardLayout(user.id, user.role);
+  const [editing, setEditing] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
+  // El panel de personalizar sale con fundido antes de desmontarse; mientras tanto la cuadrícula no se mueve.
+  const panel = usePresence(editing, MOTION.presence);
 
-  if (!user) return null;
-  if (user.role === 'umeca') return <UmecaHomeView displayName={user.displayName} />;
-
+  const visible = visibleItems(items);
+  const hidden = items.filter((i) => !i.visible);
   const mine = isAttentionRole(user.role);
-  const canViewClinical = user.role !== 'recepcion';
+  const firstName = capitalize(user.displayName.split(/\s+/)[0] ?? '');
 
-  const render: Record<WidgetId, ReactNode> = {
-    kpis: (
-      <KpisWidget
-        userId={user.id}
-        mine={mine}
-        canViewAlerts={canViewClinical}
-        canViewCases={canViewClinical}
-      />
-    ),
-    alerts: <AlertsWidget />,
-    cases: <CasesWidget userId={user.id} defaultMine={mine} />,
-    agenda: <AgendaWidget />,
-    trend: <TrendWidget />,
-    security: <SecurityWidget />,
-    directory: <DirectoryWidget />,
+  const change = (fn: (current: LayoutItem[]) => LayoutItem[]) => updateLayout(user.id, user.role, fn);
+
+  const render = (id: WidgetId): ReactNode => {
+    switch (id) {
+      case 'kpi_alerts':
+        return <KpiAlertsWidget />;
+      case 'kpi_citas':
+        return <KpiCitasWidget />;
+      case 'kpi_expedientes':
+        return <KpiExpedientesWidget userId={user.id} mine={mine} />;
+      case 'kpi_prioritarios':
+        return <KpiUrgentesWidget userId={user.id} />;
+      case 'alerts':
+        return <AlertsWidget />;
+      case 'cases':
+        return <CasesWidget userId={user.id} defaultMine={mine} />;
+      case 'agenda':
+        return <AgendaWidget />;
+      case 'trend':
+        return <TrendWidget />;
+      case 'security':
+        return <SecurityWidget />;
+      case 'directory':
+        return <DirectoryWidget />;
+    }
   };
 
-  const shown = WIDGETS.filter((w) => visible.includes(w.id));
-  const top = shown.filter((w) => w.column === 'top');
-  const main = shown.filter((w) => w.column === 'main');
-  const side = shown.filter((w) => w.column === 'side');
-  const firstName = capitalize(user.displayName.split(/\s+/)[0] ?? '');
+  const announcePosition = (id: WidgetId, next: LayoutItem[]) => {
+    const list = visibleItems(next);
+    setAnnouncement(`${widgetDef(id).title}: posición ${list.findIndex((i) => i.id === id) + 1} de ${list.length}.`);
+  };
+
+  const onMove = (id: WidgetId, delta: -1 | 1) => {
+    const next = moveItemBy(items, id, delta);
+    change(() => next);
+    announcePosition(id, next);
+  };
+
+  const onReorder = (id: WidgetId, toIndex: number) => {
+    const next = reorderVisible(items, id, toIndex);
+    change(() => next);
+    announcePosition(id, next);
+  };
+
+  const onResize = (id: WidgetId, size: WidgetSize) => {
+    change((current) => setItemSize(current, id, size));
+    setAnnouncement(`${widgetDef(id).title}: tamaño ${size.toUpperCase()}.`);
+  };
+
+  const onHide = (id: WidgetId) => {
+    change((current) => setItemVisible(current, id, false));
+    setAnnouncement(`${widgetDef(id).title} oculto.`);
+  };
+
+  const onShow = (id: WidgetId) => {
+    change((current) => setItemVisible(current, id, true));
+    setAnnouncement(`${widgetDef(id).title} agregado al final del tablero.`);
+  };
+
+  const onReset = () => {
+    resetLayout(user.id);
+    setAnnouncement('Tablero restablecido según tu rol.');
+  };
 
   return (
     <>
@@ -70,58 +126,102 @@ export default function DashboardPage() {
         documentTitle="Tablero"
         subtitle={today()}
         actions={
-          <button type="button" className="mk-button mk-button--tonal" onClick={() => setCustomizing(true)}>
-            <Icon name="dashboard_customize" />
-            <span className="ml-2">Personalizar</span>
+          <button
+            type="button"
+            aria-pressed={editing}
+            className={`mk-button ${editing ? '' : 'mk-button--tonal'}`}
+            onClick={() => setEditing((on) => !on)}
+          >
+            <Icon name={editing ? 'check' : 'dashboard_customize'} />
+            <span className="ml-2">{editing ? 'Listo' : 'Personalizar'}</span>
           </button>
         }
       />
 
-      {shown.length === 0 ? (
-        <p className="rounded-3xl border border-dashed border-outline-variant p-10 text-center text-on-surface-variant">
-          No hay widgets visibles. Usa «Personalizar» para elegir qué ver.
-        </p>
-      ) : (
-        <FlipGroup root={gridRef} signature={visible.join(',')}>
-          <div ref={gridRef} className="grid gap-6">
-            {top.map((w) => (
-              <div key={w.id} data-flip-id={w.id}>
-                {render[w.id]}
-              </div>
-            ))}
-            {(main.length > 0 || side.length > 0) && (
-              <div className={`grid gap-6 ${main.length && side.length ? 'xl:grid-cols-[minmax(0,1fr)_24rem]' : ''}`}>
-                {main.length > 0 && (
-                  <div className="grid content-start gap-6">
-                    {main.map((w) => (
-                      <div key={w.id} data-flip-id={w.id}>
-                        {render[w.id]}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {side.length > 0 && (
-                  <div className={`grid content-start gap-6 ${main.length ? '' : 'md:grid-cols-2 xl:grid-cols-3'}`}>
-                    {side.map((w) => (
-                      <div key={w.id} data-flip-id={w.id}>
-                        {render[w.id]}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </FlipGroup>
-      )}
+      <p role="status" aria-live="polite" className="sr-only">
+        {announcement}
+      </p>
 
-      <CustomizeDialog
-        open={customizing}
-        onOpenChange={setCustomizing}
-        userId={user.id}
-        role={user.role}
-        visible={visible}
-      />
+      {panel.mounted ? (
+        <section
+          aria-label="Personalizar tablero"
+          data-state={panel.state}
+          inert={panel.state === 'out'}
+          className="vc-edit-panel mb-4 grid gap-3 rounded-3xl border border-dashed border-primary/50 bg-surface-container-low p-4"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="max-w-3xl text-sm text-on-surface-variant">
+              Arrastra el asa <Icon name="drag_indicator" className="align-middle text-[18px]" /> o usa las flechas para
+              reordenar; elige el tamaño de cada widget o escóndelo. Se guarda para ti en este navegador.
+            </p>
+            <button type="button" className="mk-button mk-button--text mk-button--sm" onClick={onReset}>
+              <Icon name="restart_alt" />
+              <span className="ml-2">Restablecer según mi rol</span>
+            </button>
+          </div>
+          {hidden.length > 0 ? (
+            <div>
+              <p className="mb-2 text-xs font-medium text-on-surface-variant">Widgets ocultos · toca para agregar</p>
+              <ul className="flex flex-wrap gap-2">
+                {hidden.map((item) => {
+                  const def = widgetDef(item.id);
+                  return (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        title={def.description}
+                        onClick={() => onShow(item.id)}
+                        className="mk-chip mk-chip--filter"
+                      >
+                        <Icon name="add" className="mr-1 text-[18px]" />
+                        {def.title}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      {visible.length === 0 ? (
+        <div className="grid justify-items-center gap-3 rounded-3xl border border-dashed border-outline-variant p-10 text-center">
+          <span className="grid size-12 place-items-center rounded-full bg-secondary-container text-on-secondary-container">
+            <Icon name="space_dashboard" />
+          </span>
+          <p className="font-medium text-on-surface">Tu tablero está vacío</p>
+          <p className="max-w-md text-sm text-on-surface-variant">
+            {editing
+              ? 'Agrega widgets desde la lista de ocultos, o restablece la vista de tu rol.'
+              : 'Usa «Personalizar» para elegir qué ver.'}
+          </p>
+          {editing ? null : (
+            <button type="button" className="mk-button mk-button--tonal" onClick={() => setEditing(true)}>
+              Personalizar
+            </button>
+          )}
+        </div>
+      ) : (
+        <WidgetGrid
+          items={visible}
+          editing={editing}
+          render={render}
+          onMove={onMove}
+          onResize={onResize}
+          onHide={onHide}
+          onReorder={onReorder}
+          onAnnounce={setAnnouncement}
+          shiftKey={panel.mounted ? 'panel' : ''}
+        />
+      )}
     </>
   );
+}
+
+export default function DashboardPage() {
+  const { user } = useAuth();
+  if (!user) return null;
+  if (user.role === 'umeca') return <UmecaHomeView displayName={user.displayName} />;
+  return <StaffDashboard user={user} />;
 }

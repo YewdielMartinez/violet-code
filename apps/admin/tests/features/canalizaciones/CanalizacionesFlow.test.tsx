@@ -51,6 +51,7 @@ vi.mock('@/infrastructure/supabase/adapters/SupabaseDerivacionRepository', () =>
   supabaseDerivacionRepository: {
     list: listDerivacionesMock,
     listByFicha: listByFichaMock,
+    historialCanalizaciones: vi.fn().mockResolvedValue([]),
     create: createDerivacionMock,
     updateEstado: updateEstadoMock,
   },

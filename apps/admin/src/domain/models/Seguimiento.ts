@@ -3,13 +3,44 @@ import type { HojaSeguimientoCopia } from './HojaSeguimiento';
 
 export type PrioridadNivel = Database['public']['Enums']['prioridad_nivel'];
 
-export type TipoEventoLineaTiempo =
-  | 'registro'
-  | 'cita'
-  | 'atencion'
-  | 'derivacion'
-  | 'orden_proteccion'
-  | 'alerta';
+/** Tipos que hoy devuelve `get_linea_tiempo` (migración 66). */
+export const TIPOS_EVENTO_CONOCIDOS = [
+  'registro',
+  'archivo',
+  'reapertura',
+  'cita',
+  'atencion',
+  'derivacion',
+  'canalizacion_evento',
+  'orden_proteccion',
+  'alerta',
+] as const;
+
+export type TipoEventoConocido = (typeof TIPOS_EVENTO_CONOCIDOS)[number];
+
+/** `otro` agrupa tipos futuros que el RPC añada y esta versión aún no conoce: se pintan de forma genérica. */
+export type TipoEventoLineaTiempo = TipoEventoConocido | 'otro';
+
+const TIPOS_CONOCIDOS_SET: ReadonlySet<string> = new Set(TIPOS_EVENTO_CONOCIDOS);
+
+/** Tipos que jamás deben llegar a la línea de tiempo (notas privadas, `RN-09`): se descartan siempre. */
+const TIPO_PRIVADO_REGEX = /^nota/i;
+
+/** `true` solo para los tipos conocidos del RPC. */
+export function esTipoEventoConocido(raw: string): raw is TipoEventoConocido {
+  return TIPOS_CONOCIDOS_SET.has(raw);
+}
+
+/**
+ * Normaliza el `tipo` crudo del RPC: conocido → tal cual; notas privadas → `null` (se descarta,
+ * defensa en profundidad); cualquier otro tipo futuro → `'otro'` (se renderiza genérico, sin perderlo).
+ */
+export function normalizarTipoEvento(raw: string): TipoEventoLineaTiempo | null {
+  if (esTipoEventoConocido(raw)) return raw;
+  if (raw === 'otro') return 'otro';
+  if (TIPO_PRIVADO_REGEX.test(raw)) return null;
+  return 'otro';
+}
 
 export interface SeguimientoCreateInput {
   fichaId: string;

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { DerivacionCreateInput, EstadoDerivacion } from '@/domain/models/Derivacion';
 import { supabaseDerivacionRepository } from '@/infrastructure/supabase/adapters/SupabaseDerivacionRepository';
 import { directoryQueryOptions } from '@/features/directory/api';
+import { LINEA_TIEMPO_QUERY_ROOT } from '@/features/seguimiento/queryKeys';
 import { catalogoQueryOptions, expedientesListQueryOptions } from '@/features/expedientes/api';
 
 export type {
@@ -59,6 +60,7 @@ export function useCreateDerivacion() {
     mutationFn: (input: DerivacionCreateInput) => supabaseDerivacionRepository.create(input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['canalizaciones'] });
+      void queryClient.invalidateQueries({ queryKey: LINEA_TIEMPO_QUERY_ROOT });
     },
   });
 }
@@ -71,6 +73,8 @@ export function useUpdateEstadoDerivacion() {
       supabaseDerivacionRepository.updateEstado(id, estado),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['canalizaciones'] });
+      // El cambio de estado queda en la línea de tiempo del expediente (`canalizacion_evento`).
+      void queryClient.invalidateQueries({ queryKey: LINEA_TIEMPO_QUERY_ROOT });
     },
   });
 }

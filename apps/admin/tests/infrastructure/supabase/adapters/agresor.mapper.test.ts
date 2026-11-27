@@ -51,7 +51,6 @@ describe('agresor.mapper', () => {
       referencias: 'Frente al parque',
       ocupacionId: 2,
       ocupacionOtra: null,
-      tieneConsumoDroga: true,
       drogas: ['marihuana'],
       especificacionDroga: 'Consumo ocasional',
       especificacionArma: 'Objeto metálico',
@@ -77,9 +76,8 @@ describe('agresor.mapper', () => {
       referencias: null,
       ocupacionId: 3,
       ocupacionOtra: '',
-      tieneConsumoDroga: false,
-      drogas: ['marihuana'], // debe convertirse en ['no_consume']
-      especificacionDroga: 'Detalle',
+      drogas: ['no_consume'],
+      especificacionDroga: 'Detalle', // sin «Otra» se descarta
       especificacionArma: '  ',
       observaciones: '  Seguimiento activo.  ',
     });
@@ -116,7 +114,6 @@ describe('agresor.mapper', () => {
         nombres: 'Héctor',
         asentamientoId: null,
         codigoPostal: ' 81200 ',
-        tieneConsumoDroga: true,
         drogas: ['cristal', 'cristal', 'otra'],
         especificacionDroga: '  Policonsumo ',
         especificacionArma: '  Corta ',
@@ -134,6 +131,33 @@ describe('agresor.mapper', () => {
       p_especificacion_arma: 'Corta',
     });
     expect(args.p_ficha_id).toBeUndefined();
+  });
+
+  it('al editar, una selección vacía de drogas limpia el valor guardado (opcional) y sin dato no lo toca', () => {
+    const limpiar = toGuardarAgresorArgs(
+      { fichaId: 'ficha-1', nombres: 'Héctor', drogas: [], especificacionDroga: '' },
+      'agresor-1',
+    );
+    expect(limpiar.p_drogas).toEqual([]);
+    expect(limpiar.p_especificacion_droga).toBe('');
+
+    const noTocar = toGuardarAgresorArgs({ fichaId: 'ficha-1', nombres: 'Héctor' }, 'agresor-1');
+    expect(noTocar.p_drogas).toBeUndefined();
+    expect(noTocar.p_especificacion_droga).toBeUndefined();
+
+    const crear = toGuardarAgresorArgs({ fichaId: 'ficha-1', nombres: 'Héctor', drogas: [] });
+    expect(crear.p_drogas).toBeUndefined();
+  });
+
+  it('descarta la especificación si no se seleccionó «Otra» y deja «No consume» exclusivo', () => {
+    const args = toGuardarAgresorArgs({
+      fichaId: 'ficha-1',
+      nombres: 'Héctor',
+      drogas: ['no_consume', 'cristal'],
+      especificacionDroga: 'x',
+    });
+    expect(args.p_drogas).toEqual(['cristal']);
+    expect(args.p_especificacion_droga).toBeUndefined();
   });
 
   it('mapea filas de catálogos y asentamientos SEPOMEX', () => {

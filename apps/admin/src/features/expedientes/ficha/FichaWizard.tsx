@@ -9,6 +9,7 @@ import type { DomicilioInput } from '@/domain/models/Domicilio';
 import type { EstudioSocioeconomicoInput } from '@/domain/models/EstudioSocioeconomico';
 import type { CatalogosFicha, FichaIdentidadInput } from '@/domain/models/FichaRegistro';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
+import { useScrollToTopOnStep } from '@/shared/hooks/useScrollToTopOnStep';
 import { Icon } from '@/shared/ui/Icon';
 import { FichaAgresorStep } from './FichaAgresorStep';
 import { FichaDomicilioStep } from './FichaDomicilioStep';
@@ -48,6 +49,8 @@ export function FichaWizardStepper({ step, onSelectStep }: { step: number; onSel
 interface StepsSectionProps {
   formId: string;
   formRef: RefObject<HTMLFormElement | null>;
+  /** Elemento cuyo inicio se muestra al cambiar de paso (por defecto el formulario; en la página, la tarjeta con el stepper). */
+  scrollAnchorRef?: RefObject<HTMLElement | null>;
   step: number;
   stepError: string | null;
   invalidField: string | null;
@@ -73,6 +76,7 @@ interface StepsSectionProps {
 export function FichaWizardSteps({
   formId,
   formRef,
+  scrollAnchorRef,
   step,
   stepError,
   invalidField,
@@ -94,18 +98,10 @@ export function FichaWizardSteps({
   onSubmit,
   onStepAnimated,
 }: StepsSectionProps) {
+  useScrollToTopOnStep(step, scrollAnchorRef ?? formRef);
+
   function handleStepChange(next: number, previous: number) {
     const reducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const behavior: ScrollBehavior = reducedMotion ? 'auto' : 'smooth';
-
-    const scroller = formRef.current?.closest<HTMLElement>('[data-mk-part="body"]');
-    if (scroller) {
-      if (typeof scroller.scrollTo === 'function') scroller.scrollTo({ top: 0, behavior });
-      else scroller.scrollTop = 0;
-    }
-    if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
-      window.scrollTo({ top: 0, behavior });
-    }
 
     const activeEl = formRef.current?.querySelectorAll<HTMLElement>('[data-mk-step]')?.[next];
     if (activeEl && !reducedMotion && next !== previous) {

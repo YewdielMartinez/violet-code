@@ -8,6 +8,7 @@ import {
   type RolEmpleado,
 } from '@/domain/models/ActividadPreventiva';
 import type { ActividadEstadoCambioInput } from '@/domain/models/ActividadEstado';
+import type { ActividadPreventivaUpdateInput } from '@/domain/models/ActividadEdicion';
 
 type ActividadRowBase = Database['public']['Functions']['get_actividades_preventivas']['Returns'][number];
 
@@ -20,6 +21,7 @@ export interface ActividadEstadoColumns {
   realizada_en?: string | null;
   cancelada_motivo?: string | null;
   observaciones_cierre?: string | null;
+  actualizado_en?: string | null;
 }
 
 export type ActividadRow = ActividadRowBase & ActividadEstadoColumns;
@@ -31,6 +33,20 @@ export interface ActualizarEstadoArgs {
   p_numero_asistentes: number | null;
   p_observaciones: string | null;
   p_motivo_cancelacion: string | null;
+}
+
+/** Argumentos de `actualizar_actividad_preventiva` (`snake_case`). */
+export interface ActualizarActividadArgs {
+  p_actividad_id: string;
+  p_payload: Json;
+  p_actualizado_en: string;
+}
+
+/** Fila que devuelve `actualizar_actividad_preventiva`. TODO: sale de `database.types.ts` al regenerarlo. */
+export interface ActualizarActividadRow {
+  actividad_id: string;
+  total_participantes: number;
+  actualizado_en: string;
 }
 
 /** Fila que devuelve `actualizar_estado_actividad`. */
@@ -86,6 +102,7 @@ export function mapActividadRow(row: ActividadRow): ActividadPreventivaItem {
     realizadaEn: row.realizada_en ?? null,
     canceladaMotivo: row.cancelada_motivo ?? null,
     observacionesCierre: row.observaciones_cierre ?? null,
+    actualizadoEn: row.actualizado_en ?? null,
   };
 }
 
@@ -103,6 +120,15 @@ export function toRegistrarPayload(input: ActividadPreventivaCreateInput): Recor
     programada_en: input.programadaEn,
     numero_asistentes: input.numeroAsistentes ?? null,
     participantes_ids: input.participantesIds ?? [],
+  };
+}
+
+/** Modelo de edición → argumentos de `actualizar_actividad_preventiva` (mismo payload que el alta + bloqueo optimista). */
+export function toActualizarActividadArgs(input: ActividadPreventivaUpdateInput): ActualizarActividadArgs {
+  return {
+    p_actividad_id: input.actividadId,
+    p_payload: toRegistrarPayload(input) as Json,
+    p_actualizado_en: input.actualizadoEn,
   };
 }
 

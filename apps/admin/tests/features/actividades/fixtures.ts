@@ -26,6 +26,7 @@ export function act(id: string, programadaEn: string, extra: Partial<ActividadPr
     realizadaEn: null,
     canceladaMotivo: null,
     observacionesCierre: null,
+    actualizadoEn: '2026-11-20T00:00:00.000000+00:00',
     ...extra,
   };
 }

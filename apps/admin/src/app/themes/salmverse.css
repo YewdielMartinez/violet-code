@@ -1,4 +1,5 @@
 /* Tema personalizado "salmverse" (Rosa salmón): paletas clara y oscura.
+   Modo oscuro: fondo negro puro (#000000) y superficies neutras; el rosa/vino queda solo en los acentos.
    Paleta base: #850e35 (vino profundo), #ee6983 (rosa salmón), #ffc4c4 (rosa claro). El fondo claro es blanco puro (#ffffff);
    #fff5e4 (crema) ya no se usa como superficie.
    Define los 37 roles Material 3 con exactamente los mismos selectores que @yewdiel21/motion-kit. */
@@ -46,23 +47,23 @@
 [data-mk-theme="salmverse"][data-mk-mode="dark"],
 [data-mk-mode="dark"] [data-mk-theme="salmverse"] {
   color-scheme: dark;
-  --md-sys-color-background: #190e12;
-  --md-sys-color-on-background: #f7e8e0;
-  --md-sys-color-surface: #190e12;
-  --md-sys-color-surface-dim: #140a0e;
-  --md-sys-color-surface-bright: #422d34;
-  --md-sys-color-surface-container-lowest: #12080c;
-  --md-sys-color-surface-container-low: #23151a;
-  --md-sys-color-surface-container: #291a20;
-  --md-sys-color-surface-container-high: #34232a;
-  --md-sys-color-surface-container-highest: #402d35;
-  --md-sys-color-on-surface: #f7e8e0;
-  --md-sys-color-surface-variant: #553a42;
-  --md-sys-color-on-surface-variant: #ddc0c5;
-  --md-sys-color-inverse-surface: #f7e8e0;
-  --md-sys-color-inverse-on-surface: #351e25;
-  --md-sys-color-outline: #a98890;
-  --md-sys-color-outline-variant: #573c44;
+  --md-sys-color-background: #000000;
+  --md-sys-color-on-background: #ededf0;
+  --md-sys-color-surface: #000000;
+  --md-sys-color-surface-dim: #000000;
+  --md-sys-color-surface-bright: #2c2c31;
+  --md-sys-color-surface-container-lowest: #000000;
+  --md-sys-color-surface-container-low: #0e0e10;
+  --md-sys-color-surface-container: #151518;
+  --md-sys-color-surface-container-high: #1d1d21;
+  --md-sys-color-surface-container-highest: #26262b;
+  --md-sys-color-on-surface: #ededf0;
+  --md-sys-color-surface-variant: #2f2f35;
+  --md-sys-color-on-surface-variant: #b9b9c0;
+  --md-sys-color-inverse-surface: #ededf0;
+  --md-sys-color-inverse-on-surface: #1d1d21;
+  --md-sys-color-outline: #8a8a93;
+  --md-sys-color-outline-variant: #3a3a40;
   --md-sys-color-shadow: #000000;
   --md-sys-color-scrim: #000000;
   --md-sys-color-surface-tint: #ffb1c1;
@@ -89,23 +90,23 @@
   :root:not([data-mk-mode="light"])[data-mk-theme="salmverse"],
   :root:not([data-mk-mode="light"]) [data-mk-theme="salmverse"] {
     color-scheme: dark;
-    --md-sys-color-background: #190e12;
-    --md-sys-color-on-background: #f7e8e0;
-    --md-sys-color-surface: #190e12;
-    --md-sys-color-surface-dim: #140a0e;
-    --md-sys-color-surface-bright: #422d34;
-    --md-sys-color-surface-container-lowest: #12080c;
-    --md-sys-color-surface-container-low: #23151a;
-    --md-sys-color-surface-container: #291a20;
-    --md-sys-color-surface-container-high: #34232a;
-    --md-sys-color-surface-container-highest: #402d35;
-    --md-sys-color-on-surface: #f7e8e0;
-    --md-sys-color-surface-variant: #553a42;
-    --md-sys-color-on-surface-variant: #ddc0c5;
-    --md-sys-color-inverse-surface: #f7e8e0;
-    --md-sys-color-inverse-on-surface: #351e25;
-    --md-sys-color-outline: #a98890;
-    --md-sys-color-outline-variant: #573c44;
+    --md-sys-color-background: #000000;
+    --md-sys-color-on-background: #ededf0;
+    --md-sys-color-surface: #000000;
+    --md-sys-color-surface-dim: #000000;
+    --md-sys-color-surface-bright: #2c2c31;
+    --md-sys-color-surface-container-lowest: #000000;
+    --md-sys-color-surface-container-low: #0e0e10;
+    --md-sys-color-surface-container: #151518;
+    --md-sys-color-surface-container-high: #1d1d21;
+    --md-sys-color-surface-container-highest: #26262b;
+    --md-sys-color-on-surface: #ededf0;
+    --md-sys-color-surface-variant: #2f2f35;
+    --md-sys-color-on-surface-variant: #b9b9c0;
+    --md-sys-color-inverse-surface: #ededf0;
+    --md-sys-color-inverse-on-surface: #1d1d21;
+    --md-sys-color-outline: #8a8a93;
+    --md-sys-color-outline-variant: #3a3a40;
     --md-sys-color-shadow: #000000;
     --md-sys-color-scrim: #000000;
     --md-sys-color-surface-tint: #ffb1c1;

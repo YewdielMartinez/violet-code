@@ -3,6 +3,7 @@ import {
   aplicarCambioEstado,
   type ActividadEstadoCambioInput,
 } from '@/domain/models/ActividadEstado';
+import { aplicarEdicionActividad, type ActividadEdicionCambio } from '@/domain/models/ActividadEdicion';
 import type {
   ActividadPreventivaCreateInput,
   ActividadPreventivaFilters,
@@ -69,6 +70,37 @@ function listasEnCache(qc: ReturnType<typeof useQueryClient>): ListaEnCache[] {
   return qc
     .getQueriesData<ActividadPreventivaItem[]>({ queryKey: BASE_KEY })
     .filter(([key]) => key[1] !== 'tipos' && key[1] !== 'empleados');
+}
+
+/**
+ * Edita una actividad pendiente (`actualizar_actividad_preventiva`). Optimista: las listas en caché reflejan la
+ * edición al instante; si el servidor la rechaza (permiso, otra persona la modificó…) se restauran, y al terminar se
+ * invalidan para traer la verdad del servidor (p. ej. el nuevo `actualizado_en`).
+ */
+export function useActualizarActividadPreventiva() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ input }: ActividadEdicionCambio) => supabaseActividadPreventivaRepository.actualizar(input),
+    retry: false,
+    onMutate: async ({ input, vista }) => {
+      await qc.cancelQueries({ queryKey: BASE_KEY });
+      const previas = listasEnCache(qc);
+      for (const [key, data] of previas) {
+        if (!Array.isArray(data)) continue;
+        qc.setQueryData<ActividadPreventivaItem[]>(
+          key,
+          data.map((item) => (item.id === input.actividadId ? aplicarEdicionActividad(item, input, vista) : item)),
+        );
+      }
+      return { previas };
+    },
+    onError: (_error, _cambio, contexto) => {
+      for (const [key, data] of contexto?.previas ?? []) qc.setQueryData(key, data);
+    },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: BASE_KEY });
+    },
+  });
 }
 
 /**

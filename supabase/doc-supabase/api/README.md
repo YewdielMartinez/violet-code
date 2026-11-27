@@ -115,6 +115,7 @@ En la base de datos **no se renombran** las tablas ni las columnas ya creadas; u
 | `registrar_actividad_preventiva` | Alta de actividad con participantes | `actividad.registrar` | Tit, Sub, TS, Psi, Jur | Escritura |
 | `get_actividades_preventivas` | Lista de actividades con participantes y estado (filtro `p_estado`) | `actividad.ver` | Todos los empleados | Lectura |
 | `actualizar_estado_actividad` | Marca realizada/cancelada o reabre (pendiente) | `actividad.registrar` | Tit, Sub, TS, Psi, Jur | Escritura |
+| `actualizar_actividad_preventiva` | Edita una actividad pendiente y su personal | `actividad.registrar` | Tit, Sub, TS, Psi, Jur | Escritura |
 
 ### Informes y auditoría → [`informes.md`](./informes.md)
 
@@ -171,6 +172,7 @@ En la base de datos **no se renombran** las tablas ni las columnas ya creadas; u
 | `registrar_actividad_preventiva` | ✅ | ✅ | ✅ | ✅ | — | — | — |
 | `get_actividades_preventivas` | ✅ | ✅ | ✅ | ✅ | ✅ | — | — |
 | `actualizar_estado_actividad` | ✅ | ✅ | ✅ | ✅ | — | — | — |
+| `actualizar_actividad_preventiva` | ✅ | ✅ | ✅ | ✅ | — | — | — |
 | `get_informe` | ✅ | ⚠️ su área | ⚠️ su área | ⚠️ su área | — | — | — |
 | `get_bitacora` | ✅ | — | — | — | — | — | — |
 | `get_mapa_calor_asentamiento` | ✅ | ✅ | ✅ | ✅ | — | — | — |

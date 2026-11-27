@@ -118,6 +118,50 @@ describe('supabaseActividadPreventivaRepository', () => {
     expect(args.p_limite).toBe(100);
   });
 
+  it('edita una actividad con actualizar_actividad_preventiva y devuelve el nuevo actualizado_en', async () => {
+    rpcMock.mockResolvedValue({
+      data: [{ actividad_id: 'act-1', total_participantes: 2, actualizado_en: '2026-12-03T18:00:00.5+00:00' }],
+      error: null,
+    });
+
+    const result = await supabaseActividadPreventivaRepository.actualizar({
+      actividadId: 'act-1',
+      actualizadoEn: '2026-12-01T10:00:00+00:00',
+      titulo: 'Editada',
+      tipoActividadId: 2,
+      tipoInstitucion: 'comunidad',
+      sede: 'Parque',
+      programadaEn: '2026-12-10T10:00:00-07:00',
+      participantesIds: ['e1', 'e2'],
+    });
+
+    expect(rpcMock).toHaveBeenCalledWith(
+      'actualizar_actividad_preventiva',
+      expect.objectContaining({
+        p_actividad_id: 'act-1',
+        p_actualizado_en: '2026-12-01T10:00:00+00:00',
+        p_payload: expect.objectContaining({ titulo: 'Editada', participantes_ids: ['e1', 'e2'] }),
+      }),
+    );
+    expect(result).toEqual({ actividadId: 'act-1', totalParticipantes: 2, actualizadoEn: '2026-12-03T18:00:00.5+00:00' });
+  });
+
+  it('al editar propaga el error del servidor (p. ej. 23505 por bloqueo optimista)', async () => {
+    const error = { code: '23505', message: 'Esta actividad fue modificada por otra persona. Recarga los datos.' };
+    rpcMock.mockResolvedValue({ data: null, error });
+    await expect(
+      supabaseActividadPreventivaRepository.actualizar({
+        actividadId: 'act-1',
+        actualizadoEn: 'x',
+        titulo: 'T',
+        tipoActividadId: 1,
+        tipoInstitucion: 'comunidad',
+        sede: 'S',
+        programadaEn: '2026-12-10T10:00:00-07:00',
+      }),
+    ).rejects.toBe(error);
+  });
+
   it('actualiza el estado con actualizar_estado_actividad y devuelve el resultado mapeado', async () => {
     rpcMock.mockResolvedValue({
       data: [{ actividad_id: 'act-1', estado: 'realizada', realizada_en: '2026-12-03T18:00:00Z' }],

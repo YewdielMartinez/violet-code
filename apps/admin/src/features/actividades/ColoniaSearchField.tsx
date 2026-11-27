@@ -79,7 +79,7 @@ export function ColoniaSearchField({ value, onChange, asentamientos, loading, di
         <span className="min-w-0">
           <span className="block truncate text-sm font-semibold text-on-surface">{value.nombre}</span>
           <span className="block truncate text-xs text-on-surface-variant">
-            {value.tipoAsentamiento} · CP {value.codigoPostal} · {value.municipio}
+            {[value.tipoAsentamiento, value.codigoPostal ? `CP ${value.codigoPostal}` : '', value.municipio].filter(Boolean).join(' · ')}
           </span>
         </span>
         <button type="button" className="mk-button mk-button--tonal mk-button--sm act-btn shrink-0" disabled={disabled} onClick={limpiar}>

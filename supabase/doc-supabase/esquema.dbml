@@ -475,6 +475,25 @@ Table historial_clinico {
   creado_por uuid
 }
 
+Table historial_clinico_version {
+  id uuid [pk, default: `gen_random_uuid()`]
+  historial_clinico_id uuid [not null]
+  ficha_id uuid [not null]
+  version integer [not null, note: 'Único por historial_clinico_id; append-only (solo SELECT para el cliente)']
+  antecedentes_familiares text
+  antecedentes_personales text
+  motivo_consulta text
+  observaciones_iniciales text
+  tiene_atencion_psicologica_previa boolean
+  campos_modificados "text[]" [not null, default: '{}']
+  creado_por uuid
+  creado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (historial_clinico_id, version) [unique]
+  }
+}
+
 Table directorio_institucion {
   id smallint [pk, increment]
   nombre text [not null]
@@ -632,6 +651,7 @@ Table orden_proteccion {
   fecha_emision date [not null]
   fecha_vigencia date
   estado estado_orden_proteccion [not null, default: 'vigente']
+  nota_cambio_estado text [note: 'Transitoria: el trigger la copia a orden_proteccion_evento y la limpia']
   activo boolean [not null, default: true]
   creado_en timestamptz [not null, default: `now()`]
   actualizado_en timestamptz [not null, default: `now()`]
@@ -640,6 +660,18 @@ Table orden_proteccion {
   Indexes {
     (id, ficha_id) [unique]
   }
+}
+
+Table orden_proteccion_evento {
+  id uuid [pk, default: `gen_random_uuid()`]
+  orden_proteccion_id uuid [not null]
+  estado_anterior estado_orden_proteccion
+  estado_nuevo estado_orden_proteccion [not null]
+  nota text
+  creado_por uuid
+  creado_en timestamptz [not null, default: `now()`]
+
+  Note: 'Append-only; alimentada por triggers de orden_proteccion'
 }
 
 Table nota_area {
@@ -740,6 +772,10 @@ Ref: alerta.creado_por > empleado.id
 Ref: historial_clinico.ficha_id - ficha_registro.id
 Ref: historial_clinico.creado_por > empleado.id
 
+Ref: historial_clinico_version.historial_clinico_id > historial_clinico.id
+Ref: historial_clinico_version.ficha_id > ficha_registro.id
+Ref: historial_clinico_version.creado_por > empleado.id
+
 Ref: directorio_institucion.asentamiento_id > cat_asentamiento.id
 Ref: directorio_institucion.creado_por > empleado.id
 
@@ -771,6 +807,8 @@ Ref: agresor.creado_por > empleado.id
 Ref: orden_proteccion.ficha_id > ficha_registro.id
 Ref: orden_proteccion.(agresor_id, ficha_id) > agresor.(id, ficha_id)
 Ref: orden_proteccion.creado_por > empleado.id
+Ref: orden_proteccion_evento.orden_proteccion_id > orden_proteccion.id
+Ref: orden_proteccion_evento.creado_por > empleado.id
 
 Ref: nota_area.ficha_id > ficha_registro.id
 Ref: nota_area.area_id > cat_area.id

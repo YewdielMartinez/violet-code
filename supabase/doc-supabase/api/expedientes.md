@@ -761,11 +761,13 @@ const { data, error } = await supabase
 
 **Versión:** [`20261127000600_37`](../../migrations/20261127000600_37_rpc_historial_clinico_y_estudio.sql)
 
-> Crea o actualiza el historial clínico psicológico del expediente (con bloqueo optimista y RN-01) y lo consulta dejando registro `'ver'` en bitácora.
+> Crea o actualiza el historial clínico psicológico del expediente (con bloqueo optimista y RN-01) y lo consulta dejando registro `'ver'` en bitácora. **Solo Psicología escribe** (desde `_67`); Dirección solo lee. Cada guardado con cambios crea una versión consultable con `get_historial_clinico_versiones`.
 
-| Permiso                     | Roles         | Tipo                | Bitácora                          | Migración                             |
-| --------------------------- | ------------- | ------------------- | --------------------------------- | ------------------------------------- |
-| `historial_clinico.acceder` | Tit, Sub, Psi | Lectura / Escritura | Sí (`ver`, `crear`, `actualizar`) | `_37_rpc_historial_clinico_y_estudio` |
+| Permiso                      | Roles         | Tipo      | Bitácora                          | Migración                                                                  |
+| ---------------------------- | ------------- | --------- | --------------------------------- | -------------------------------------------------------------------------- |
+| `historial_clinico.acceder`  | Tit, Sub, Psi | Lectura   | Sí (`ver`)                        | `_37_rpc_historial_clinico_y_estudio`                                      |
+| `historial_clinico.escribir` | Psi           | Escritura | Sí (`crear`, `actualizar`)        | `_67_historial_clinico_psicologia` (`guardar_historial_clinico`)           |
+| `historial_clinico.acceder`  | Tit, Sub, Psi | Lectura   | Sí (`ver`, `historial_clinico_version`) | `_67_historial_clinico_psicologia` (`get_historial_clinico_versiones`) |
 
 **Llamada**
 
@@ -784,9 +786,15 @@ const { data, error } = await supabase
     p_tiene_atencion_psicologica_previa: false,
   })
   .single();
+
+// Histórico de cambios (más reciente primero)
+const { data: versiones } = await supabase.rpc("get_historial_clinico_versiones", {
+  p_ficha_id: fichaId,
+});
+// cada fila: version, snapshot completo, campos_modificados[], creado_por_nombre, creado_en
 ```
 
-**Errores:** `42501` (TS, Jur, Rec, UMECA) · `23514` (expediente archivado o persona menor de 18 años RN-01) · `23505` (`p_actualizado_en` obsoleto).
+**Errores:** `guardar_historial_clinico`: `42501` (todo rol distinto de Psicología, incluida Dirección: "Solo Psicología puede registrar o editar el historial clínico") · `23514` (expediente archivado o persona menor de 18 años RN-01) · `23505` (`p_actualizado_en` obsoleto). `get_historial_clinico` / `get_historial_clinico_versiones`: `42501` (TS, Jur, Rec, UMECA).
 
 ---
 

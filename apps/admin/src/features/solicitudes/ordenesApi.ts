@@ -6,6 +6,7 @@ import {
   type SubirDocumentoInput,
 } from '@/domain/models/DocumentoAdjunto';
 import type { OrdenProteccionInput } from '@/domain/models/OrdenProteccion';
+import { lineaTiempoQueryKey } from '@/features/seguimiento/api';
 import { supabaseAgresorRepository } from '@/infrastructure/supabase/adapters/SupabaseAgresorRepository';
 import { supabaseDocumentoStorageRepository } from '@/infrastructure/supabase/adapters/SupabaseDocumentoStorageRepository';
 import { supabaseOrdenProteccionRepository } from '@/infrastructure/supabase/adapters/SupabaseOrdenProteccionRepository';
@@ -21,6 +22,7 @@ export {
   AUTORIDAD_EMISORA_MAX_LENGTH,
   ESTADO_ORDEN_LABELS,
   ESTADOS_ORDEN_PROTECCION,
+  NOTA_CAMBIO_ESTADO_MAX_LENGTH,
   NUMERO_OFICIO_MAX_LENGTH,
   esOrdenVigente,
   fechaHoyLocalMazatlan,
@@ -81,6 +83,8 @@ export function useTiposDocumentoOrden(enabled = true) {
 function invalidateOrdenRelatedQueries(qc: ReturnType<typeof useQueryClient>, fichaId: string) {
   void qc.invalidateQueries({ queryKey: ORDENES_QUERY_KEYS.porFicha(fichaId) });
   void qc.invalidateQueries({ queryKey: ORDENES_QUERY_KEYS.documentosOrdenesPorFicha(fichaId) });
+  // Cada cambio de estado queda en el área de Seguimiento (línea de tiempo del expediente).
+  void qc.invalidateQueries({ queryKey: lineaTiempoQueryKey(fichaId) });
   void qc.invalidateQueries({ queryKey: ['alertas', 'cola'] });
   void qc.invalidateQueries({ queryKey: ['alerts'] });
 }

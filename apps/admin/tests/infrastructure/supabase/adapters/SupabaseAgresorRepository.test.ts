@@ -81,7 +81,7 @@ describe('supabaseAgresorRepository', () => {
     const created = await supabaseAgresorRepository.crear({
       fichaId: 'ficha-1',
       nombres: 'Roberto',
-      tieneConsumoDroga: false,
+      drogas: ['no_consume'],
     });
     expect(rpcMock).toHaveBeenCalledWith(
       'guardar_agresor',

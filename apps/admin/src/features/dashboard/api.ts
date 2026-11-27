@@ -37,7 +37,7 @@ const LIVE = 30_000;
 export const useRecentActivity = (enabled: boolean) =>
   useQuery({
     queryKey: ['audit', 'recent'],
-    queryFn: () => supabaseDashboardRepository.getRecentActivity(8),
+    queryFn: () => supabaseDashboardRepository.getRecentActivity(15),
     enabled,
     refetchInterval: LIVE,
   });
@@ -53,7 +53,7 @@ export const useAlertsSummary = (enabled = true) =>
 export const useAlerts = (estado?: EstadoAlerta, enabled = true) =>
   useQuery({
     queryKey: ['alerts', 'list', estado ?? 'active'],
-    queryFn: () => supabaseDashboardRepository.getAlerts(estado, 8),
+    queryFn: () => supabaseDashboardRepository.getAlerts(estado, 15),
     enabled,
     refetchInterval: LIVE,
     placeholderData: keepPreviousData,
@@ -70,7 +70,7 @@ export const useCasesSummary = (userId: string, enabled = true) =>
 export const useCasesToReview = (mine: boolean, userId: string, enabled = true) =>
   useQuery({
     queryKey: ['cases', 'review', mine, userId],
-    queryFn: () => supabaseDashboardRepository.getCasesToReview(mine, userId, 6),
+    queryFn: () => supabaseDashboardRepository.getCasesToReview(mine, userId, 15),
     enabled: enabled && Boolean(userId),
     placeholderData: keepPreviousData,
   });

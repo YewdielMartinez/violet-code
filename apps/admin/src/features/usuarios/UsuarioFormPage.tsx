@@ -22,6 +22,7 @@ const BACK_ACTION = [{ id: 'back', label: 'Volver a Usuarios' }];
 export default function UsuarioFormPage() {
   const formId = useId();
   const formRef = useRef<HTMLFormElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const pendingFocusFieldRef = useRef<string | null>(null);
   const bypassGuardRef = useRef(false);
   const navigate = useNavigate();
@@ -126,7 +127,7 @@ export default function UsuarioFormPage() {
       ) : (
         <Skeleton loading={isEditRoute && !cuenta} shape="card" lines={6} label="Cargando cuenta">
           <FadeContent rise={10} duration={0.28} trigger="load" once>
-            <div className="w-full rounded-3xl border border-outline-variant bg-surface-container-lowest p-6">
+            <div ref={cardRef} className="w-full rounded-3xl border border-outline-variant bg-surface-container-lowest p-6">
               <div className="mb-6 border-b border-outline-variant pb-5">
                 <UsuarioWizardStepper step={step} onSelectStep={handleStepSelect} />
               </div>
@@ -134,6 +135,7 @@ export default function UsuarioFormPage() {
               <UsuarioWizardSteps
                 formId={formId}
                 formRef={formRef}
+                scrollAnchorRef={cardRef}
                 mode={mode}
                 original={form.original}
                 step={step}

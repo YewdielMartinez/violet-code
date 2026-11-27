@@ -21,15 +21,15 @@ describe('esVencida', () => {
 });
 
 describe('accionesActividad', () => {
-  it('pendiente: realizar y cancelar; realizada / cancelada: reabrir', () => {
-    expect(accionesActividad('pendiente', true)).toEqual({ realizar: true, cancelar: true, reabrir: false });
-    expect(accionesActividad('realizada', true)).toEqual({ realizar: false, cancelar: false, reabrir: true });
-    expect(accionesActividad('cancelada', true)).toEqual({ realizar: false, cancelar: false, reabrir: true });
+  it('pendiente: editar, realizar y cancelar; realizada / cancelada: reabrir', () => {
+    expect(accionesActividad('pendiente', true)).toEqual({ editar: true, realizar: true, cancelar: true, reabrir: false });
+    expect(accionesActividad('realizada', true)).toEqual({ editar: false, realizar: false, cancelar: false, reabrir: true });
+    expect(accionesActividad('cancelada', true)).toEqual({ editar: false, realizar: false, cancelar: false, reabrir: true });
   });
 
   it('sin actividad.registrar no hay ninguna acción', () => {
     for (const estado of ['pendiente', 'realizada', 'cancelada'] as const) {
-      expect(accionesActividad(estado, false)).toEqual({ realizar: false, cancelar: false, reabrir: false });
+      expect(accionesActividad(estado, false)).toEqual({ editar: false, realizar: false, cancelar: false, reabrir: false });
     }
   });
 });

@@ -176,7 +176,7 @@ export function AlertaDetalleDrawer({
                 >
                   <Icon name="gavel" className="mt-0.5 shrink-0" />
                   <div className="text-sm sm:text-base">
-                    <p className="font-semibold">Orden de protección vigente (RN-17)</p>
+                    <p className="font-semibold">Orden de protección vigente</p>
                     <p className="opacity-90">
                       Esta persona cuenta con una orden de protección vigente; la prioridad de la alerta se elevó a alta automáticamente.
                     </p>

@@ -1,6 +1,6 @@
 # RPC: `public.get_linea_tiempo`
 
-- **Versión:** [`20261128001400_54`](../../migrations/20261128001400_54_quitar_folio_seguimiento.sql)
+- **Versión:** [`20261128002500_66`](../../migrations/20261128002500_66_orden_proteccion_seguimiento.sql)
 - **Migración:** `supabase/migrations/20261126001000_20_rpc_linea_tiempo.sql`
 - **Permiso RBAC:** `public.tiene_permiso('expediente.ver')`
 - **Actores autorizados:** `titular`, `subdireccion` (ven todo), `trabajo_social`, `psicologia`, `juridico` (ven título/estado de todo y detalle solo de lo propio)
@@ -30,6 +30,13 @@ Eventos del caso ordenados por `fecha DESC, tipo ASC, referencia_id DESC`:
 - Áreas operativas (`trabajo_social`, `psicologia`, `juridico`) ven `titulo` y `estado` de todos los eventos del caso, pero `detalle` únicamente de sus propios eventos (citas/atenciones de su `area_id`, derivaciones donde su área es origen o destino, órdenes de protección para `juridico`/`trabajo_social`, alertas para línea 24/7).
 - **Nunca** incluye registros ni contenido de `nota_area` ni `historial_clinico`.
 - Operación de solo lectura (`stable`).
+
+### Órdenes de protección (migración 66)
+- El **alta** de una orden aparece como `Orden de protección · <estado inicial>` (el estado con el que se registró, no el actual).
+- Cada **cambio de estado** (`public.orden_proteccion_evento`, alimentada por triggers sobre `orden_proteccion`) aparece como `Orden de protección: <estado anterior> → <estado nuevo>` con `tipo = 'orden_proteccion'`.
+- El `detalle` del cambio (`Por <empleado> — <nota>`) solo se muestra a Dirección, `juridico` y `trabajo_social`; el resto ve únicamente el título.
+- Una orden archivada (`activo = false`) y sus cambios dejan de aparecer.
+- La web guarda la nota opcional en la columna transitoria `orden_proteccion.nota_cambio_estado` dentro del mismo `UPDATE` que cambia el estado; el trigger la copia al evento y la limpia.
 
 ## 4. Errores esperados
 

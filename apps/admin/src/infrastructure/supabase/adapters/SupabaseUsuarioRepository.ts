@@ -1,4 +1,4 @@
-import { createIsolatedAuthClient, supabase } from '../client';
+import { supabase } from '../client';
 import type { StaffRole } from '@/domain/models/Auth';
 import {
   rolRequiereArea,
@@ -95,42 +95,43 @@ async function assertPuedeGestionarCuentas(): Promise<string> {
   return actorId;
 }
 
-function mapSignUpError(raw: string, status?: number): UsuarioError {
-  const lower = raw.toLowerCase();
-  if (lower.includes('already registered') || lower.includes('already been registered') || lower.includes('exists')) {
+/** Traduce los errores del RPC `crear_cuenta_acceso` (SQLSTATE + mensaje en español) a `UsuarioError`. */
+export function mapCrearCuentaError(error: { code?: string; message?: string } | null): UsuarioError {
+  const code = error?.code;
+  const message = error?.message?.trim() ?? '';
+  if (code === '42501' || code === 'PGRST301') {
+    return new UsuarioError('permiso', 'No tienes permiso para gestionar cuentas.');
+  }
+  if (code === '23505') {
     return new UsuarioError('correo_duplicado', 'Ya existe una cuenta con ese correo electrónico.');
   }
-  if (status === 429 || lower.includes('rate limit') || lower.includes('too many')) {
-    return new UsuarioError('auth', 'Demasiados intentos de alta. Espera un minuto e inténtalo de nuevo.');
+  if (code === '23514' && message) {
+    return new UsuarioError('auth', message);
   }
-  if (lower.includes('password')) {
-    return new UsuarioError('auth', 'La contraseña temporal no cumple la política de seguridad de Supabase.');
-  }
-  if (lower.includes('signups not allowed') || lower.includes('signup is disabled')) {
-    return new UsuarioError('auth', 'El alta de cuentas está deshabilitada en Supabase Auth.');
-  }
-  return new UsuarioError('auth', raw || 'No se pudo crear la cuenta de acceso.');
+  return new UsuarioError('auth', message || 'No se pudo crear la cuenta de acceso.');
 }
 
-/** Crea la credencial en Supabase Auth sin tocar la sesión actual y devuelve el `id` de `auth.users`. */
-async function crearCredencial(correo: string, contrasena: string, nombre: string): Promise<string> {
-  const authClient = createIsolatedAuthClient();
-  const { data, error } = await authClient.auth.signUp({
-    email: correo.trim().toLowerCase(),
-    password: contrasena,
-    options: { data: { nombre } },
+interface CrearCuentaRpcClient {
+  rpc: (
+    fn: 'crear_cuenta_acceso',
+    args: { p_correo: string; p_contrasena: string; p_nombre: string; p_rol: string },
+  ) => PromiseLike<{ data: string | null; error: { code?: string; message?: string } | null }>;
+}
+
+/**
+ * Crea la credencial (ya confirmada) y el perfil en una sola transacción con el RPC `crear_cuenta_acceso`.
+ * Se evita `auth.signUp()`: con `enable_confirmations` dejaba la cuenta "sin confirmar" y no podía iniciar sesión.
+ * TODO: quitar el cast cuando se regeneren los tipos (`database.types.ts`) tras la migración 68.
+ */
+async function crearCuentaAcceso(input: UsuarioCreateInput, nombre: string): Promise<string> {
+  const { data, error } = await (supabase as unknown as CrearCuentaRpcClient).rpc('crear_cuenta_acceso', {
+    p_correo: input.correo.trim().toLowerCase(),
+    p_contrasena: input.contrasena,
+    p_nombre: nombre,
+    p_rol: input.rol,
   });
-  if (error) throw mapSignUpError(error.message, error.status);
-  const user = data.user;
-  // Con protección contra enumeración, Supabase responde un usuario "falso" sin identidades si el correo ya existe.
-  if (!user || (Array.isArray(user.identities) && user.identities.length === 0)) {
-    throw new UsuarioError('correo_duplicado', 'Ya existe una cuenta con ese correo electrónico.');
-  }
-  if (data.session) {
-    // La sesión de la cuenta nueva no se usa: se cierra para no dejar tokens vivos en memoria.
-    await authClient.auth.signOut({ scope: 'local' }).catch(() => undefined);
-  }
-  return user.id;
+  if (error || !data) throw mapCrearCuentaError(error);
+  return data;
 }
 
 export const supabaseUsuarioRepository: UsuarioRepository = {
@@ -150,34 +151,25 @@ export const supabaseUsuarioRepository: UsuarioRepository = {
   },
 
   async crear(input: UsuarioCreateInput) {
-    const actorId = await assertPuedeGestionarCuentas();
+    await assertPuedeGestionarCuentas();
     const nombre = input.nombre.trim();
-    const areaId = await resolveAreaId(input.rol);
-    const userId = await crearCredencial(input.correo, input.contrasena, nombre);
+    const userId = await crearCuentaAcceso(input, nombre);
 
     const perfilError = (raw: { code?: string; message?: string } | null) =>
       new UsuarioError(
         'perfil',
-        `Se creó el acceso de ${input.correo.trim()}, pero no se pudo registrar su perfil` +
+        `Se creó el acceso de ${input.correo.trim()}, pero no se pudo cargar su perfil` +
           (raw?.message ? ` (${raw.message})` : '') +
-          '. Pide a Soporte que lo complete desde Supabase.',
+          '. Actualiza la lista de cuentas.',
       );
 
     if (tipoCuentaDeRol(input.rol) === 'externo') {
-      const { data, error } = await supabase
-        .from('usuario_externo')
-        .insert({ id: userId, nombre, dependencia: 'umeca', creado_por: actorId })
-        .select(EXTERNO_SELECT)
-        .single();
+      const { data, error } = await supabase.from('usuario_externo').select(EXTERNO_SELECT).eq('id', userId).single();
       if (error || !data) throw perfilError(error);
       return mapExternoRow(data as ExternoRow);
     }
 
-    const { data, error } = await supabase
-      .from('empleado')
-      .insert({ id: userId, nombre, rol: input.rol as EmpleadoRol, area_id: areaId, creado_por: actorId })
-      .select(EMPLEADO_SELECT)
-      .single();
+    const { data, error } = await supabase.from('empleado').select(EMPLEADO_SELECT).eq('id', userId).single();
     if (error || !data) throw perfilError(error);
     return mapEmpleadoRow(data as EmpleadoRow);
   },

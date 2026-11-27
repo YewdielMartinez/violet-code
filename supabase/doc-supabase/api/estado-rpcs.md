@@ -48,7 +48,8 @@ Corte: 27-nov-2026, rama `develop` con la migración `60_integrar_develop_y_supa
 | RPC | Versión | Base de datos | Admin (adapters) | Nota |
 |---|---|---|---|---|
 | [`get_historial_clinico`](../rpcs/get_historial_clinico.md) | `20261127000600_37` | ✅ | ✅ `SupabaseHistorialClinicoRepository.obtener` | |
-| [`guardar_historial_clinico`](../rpcs/guardar_historial_clinico.md) | `20261127000600_37` | ✅ | ✅ `SupabaseHistorialClinicoRepository.guardar` | |
+| [`guardar_historial_clinico`](../rpcs/guardar_historial_clinico.md) | `20261128002600_67` | ✅ | ✅ `SupabaseHistorialClinicoRepository.guardar` | Solo Psicología (`historial_clinico.escribir`) |
+| [`get_historial_clinico_versiones`](../rpcs/get_historial_clinico_versiones.md) | `20261128002600_67` | ✅ | ✅ `SupabaseHistorialClinicoRepository.versiones` | Histórico de cambios |
 
 ### Agenda y citas
 

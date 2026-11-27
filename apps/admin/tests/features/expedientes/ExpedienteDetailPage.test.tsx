@@ -193,7 +193,6 @@ const SAMPLE_AGRESOR: Agresor = {
   referencias: null,
   ocupacionId: 2,
   ocupacionOtra: null,
-  tieneConsumoDroga: true,
   drogas: ['marihuana'],
   especificacionDroga: null,
   especificacionArma: null,
@@ -261,7 +260,7 @@ describe('ExpedienteDetailPage', () => {
     expect(within(identityCard).getByText('SEM-2026-0001')).toBeTruthy();
     expect(within(identityCard).getByText('MEZA910315MSLGRN04')).toBeTruthy();
     expect(within(identityCard).getByText('En seguimiento')).toBeTruthy();
-    expect(within(identityCard).getByText('Prioritario')).toBeTruthy();
+    expect(within(identityCard).getByText('Urgente')).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'Llamar' })).toBeNull();
     expect(screen.getByTestId('ficha-resumen')).toBeTruthy();
     // La zona de gestión ya no vive en la pestaña Datos (archivar/desarchivar está en el menú del listado).

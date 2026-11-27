@@ -189,7 +189,6 @@ const SAMPLE_AGRESOR: Agresor = {
   referencias: null,
   ocupacionId: 2,
   ocupacionOtra: null,
-  tieneConsumoDroga: true,
   drogas: ['marihuana'],
   especificacionDroga: null,
   especificacionArma: null,
@@ -284,7 +283,7 @@ describe('ExpedienteDrawer (RBAC, rediseño y bitácora RF-05 / RF-22)', () => {
     expect(screen.getByText(formatFechaNacimiento(SAMPLE_EXPEDIENTE.persona.fechaNacimiento))).toBeTruthy();
 
     expect(screen.getByText('En seguimiento')).toBeTruthy();
-    expect(screen.getByText('Prioritario')).toBeTruthy();
+    expect(screen.getByText('Urgente')).toBeTruthy();
     expect(screen.getByText('MEZA910315MSLGRN04')).toBeTruthy();
     expect(screen.getByText('668 100 0001')).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'Llamar' })).toBeNull();

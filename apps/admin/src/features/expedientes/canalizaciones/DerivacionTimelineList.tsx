@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
   FlipGroup,
   FuseButton,
@@ -7,7 +7,6 @@ import {
 } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/fuse-button';
 import '@yewdiel21/motion-kit/css/components/loading-button';
-import { Icon } from '@/shared/ui/Icon';
 import {
   DESTINO_LABELS,
   isInternalDestino,
@@ -15,10 +14,17 @@ import {
   type DerivacionItem,
   type EstadoDerivacion,
 } from '@/features/canalizaciones/api';
-import { DerivacionStatusChip, getEstadoDotClass } from './DerivacionStatusChip';
+import type { HistorialCanalizacionItem } from '@/domain/models/Derivacion';
+import { DerivacionHistorial } from './DerivacionHistorial';
+import { DerivacionStatusChip } from './DerivacionStatusChip';
+import { formatDiaCalendario, formatMomento, nombreDestino } from './derivacionFormat';
+import './canalizaciones.css';
 
 interface DerivacionTimelineListProps {
   derivaciones: DerivacionItem[];
+  /** Historial por canalización (RPC get_historial_canalizaciones); opcional, la lista funciona sin él. */
+  historial?: readonly HistorialCanalizacionItem[];
+  historialLoading?: boolean;
   updatingId: string | null;
   onUpdateEstado: (id: string, next: EstadoDerivacion) => Promise<void>;
 }
@@ -38,8 +44,122 @@ const CANCEL_FUSE_LABELS: NonNullable<FuseButtonProps['labels']> = {
   prompt: '¿Cancelar esta canalización? Volver o Sí, cancelar.',
 };
 
+interface DerivacionCardProps {
+  derivacion: DerivacionItem;
+  index: number;
+  historial: HistorialCanalizacionItem | undefined;
+  historialLoading: boolean;
+  isBusy: boolean;
+  onUpdateEstado: (id: string, next: EstadoDerivacion) => Promise<void>;
+}
+
+function DerivacionCard({
+  derivacion: d,
+  index,
+  historial,
+  historialLoading,
+  isBusy,
+  onUpdateEstado,
+}: DerivacionCardProps) {
+  // Si el estado cambia durante la vida de la tarjeta, el chip se remonta y reproduce el «pop».
+  const [estadoInicial] = useState(d.estado);
+  const estadoCambio = estadoInicial !== d.estado;
+
+  const advanceAction = NEXT_STATUS[d.estado];
+  const canCancel = validarTransicionDerivacion(d.estado, 'cancelada') === null;
+  const internal = isInternalDestino(d.destino);
+  const titulo = nombreDestino(d, DESTINO_LABELS[d.destino]);
+  const eventos = historial?.eventos ?? [];
+  const ultimoCambio =
+    historial && historial.actualizadoEn !== historial.creadoEn
+      ? formatMomento(historial.actualizadoEn)
+      : 'Sin cambios';
+
+  return (
+    <li
+      data-flip-id={d.id}
+      className="vc-canal-card"
+      style={{ '--i': index } as CSSProperties}
+    >
+      <div className="vc-canal-card__head">
+        <div className="min-w-0">
+          <h4 className="vc-canal-card__title">{titulo}</h4>
+          <p className="vc-canal-card__sub">
+            {DESTINO_LABELS[d.destino]} · {internal ? 'Interna' : 'Externa'} · Desde{' '}
+            {d.areaOrigenNombre ?? 'Dirección'}
+          </p>
+        </div>
+        <DerivacionStatusChip key={d.estado} estado={d.estado} pop={estadoCambio} />
+      </div>
+
+      <dl className="vc-canal-dates">
+        <div>
+          <dt>Canalizada</dt>
+          <dd>{formatDiaCalendario(d.fechaDerivacion)}</dd>
+        </div>
+        <div>
+          <dt>Creada</dt>
+          <dd>{formatMomento(d.creadoEn)}</dd>
+        </div>
+        <div>
+          <dt>Último cambio</dt>
+          <dd>{ultimoCambio}</dd>
+        </div>
+      </dl>
+
+      {d.motivo ? (
+        <div className="vc-canal-motivo">
+          <p className="vc-canal-motivo__label">Motivo</p>
+          <p className="vc-canal-motivo__text">{d.motivo}</p>
+        </div>
+      ) : null}
+
+      <DerivacionHistorial
+        eventos={eventos}
+        creadoEn={d.creadoEn}
+        loading={historialLoading && !historial}
+      />
+
+      {advanceAction || canCancel ? (
+        <div className="vc-canal-card__actions">
+          {canCancel ? (
+            <FuseButton
+              key={`${d.id}-${d.estado}`}
+              mode="split"
+              tone="danger"
+              align="end"
+              height={44}
+              disabled={isBusy}
+              labels={CANCEL_FUSE_LABELS}
+              onConfirm={async () => {
+                await onUpdateEstado(d.id, 'cancelada');
+              }}
+            />
+          ) : null}
+
+          {advanceAction ? (
+            <LoadingButton
+              type="button"
+              aria-label={advanceAction.label}
+              disabled={isBusy}
+              state={isBusy ? 'loading' : 'idle'}
+              compact={false}
+              action={() => onUpdateEstado(d.id, advanceAction.next)}
+              className="mk-button mk-button--filled min-h-11 px-5 text-base whitespace-nowrap"
+            >
+              {advanceAction.label}
+            </LoadingButton>
+          ) : null}
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
 export function DerivacionTimelineList({
   derivaciones,
+  historial,
+  historialLoading = false,
   updatingId,
   onUpdateEstado,
 }: DerivacionTimelineListProps) {
@@ -49,92 +169,25 @@ export function DerivacionTimelineList({
     () => derivaciones.map((d) => `${d.id}:${d.estado}`).join('|'),
     [derivaciones],
   );
+  const historialById = useMemo(
+    () => new Map((historial ?? []).map((h) => [h.id, h])),
+    [historial],
+  );
 
   return (
     <FlipGroup root={listRef} signature={flipSignature}>
-      <ol
-        ref={listRef}
-        aria-label="Línea de tiempo de canalizaciones"
-        className="relative grid gap-3 pl-5 before:absolute before:top-4 before:bottom-4 before:left-2 before:w-px before:bg-outline-variant"
-      >
-        {derivaciones.map((d) => {
-          const advanceAction = NEXT_STATUS[d.estado];
-          const canCancel = validarTransicionDerivacion(d.estado, 'cancelada') === null;
-          const isBusy = updatingId === d.id;
-          const internal = isInternalDestino(d.destino);
-          const targetName =
-            d.areaDestinoNombre ?? d.institucionNombre ?? d.institucionOtra ?? '—';
-
-          return (
-            <li
-              key={d.id}
-              data-flip-id={d.id}
-              className="relative grid gap-2.5 rounded-2xl border border-outline-variant bg-surface-container-low p-3.5"
-            >
-              <span
-                aria-hidden="true"
-                className={`absolute top-5 -left-[1.0625rem] h-2.5 w-2.5 rounded-full ring-4 ring-surface ${getEstadoDotClass(d.estado)}`}
-              />
-
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-on-surface">
-                    <span>{d.areaOrigenNombre ?? 'Dirección'}</span>
-                    <Icon name="arrow_forward" className="text-[16px] text-on-surface-variant" />
-                    <span>{DESTINO_LABELS[d.destino]}</span>
-                  </div>
-                  <p className="mt-0.5 text-xs text-on-surface-variant">
-                    {internal ? 'Interna' : 'Externa'} · {targetName} · {d.fechaDerivacion}
-                  </p>
-                </div>
-
-                <DerivacionStatusChip estado={d.estado} />
-              </div>
-
-              {d.motivo ? (
-                <p className="rounded-xl bg-surface-container-lowest px-3 py-2 text-sm text-on-surface">
-                  {d.motivo}
-                </p>
-              ) : null}
-
-              {advanceAction || canCancel ? (
-                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-outline-variant/60 pt-2.5">
-                  {advanceAction ? (
-                    <LoadingButton
-                      type="button"
-                      aria-label={advanceAction.label}
-                      disabled={isBusy}
-                      state={isBusy ? 'loading' : 'idle'}
-                      compact={false}
-                      action={() => onUpdateEstado(d.id, advanceAction.next)}
-                      className="mk-button mk-button--tonal mk-button--sm"
-                    >
-                      <Icon name="arrow_right_alt" />
-                      <span>{advanceAction.label}</span>
-                    </LoadingButton>
-                  ) : (
-                    <span />
-                  )}
-
-                  {canCancel ? (
-                    <FuseButton
-                      key={`${d.id}-${d.estado}`}
-                      mode="split"
-                      tone="danger"
-                      align="end"
-                      height={34}
-                      disabled={isBusy}
-                      labels={CANCEL_FUSE_LABELS}
-                      onConfirm={async () => {
-                        await onUpdateEstado(d.id, 'cancelada');
-                      }}
-                    />
-                  ) : null}
-                </div>
-              ) : null}
-            </li>
-          );
-        })}
+      <ol ref={listRef} aria-label="Lista de canalizaciones" className="vc-canal-list">
+        {derivaciones.map((d, index) => (
+          <DerivacionCard
+            key={d.id}
+            derivacion={d}
+            index={index}
+            historial={historialById.get(d.id)}
+            historialLoading={historialLoading}
+            isBusy={updatingId === d.id}
+            onUpdateEstado={onUpdateEstado}
+          />
+        ))}
       </ol>
     </FlipGroup>
   );

@@ -5,8 +5,10 @@ import {
   humanizarTitulo,
   mapLineaTiempo,
   ordenarLineaTiempo,
+  TIPO_ICON,
+  TIPOS_LINEA_TIEMPO,
 } from '@/domain/models/LineaTiempo';
-import type { LineaTiempoEvento } from '@/domain/models/Seguimiento';
+import { normalizarTipoEvento, type LineaTiempoEvento } from '@/domain/models/Seguimiento';
 
 const NOW = new Date('2026-11-26T18:00:00Z');
 
@@ -125,14 +127,129 @@ describe('LineaTiempo (RF-25, RN-09)', () => {
     );
   });
 
+  it('muestra cada cambio de estado de una orden como «Orden de protección: anterior → nuevo»', () => {
+    const [cancelada, vencida] = mapLineaTiempo(
+      [
+        evento({
+          fecha: '2026-11-22T16:00:00Z',
+          tipo: 'orden_proteccion',
+          area: null,
+          titulo: 'Orden de protección: vigente → cancelada',
+          detalle: 'Por Ana López — Revocada por el juzgado',
+          referenciaId: 'oe-2',
+        }),
+        evento({
+          fecha: '2026-11-21T16:00:00Z',
+          tipo: 'orden_proteccion',
+          area: null,
+          titulo: 'Orden de protección: en_tramite → vencida',
+          referenciaId: 'oe-1',
+        }),
+      ],
+      null,
+      NOW,
+    );
+    expect(cancelada).toMatchObject({
+      id: 'orden_proteccion-oe-2',
+      title: 'Orden de protección: Vigente → Cancelada',
+      description: 'Por Ana López — Revocada por el juzgado',
+      status: 'error',
+    });
+    expect(vencida).toMatchObject({
+      title: 'Orden de protección: En trámite → Vencida',
+      status: 'done',
+    });
+    expect(estadoCrudoDesdeTitulo('Orden de protección: en_tramite → vigente')).toBe('vigente');
+  });
+
   it('cuenta eventos por tipo para los filtros', () => {
     expect(contarPorTipo(EVENTOS)).toEqual({
       cita: 2,
       atencion: 1,
       derivacion: 1,
+      canalizacion_evento: 0,
       orden_proteccion: 1,
       alerta: 0,
       registro: 1,
+      archivo: 0,
+      reapertura: 0,
+      otro: 0,
+    });
+  });
+
+  it('muestra canalización, archivo y reapertura que devuelve el RPC', () => {
+    const vista = mapLineaTiempo(
+      [
+        evento({
+          fecha: '2026-11-24T16:00:00Z',
+          tipo: 'canalizacion_evento',
+          area: 'Jurídico',
+          titulo: 'Canalización a Jurídico: en_proceso → concluida',
+          detalle: 'Se entregó oficio',
+          referenciaId: 'ce-1',
+        }),
+        evento({
+          fecha: '2026-11-23T16:00:00Z',
+          tipo: 'archivo',
+          area: null,
+          titulo: 'Archivo de expediente SEM-2026-0001',
+          detalle: 'Caso concluido',
+          referenciaId: 'f-1',
+        }),
+        evento({
+          fecha: '2026-11-25T16:00:00Z',
+          tipo: 'reapertura',
+          area: null,
+          titulo: 'Reapertura de expediente SEM-2026-0001',
+          detalle: 'Nueva agresión',
+          referenciaId: 'f-1',
+        }),
+      ],
+      null,
+      NOW,
+    );
+    expect(vista.map((e) => e.id)).toEqual(['reapertura-f-1', 'canalizacion_evento-ce-1', 'archivo-f-1']);
+    expect(vista[0]).toMatchObject({ icon: 'autorenew', status: 'current', description: 'Nueva agresión' });
+    expect(vista[1]).toMatchObject({
+      title: 'Canalización a Jurídico: En proceso → Concluida',
+      status: 'done',
+      icon: 'alt_route',
+      meta: 'Jurídico',
+    });
+    expect(vista[2]).toMatchObject({ icon: 'archive', status: 'done', title: 'Archivo de expediente SEM-2026-0001' });
+    const filtrada = mapLineaTiempo(
+      [evento({ tipo: 'canalizacion_evento', titulo: 'Canalización a X: pendiente → cancelada' })],
+      new Set(['canalizacion_evento'] as const),
+      NOW,
+    );
+    expect(filtrada[0].status).toBe('error');
+  });
+
+  it('renderiza genérico un tipo futuro desconocido y sigue descartando notas privadas', () => {
+    const futuro = { ...evento({ referenciaId: 'x-1', titulo: 'Evento nuevo' }), tipo: 'visita_domiciliaria' as never };
+    const nota = { ...evento({ referenciaId: 'n-1' }), tipo: 'nota_privada' as never };
+    const vista = mapLineaTiempo([futuro, nota], null, NOW);
+    expect(vista).toHaveLength(1);
+    expect(vista[0]).toMatchObject({ tipo: 'otro', title: 'Evento nuevo', icon: 'circle', id: 'otro-x-1' });
+    expect(contarPorTipo([futuro, nota]).otro).toBe(1);
+    expect(normalizarTipoEvento('alerta')).toBe('alerta');
+    expect(normalizarTipoEvento('nota_area')).toBeNull();
+    expect(normalizarTipoEvento('algo_nuevo')).toBe('otro');
+  });
+
+  it('usa un nombre de icono Material Symbols por tipo (sin letras sueltas)', () => {
+    for (const tipo of TIPOS_LINEA_TIEMPO) expect(TIPO_ICON[tipo]).toMatch(/^[a-z][a-z_]{2,}$/);
+    expect(TIPO_ICON).toMatchObject({
+      registro: 'description',
+      cita: 'event',
+      atencion: 'clinical_notes',
+      derivacion: 'alt_route',
+      canalizacion_evento: 'alt_route',
+      orden_proteccion: 'gavel',
+      alerta: 'sos',
+      archivo: 'archive',
+      reapertura: 'autorenew',
+      otro: 'circle',
     });
   });
 });

@@ -6,10 +6,13 @@ import { ThemeProvider } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/toast';
 import { queryClient } from '@/app/queryClient';
 import { router } from '@/app/router';
+import { sanitizeStoredTheme } from '@/app/retiredThemes';
 import { registerCustomThemes, THEME_STORAGE_KEY } from '@/app/theme';
 import { installFileInputCancelGuard } from '@/shared/dom/fileInputCancelGuard';
 import './index.css';
 
+// Temas retirados (purple, neogreen) guardados en vc-theme vuelven a salmverse antes de montar ThemeProvider.
+sanitizeStoredTheme(THEME_STORAGE_KEY);
 registerCustomThemes();
 installFileInputCancelGuard();
 

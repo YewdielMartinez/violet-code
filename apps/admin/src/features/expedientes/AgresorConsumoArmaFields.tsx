@@ -1,33 +1,8 @@
-import { Icon } from '@/shared/ui/Icon';
-import {
-  DROGA_LABELS,
-  TIPOS_DROGA,
-  type AgresorValidationField,
-  type TipoDroga,
-} from './agresorApi';
-import { AnimatedReveal } from './agresor/AnimatedReveal';
-import { AgresorRadioGroup } from './agresor/motionCompat';
-
-const TRI_STATE_ITEMS = [
-  { value: 'desconocido', label: 'No se sabe' },
-  { value: 'no', label: 'No' },
-  { value: 'si', label: 'Sí' },
-];
-
-function boolToTriState(value: boolean | null): 'si' | 'no' | 'desconocido' {
-  if (value === true) return 'si';
-  if (value === false) return 'no';
-  return 'desconocido';
-}
-
-function triStateToBool(value: string | null): boolean | null {
-  if (value === 'si') return true;
-  if (value === 'no') return false;
-  return null;
-}
+import type { TipoDroga } from '@/domain/models/ConsumoDrogas';
+import type { AgresorValidationField } from './agresorApi';
+import { ConsumoDrogasSelector } from './shared/ConsumoDrogasSelector';
 
 export interface ConsumoArmaValues {
-  tieneConsumoDroga: boolean | null;
   drogas: TipoDroga[];
   especificacionDroga: string;
   especificacionArma: string;
@@ -50,22 +25,6 @@ export function AgresorConsumoArmaFields({
   fieldPrefix = '',
 }: Props) {
   const fieldKey = (name: string) => (fieldPrefix ? `${fieldPrefix}${name}` : name);
-  function handleConsumo(next: boolean | null) {
-    onPatch(
-      next === true
-        ? { tieneConsumoDroga: true }
-        : { tieneConsumoDroga: next, drogas: [], especificacionDroga: '' },
-    );
-  }
-
-  function handleToggleDroga(droga: TipoDroga) {
-    const next = values.drogas.includes(droga)
-      ? values.drogas.filter((item) => item !== droga)
-      : [...values.drogas, droga];
-    onPatch({ drogas: next });
-  }
-
-  const consumoActivo = values.tieneConsumoDroga === true;
 
   return (
     <div className="grid gap-5">
@@ -74,71 +33,14 @@ export function AgresorConsumoArmaFields({
           Consumo de sustancias
         </legend>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="text-base font-medium text-on-surface">¿Presenta consumo de drogas?</span>
-          <AgresorRadioGroup
-            variant="pill"
-            label="¿Presenta consumo de drogas?"
-            items={TRI_STATE_ITEMS}
-            value={boolToTriState(values.tieneConsumoDroga)}
-            onChange={(val) => handleConsumo(triStateToBool(val))}
-          />
-        </div>
-
-        <AnimatedReveal show={consumoActivo}>
-          <div className="grid gap-3 pt-1">
-            <span className="text-sm font-medium text-on-surface-variant">
-              Sustancias detectadas (selecciona una o más)
-            </span>
-            <div
-              className="flex flex-wrap gap-2"
-              role="group"
-              aria-label="Tipos de drogas"
-              data-ficha-field={fieldKey('drogas')}
-            >
-              {TIPOS_DROGA.map((droga) => {
-                const checked = values.drogas.includes(droga);
-                return (
-                  <button
-                    key={droga}
-                    type="button"
-                    aria-pressed={checked}
-                    onClick={() => handleToggleDroga(droga)}
-                    className="mk-chip mk-chip--filter px-3.5 py-1.5 text-sm transition-transform duration-150 active:scale-95 motion-reduce:transition-none"
-                  >
-                    <Icon name={checked ? 'check' : 'add'} className="text-[18px]" />
-                    <span>{DROGA_LABELS[droga]}</span>
-                  </button>
-                );
-              })}
-            </div>
-            {errores.drogas ? (
-              <p role="alert" className="text-sm text-status-danger">{errores.drogas}</p>
-            ) : null}
-
-            <div className="grid gap-1">
-              <label className="text-sm font-medium text-on-surface-variant">
-                Especificación de droga (opcional)
-              </label>
-              <label className="mk-field">
-                <input
-                  type="text"
-                  maxLength={250}
-                  data-ficha-field={fieldKey('especificacionDroga')}
-                  aria-invalid={errores.especificacionDroga ? true : undefined}
-                  value={values.especificacionDroga}
-                  placeholder="Ej. frecuencia o sustancia adicional"
-                  onChange={(e) => onPatch({ especificacionDroga: e.target.value })}
-                />
-              </label>
-              {errores.especificacionDroga ? (
-                <p role="alert" className="text-sm text-status-danger">
-                  {errores.especificacionDroga}
-                </p>
-              ) : null}
-            </div>
-          </div>
-        </AnimatedReveal>
+        <ConsumoDrogasSelector
+          drogas={values.drogas}
+          especificacionDroga={values.especificacionDroga}
+          onChange={onPatch}
+          errores={errores}
+          fieldPrefix={fieldPrefix}
+          label="Consumo de drogas"
+        />
       </fieldset>
 
       <fieldset className={`grid gap-4 rounded-2xl border border-outline-variant ${surfaceClassName} p-5`}>

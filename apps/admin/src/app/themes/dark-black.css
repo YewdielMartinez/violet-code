@@ -1,0 +1,197 @@
+/* Modo oscuro con fondo negro puro (#000000) para TODOS los temas.
+   Sobrescribe SOLO los roles neutros (fondo, superficies, texto, contornos); cada tema conserva su paleta de acento
+   (primary/secondary/tertiary y sus contenedores), que ya supera 4.5:1 sobre negro.
+   Se importa DESPUÉS de los temas de motion-kit (misma capa) con los mismos selectores, por lo que gana por orden.
+   Salmverse aplica el mismo negro en su propio archivo; "oled" ya es negro puro de origen. */
+
+/* blue */
+[data-mk-theme="blue"][data-mk-mode="dark"],
+[data-mk-mode="dark"] [data-mk-theme="blue"] {
+  --md-sys-color-background: #000000;
+  --md-sys-color-on-background: #ededf0;
+  --md-sys-color-surface: #000000;
+  --md-sys-color-surface-dim: #000000;
+  --md-sys-color-surface-bright: #2c2c31;
+  --md-sys-color-surface-container-lowest: #000000;
+  --md-sys-color-surface-container-low: #0e0e10;
+  --md-sys-color-surface-container: #151518;
+  --md-sys-color-surface-container-high: #1d1d21;
+  --md-sys-color-surface-container-highest: #26262b;
+  --md-sys-color-on-surface: #ededf0;
+  --md-sys-color-surface-variant: #2f2f35;
+  --md-sys-color-on-surface-variant: #b9b9c0;
+  --md-sys-color-inverse-surface: #ededf0;
+  --md-sys-color-inverse-on-surface: #1d1d21;
+  --md-sys-color-outline: #8a8a93;
+  --md-sys-color-outline-variant: #3a3a40;
+  --md-sys-color-shadow: #000000;
+  --md-sys-color-scrim: #000000;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mk-mode="light"])[data-mk-theme="blue"],
+  :root:not([data-mk-mode="light"]) [data-mk-theme="blue"] {
+    --md-sys-color-background: #000000;
+    --md-sys-color-on-background: #ededf0;
+    --md-sys-color-surface: #000000;
+    --md-sys-color-surface-dim: #000000;
+    --md-sys-color-surface-bright: #2c2c31;
+    --md-sys-color-surface-container-lowest: #000000;
+    --md-sys-color-surface-container-low: #0e0e10;
+    --md-sys-color-surface-container: #151518;
+    --md-sys-color-surface-container-high: #1d1d21;
+    --md-sys-color-surface-container-highest: #26262b;
+    --md-sys-color-on-surface: #ededf0;
+    --md-sys-color-surface-variant: #2f2f35;
+    --md-sys-color-on-surface-variant: #b9b9c0;
+    --md-sys-color-inverse-surface: #ededf0;
+    --md-sys-color-inverse-on-surface: #1d1d21;
+    --md-sys-color-outline: #8a8a93;
+    --md-sys-color-outline-variant: #3a3a40;
+    --md-sys-color-shadow: #000000;
+    --md-sys-color-scrim: #000000;
+  }
+}
+
+/* pink */
+[data-mk-theme="pink"][data-mk-mode="dark"],
+[data-mk-mode="dark"] [data-mk-theme="pink"] {
+  --md-sys-color-background: #000000;
+  --md-sys-color-on-background: #ededf0;
+  --md-sys-color-surface: #000000;
+  --md-sys-color-surface-dim: #000000;
+  --md-sys-color-surface-bright: #2c2c31;
+  --md-sys-color-surface-container-lowest: #000000;
+  --md-sys-color-surface-container-low: #0e0e10;
+  --md-sys-color-surface-container: #151518;
+  --md-sys-color-surface-container-high: #1d1d21;
+  --md-sys-color-surface-container-highest: #26262b;
+  --md-sys-color-on-surface: #ededf0;
+  --md-sys-color-surface-variant: #2f2f35;
+  --md-sys-color-on-surface-variant: #b9b9c0;
+  --md-sys-color-inverse-surface: #ededf0;
+  --md-sys-color-inverse-on-surface: #1d1d21;
+  --md-sys-color-outline: #8a8a93;
+  --md-sys-color-outline-variant: #3a3a40;
+  --md-sys-color-shadow: #000000;
+  --md-sys-color-scrim: #000000;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mk-mode="light"])[data-mk-theme="pink"],
+  :root:not([data-mk-mode="light"]) [data-mk-theme="pink"] {
+    --md-sys-color-background: #000000;
+    --md-sys-color-on-background: #ededf0;
+    --md-sys-color-surface: #000000;
+    --md-sys-color-surface-dim: #000000;
+    --md-sys-color-surface-bright: #2c2c31;
+    --md-sys-color-surface-container-lowest: #000000;
+    --md-sys-color-surface-container-low: #0e0e10;
+    --md-sys-color-surface-container: #151518;
+    --md-sys-color-surface-container-high: #1d1d21;
+    --md-sys-color-surface-container-highest: #26262b;
+    --md-sys-color-on-surface: #ededf0;
+    --md-sys-color-surface-variant: #2f2f35;
+    --md-sys-color-on-surface-variant: #b9b9c0;
+    --md-sys-color-inverse-surface: #ededf0;
+    --md-sys-color-inverse-on-surface: #1d1d21;
+    --md-sys-color-outline: #8a8a93;
+    --md-sys-color-outline-variant: #3a3a40;
+    --md-sys-color-shadow: #000000;
+    --md-sys-color-scrim: #000000;
+  }
+}
+
+/* red */
+[data-mk-theme="red"][data-mk-mode="dark"],
+[data-mk-mode="dark"] [data-mk-theme="red"] {
+  --md-sys-color-background: #000000;
+  --md-sys-color-on-background: #ededf0;
+  --md-sys-color-surface: #000000;
+  --md-sys-color-surface-dim: #000000;
+  --md-sys-color-surface-bright: #2c2c31;
+  --md-sys-color-surface-container-lowest: #000000;
+  --md-sys-color-surface-container-low: #0e0e10;
+  --md-sys-color-surface-container: #151518;
+  --md-sys-color-surface-container-high: #1d1d21;
+  --md-sys-color-surface-container-highest: #26262b;
+  --md-sys-color-on-surface: #ededf0;
+  --md-sys-color-surface-variant: #2f2f35;
+  --md-sys-color-on-surface-variant: #b9b9c0;
+  --md-sys-color-inverse-surface: #ededf0;
+  --md-sys-color-inverse-on-surface: #1d1d21;
+  --md-sys-color-outline: #8a8a93;
+  --md-sys-color-outline-variant: #3a3a40;
+  --md-sys-color-shadow: #000000;
+  --md-sys-color-scrim: #000000;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mk-mode="light"])[data-mk-theme="red"],
+  :root:not([data-mk-mode="light"]) [data-mk-theme="red"] {
+    --md-sys-color-background: #000000;
+    --md-sys-color-on-background: #ededf0;
+    --md-sys-color-surface: #000000;
+    --md-sys-color-surface-dim: #000000;
+    --md-sys-color-surface-bright: #2c2c31;
+    --md-sys-color-surface-container-lowest: #000000;
+    --md-sys-color-surface-container-low: #0e0e10;
+    --md-sys-color-surface-container: #151518;
+    --md-sys-color-surface-container-high: #1d1d21;
+    --md-sys-color-surface-container-highest: #26262b;
+    --md-sys-color-on-surface: #ededf0;
+    --md-sys-color-surface-variant: #2f2f35;
+    --md-sys-color-on-surface-variant: #b9b9c0;
+    --md-sys-color-inverse-surface: #ededf0;
+    --md-sys-color-inverse-on-surface: #1d1d21;
+    --md-sys-color-outline: #8a8a93;
+    --md-sys-color-outline-variant: #3a3a40;
+    --md-sys-color-shadow: #000000;
+    --md-sys-color-scrim: #000000;
+  }
+}
+
+/* black */
+[data-mk-theme="black"][data-mk-mode="dark"],
+[data-mk-mode="dark"] [data-mk-theme="black"] {
+  --md-sys-color-background: #000000;
+  --md-sys-color-on-background: #ededf0;
+  --md-sys-color-surface: #000000;
+  --md-sys-color-surface-dim: #000000;
+  --md-sys-color-surface-bright: #2c2c31;
+  --md-sys-color-surface-container-lowest: #000000;
+  --md-sys-color-surface-container-low: #0e0e10;
+  --md-sys-color-surface-container: #151518;
+  --md-sys-color-surface-container-high: #1d1d21;
+  --md-sys-color-surface-container-highest: #26262b;
+  --md-sys-color-on-surface: #ededf0;
+  --md-sys-color-surface-variant: #2f2f35;
+  --md-sys-color-on-surface-variant: #b9b9c0;
+  --md-sys-color-inverse-surface: #ededf0;
+  --md-sys-color-inverse-on-surface: #1d1d21;
+  --md-sys-color-outline: #8a8a93;
+  --md-sys-color-outline-variant: #3a3a40;
+  --md-sys-color-shadow: #000000;
+  --md-sys-color-scrim: #000000;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mk-mode="light"])[data-mk-theme="black"],
+  :root:not([data-mk-mode="light"]) [data-mk-theme="black"] {
+    --md-sys-color-background: #000000;
+    --md-sys-color-on-background: #ededf0;
+    --md-sys-color-surface: #000000;
+    --md-sys-color-surface-dim: #000000;
+    --md-sys-color-surface-bright: #2c2c31;
+    --md-sys-color-surface-container-lowest: #000000;
+    --md-sys-color-surface-container-low: #0e0e10;
+    --md-sys-color-surface-container: #151518;
+    --md-sys-color-surface-container-high: #1d1d21;
+    --md-sys-color-surface-container-highest: #26262b;
+    --md-sys-color-on-surface: #ededf0;
+    --md-sys-color-surface-variant: #2f2f35;
+    --md-sys-color-on-surface-variant: #b9b9c0;
+    --md-sys-color-inverse-surface: #ededf0;
+    --md-sys-color-inverse-on-surface: #1d1d21;
+    --md-sys-color-outline: #8a8a93;
+    --md-sys-color-outline-variant: #3a3a40;
+    --md-sys-color-shadow: #000000;
+    --md-sys-color-scrim: #000000;
+  }
+}

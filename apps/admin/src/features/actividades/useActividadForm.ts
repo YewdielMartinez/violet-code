@@ -1,14 +1,25 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
+  validateActividadActualizar,
+  aplicarEdicionActividad,
+  type ActividadEdicionVista,
+} from '@/domain/models/ActividadEdicion';
+import {
   validateActividadCampos,
   type ActividadCampo,
   type ActividadPreventivaCreateInput,
+  type ActividadPreventivaItem,
   type NivelEducativo,
   type TipoInstitucionActividad,
 } from '@/domain/models/ActividadPreventiva';
 import type { AsentamientoSepomex } from '@/domain/models/Domicilio';
-import { useRegistrarActividadPreventiva } from './api';
-import { aIsoMazatlan } from './actividadesList';
+import {
+  useActualizarActividadPreventiva,
+  useEmpleadosParticipantes,
+  useRegistrarActividadPreventiva,
+  useTiposActividad,
+} from './api';
+import { aIsoMazatlan, deIsoMazatlan } from './actividadesList';
 
 export const ACTIVIDAD_LAST_STEP = 1;
 
@@ -54,6 +65,35 @@ function estadoInicial(): ActividadFormValue {
   };
 }
 
+/** Valores del formulario a partir de una actividad existente (modo edición). */
+export function actividadAFormValue(actividad: ActividadPreventivaItem): ActividadFormValue {
+  return {
+    titulo: actividad.titulo,
+    tipoActividadId: actividad.tipoActividadId,
+    tipoInstitucion: actividad.tipoInstitucion,
+    nivelEducativo: actividad.nivelEducativo ?? '',
+    sede: actividad.sede,
+    direccion: actividad.direccion ?? '',
+    referencias: actividad.referencias ?? '',
+    asistentes: actividad.numeroAsistentes === null ? '' : String(actividad.numeroAsistentes),
+    cuando: deIsoMazatlan(actividad.programadaEn),
+    // El detalle solo trae nombre, CP y municipio: el tipo de asentamiento no se conoce y no se muestra.
+    colonia:
+      actividad.asentamientoId === null
+        ? null
+        : {
+            id: actividad.asentamientoId,
+            nombre: actividad.asentamientoNombre ?? 'Colonia',
+            tipoAsentamiento: '',
+            codigoPostal: actividad.codigoPostal ?? '',
+            municipio: actividad.municipio ?? '',
+            estado: '',
+            localidad: null,
+          },
+    participantes: actividad.participantes.map((p) => p.empleadoId),
+  };
+}
+
 function aInput(form: ActividadFormValue): ActividadPreventivaCreateInput {
   const asistentes = form.asistentes.trim();
   return {
@@ -71,13 +111,26 @@ function aInput(form: ActividadFormValue): ActividadPreventivaCreateInput {
   };
 }
 
+export interface UseActividadFormOptions {
+  /** Con una actividad, el formulario es de edición (`actualizar_actividad_preventiva`): precarga sus valores. */
+  actividad?: ActividadPreventivaItem;
+}
+
+/** Lo que devuelve `submit`: los datos enviados y, en edición, la actividad ya actualizada (con el nuevo `actualizado_en`). */
+export interface ActividadGuardada {
+  input: ActividadPreventivaCreateInput;
+  actualizada: ActividadPreventivaItem | null;
+}
+
 /**
- * Estado del asistente «Nueva actividad» (mismo patrón que `useUsuarioForm` y `useFichaForm`): paso actual,
- * error del paso, campo inválido a enfocar, detección de cambios sin guardar y envío.
+ * Estado del asistente de actividad (mismo patrón que `useUsuarioForm` y `useFichaForm`): paso actual, error del
+ * paso, campo inválido a enfocar, detección de cambios sin guardar y envío. Sin `actividad` registra una nueva
+ * («Nueva actividad»); con ella edita una pendiente desde el diálogo de detalle.
  */
-export function useActividadForm() {
+export function useActividadForm({ actividad }: UseActividadFormOptions = {}) {
+  const isEdit = actividad !== undefined;
   const [initial] = useState(() => {
-    const base = estadoInicial();
+    const base = actividad ? actividadAFormValue(actividad) : estadoInicial();
     return { base, snapshot: JSON.stringify(base) };
   });
   const [step, setStep] = useState(0);
@@ -85,6 +138,10 @@ export function useActividadForm() {
   const [invalidField, setInvalidField] = useState<ActividadCampo | null>(null);
   const [value, setValueRaw] = useState<ActividadFormValue>(initial.base);
   const registrar = useRegistrarActividadPreventiva();
+  const actualizar = useActualizarActividadPreventiva();
+  // Nombres de catálogo para reflejar la edición al instante (en alta no se piden aquí).
+  const tiposQuery = useTiposActividad(isEdit);
+  const empleadosQuery = useEmpleadosParticipantes(isEdit);
 
   const isDirty = useMemo(() => JSON.stringify(value) !== initial.snapshot, [value, initial.snapshot]);
 
@@ -139,7 +196,7 @@ export function useActividadForm() {
   const submit = useCallback(
     async (
       onInvalid?: (field: ActividadCampo, invalidStep: number) => void,
-    ): Promise<ActividadPreventivaCreateInput | null> => {
+    ): Promise<ActividadGuardada | null> => {
       for (let index = 0; index <= ACTIVIDAD_LAST_STEP; index++) {
         const failure = validateStep(index);
         if (failure) {
@@ -151,10 +208,32 @@ export function useActividadForm() {
         }
       }
       const input = aInput(value);
-      await registrar.mutateAsync(input);
-      return input;
+      if (!actividad) {
+        await registrar.mutateAsync(input);
+        return { input, actualizada: null };
+      }
+
+      const cambio = { ...input, actividadId: actividad.id, actualizadoEn: actividad.actualizadoEn ?? '' };
+      const invalido = validateActividadActualizar(cambio);
+      if (invalido) throw new Error(invalido);
+      const tipo = tiposQuery.data?.find((t) => t.id === input.tipoActividadId);
+      const vista: ActividadEdicionVista = {
+        tipoActividadClave: tipo?.clave ?? actividad.tipoActividadClave,
+        tipoActividadNombre: tipo?.nombre ?? actividad.tipoActividadNombre,
+        asentamientoNombre: value.colonia?.nombre ?? null,
+        codigoPostal: value.colonia?.codigoPostal || null,
+        municipio: value.colonia?.municipio || null,
+        participantes: (input.participantesIds ?? []).flatMap((id) => {
+          const conocido = actividad.participantes.find((p) => p.empleadoId === id);
+          if (conocido) return [conocido];
+          const empleado = empleadosQuery.data?.find((e) => e.id === id);
+          return empleado ? [{ empleadoId: empleado.id, nombre: empleado.nombre, rol: empleado.rol }] : [];
+        }),
+      };
+      const result = await actualizar.mutateAsync({ input: cambio, vista });
+      return { input, actualizada: aplicarEdicionActividad(actividad, input, vista, result.actualizadoEn) };
     },
-    [validateStep, value, registrar],
+    [validateStep, value, registrar, actualizar, actividad, tiposQuery.data, empleadosQuery.data],
   );
 
   return {
@@ -168,7 +247,8 @@ export function useActividadForm() {
     goNext,
     goBack,
     submit,
-    isSubmitting: registrar.isPending,
+    isSubmitting: registrar.isPending || actualizar.isPending,
+    isEdit,
   };
 }
 

@@ -65,7 +65,7 @@ export const PrioridadPill = memo(function PrioridadPill({ size = 'sm' }: { size
   return (
     <span className="vc-estado-pill" data-tone="danger" data-size={size}>
       <Icon name="priority_high" filled className="vc-estado-pill__icon" />
-      <span>Prioritario</span>
+      <span>Urgente</span>
     </span>
   );
 });
@@ -146,11 +146,6 @@ export const ExpedienteEstadoCard = memo(function ExpedienteEstadoCard({
           </span>
         </p>
       ) : null}
-
-      <p className="vc-estado-card__meta">
-        <Icon name="lock" className="text-[18px]" />
-        <span>Consulta auditada en bitácora (RF-22)</span>
-      </p>
     </section>
   );
 });

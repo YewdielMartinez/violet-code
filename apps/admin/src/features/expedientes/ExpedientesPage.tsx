@@ -215,7 +215,7 @@ export default function ExpedientesPage() {
         nombreCompleto: item.persona.nombreCompleto,
         curp: item.persona.curp,
         estado: ESTADO_FICHA_LABELS[item.estado],
-        urgencia: item.enListaUrgencias ? 'Prioritario' : 'Normal',
+        urgencia: item.enListaUrgencias ? 'Urgente' : 'Normal',
         actualizadoLabel: formatTableDate(item.actualizadoEn),
       })),
     [filteredItems],

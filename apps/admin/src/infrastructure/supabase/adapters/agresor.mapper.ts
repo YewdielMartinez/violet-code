@@ -1,5 +1,5 @@
+import { normalizarConsumoDrogas } from '@/domain/models/ConsumoDrogas';
 import {
-  isTipoDroga,
   type Agresor,
   type AgresorInput,
   type AsentamientoOpcion,
@@ -52,12 +52,6 @@ function toRpcText(value: string | null | undefined, isEdit: boolean): string | 
   return isEdit ? '' : undefined;
 }
 
-function mapDrogasFromRow(raw: string[] | null): TipoDroga[] | null {
-  if (!raw || raw.length === 0) return null;
-  const valid = raw.filter(isTipoDroga);
-  return valid.length > 0 ? valid : null;
-}
-
 export function toGuardarAgresorArgs(
   input: AgresorInput,
   agresorId?: string | null,
@@ -67,16 +61,13 @@ export function toGuardarAgresorArgs(
   const codigoPostal =
     asentamientoId !== null ? undefined : toRpcText(input.codigoPostal, isEdit);
 
-  const tieneConsumoDroga = input.tieneConsumoDroga ?? null;
-  const drogasRaw = tieneConsumoDroga === true ? (input.drogas ?? []).filter(isTipoDroga) : [];
+  // El consumo es opcional. En edición, `[]` / `''` limpian el valor guardado
+  // (el RPC conserva lo existente cuando recibe null / undefined).
+  const consumo = normalizarConsumoDrogas(input.drogas, input.especificacionDroga);
   const drogas: TipoDroga[] | undefined =
-    tieneConsumoDroga === false
-      ? ['no_consume']
-      : drogasRaw.length > 0
-        ? Array.from(new Set(drogasRaw))
-        : undefined;
-  const especificacionDroga =
-    tieneConsumoDroga === true ? toRpcText(input.especificacionDroga, isEdit) : undefined;
+    consumo.drogas ?? (isEdit && input.drogas !== undefined ? [] : undefined);
+  const especificacionDroga: string | undefined =
+    consumo.especificacionDroga ?? (isEdit && input.drogas !== undefined ? '' : undefined);
 
   return {
     p_agresor_id: agresorId ?? undefined,
@@ -103,10 +94,6 @@ export function toGuardarAgresorArgs(
 }
 
 export function mapAgresorRow(row: AgresorRow): Agresor {
-  const tieneConsumoDroga =
-    row.drogas === null || row.drogas.length === 0 ? null : !row.drogas.includes('no_consume');
-  const drogas = row.drogas?.includes('no_consume') ? null : mapDrogasFromRow(row.drogas);
-
   return {
     id: row.id,
     fichaId: row.ficha_id,
@@ -123,8 +110,7 @@ export function mapAgresorRow(row: AgresorRow): Agresor {
     referencias: row.referencias,
     ocupacionId: row.ocupacion_id,
     ocupacionOtra: row.ocupacion_otra,
-    tieneConsumoDroga,
-    drogas,
+    drogas: normalizarConsumoDrogas(row.drogas, null).drogas,
     especificacionDroga: row.especificacion_droga,
     especificacionArma: row.especificacion_arma,
     observaciones: row.observaciones,

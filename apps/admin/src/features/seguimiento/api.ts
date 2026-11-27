@@ -2,9 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { SeguimientoCreateInput } from '@/domain/models/Seguimiento';
 import { supabaseSeguimientoRepository } from '@/infrastructure/supabase/adapters/SupabaseSeguimientoRepository';
 
-export function lineaTiempoQueryKey(fichaId: string) {
-  return ['seguimiento', 'linea-tiempo', fichaId] as const;
-}
+import { lineaTiempoQueryKey } from './queryKeys';
+
+export { LINEA_TIEMPO_QUERY_ROOT, lineaTiempoQueryKey } from './queryKeys';
 
 export function useLineaTiempo(fichaId: string, enabled = true) {
   return useQuery({

@@ -9,12 +9,16 @@ import type {
   TipoActividadItem,
 } from '@/domain/models/ActividadPreventiva';
 import type { ActividadEstadoCambioInput, ActividadEstadoCambioResult } from '@/domain/models/ActividadEstado';
+import type { ActividadActualizadaResult, ActividadPreventivaUpdateInput } from '@/domain/models/ActividadEdicion';
 import type { ActividadPreventivaRepository } from '@/domain/ports/ActividadPreventivaRepository';
 import {
   mapActividadRow,
+  toActualizarActividadArgs,
   toActualizarEstadoArgs,
   toRegistrarPayload,
   type ActividadRow,
+  type ActualizarActividadArgs,
+  type ActualizarActividadRow,
   type ActualizarEstadoArgs,
   type ActualizarEstadoRow,
 } from './actividadPreventiva.mapper';
@@ -29,7 +33,8 @@ interface GetActividadesArgs {
 type RpcResult<T> = PromiseLike<{ data: T | null; error: Error | null }>;
 
 /**
- * `get_actividades_preventivas` (con `p_estado` y las columnas de estado) y `actualizar_estado_actividad` aún no
+ * `get_actividades_preventivas` (con `p_estado`, estado y `actualizado_en`), `actualizar_estado_actividad` y
+ * `actualizar_actividad_preventiva` aún no
  * están en `database.types.ts` (se regenera con `supabase gen types` tras la migración); mientras tanto se tipan
  * aquí las llamadas. TODO: retirar este cast y usar `supabase.rpc(...)` directo al regenerar los tipos.
  */
@@ -37,6 +42,10 @@ const rpcActividades = supabase as unknown as {
   rpc: {
     (fn: 'get_actividades_preventivas', args: GetActividadesArgs): RpcResult<ActividadRow[]>;
     (fn: 'actualizar_estado_actividad', args: ActualizarEstadoArgs): RpcResult<ActualizarEstadoRow[] | ActualizarEstadoRow>;
+    (
+      fn: 'actualizar_actividad_preventiva',
+      args: ActualizarActividadArgs,
+    ): RpcResult<ActualizarActividadRow[] | ActualizarActividadRow>;
   };
 };
 
@@ -69,6 +78,23 @@ export const supabaseActividadPreventivaRepository: ActividadPreventivaRepositor
     return {
       actividadId: row.actividad_id,
       totalParticipantes: row.total_participantes,
+    };
+  },
+
+  async actualizar(input: ActividadPreventivaUpdateInput): Promise<ActividadActualizadaResult> {
+    const { data, error } = await rpcActividades.rpc('actualizar_actividad_preventiva', toActualizarActividadArgs(input));
+
+    if (error) throw error;
+
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió la actividad actualizada.');
+    }
+
+    return {
+      actividadId: row.actividad_id,
+      totalParticipantes: row.total_participantes,
+      actualizadoEn: row.actualizado_en,
     };
   },
 

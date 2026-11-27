@@ -24,6 +24,7 @@ import { useFichaForm, type FichaSeedContext } from './useFichaForm';
 export default function NuevaFichaPage() {
   const formId = useId();
   const formRef = useRef<HTMLFormElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const pendingFocusFieldRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -138,7 +139,7 @@ export default function NuevaFichaPage() {
       />
 
       <FadeContent rise={10} duration={0.28} trigger="load" once>
-        <div className="w-full rounded-3xl border border-outline-variant bg-surface-container-lowest p-6">
+        <div ref={cardRef} className="w-full rounded-3xl border border-outline-variant bg-surface-container-lowest p-6">
           <div className="mb-6 border-b border-outline-variant pb-5">
             <FichaWizardStepper step={step} onSelectStep={handleStepSelect} />
           </div>
@@ -146,6 +147,7 @@ export default function NuevaFichaPage() {
           <FichaWizardSteps
             formId={formId}
             formRef={formRef}
+            scrollAnchorRef={cardRef}
             step={step}
             stepError={stepError}
             invalidField={invalidField}

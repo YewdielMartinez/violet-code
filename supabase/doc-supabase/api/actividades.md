@@ -68,7 +68,7 @@ const { data, error } = await supabase
 
 ## `get_actividades_preventivas`
 
-**Versión:** [`20261127001000_41`](../../migrations/20261127001000_41_actividad_estado.sql)
+**Versión:** [`20261128002400_65`](../../migrations/20261128002400_65_editar_actividad_preventiva.sql)
 
 > Lista de actividades con sus participantes.
 
@@ -124,6 +124,7 @@ interface ActividadPreventivaRow {
   realizada_en: string | null;
   cancelada_motivo: string | null;
   observaciones_cierre: string | null;
+  actualizado_en: string;             // token de bloqueo optimista de actualizar_actividad_preventiva
 }
 ```
 
@@ -182,3 +183,54 @@ const { data, error } = await supabase
 | `P0002` | Actividad inexistente o inactiva | `error.message` |
 
 **En el front:** pendiente. Sugerido: `actividades/useActualizarEstadoActividad` (invalida `['actividades']`).
+
+---
+
+## `actualizar_actividad_preventiva`
+
+**Versión:** [`20261128002400_65`](../../migrations/20261128002400_65_editar_actividad_preventiva.sql)
+
+> Edita los datos de una actividad **pendiente** y reemplaza su personal participante. Lo usa el botón «Editar» del diálogo de detalle.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+|---|---|---|---|---|
+| `actividad.registrar` | Tit, Sub, TS, Psi, Jur | Escritura | Sí (`actualizar`) | `_65_editar_actividad_preventiva` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('actualizar_actividad_preventiva', {
+    p_actividad_id: actividad.id,
+    p_actualizado_en: actividad.actualizado_en, // de get_actividades_preventivas
+    p_payload: {
+      titulo: 'Violencia en el noviazgo',
+      tipo_actividad_id: 2,
+      tipo_institucion: 'escuela',
+      nivel_educativo: 'secundaria',
+      sede: 'Secundaria Técnica 12',
+      direccion: null,
+      referencias: null,
+      asentamiento_id: 15,
+      programada_en: '2026-12-10T09:00:00-07:00',
+      numero_asistentes: 80,
+      participantes_ids: ['<uuid-empleado>'], // [] quita a todos; omitir conserva
+    },
+  })
+  .single();
+// data: { actividad_id, total_participantes, actualizado_en }
+```
+
+El `p_payload` usa las mismas claves y validaciones que `registrar_actividad_preventiva`. Contrato completo: [`rpcs/actualizar_actividad_preventiva.md`](../rpcs/actualizar_actividad_preventiva.md).
+
+**Errores**
+
+| Código | Cuándo | Mensaje UI |
+|---|---|---|
+| `42501` | Rec, UMECA, app, inactivo | Fijo de permiso |
+| `22023` | Actividad no pendiente (`Solo se pueden editar actividades pendientes`) o `p_actualizado_en` / `p_actividad_id` nulos | `error.message` |
+| `23505` | Otra persona la modificó (bloqueo optimista) | «Recarga los datos» |
+| `23514` | Campo inválido del payload | `error.message` |
+| `P0002` | Actividad inexistente o inactiva | `error.message` |
+
+**En el front:** `useActualizarActividadPreventiva` (`features/actividades/api.ts`) · `ActividadDialog` → vista «Editar actividad».

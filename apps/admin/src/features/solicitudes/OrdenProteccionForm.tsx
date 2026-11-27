@@ -1,6 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
-  Attachment,
   Dialog,
   LoadingButton,
   Select,
@@ -8,14 +7,15 @@ import {
   type AttachmentProps,
   type AttachmentUpload,
 } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/attachment';
 import '@yewdiel21/motion-kit/css/components/loading-button';
 import '@yewdiel21/motion-kit/css/components/select';
+import { FileDropzone } from '@/shared/ui/FileDropzone';
 import { formatErrorEscrituraExpediente } from '@/features/expedientes/api';
 import {
   AUTORIDAD_EMISORA_MAX_LENGTH,
   ESTADO_ORDEN_LABELS,
   ESTADOS_ORDEN_PROTECCION,
+  NOTA_CAMBIO_ESTADO_MAX_LENGTH,
   NUMERO_OFICIO_MAX_LENGTH,
   fechaHoyLocalMazatlan,
   useActualizarOrdenProteccion,
@@ -56,7 +56,6 @@ const SIN_AGRESOR_OPTION = { value: '', label: 'Sin vincular a persona agresora'
 
 const ATTACHMENT_LABELS: NonNullable<AttachmentProps['labels']> = {
   choose: 'Adjuntar copia (opcional)',
-  drop: 'o arrastra JPG, PNG o PDF (máx. 10 MB)',
   remove: 'Quitar archivo',
   list: 'Copia lista para subir',
   uploading: 'Subiendo copia…',
@@ -86,6 +85,7 @@ export function OrdenProteccionForm({
   const autoridadId = useId();
   const emisionId = useId();
   const vigenciaId = useId();
+  const notaId = useId();
   const attachmentRef: NonNullable<AttachmentProps['instanceRef']> = useRef(null);
   const closeTimerRef = useRef<number | null>(null);
 
@@ -97,6 +97,7 @@ export function OrdenProteccionForm({
   const [fechaVigencia, setFechaVigencia] = useState(orden?.fechaVigencia ?? '');
   const [estado, setEstado] = useState<EstadoOrdenProteccion>(orden?.estado ?? 'vigente');
   const [agresorId, setAgresorId] = useState(orden?.agresorId ?? '');
+  const [notaCambioEstado, setNotaCambioEstado] = useState('');
   const [selectedFile, setSelectedFile] = useState<{ id: string; file: File } | null>(null);
   const [uploadState, setUploadState] = useState<AttachmentUpload | null>(null);
   const [fieldErrors, setFieldErrors] = useState<
@@ -122,6 +123,10 @@ export function OrdenProteccionForm({
     () => [SIN_AGRESOR_OPTION, ...agresores.map((a) => ({ value: a.id, label: a.nombre }))],
     [agresores],
   );
+
+  // Solo al editar y cambiar el estado: ese cambio queda en el área de Seguimiento del expediente.
+  const estadoAnterior = orden?.estado;
+  const cambiaEstado = estadoAnterior !== undefined && estadoAnterior !== estado;
 
   const tipoOrdenId = useMemo(() => {
     const tipos = tiposQuery.data ?? [];
@@ -172,6 +177,7 @@ export function OrdenProteccionForm({
       fechaEmision,
       fechaVigencia: fechaVigencia || null,
       estado,
+      notaCambioEstado: cambiaEstado ? notaCambioEstado : null,
       actualizadoEnEsperado: orden?.actualizadoEn,
     };
 
@@ -374,6 +380,34 @@ export function OrdenProteccionForm({
           </div>
         </div>
 
+        {estadoAnterior && cambiaEstado ? (
+          <div>
+            <label htmlFor={notaId} className="mb-1.5 block text-sm font-medium text-on-surface">
+              Nota del cambio de estado (opcional)
+            </label>
+            <label className="mk-field w-full">
+              <textarea
+                id={notaId}
+                rows={2}
+                maxLength={NOTA_CAMBIO_ESTADO_MAX_LENGTH}
+                disabled={isBusy}
+                value={notaCambioEstado}
+                onChange={(e) => setNotaCambioEstado(e.target.value)}
+                placeholder="Ej. Oficio ratificado por el juzgado"
+                aria-invalid={Boolean(fieldErrors.notaCambioEstado)}
+              />
+            </label>
+            {fieldErrors.notaCambioEstado ? (
+              <p className="mt-1 text-sm text-status-danger">{fieldErrors.notaCambioEstado}</p>
+            ) : (
+              <p className="mt-1 text-sm text-on-surface-variant">
+                Se registrará en Seguimiento junto con el cambio de {ESTADO_ORDEN_LABELS[estadoAnterior]} a{' '}
+                {ESTADO_ORDEN_LABELS[estado]}.
+              </p>
+            )}
+          </div>
+        ) : null}
+
         <div>
           <span className="mb-1.5 block text-sm font-medium text-on-surface">
             Persona agresora vinculada (opcional)
@@ -393,14 +427,13 @@ export function OrdenProteccionForm({
           <p className="text-sm font-medium text-on-surface">
             Copia de la orden de protección (opcional)
           </p>
-          <Attachment
+          <FileDropzone
             instanceRef={attachmentRef}
             accept={ACCEPT_ARCHIVOS}
             multiple={false}
             maxFiles={1}
             maxSize={10 * 1024 * 1024}
             disabled={isBusy}
-            hint="JPG, PNG o PDF · Máximo 10 MB"
             labels={ATTACHMENT_LABELS}
             uploads={uploads}
             onFiles={handleFiles}
@@ -429,7 +462,7 @@ export function OrdenProteccionForm({
           state={submitState}
           labels={LOADING_LABELS}
           disabled={isBusy}
-          className="mk-button mk-button--filled"
+          className="mk-button mk-button--primary"
         >
           {orden ? 'Guardar cambios' : 'Registrar orden'}
         </LoadingButton>

@@ -1,0 +1,145 @@
+/* Línea de tiempo del expediente: puntos con anillo fino y un icono Material Symbols por tipo de evento.
+   Sin rellenos fuertes: el estado se expresa con el color del anillo/icono (tokens del tema, claro y oscuro).
+   Animación solo con opacity/transform y se anula con prefers-reduced-motion. */
+
+.vc-timeline {
+  --_dot: 2rem;
+  --_ink: var(--md-sys-color-on-surface-variant);
+  --_line: var(--md-sys-color-outline-variant);
+}
+
+/* Riel fino y discreto (el tramo "hecho" del kit se atenúa para no competir con los iconos). */
+.vc-timeline [data-mk-tl-rail] {
+  left: calc(var(--_dot) / 2 - 0.5px);
+  width: 1px;
+  background: var(--_line);
+}
+
+.vc-timeline [data-mk-tl-progress] {
+  background: var(--md-sys-color-outline);
+  opacity: 0.55;
+}
+
+.vc-timeline [data-mk-timeline-list] {
+  gap: 1.25rem;
+}
+
+/* Punto: anillo de 1 px sobre la superficie y un único icono de 18 px. */
+.vc-timeline [data-mk-tl-dot] {
+  width: var(--_dot);
+  height: var(--_dot);
+  overflow: hidden;
+  border: 1px solid var(--_line);
+  background: var(--mk-surface-1, var(--md-sys-color-surface));
+  color: var(--_ink);
+  font-family: 'Material Symbols Rounded';
+  font-size: 18px;
+  font-style: normal;
+  font-weight: normal;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  font-feature-settings: 'liga';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  box-shadow: 0 0 0 4px var(--mk-surface-1, var(--md-sys-color-surface));
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* Evita mostrar el texto de la ligadura mientras carga la fuente de iconos. */
+html.vc-icons-loading .vc-timeline [data-mk-tl-dot] {
+  color: transparent;
+}
+
+.vc-timeline [data-mk-tl-item][data-status='current'] [data-mk-tl-dot] {
+  border-color: var(--md-sys-color-primary);
+  background: var(--mk-surface-1, var(--md-sys-color-surface));
+  color: var(--md-sys-color-primary);
+  animation: none;
+  box-shadow: 0 0 0 4px var(--mk-surface-1, var(--md-sys-color-surface));
+}
+
+.vc-timeline [data-mk-tl-item][data-status='upcoming'] [data-mk-tl-dot] {
+  border-style: dashed;
+  border-color: var(--md-sys-color-outline);
+  color: var(--md-sys-color-outline);
+  outline: none;
+}
+
+.vc-timeline [data-mk-tl-item][data-status='error'] [data-mk-tl-dot] {
+  border-color: color-mix(in srgb, var(--md-sys-color-error) 55%, transparent);
+  background: var(--mk-surface-1, var(--md-sys-color-surface));
+  color: var(--md-sys-color-error);
+}
+
+/* Jerarquía: fecha tenue y pequeña, título medio, detalle en cuerpo. */
+.vc-timeline [data-mk-tl-body] {
+  gap: 0.15rem;
+  padding-top: 0.3rem;
+}
+
+.vc-timeline [data-mk-tl-time] {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
+}
+
+.vc-timeline [data-mk-tl-title] {
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.vc-timeline [data-mk-tl-item][data-status='upcoming'] [data-mk-tl-title] {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.vc-timeline [data-mk-tl-description] {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.vc-timeline [data-mk-tl-meta] {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.75rem;
+}
+
+/* Día: etiqueta discreta sobre el riel. */
+.vc-timeline [data-mk-tl-day] {
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+/* Entrada escalonada suave (solo los primeros eventos; el resto aparece sin retraso). */
+@keyframes vc-timeline-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.vc-timeline [data-mk-tl-item] {
+  animation: vc-timeline-in 320ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+.vc-timeline [data-mk-tl-item]:nth-child(2) { animation-delay: 40ms; }
+.vc-timeline [data-mk-tl-item]:nth-child(3) { animation-delay: 80ms; }
+.vc-timeline [data-mk-tl-item]:nth-child(4) { animation-delay: 120ms; }
+.vc-timeline [data-mk-tl-item]:nth-child(5) { animation-delay: 160ms; }
+.vc-timeline [data-mk-tl-item]:nth-child(6) { animation-delay: 200ms; }
+.vc-timeline [data-mk-tl-item]:nth-child(n + 7) { animation-delay: 240ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vc-timeline [data-mk-tl-item] {
+    animation: none;
+  }
+}

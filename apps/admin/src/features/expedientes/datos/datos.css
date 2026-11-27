@@ -1,0 +1,450 @@
+/* Secciones de datos del expediente (Datos generales, Ficha, Domicilio, Estudio socioeconómico).
+   Tipografía: título 18 px semibold, etiqueta 14 px atenuada, valor 16 px.
+   Movimiento: transform + opacity (y la altura vía grid-template-rows, que es el patrón del kit para
+   colapsar). Color solo con tokens del tema. Todo se anula con prefers-reduced-motion. */
+
+.vc-sec {
+  --vc-sec-duration: 320ms;
+  --vc-sec-ease: var(--mk-ease-sheet, cubic-bezier(0.22, 1, 0.36, 1));
+  display: grid;
+  gap: 14px;
+}
+
+.vc-sec__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  min-height: 40px;
+}
+
+.vc-sec__title-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  min-width: 0;
+}
+
+.vc-sec__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Botón «Editar»: se atenúa mientras el formulario está abierto (no desaparece de golpe). */
+.vc-sec .vc-sec__edit {
+  transition:
+    opacity 180ms ease,
+    transform 180ms var(--mk-ease-click, ease-out);
+}
+
+.vc-sec .vc-sec__edit[aria-hidden='true'] {
+  opacity: 0;
+  transform: scale(0.94);
+  pointer-events: none;
+}
+
+/* Palomita de «Guardado» en el encabezado: el círculo «salta» y todo se desvanece solo. */
+.vc-sec__status {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+}
+
+.vc-sec__saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--vc-status-success);
+  animation: vc-sec-saved 2800ms ease both;
+}
+
+.vc-sec__saved-badge {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--vc-status-success-bg);
+  animation: vc-sec-check-pop 460ms var(--mk-ease-pop, cubic-bezier(0.34, 1.56, 0.64, 1)) both;
+}
+
+.vc-sec__saved-icon {
+  font-size: 20px;
+  font-variation-settings: 'wght' 600;
+}
+
+@keyframes vc-sec-saved {
+  0% {
+    opacity: 0;
+    transform: translate3d(-8px, 0, 0);
+  }
+  9% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes vc-sec-check-pop {
+  0% {
+    transform: scale(0.3);
+  }
+  60% {
+    transform: scale(1.22);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Vista y edición: cada panel colapsa/expande su altura (0fr a 1fr) mientras se desvanece. */
+.vc-sec__body {
+  display: grid;
+}
+
+.vc-sec__pane {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translate3d(0, -6px, 0);
+  transition:
+    grid-template-rows var(--vc-sec-duration) var(--vc-sec-ease),
+    opacity 150ms ease,
+    transform var(--vc-sec-duration) var(--vc-sec-ease);
+}
+
+.vc-sec__pane[data-open='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: none;
+}
+
+/* El formulario entra con un pequeño retraso para no solaparse con la salida de la vista. */
+.vc-sec__pane--edit[data-open='true'] {
+  transition:
+    grid-template-rows var(--vc-sec-duration) var(--vc-sec-ease),
+    opacity 220ms ease 90ms,
+    transform var(--vc-sec-duration) var(--vc-sec-ease);
+}
+
+/* La vista reaparece (cancelar o guardar) cuando el formulario ya casi terminó de colapsar. */
+.vc-sec__pane--view[data-open='true'] {
+  transition:
+    grid-template-rows var(--vc-sec-duration) var(--vc-sec-ease),
+    opacity 240ms ease 110ms,
+    transform var(--vc-sec-duration) var(--vc-sec-ease);
+}
+
+/* El relleno de 4 px (compensado con margen negativo) evita recortar anillos de foco. */
+.vc-sec__pane-inner {
+  min-height: 0;
+  overflow: hidden;
+  padding: 4px;
+  margin: -4px;
+}
+
+.vc-sec__pane--edit[data-settled='true'] > .vc-sec__pane-inner {
+  overflow: visible;
+}
+
+/* Tarjetas de datos. */
+.vc-dato-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .vc-dato-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.vc-dato {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  min-height: 78px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.vc-dato[data-full='true'] {
+  grid-column: 1 / -1;
+}
+
+.vc-dato__main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.vc-dato__action {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.vc-dato__label {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.vc-dato__value {
+  margin: 4px 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface);
+  overflow-wrap: anywhere;
+}
+
+.vc-dato__value[data-mono='true'] {
+  font-family: var(--mk-font-mono, ui-monospace, monospace);
+  letter-spacing: 0.01em;
+}
+
+.vc-dato__value--empty {
+  font-weight: 400;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Velo tonal que señala el valor recién cambiado: aparece tras reabrirse la vista y se disipa. */
+.vc-dato__flash {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--md-sys-color-secondary-container);
+  opacity: 0;
+  pointer-events: none;
+  animation: vc-dato-flash 1700ms ease-out 300ms both;
+}
+
+@keyframes vc-dato-flash {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Formulario de edición. */
+.vc-sec-form {
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 38%, var(--md-sys-color-outline-variant));
+  border-radius: 18px;
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+/* Los bloques del formulario entran en cascada corta. */
+.vc-sec-form > * {
+  animation: vc-sec-field-in 300ms var(--vc-sec-ease, ease-out) backwards;
+}
+
+.vc-sec-form > :nth-child(1) {
+  animation-delay: 60ms;
+}
+.vc-sec-form > :nth-child(2) {
+  animation-delay: 100ms;
+}
+.vc-sec-form > :nth-child(3) {
+  animation-delay: 140ms;
+}
+.vc-sec-form > :nth-child(4) {
+  animation-delay: 180ms;
+}
+.vc-sec-form > :nth-child(n + 5) {
+  animation-delay: 220ms;
+}
+
+@keyframes vc-sec-field-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.vc-sec-form__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.vc-form-error {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--vc-status-danger-bg);
+  color: var(--vc-status-danger);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.45;
+  animation: vc-form-error-in 220ms ease-out both;
+}
+
+@keyframes vc-form-error-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -4px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc-sec__pane,
+  .vc-sec__pane--edit[data-open='true'],
+  .vc-sec__pane--view[data-open='true'],
+  .vc-sec .vc-sec__edit {
+    transition: none;
+    transform: none;
+  }
+
+  .vc-sec .vc-sec__edit[aria-hidden='true'] {
+    transform: none;
+  }
+
+  .vc-sec-form > *,
+  .vc-form-error,
+  .vc-sec__saved-badge {
+    animation: none;
+  }
+
+  /* Solo opacidad: el aviso de guardado y el velo siguen siendo visibles, sin desplazarse. */
+  .vc-sec__saved {
+    animation: vc-sec-saved-fade 2800ms linear both;
+  }
+
+  .vc-dato__flash {
+    animation-delay: 0s;
+  }
+}
+
+@keyframes vc-sec-saved-fade {
+  0%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* Aportantes del hogar dentro de una tarjeta de dato. */
+.vc-aportantes {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vc-aportantes__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-low);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.vc-aportantes__name {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.vc-aportantes__amount {
+  font-family: var(--mk-font-mono, ui-monospace, monospace);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Tarjeta de persona agresora: mismo velo tonal de «valor cambiado» que las tarjetas de dato. */
+.vc-agresor-card {
+  position: relative;
+  isolation: isolate;
+}
+
+.vc-agresor-card__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--md-sys-color-on-surface);
+}
+
+.vc-agresor-card__sub {
+  margin: 2px 0 0;
+  font-size: 1rem;
+  line-height: 1.45;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.vc-agresor-card__line {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.vc-agresor-card__line strong {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.vc-agresor-card__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px 5px 10px;
+  border-radius: 999px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.vc-agresor-card__note {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant);
+}

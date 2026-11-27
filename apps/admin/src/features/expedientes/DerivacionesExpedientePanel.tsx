@@ -11,6 +11,8 @@ import {
   type EstadoDerivacion,
 } from '../canalizaciones/api';
 import { DerivacionTimelineList } from './canalizaciones/DerivacionTimelineList';
+import { useHistorialDerivacionesByFicha } from './canalizaciones/useHistorialDerivaciones';
+import './canalizaciones/canalizaciones.css';
 
 interface Props {
   fichaId: string;
@@ -27,17 +29,20 @@ const RETRY_ACTIONS = [{ id: 'retry', label: 'Reintentar' }];
 export function DerivacionesExpedientePanel({ fichaId, estado }: Props) {
   const isArchivado = estado === 'archivado';
   const { data: derivaciones = [], isLoading, isError, refetch } = useDerivacionesByFicha(fichaId);
+  const { data: historial, isLoading: historialLoading } = useHistorialDerivacionesByFicha(fichaId);
   const updateEstado = useUpdateEstadoDerivacion();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const summaryCounts = useMemo(() => {
     let activas = 0;
     let concluidas = 0;
+    let canceladas = 0;
     for (const d of derivaciones) {
       if (d.estado === 'pendiente' || d.estado === 'en_proceso') activas++;
       else if (d.estado === 'concluida') concluidas++;
+      else if (d.estado === 'cancelada') canceladas++;
     }
-    return { total: derivaciones.length, activas, concluidas };
+    return { total: derivaciones.length, activas, concluidas, canceladas };
   }, [derivaciones]);
 
   async function handleUpdateEstado(id: string, next: EstadoDerivacion) {
@@ -56,19 +61,27 @@ export function DerivacionesExpedientePanel({ fichaId, estado }: Props) {
 
   return (
     <section aria-label="Canalizaciones del expediente" className="grid gap-4">
-      <div className="grid gap-0.5 rounded-2xl border border-outline-variant bg-surface-container-low p-3.5">
-        <p className="text-sm font-semibold text-on-surface">
+      <div className="vc-canal-summary">
+        <h3 className="vc-canal-summary__title">
           {isLoading
             ? 'Canalizaciones del expediente'
             : `${summaryCounts.total} ${summaryCounts.total === 1 ? 'canalización' : 'canalizaciones'}`}
-        </p>
-        <p className="text-xs text-on-surface-variant">
-          {summaryCounts.activas} activas · {summaryCounts.concluidas} concluidas
-        </p>
+        </h3>
+        <ul className="vc-canal-summary__stats" aria-label="Resumen por estado">
+          <li className="vc-canal-stat">
+            <strong>{summaryCounts.activas}</strong> activas
+          </li>
+          <li className="vc-canal-stat">
+            <strong>{summaryCounts.concluidas}</strong> concluidas
+          </li>
+          <li className="vc-canal-stat">
+            <strong>{summaryCounts.canceladas}</strong> canceladas
+          </li>
+        </ul>
       </div>
 
       {isArchivado ? (
-        <p className="rounded-xl border border-outline-variant bg-surface-container-low px-3.5 py-2 text-xs font-medium text-on-surface-variant">
+        <p className="rounded-xl border border-outline-variant bg-surface-container-low px-3.5 py-2 text-sm font-medium text-on-surface-variant">
           Expediente archivado: solo consulta
         </p>
       ) : null}
@@ -95,6 +108,8 @@ export function DerivacionesExpedientePanel({ fichaId, estado }: Props) {
           ) : (
             <DerivacionTimelineList
               derivaciones={derivaciones}
+              historial={historial}
+              historialLoading={historialLoading}
               updatingId={updatingId}
               onUpdateEstado={handleUpdateEstado}
             />

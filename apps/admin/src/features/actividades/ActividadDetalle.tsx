@@ -24,7 +24,8 @@ import { fechaLargaActividad, horaActividad, mensajeError } from './actividadesL
 
 type Modo = 'realizar' | 'cancelar' | null;
 
-const MENU_CANCELAR: readonly DialogMenuItem[] = [{ value: 'cancelar', label: 'Cancelar actividad', icon: 'cancel' }];
+const MENU_EDITAR: DialogMenuItem = { value: 'editar', label: 'Editar', icon: 'edit' };
+const MENU_CANCELAR: DialogMenuItem = { value: 'cancelar', label: 'Cancelar actividad', icon: 'cancel' };
 
 export interface ActividadDetalleProps {
   actividad: ActividadPreventivaItem;
@@ -37,6 +38,8 @@ export interface ActividadDetalleProps {
   onPatch: (actividadId: string, patch: Partial<ActividadPreventivaItem>) => void;
   /** Hueco del encabezado del diálogo donde se monta el menú ⋮ de acciones secundarias. */
   accionesSlot?: HTMLElement | null;
+  /** «Editar» (solo pendientes con `actividad.registrar`): el diálogo pasa a la vista de edición. */
+  onEditar?: () => void;
 }
 
 /** Campos que cambia una transición: se guardan antes del cambio optimista para poder revertirlo. */
@@ -56,7 +59,7 @@ function camposDeEstado(a: ActividadPreventivaItem): Partial<ActividadPreventiva
  * reabrir) y la secundaria (cancelar) en el menú ⋮ del encabezado. Los paneles de cierre y cancelación reemplazan
  * la rejilla dentro del mismo diálogo. El cambio de estado es optimista.
  */
-export function ActividadDetalle({ actividad, ahora, dir, puedeRegistrar, onPatch, accionesSlot }: ActividadDetalleProps) {
+export function ActividadDetalle({ actividad, ahora, dir, puedeRegistrar, onPatch, accionesSlot, onEditar }: ActividadDetalleProps) {
   const formId = useId();
   const cambiarEstado = useCambiarEstadoActividad();
 
@@ -68,6 +71,8 @@ export function ActividadDetalle({ actividad, ahora, dir, puedeRegistrar, onPatc
 
   const acciones = accionesActividad(actividad.estado, puedeRegistrar);
   const hayAcciones = acciones.realizar || acciones.cancelar || acciones.reabrir;
+  const puedeEditar = acciones.editar && onEditar !== undefined;
+  const itemsMenu: DialogMenuItem[] = modo === null ? [...(puedeEditar ? [MENU_EDITAR] : []), ...(acciones.cancelar ? [MENU_CANCELAR] : [])] : [];
   const vencida = esVencida(actividad, ahora);
   const pending = cambiarEstado.isPending;
 
@@ -134,9 +139,9 @@ export function ActividadDetalle({ actividad, ahora, dir, puedeRegistrar, onPatc
     <>
       <DialogActionsMenu
         slot={accionesSlot}
-        items={acciones.cancelar && modo === null ? MENU_CANCELAR : []}
+        items={itemsMenu}
         disabled={pending}
-        onSelect={() => abrirModo('cancelar')}
+        onSelect={(value) => (value === 'editar' ? onEditar?.() : abrirModo('cancelar'))}
       />
 
       <Dialog.Body className="vc-dlg-view" data-dir={dir}>

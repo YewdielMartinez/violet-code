@@ -20,6 +20,7 @@ import { focusActividadField, useActividadForm } from './useActividadForm';
 export default function ActividadFormPage() {
   const formId = useId();
   const formRef = useRef<HTMLFormElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const pendingFocusFieldRef = useRef<string | null>(null);
   const bypassGuardRef = useRef(false);
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ export default function ActividadFormPage() {
         else pendingFocusFieldRef.current = field;
       });
       if (!saved) return;
-      toast(`Actividad registrada: ${fechaLargaActividad(saved.programadaEn)}, ${horaActividad(saved.programadaEn)}.`, {
+      toast(`Actividad registrada: ${fechaLargaActividad(saved.input.programadaEn)}, ${horaActividad(saved.input.programadaEn)}.`, {
         tone: 'success',
       });
       bypassGuardRef.current = true;
@@ -91,7 +92,7 @@ export default function ActividadFormPage() {
       />
 
       <FadeContent rise={10} duration={0.28} trigger="load" once>
-        <div className="w-full rounded-3xl border border-outline-variant bg-surface-container-lowest p-6">
+        <div ref={cardRef} className="w-full rounded-3xl border border-outline-variant bg-surface-container-lowest p-6">
           <div className="mb-6 border-b border-outline-variant pb-5">
             <ActividadWizardStepper step={step} onSelectStep={handleStepSelect} />
           </div>
@@ -99,6 +100,7 @@ export default function ActividadFormPage() {
           <ActividadWizardSteps
             formId={formId}
             formRef={formRef}
+            scrollAnchorRef={cardRef}
             step={step}
             stepError={form.stepError}
             invalidField={form.invalidField}

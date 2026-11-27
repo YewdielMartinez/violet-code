@@ -1,26 +1,12 @@
-import type { Database } from '@/infrastructure/supabase/database.types';
+import { normalizarConsumoDrogas, validarConsumoDrogas, type TipoDroga } from './ConsumoDrogas';
 import { isAttentionRole, isSupervisor, type StaffRole } from './Auth';
 
-export type TipoDroga = Database['public']['Enums']['tipo_droga'];
-
-export const TIPOS_DROGA: readonly TipoDroga[] = [
-  'marihuana',
-  'cristal',
-  'cocaina',
-  'inhalantes',
-  'medicamento_controlado',
-  'otra',
-];
-
-export const DROGA_LABELS: Record<TipoDroga, string> = {
-  no_consume: 'No consume',
-  marihuana: 'Marihuana',
-  cristal: 'Cristal',
-  cocaina: 'Cocaína',
-  inhalantes: 'Inhalantes',
-  medicamento_controlado: 'Medicamento controlado',
-  otra: 'Otra',
-};
+export {
+  DROGA_LABELS,
+  TIPOS_DROGA,
+  isTipoDroga,
+  type TipoDroga,
+} from './ConsumoDrogas';
 
 export interface CatalogoOpcion {
   id: number;
@@ -52,7 +38,6 @@ export interface Agresor {
   referencias: string | null;
   ocupacionId: number | null;
   ocupacionOtra: string | null;
-  tieneConsumoDroga: boolean | null;
   drogas: TipoDroga[] | null;
   especificacionDroga: string | null;
   especificacionArma: string | null;
@@ -76,7 +61,6 @@ export interface AgresorInput {
   referencias?: string | null;
   ocupacionId?: number | null;
   ocupacionOtra?: string | null;
-  tieneConsumoDroga?: boolean | null;
   drogas?: TipoDroga[] | null;
   especificacionDroga?: string | null;
   especificacionArma?: string | null;
@@ -110,7 +94,6 @@ export interface ValidacionAgresorResult {
 }
 
 const CP_REGEX = /^[0-9]{5}$/;
-const DROGA_SET = new Set<string>(TIPOS_DROGA);
 
 /**
  * Permiso `agresor.acceder` definido en `07_rls.sql`:
@@ -119,10 +102,6 @@ const DROGA_SET = new Set<string>(TIPOS_DROGA);
  */
 export function puedeAccederAgresor(rol: StaffRole | undefined): boolean {
   return isSupervisor(rol) || isAttentionRole(rol);
-}
-
-export function isTipoDroga(value: string): value is TipoDroga {
-  return DROGA_SET.has(value);
 }
 
 export function formatAgresorNombre(agresor: Pick<Agresor, 'nombres' | 'apellidoPaterno' | 'apellidoMaterno'>): string {
@@ -185,18 +164,7 @@ export function validarAgresor(input: AgresorInput): ValidacionAgresorResult {
     errores.ocupacionOtra = 'La especificación de ocupación no puede exceder 150 caracteres.';
   }
 
-  const drogas = input.drogas ?? [];
-  const especificacionDroga = trimmedText(input.especificacionDroga);
-  const consumoActivo = input.tieneConsumoDroga === true;
-
-  if (!consumoActivo && (drogas.length > 0 || especificacionDroga.length > 0)) {
-    errores.drogas = 'Solo puedes indicar drogas o especificación si existe consumo de drogas.';
-  } else if (drogas.some((d) => !DROGA_SET.has(d))) {
-    errores.drogas = 'Una o más opciones de droga no son válidas.';
-  }
-  if ((input.especificacionDroga?.length ?? 0) > 250) {
-    errores.especificacionDroga = 'La especificación de droga no puede exceder 250 caracteres.';
-  }
+  Object.assign(errores, validarConsumoDrogas(input));
 
   if ((input.especificacionArma?.length ?? 0) > 250) {
     errores.especificacionArma = 'La especificación de arma no puede exceder 250 caracteres.';
@@ -226,7 +194,6 @@ export interface FichaAgresorInput {
   numeroExterior: string;
   numeroInterior: string;
   referencias: string;
-  tieneConsumoDroga: boolean | null;
   drogas: TipoDroga[];
   especificacionDroga: string;
   especificacionArma: string;
@@ -247,7 +214,6 @@ export const INITIAL_FICHA_AGRESOR: FichaAgresorInput = {
   numeroExterior: '',
   numeroInterior: '',
   referencias: '',
-  tieneConsumoDroga: null,
   drogas: [],
   especificacionDroga: '',
   especificacionArma: '',
@@ -270,7 +236,6 @@ export function hasFichaAgresorData(input: FichaAgresorInput): boolean {
       input.numeroExterior.trim() ||
       input.numeroInterior.trim() ||
       input.referencias.trim() ||
-      input.tieneConsumoDroga !== null ||
       input.drogas.length > 0 ||
       input.especificacionDroga.trim() ||
       input.especificacionArma.trim() ||
@@ -305,9 +270,7 @@ export function toAgresorInput(
     numeroExterior: input.numeroExterior,
     numeroInterior: input.numeroInterior,
     referencias: input.referencias,
-    tieneConsumoDroga: input.tieneConsumoDroga,
-    drogas: input.tieneConsumoDroga === true ? input.drogas : null,
-    especificacionDroga: input.tieneConsumoDroga === true ? input.especificacionDroga : null,
+    ...normalizarConsumoDrogas(input.drogas, input.especificacionDroga),
     especificacionArma: input.especificacionArma,
     observaciones: input.observaciones,
   };

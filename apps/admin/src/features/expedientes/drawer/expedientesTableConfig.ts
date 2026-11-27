@@ -19,7 +19,7 @@ const ESTADO_OPTIONS = Object.entries(ESTADO_FICHA_LABELS).map(([value, label]) 
 }));
 
 const URGENCIA_OPTIONS = [
-  { value: 'Prioritario', label: 'Prioritario' },
+  { value: 'Urgente', label: 'Urgente' },
   { value: 'Normal', label: 'Normal' },
 ];
 
@@ -62,7 +62,7 @@ export const QUICK_FILTERS: { id: QuickFilter; label: string }[] = [
   { id: 'todos', label: 'Todos' },
   { id: 'abierto', label: 'Abiertos' },
   { id: 'en_seguimiento', label: 'En seguimiento' },
-  { id: 'prioritarios', label: 'Prioritarios' },
+  { id: 'prioritarios', label: 'Urgentes' },
   { id: 'cerrado', label: 'Cerrados' },
   { id: 'archivado', label: 'Archivados' },
 ];
@@ -87,7 +87,7 @@ const ESTADO_TONES: Record<string, PillTone> = {
 };
 
 const URGENCIA_TONES: Record<string, PillTone> = {
-  Prioritario: 'danger',
+  Urgente: 'danger',
   Normal: 'neutral',
 };
 

@@ -39,7 +39,7 @@ describe('ExpedienteEstadoCard', () => {
     render(<ExpedienteEstadoCard expediente={{ ...BASE, estado: 'archivado', enListaUrgencias: true }} />);
     expect(screen.queryByRole('list', { name: 'Progreso del expediente' })).toBeNull();
     expect(screen.getByText(/Archivado: ya no forma parte/)).toBeTruthy();
-    expect(screen.getByText('Prioritario')).toBeTruthy();
+    expect(screen.getByText('Urgente')).toBeTruthy();
   });
 });
 

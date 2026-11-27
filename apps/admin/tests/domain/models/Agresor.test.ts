@@ -98,39 +98,34 @@ describe("Agresor — validarAgresor", () => {
     ).toBeTruthy();
   });
 
-  it("permite drogas solo cuando tieneConsumoDroga es true", () => {
-    const ok = validarAgresor(
-      baseInput({
-        tieneConsumoDroga: true,
-        drogas: ["marihuana", "cristal"],
-        especificacionDroga: "Consumo eventual",
-      }),
-    );
-    expect(ok.valido).toBe(true);
+  it("el consumo de drogas es opcional y admite selección múltiple", () => {
+    expect(validarAgresor(baseInput()).valido).toBe(true);
+    expect(validarAgresor(baseInput({ drogas: [] })).valido).toBe(true);
+    expect(validarAgresor(baseInput({ drogas: null })).valido).toBe(true);
+    expect(
+      validarAgresor(
+        baseInput({
+          drogas: ["marihuana", "cristal", "otra"],
+          especificacionDroga: "Consumo eventual",
+        }),
+      ).valido,
+    ).toBe(true);
+    expect(validarAgresor(baseInput({ drogas: ["no_consume"] })).valido).toBe(true);
+  });
 
-    const invalidFalse = validarAgresor(
-      baseInput({ tieneConsumoDroga: false, drogas: ["marihuana"] }),
-    );
-    expect(invalidFalse.valido).toBe(false);
-    expect(invalidFalse.errores.drogas).toBeTruthy();
-
-    const invalidNull = validarAgresor(
-      baseInput({
-        tieneConsumoDroga: null,
-        especificacionDroga: "Otra sustancia",
-      }),
-    );
-    expect(invalidNull.valido).toBe(false);
-    expect(invalidNull.errores.drogas).toBeTruthy();
-
-    const invalidItem = validarAgresor(
-      baseInput({
-        tieneConsumoDroga: true,
-        drogas: ["desconocida" as TipoDroga],
-      }),
-    );
+  it("rechaza drogas inválidas, «no_consume» combinado y especificaciones demasiado largas", () => {
+    const invalidItem = validarAgresor(baseInput({ drogas: ["desconocida" as TipoDroga] }));
     expect(invalidItem.valido).toBe(false);
     expect(invalidItem.errores.drogas).toBeTruthy();
+
+    const combinado = validarAgresor(baseInput({ drogas: ["no_consume", "cristal"] }));
+    expect(combinado.valido).toBe(false);
+    expect(combinado.errores.drogas).toBeTruthy();
+
+    const larga = validarAgresor(
+      baseInput({ drogas: ["otra"], especificacionDroga: "x".repeat(251) }),
+    );
+    expect(larga.errores.especificacionDroga).toBeTruthy();
   });
 
   it("valida longitud máxima de especificacionArma", () => {

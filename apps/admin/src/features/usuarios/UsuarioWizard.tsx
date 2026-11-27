@@ -20,6 +20,7 @@ import {
   type UsuarioFormInput,
 } from '@/domain/models/Usuario';
 import { PasswordField } from '@/features/auth/PasswordField';
+import { useScrollToTopOnStep } from '@/shared/hooks/useScrollToTopOnStep';
 import { Icon } from '@/shared/ui/Icon';
 import { USUARIO_LAST_STEP, type UsuarioFormMode } from './useUsuarioForm';
 import '@/features/expedientes/ficha/ficha-wizard.css';
@@ -58,6 +59,8 @@ export function UsuarioWizardStepper({ step, onSelectStep }: { step: number; onS
 interface StepsProps {
   formId: string;
   formRef: RefObject<HTMLFormElement | null>;
+  /** Elemento cuyo inicio se muestra al cambiar de paso (por defecto el formulario; en la página, la tarjeta con el stepper). */
+  scrollAnchorRef?: RefObject<HTMLElement | null>;
   mode: UsuarioFormMode;
   original: UsuarioCuenta | null;
   step: number;
@@ -75,6 +78,7 @@ interface StepsProps {
 export function UsuarioWizardSteps({
   formId,
   formRef,
+  scrollAnchorRef,
   mode,
   original,
   step,
@@ -91,16 +95,10 @@ export function UsuarioWizardSteps({
     onChange({ ...value, [key]: next });
   }
 
+  useScrollToTopOnStep(step, scrollAnchorRef ?? formRef);
+
   function handleStepChange(next: number, previous: number) {
     const reducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const scroller = formRef.current?.closest<HTMLElement>('[data-mk-part="body"]');
-    if (scroller) {
-      if (typeof scroller.scrollTo === 'function') scroller.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
-      else scroller.scrollTop = 0;
-    }
-    if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
-      window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
-    }
     const activeEl = formRef.current?.querySelectorAll<HTMLElement>('[data-mk-step]')?.[next];
     if (activeEl && !reducedMotion && next !== previous) {
       const dir = next > previous ? 1 : -1;

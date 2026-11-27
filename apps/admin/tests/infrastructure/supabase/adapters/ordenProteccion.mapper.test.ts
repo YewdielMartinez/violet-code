@@ -82,6 +82,24 @@ describe('ordenProteccion.mapper', () => {
     });
   });
 
+  it('envía la nota del cambio de estado solo cuando existe (columna transitoria nota_cambio_estado)', () => {
+    const base = {
+      fichaId: 'ficha-1',
+      numeroOficio: 'OF-12',
+      autoridadEmisora: 'Juzgado',
+      fechaEmision: '2026-11-26',
+      estado: 'cancelada' as const,
+    };
+    expect(toOrdenProteccionUpdate({ ...base, notaCambioEstado: '  Revocada por el juzgado  ' })).toMatchObject({
+      estado: 'cancelada',
+      nota_cambio_estado: 'Revocada por el juzgado',
+    });
+    expect(toOrdenProteccionUpdate({ ...base, notaCambioEstado: '   ' })).not.toHaveProperty(
+      'nota_cambio_estado',
+    );
+    expect(toOrdenProteccionUpdate(base)).not.toHaveProperty('nota_cambio_estado');
+  });
+
   it('traduce códigos de error Postgres sin exponer detalles internos', () => {
     expect(traducirErrorOrdenProteccion({ code: '42501' }, 'fallback').message).toMatch(/permisos/i);
     expect(traducirErrorOrdenProteccion({ code: '23503' }, 'fallback').message).toMatch(/agresora/i);

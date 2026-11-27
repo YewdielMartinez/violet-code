@@ -170,7 +170,8 @@ function renderDrawer(props: Partial<Parameters<typeof NuevaFichaDrawer>[0]> = {
 function fillSelectsObligatorios() {
   fireEvent.change(screen.getByLabelText(/Estado civil \*/i), { target: { value: 'soltero' } });
   fireEvent.change(screen.getByLabelText(/Escolaridad \*/i), { target: { value: 'preparatoria' } });
-  fireEvent.change(screen.getByLabelText(/Ocupación \*/i), { target: { value: '2' } });
+  // El paso de persona agresora (oculto en el mock) también tiene «Ocupación *»: el de identidad es el primero.
+  fireEvent.change(screen.getAllByLabelText(/Ocupación \*/i)[0], { target: { value: '2' } });
 }
 
 function fillStep0() {
@@ -287,6 +288,33 @@ describe('NuevaFichaDrawer (verificación inline de CURP, validación, navegaci�
     expect(toastMock).toHaveBeenCalledWith('Expediente SEM-2026-0099 registrado.');
     expect(onCreated).toHaveBeenCalledWith('ficha-99');
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('al pasar de paso (Siguiente y Atrás) devuelve el scroll del cuerpo del panel al inicio del formulario', async () => {
+    renderDrawer();
+    await waitFor(() => expect(listCatalogoMock).toHaveBeenCalledWith('parentesco'));
+
+    // El cuerpo del Drawer es el contenedor desplazable; el formulario quedó fuera de vista (usuaria abajo, en Siguiente).
+    const body = document.querySelector<HTMLElement>('[data-mk-part="body"]')!;
+    const form = document.querySelector<HTMLFormElement>('form')!;
+    body.style.overflowY = 'auto';
+    body.scrollTop = 600;
+    const scrollTo = vi.fn();
+    body.scrollTo = scrollTo as unknown as typeof body.scrollTo;
+    body.getBoundingClientRect = () => ({ top: 0 }) as DOMRect;
+    form.getBoundingClientRect = () => ({ top: -580 }) as DOMRect;
+
+    fillStep0();
+    fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
+    await screen.findByText(/Domicilio de la usuaria/i);
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledTimes(1));
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 4, behavior: 'smooth' });
+
+    body.scrollTop = 600;
+    fireEvent.click(screen.getByRole('button', { name: /Atrás/i }));
+    await screen.findByText(/Datos de identidad y servicios solicitados/i);
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledTimes(2));
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 4, behavior: 'smooth' });
   });
 
   it('muestra alerta inline de CURP duplicada, bloquea avanzar y permite abrir el expediente existente', async () => {

@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import {
   AgresorConsumoArmaFields,
   type ConsumoArmaValues,
 } from '@/features/expedientes/AgresorConsumoArmaFields';
 
 const INITIAL_VALUES: ConsumoArmaValues = {
-  tieneConsumoDroga: null,
   drogas: [],
   especificacionDroga: '',
   especificacionArma: '',
@@ -25,29 +24,53 @@ function Harness({ initial = INITIAL_VALUES }: { initial?: ConsumoArmaValues }) 
   );
 }
 
+const pressed = (name: RegExp) =>
+  screen.getByRole('button', { name }).getAttribute('aria-pressed');
+
 afterEach(() => {
   cleanup();
 });
 
 describe('AgresorConsumoArmaFields', () => {
-  it('permite seleccionar drogas en chips y limpia al cambiar consumo a No', () => {
+  it('muestra el selector de drogas sin pregunta previa y marcado como opcional', () => {
+    render(<Harness />);
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+    expect(screen.getByText(/^Consumo de drogas/i).textContent).toMatch(/opcional/i);
+    expect(pressed(/^Marihuana/i)).toBe('false');
+  });
+
+  it('permite seleccionar varias drogas y «No consume» es excluyente', () => {
     render(<Harness />);
 
-    const consumoGroup = screen.getByRole('radiogroup', {
-      name: /¿Presenta consumo de drogas\?/i,
-    });
-    fireEvent.click(within(consumoGroup).getByLabelText('Sí'));
+    fireEvent.click(screen.getByRole('button', { name: /^Marihuana/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^Cristal/i }));
+    expect(pressed(/^Marihuana/i)).toBe('true');
+    expect(pressed(/^Cristal/i)).toBe('true');
 
-    const marihuanaChip = screen.getByRole('button', { name: /Marihuana/i });
-    fireEvent.click(marihuanaChip);
-    expect(marihuanaChip.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: /^No consume/i }));
+    expect(pressed(/^No consume/i)).toBe('true');
+    expect(pressed(/^Marihuana/i)).toBe('false');
+    expect(pressed(/^Cristal/i)).toBe('false');
 
-    fireEvent.click(within(consumoGroup).getByLabelText('No'));
-    fireEvent.click(within(consumoGroup).getByLabelText('Sí'));
+    fireEvent.click(screen.getByRole('button', { name: /^Cocaína/i }));
+    expect(pressed(/^No consume/i)).toBe('false');
+    expect(pressed(/^Cocaína/i)).toBe('true');
+  });
 
-    expect(screen.getByRole('button', { name: /Marihuana/i }).getAttribute('aria-pressed')).toBe(
-      'false',
-    );
+  it('la especificación aparece solo con «Otra» y se limpia al quitarla', () => {
+    render(<Harness />);
+    const placeholder = /Ej\. sustancia o frecuencia/i;
+    expect(screen.queryByPlaceholderText(placeholder)).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Otra/i }));
+    const input = screen.getByPlaceholderText(placeholder) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'Pegamento' } });
+    expect(input.value).toBe('Pegamento');
+
+    fireEvent.click(screen.getByRole('button', { name: /^Otra/i }));
+    expect(screen.queryByPlaceholderText(placeholder)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /^Otra/i }));
+    expect((screen.getByPlaceholderText(placeholder) as HTMLInputElement).value).toBe('');
   });
 
   it('permite capturar la especificación del arma u objeto directamente', () => {

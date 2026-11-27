@@ -19,6 +19,8 @@ export const ESTADO_ORDEN_LABELS: Record<EstadoOrdenProteccion, string> = {
 
 export const NUMERO_OFICIO_MAX_LENGTH = 80;
 export const AUTORIDAD_EMISORA_MAX_LENGTH = 150;
+/** Máximo de la nota del cambio de estado (`orden_proteccion_evento.nota`). */
+export const NOTA_CAMBIO_ESTADO_MAX_LENGTH = 1000;
 
 const ESTADO_SET = new Set<string>(ESTADOS_ORDEN_PROTECCION);
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
@@ -54,6 +56,11 @@ export interface OrdenProteccionInput {
   fechaEmision: string;
   fechaVigencia?: string | null;
   estado: EstadoOrdenProteccion;
+  /**
+   * Nota opcional del cambio de estado: solo se envía al editar una orden cuyo estado cambia;
+   * queda en el área de Seguimiento del expediente (`orden_proteccion_evento`).
+   */
+  notaCambioEstado?: string | null;
   /** Marca temporal leída al abrir el registro para bloqueo optimista en actualizaciones. */
   actualizadoEnEsperado?: string;
 }
@@ -64,7 +71,8 @@ export type OrdenProteccionValidationField =
   | 'autoridadEmisora'
   | 'fechaEmision'
   | 'fechaVigencia'
-  | 'estado';
+  | 'estado'
+  | 'notaCambioEstado';
 
 export interface ValidacionOrdenProteccionResult {
   valido: boolean;
@@ -174,6 +182,11 @@ export function validarOrdenProteccion(
 
   if (!ESTADO_SET.has(input.estado)) {
     errores.estado = 'Selecciona un estado válido para la orden de protección.';
+  }
+
+  const nota = input.notaCambioEstado?.trim() ?? '';
+  if (nota.length > NOTA_CAMBIO_ESTADO_MAX_LENGTH) {
+    errores.notaCambioEstado = `La nota no puede exceder ${NOTA_CAMBIO_ESTADO_MAX_LENGTH} caracteres.`;
   }
 
   return {

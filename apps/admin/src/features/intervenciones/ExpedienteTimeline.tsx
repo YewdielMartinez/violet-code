@@ -3,6 +3,7 @@ import { EmptyState, Skeleton, Timeline } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/skeleton';
 import '@yewdiel21/motion-kit/css/components/timeline';
+import './expediente-timeline.css';
 import {
   TIPOS_LINEA_TIEMPO,
   TIPO_EVENTO_LABELS,
@@ -74,7 +75,13 @@ export const ExpedienteTimeline = memo(function ExpedienteTimeline({ fichaId }: 
             description="Aquí aparecerán las citas, atenciones, derivaciones y órdenes del expediente."
           />
         ) : (
-          <Timeline events={eventos} group locale="es-MX" label="Línea de tiempo del expediente" />
+          <Timeline
+            className="vc-timeline"
+            events={eventos}
+            group
+            locale="es-MX"
+            label="Línea de tiempo del expediente"
+          />
         )}
       </Skeleton>
 
