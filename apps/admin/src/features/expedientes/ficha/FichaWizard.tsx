@@ -16,7 +16,7 @@ import './ficha-wizard.css';
 
 export const FICHA_STEP_ITEMS = [
   { label: 'Identidad', description: 'CURP, servicios y aviso' },
-  { label: 'Domicilio', description: 'SEPOMEX o foráneo' },
+  { label: 'Domicilio', description: 'Ubicación y dirección' },
   { label: 'Estudio socioeconómico', description: 'Vivienda y aportantes' },
 ];
 
