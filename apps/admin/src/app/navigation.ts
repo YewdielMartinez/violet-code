@@ -93,7 +93,7 @@ export const NAVIGATION: NavPage[] = [
     path: '/usuarios',
     label: 'Usuarios',
     icon: 'manage_accounts',
-    ready: false,
+    ready: true,
     allowedRoles: DIRECTION_ONLY,
   },
 ];
