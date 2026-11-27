@@ -135,9 +135,9 @@ select lives_ok(
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111105'::uuid); -- juridico
-select lives_ok(
+select throws_ok(
   $$update public.agresor set observaciones = 'Act A06' where id = '77777777-7777-4777-8777-777777777701'$$,
-  'juridico actualiza agresor'
+  '42501', null, 'juridico no actualiza agresor directo (cerrado en A-07 S2)'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111106'::uuid); -- recepcion
@@ -169,31 +169,33 @@ select throws_ok(
 -- 2. ficha_registro, ficha_servicio_solicitado, estudio_socioeconomico, aportante_hogar
 -- =====================================================================
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111101'::uuid); -- titular
-select lives_ok(
+select throws_ok(
   $$insert into public.ficha_registro (id, persona_id, aviso_privacidad_aceptado_en) values ('55555555-2100-4000-8000-000000000091', '33333333-2100-4000-8000-000000000091', now())$$,
-  'titular inserta ficha_registro'
+  '42501', null, 'titular no inserta ficha_registro directo (cerrado en A-07 S2)'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111103'::uuid); -- trabajo_social
-select lives_ok(
-  $$update public.ficha_registro set tiene_trabajo = false where id = '55555555-2100-4000-8000-000000000091'$$,
-  'trabajo_social actualiza ficha_registro'
+select throws_ok(
+  $$update public.ficha_registro set tiene_trabajo = false where id = '55555555-5555-4555-8555-555555555501'$$,
+  '42501', null, 'trabajo_social no actualiza ficha_registro directo (cerrado en A-07 S2)'
 );
-select lives_ok(
-  $$insert into public.ficha_servicio_solicitado (ficha_id, area_id) values ('55555555-2100-4000-8000-000000000091', (select id from public.cat_area where clave = 'trabajo_social'))$$,
-  'trabajo_social inserta ficha_servicio_solicitado'
+select throws_ok(
+  $$insert into public.ficha_servicio_solicitado (ficha_id, area_id) values ('55555555-5555-4555-8555-555555555502', (select id from public.cat_area where clave = 'juridico'))$$,
+  '42501', null, 'trabajo_social no inserta ficha_servicio_solicitado directo (cerrado en A-07 S2)'
 );
-select lives_ok(
-  $$delete from public.ficha_servicio_solicitado where ficha_id = '55555555-2100-4000-8000-000000000091'$$,
-  'trabajo_social borra ficha_servicio_solicitado'
+with del_ts as (
+  delete from public.ficha_servicio_solicitado
+  where ficha_id = '55555555-5555-4555-8555-555555555501'
+  returning 1
+)
+select is((select count(*)::int from del_ts), 0, 'trabajo_social no borra ficha_servicio_solicitado directo (cerrado en A-07 S2)');
+select throws_ok(
+  $$insert into public.estudio_socioeconomico (id, ficha_id, es_actual) values ('66666666-2100-4000-8000-000000000091', '55555555-5555-4555-8555-555555555501', false)$$,
+  '42501', null, 'trabajo_social no inserta estudio_socioeconomico directo (cerrado en A-07 S2)'
 );
-select lives_ok(
-  $$insert into public.estudio_socioeconomico (id, ficha_id, es_actual) values ('66666666-2100-4000-8000-000000000091', '55555555-2100-4000-8000-000000000091', false)$$,
-  'trabajo_social inserta estudio_socioeconomico'
-);
-select lives_ok(
-  $$insert into public.aportante_hogar (estudio_socioeconomico_id, nombre) values ('66666666-2100-4000-8000-000000000091', 'Aportante A06')$$,
-  'trabajo_social inserta aportante_hogar'
+select throws_ok(
+  $$insert into public.aportante_hogar (estudio_socioeconomico_id, nombre) values ('66666666-6666-4666-8666-666666666601', 'Aportante A06')$$,
+  '42501', null, 'trabajo_social no inserta aportante_hogar directo (cerrado en A-07 S2)'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111104'::uuid); -- psicologia
@@ -404,9 +406,9 @@ select is((select count(*)::int from public.nota_area), 0, 'recepcion no lee not
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111101'::uuid); -- titular
 select ok((select count(*) >= 1 from public.historial_clinico), 'titular lee historial_clinico');
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111104'::uuid); -- psicologia
-select lives_ok(
+select throws_ok(
   $$insert into public.historial_clinico (ficha_id, motivo_consulta) values ('55555555-5555-4555-8555-555555555502', 'Motivo A06')$$,
-  'psicologia inserta historial_clinico'
+  '42501', null, 'psicologia no inserta historial_clinico directo (cerrado en A-07 S2)'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111103'::uuid); -- trabajo_social
@@ -494,7 +496,8 @@ select is(
         'estudio_socioeconomico','aportante_hogar','agresor','orden_proteccion',
         'cita','atencion','nota_area','historial_clinico','derivacion','documento'
       )
-      and policyname <> 'derivacion_insert'
+      and coalesce(qual, '') <> 'false'
+      and coalesce(with_check, '') <> 'false'
       and coalesce(qual, '') || ' ' || coalesce(with_check, '') not like '%tiene_permiso(%'
   ),
   0,
