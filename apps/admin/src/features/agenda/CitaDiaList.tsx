@@ -8,7 +8,7 @@ import { areaNombre, ordenarPorHora, partesHora, type CitaDir } from './citaDial
 export interface CitaDiaListProps {
   citas: readonly AgendaItem[];
   dir: CitaDir;
-  /** Sin permiso para agendar (solo Recepción y Jurídico pueden): oculta «Nueva cita». */
+  /** Sin permiso para agendar (Trabajo Social y UMECA no pueden): oculta «Nueva cita». */
   puedeAgendar: boolean;
   onOpenCita: (cita: AgendaItem) => void;
   onNueva: () => void;

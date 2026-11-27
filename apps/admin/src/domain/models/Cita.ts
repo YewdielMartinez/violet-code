@@ -1,4 +1,5 @@
 import type { Database } from '@/infrastructure/supabase/database.types';
+import type { StaffRole } from './Auth';
 
 export type EstadoCita = Database['public']['Enums']['estado_cita'];
 export type OrigenCita = Database['public']['Enums']['origen_cita'];
@@ -20,6 +21,39 @@ export const PRIORIDAD_CITA_LABELS: Record<PrioridadNivel, string> = {
   media: 'Media',
   baja: 'Baja',
 };
+
+const TODAS_LAS_AREAS: readonly string[] = ['trabajo_social', 'psicologia', 'juridico'];
+
+/**
+ * Regla única de alta de citas (decisión del producto): qué áreas puede agendar cada rol.
+ * Recepción agenda en Trabajo Social, Psicología y Jurídico; Jurídico y Psicología, solo en la suya;
+ * Dirección y Subdirección, en todas. Trabajo Social no agenda (la siguiente cita la agenda Recepción).
+ * Reagendar y la próxima cita siguen la misma regla porque crean una cita nueva.
+ */
+const AREAS_CREABLES: Partial<Record<StaffRole, readonly string[]>> = {
+  recepcion: TODAS_LAS_AREAS,
+  juridico: ['juridico'],
+  psicologia: ['psicologia'],
+  titular: TODAS_LAS_AREAS,
+  subdireccion: TODAS_LAS_AREAS,
+};
+
+const SIN_AREAS: readonly string[] = [];
+
+/** Claves de las áreas donde el rol puede agendar (vacío si no puede agendar). */
+export function areasCreablesPorRol(rol: StaffRole | undefined): readonly string[] {
+  return (rol && AREAS_CREABLES[rol]) || SIN_AREAS;
+}
+
+/** Resultado de `buscar_personas_agenda`: persona localizable al agendar (CURP enmascarada, sin datos sensibles). */
+export interface PersonaAgendaItem {
+  personaId: string;
+  fichaId: string;
+  folio: string;
+  nombreCompleto: string;
+  curpEnmascarada: string | null;
+  celular: string | null;
+}
 
 export interface AgendaItem {
   citaId: string;

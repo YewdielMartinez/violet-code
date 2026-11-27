@@ -1,22 +1,13 @@
 import type { StaffRole } from '@/domain/models/Auth';
+import { areasCreablesPorRol } from '@/domain/models/Cita';
 
 /**
- * Regla única de alta de citas (decisión del producto): solo Recepción y Jurídico agendan.
- * Recepción lo hace en Trabajo Social, Psicología y Jurídico; Jurídico, solo en Jurídico.
- * El resto de los roles (Dirección, Subdirección, Trabajo Social, Psicología, UMECA) no ve ninguna interfaz de alta.
- * Reagendar sigue la misma regla porque crea una cita nueva.
+ * Regla única de alta de citas (definida en `domain/models/Cita`):
+ * Recepción agenda en Trabajo Social, Psicología y Jurídico; Jurídico y Psicología, solo en la suya;
+ * Dirección y Subdirección, en todas; Trabajo Social no agenda.
+ * Reagendar y agendar la siguiente cita siguen la misma regla porque crean una cita nueva.
  */
-const AREAS_CREABLES: Partial<Record<StaffRole, readonly string[]>> = {
-  recepcion: ['trabajo_social', 'psicologia', 'juridico'],
-  juridico: ['juridico'],
-};
-
-const SIN_AREAS: readonly string[] = [];
-
-/** Claves de las áreas donde el rol puede agendar (vacío si no puede agendar). */
-export function areasCreablesPorRol(rol: StaffRole | undefined): readonly string[] {
-  return (rol && AREAS_CREABLES[rol]) || SIN_AREAS;
-}
+export { areasCreablesPorRol };
 
 /** `true` si el rol puede crear citas (y, por tanto, reagendar o agendar la siguiente). */
 export function puedeCrearCita(rol: StaffRole | undefined): boolean {

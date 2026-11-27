@@ -17,7 +17,7 @@ import '@yewdiel21/motion-kit/css/components/nav';
 import { useAuth } from '@/shared/auth/useAuth';
 import { BrandMark } from '@/shared/ui/BrandMark';
 import { Icon } from '@/shared/ui/Icon';
-import { getNavigationForRole } from './navigation';
+import { getMobilePaths, getNavigationForRole } from './navigation';
 import { useNavStyle } from './preferences';
 import { preloadPage, preloadPages } from './pages';
 
@@ -107,16 +107,16 @@ export function AppLayout() {
   const navStyle = useNavStyle();
   const { user } = useAuth();
 
-  const navItems = useMemo(
-    () =>
-      getNavigationForRole(user?.role).map((page) => ({
-        value: page.path,
-        label: page.label,
-        icon: <Icon name={page.icon} />,
-        hideOnMobile: !page.mobile,
-      })),
-    [user?.role],
-  );
+  const navItems = useMemo(() => {
+    // Barra móvil por rol: las 5 páginas de mayor prioridad a las que el rol tiene acceso.
+    const mobilePaths = getMobilePaths(user?.role);
+    return getNavigationForRole(user?.role).map((page) => ({
+      value: page.path,
+      label: page.label,
+      icon: <Icon name={page.icon} />,
+      hideOnMobile: !mobilePaths.has(page.path),
+    }));
+  }, [user?.role]);
 
   useEffect(() => preloadPages(), []);
 

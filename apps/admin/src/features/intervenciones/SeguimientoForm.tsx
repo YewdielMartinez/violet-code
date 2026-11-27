@@ -34,7 +34,7 @@ export interface SeguimientoFormProps {
   cita: AgendaItem;
   contexto: ContextoHojaSeguimiento;
   areaId: number | null;
-  /** Solo Jurídico agenda directo la siguiente cita (`RN-04`). */
+  /** Quien puede crear citas en el área agenda directo la siguiente (`puedeAgendarProximaCita`). */
   permiteAgendar: boolean;
   /** Se llama tras guardar; recibe la asistencia registrada (`asistio` genera la hoja, `no_asistio` solo cambia la cita). */
   onDone: (asistencia: AsistenciaCita) => void;

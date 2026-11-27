@@ -15,13 +15,15 @@ Estados de una cita: `agendada → confirmada → asistio | no_asistio`, o `canc
 
 | Rol | Ve | Gestiona (confirmar / cancelar / no asistió) | Crea y reagenda |
 |---|---|---|---|
-| Tit, Sub | Todas las áreas | Todas las áreas | No |
+| Tit, Sub | Todas las áreas | Todas las áreas | Todas las áreas |
 | Recepción | Trabajo Social, Psicología y Jurídico | Trabajo Social, Psicología y Jurídico | Trabajo Social, Psicología y Jurídico |
 | Trabajo Social | Trabajo Social y Psicología | Solo Trabajo Social | No |
-| Psicología | Solo su área | Solo su área | No |
+| Psicología | Solo su área | Solo su área | Solo Psicología |
 | Jurídico | Solo su área | Solo su área | Solo Jurídico |
 
-> **Regla de creación (permiso `agenda.crear`, migración `_39_agenda_permisos_creacion`):** solo Recepción (3 áreas) y Jurídico (su área) crean citas. Como reagendar genera una cita nueva, sigue la misma regla. Las citas UMECA (`origen = 'umeca'`) no cambian: se consultan con `get_umeca_citas()`.
+> **Regla de creación (permiso `agenda.crear` + `puede_crear_cita_en_area`, migración `_42_agenda_busqueda_umeca`, que sustituye a la de `_40`):** Recepción crea en TS, Psicología y Jurídico; Jurídico solo en Jurídico; Psicología solo en Psicología; Titular y Subdirección en cualquier área; Trabajo Social no crea. Como reagendar genera una cita nueva, sigue la misma regla, y la próxima cita de `registrar_seguimiento` también. Las citas UMECA (`origen = 'umeca'`) se consultan con `get_umeca_citas()`.
+>
+> Para elegir a la persona al crear la cita, usar el autocompletado [`buscar_personas_agenda`](#buscar_personas_agenda).
 >
 > Crear una cita nueva no tiene RPC: es un `insert` directo sobre `cita`. Ver [tablas-directas.md](./tablas-directas.md#cita).
 
@@ -139,7 +141,7 @@ const { data, error } = await supabase
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| `agenda.crear` + alcance de área | Recepción (3 áreas) y Jurídico (su área). Dirección, TS y Psicología: `42501` | Escritura | Sí, por trigger | `_23_rpc_reagendar_y_urgencias` y `_39_agenda_permisos_creacion` |
+| `agenda.crear` + alcance de área | Recepción (3 áreas), Jurídico y Psicología (su área), Dirección (todas). TS: `42501` | Escritura | Sí, por trigger | `_23_rpc_reagendar_y_urgencias`, `_40_agenda_permisos_creacion` y `_42_agenda_busqueda_umeca` |
 
 **Llamada**
 
@@ -225,13 +227,51 @@ interface UrgenciaRow {
 
 ---
 
-## `get_umeca_citas`
+## `buscar_personas_agenda`
 
-> Vista de UMECA: solo nombre, fecha y estado de las citas que UMECA canalizó.
+> Autocompletado de la persona al crear una cita: nombre (sin acentos) o prefijo de CURP, solo personas con expediente activo y no archivado.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| `usuario_externo` activo con dependencia `umeca` | UMECA | Lectura | Sí: `'ver'` sobre `cita` en cada consulta | `_05_vistas` |
+| `agenda.crear` | Recepción, Jurídico, Psicología, Titular, Subdirección. TS y UMECA: `42501` | Lectura | No (datos enmascarados) | `_42_agenda_busqueda_umeca` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase.rpc('buscar_personas_agenda', {
+  p_q: 'maria lop',   // mínimo 3 caracteres; con menos devuelve []
+  p_limite: 10,       // opcional, 1..25 (default 10)
+});
+```
+
+**Respuesta**
+
+```ts
+interface PersonaAgendaRow {
+  persona_id: string;           // el que va en cita.persona_id
+  ficha_id: string;
+  folio: string;
+  nombre_completo: string;
+  curp_enmascarada: string | null;   // 'PEPZ******01'
+  celular: string | null;
+}
+```
+
+**Comportamiento:** todos los términos del texto deben aparecer en el nombre (sin acentos ni mayúsculas); también coincide por prefijo de CURP. Orden: CURP, nombre que empieza con el texto, resto; luego por nombre. Detalle: [rpcs/buscar_personas_agenda.md](../rpcs/buscar_personas_agenda.md).
+
+**Errores:** `42501` sin `agenda.crear`.
+
+**En el front:** `PersonaSearchField` del formulario de nueva cita · debounce ≥ 250 ms · no llamar con menos de 3 caracteres.
+
+---
+
+## `get_umeca_citas`
+
+> Vista de UMECA: nombre, fecha, estado y área de las citas que UMECA canalizó.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+|---|---|---|---|---|
+| `usuario_externo` activo con dependencia `umeca` | UMECA | Lectura | Sí: `'ver'` sobre `cita` en cada consulta | `_05_vistas` y `_42_agenda_busqueda_umeca` (área) |
 
 **Llamada**
 
@@ -249,6 +289,8 @@ interface UmecaCitaRow {
   apellido_materno: string | null;
   programada_en: string;
   estado: 'pendiente' | 'asistio' | 'no_asistio' | 'cancelo';
+  area_clave: string;    // 'trabajo_social' | 'psicologia' | 'juridico'
+  area_nombre: string;
 }
 ```
 

@@ -17,17 +17,15 @@ function useDebounced<T>(value: T, delay: number): T {
 export interface PersonaSearchFieldProps {
   value: PersonaSeleccion | null;
   onChange: (persona: PersonaSeleccion | null) => void;
-  /** `true`: búsqueda por nombre/CURP/folio; `false` (Recepción): solo CURP completa. */
-  porNombre: boolean;
   error?: string | null;
   disabled?: boolean;
 }
 
 /**
- * Selector de persona existente con búsqueda diferida en el servidor (no se carga el padrón completo).
+ * Selector de persona existente con búsqueda diferida en el servidor (`buscar_personas_agenda`; no se carga el padrón).
  * Combobox accesible: flechas, Enter y Escape.
  */
-export function PersonaSearchField({ value, onChange, porNombre, error, disabled }: PersonaSearchFieldProps) {
+export function PersonaSearchField({ value, onChange, error, disabled }: PersonaSearchFieldProps) {
   const ids = { input: useId(), list: useId(), help: useId() };
   const inputRef = useRef<HTMLInputElement>(null);
   const [term, setTerm] = useState('');
@@ -35,15 +33,13 @@ export function PersonaSearchField({ value, onChange, porNombre, error, disabled
   const [active, setActive] = useState(0);
 
   const debounced = useDebounced(term, DEBOUNCE_MS);
-  const buscable = terminoBuscable(debounced, porNombre);
-  const query = usePersonaSearch(debounced, porNombre);
+  const buscable = terminoBuscable(debounced);
+  const query = usePersonaSearch(debounced);
   const resultados = useMemo(() => (buscable ? (query.data ?? []).slice(0, MAX_RESULTADOS) : []), [buscable, query.data]);
-  const pendiente = terminoBuscable(term, porNombre) && (term !== debounced || query.isFetching);
+  const pendiente = terminoBuscable(term) && (term !== debounced || query.isFetching);
   const activeIndex = resultados.length ? Math.min(active, resultados.length - 1) : -1;
 
-  const ayuda = porNombre
-    ? `Escribe al menos ${MIN_TERMINO_BUSQUEDA} letras del nombre, la CURP o el folio.`
-    : 'Captura la CURP completa (18 caracteres) para localizar a la persona.';
+  const ayuda = `Escribe al menos ${MIN_TERMINO_BUSQUEDA} letras del nombre, apellidos o el inicio de la CURP.`;
 
   function seleccionar(index: number) {
     const item = resultados[index];
@@ -113,12 +109,12 @@ export function PersonaSearchField({ value, onChange, porNombre, error, disabled
           aria-describedby={ids.help}
           aria-invalid={error ? true : undefined}
           aria-activedescendant={mostrarLista && activeIndex >= 0 ? `${ids.list}-${activeIndex}` : undefined}
-          placeholder={porNombre ? 'Buscar por nombre, CURP o folio…' : 'CURP de la persona…'}
+          placeholder="Buscar por nombre o CURP…"
           autoComplete="off"
           disabled={disabled}
           value={term}
           onChange={(e) => {
-            setTerm(porNombre ? e.target.value : e.target.value.toUpperCase());
+            setTerm(e.target.value);
             setOpen(true);
             setActive(0);
           }}
@@ -164,7 +160,11 @@ export function PersonaSearchField({ value, onChange, porNombre, error, disabled
               }`}
             >
               <span className="text-sm font-semibold text-on-surface">{item.nombre}</span>
-              {item.detalle ? <span className="font-mono text-xs text-on-surface-variant">{item.detalle}</span> : null}
+              {item.curp || item.folio ? (
+                <span className="font-mono text-xs text-on-surface-variant">
+                  {[item.curp, item.folio].filter(Boolean).join(' · ')}
+                </span>
+              ) : null}
             </button>
           ))}
         </div>

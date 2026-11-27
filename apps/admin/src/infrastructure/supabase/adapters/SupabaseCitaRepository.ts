@@ -8,6 +8,7 @@ import type {
   EstadoCita,
   EstadoCitaGestionable,
   ListaUrgenciasItem,
+  PersonaAgendaItem,
   ReagendarCitaInput,
   ReagendarCitaResult,
 } from '@/domain/models/Cita';
@@ -15,6 +16,46 @@ import type { CitaRepository } from '@/domain/ports/CitaRepository';
 
 type RpcAgendaRow = Database['public']['Functions']['get_agenda']['Returns'][number];
 type RpcUrgenciaRow = Database['public']['Functions']['get_lista_urgencias']['Returns'][number];
+
+interface BuscarPersonasAgendaArgs {
+  p_q: string;
+  p_limite?: number;
+}
+
+interface RpcPersonaAgendaRow {
+  persona_id: string;
+  ficha_id: string;
+  folio: string | null;
+  nombre_completo: string | null;
+  curp_enmascarada: string | null;
+  celular: string | null;
+}
+
+/**
+ * `buscar_personas_agenda` aún no está en `database.types.ts` (se regenera con `supabase gen types`); mientras
+ * tanto se tipa aquí la llamada.
+ * TODO: retirar este helper y usar `supabase.rpc('buscar_personas_agenda', ...)` al regenerar los tipos.
+ */
+function rpcBuscarPersonasAgenda(args: BuscarPersonasAgendaArgs) {
+  const client = supabase as unknown as {
+    rpc: (
+      fn: 'buscar_personas_agenda',
+      args: BuscarPersonasAgendaArgs,
+    ) => PromiseLike<{ data: RpcPersonaAgendaRow[] | null; error: Error | null }>;
+  };
+  return client.rpc('buscar_personas_agenda', args);
+}
+
+function mapPersonaAgendaRow(row: RpcPersonaAgendaRow): PersonaAgendaItem {
+  return {
+    personaId: row.persona_id,
+    fichaId: row.ficha_id,
+    folio: row.folio ?? '',
+    nombreCompleto: row.nombre_completo?.trim() || '—',
+    curpEnmascarada: row.curp_enmascarada,
+    celular: row.celular,
+  };
+}
 
 function mapAgendaRow(row: RpcAgendaRow): AgendaItem {
   return {
@@ -133,6 +174,13 @@ export const supabaseCitaRepository: CitaRepository = {
       programadaEn: row.programada_en,
       estado: row.estado,
     };
+  },
+
+  async buscarPersonas(termino: string, limite = 10): Promise<PersonaAgendaItem[]> {
+    const { data, error } = await rpcBuscarPersonasAgenda({ p_q: termino.trim(), p_limite: limite });
+
+    if (error) throw error;
+    return (data ?? []).map(mapPersonaAgendaRow);
   },
 
   async listarUrgencias(areaId?: number | null): Promise<ListaUrgenciasItem[]> {

@@ -1,12 +1,44 @@
 import type { Database, Json } from '../database.types';
-import type {
-  ActividadParticipante,
-  ActividadPreventivaCreateInput,
-  ActividadPreventivaItem,
-  RolEmpleado,
+import {
+  esEstadoActividad,
+  type ActividadParticipante,
+  type ActividadPreventivaCreateInput,
+  type ActividadPreventivaItem,
+  type EstadoActividad,
+  type RolEmpleado,
 } from '@/domain/models/ActividadPreventiva';
+import type { ActividadEstadoCambioInput } from '@/domain/models/ActividadEstado';
 
-type ActividadRow = Database['public']['Functions']['get_actividades_preventivas']['Returns'][number];
+type ActividadRowBase = Database['public']['Functions']['get_actividades_preventivas']['Returns'][number];
+
+/**
+ * Columnas de estado que agrega `get_actividades_preventivas` (enum `estado_actividad`). TODO: quitar esta
+ * extensión (y el cast del adaptador) cuando `database.types.ts` se regenere con la migración.
+ */
+export interface ActividadEstadoColumns {
+  estado?: EstadoActividad | null;
+  realizada_en?: string | null;
+  cancelada_motivo?: string | null;
+  observaciones_cierre?: string | null;
+}
+
+export type ActividadRow = ActividadRowBase & ActividadEstadoColumns;
+
+/** Argumentos de `actualizar_estado_actividad` (`snake_case`). */
+export interface ActualizarEstadoArgs {
+  p_actividad_id: string;
+  p_estado: EstadoActividad;
+  p_numero_asistentes: number | null;
+  p_observaciones: string | null;
+  p_motivo_cancelacion: string | null;
+}
+
+/** Fila que devuelve `actualizar_estado_actividad`. */
+export interface ActualizarEstadoRow {
+  actividad_id: string;
+  estado: EstadoActividad;
+  realizada_en: string | null;
+}
 
 interface RpcParticipanteShape {
   empleado_id: string;
@@ -50,6 +82,10 @@ export function mapActividadRow(row: ActividadRow): ActividadPreventivaItem {
     creadoPorNombre: row.creado_por_nombre ?? null,
     creadoEn: row.creado_en,
     participantes: mapParticipantes(row.participantes),
+    estado: esEstadoActividad(row.estado) ? row.estado : 'pendiente',
+    realizadaEn: row.realizada_en ?? null,
+    canceladaMotivo: row.cancelada_motivo ?? null,
+    observacionesCierre: row.observaciones_cierre ?? null,
   };
 }
 
@@ -67,5 +103,16 @@ export function toRegistrarPayload(input: ActividadPreventivaCreateInput): Recor
     programada_en: input.programadaEn,
     numero_asistentes: input.numeroAsistentes ?? null,
     participantes_ids: input.participantesIds ?? [],
+  };
+}
+
+/** Modelo de cambio de estado → argumentos del RPC (textos recortados; vacío = `null`). */
+export function toActualizarEstadoArgs(input: ActividadEstadoCambioInput): ActualizarEstadoArgs {
+  return {
+    p_actividad_id: input.actividadId,
+    p_estado: input.estado,
+    p_numero_asistentes: input.numeroAsistentes ?? null,
+    p_observaciones: input.observaciones?.trim() || null,
+    p_motivo_cancelacion: input.motivoCancelacion?.trim() || null,
   };
 }

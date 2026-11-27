@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canAccessPath, getNavigationForRole } from '@/app/navigation';
+import { MOBILE_NAV_MAX, canAccessPath, getMobilePaths, getNavigationForRole } from '@/app/navigation';
 
 describe('navigation permissions by role', () => {
   it('restringe a UMECA únicamente a la ruta raíz /', () => {
@@ -10,8 +10,8 @@ describe('navigation permissions by role', () => {
     expect(canAccessPath('umeca', '/usuarios')).toBe(false);
   });
 
-  it('limita a recepción a Dashboard, Agenda, Actividades y Directorio', () => {
-    expect(getNavigationForRole('recepcion').map((p) => p.path)).toEqual(['/', '/agenda', '/actividades', '/directorio']);
+  it('limita a recepción a Tablero, Agenda y Actividades en el menú (Directorio solo por ruta)', () => {
+    expect(getNavigationForRole('recepcion').map((p) => p.path)).toEqual(['/', '/agenda', '/actividades']);
     expect(canAccessPath('recepcion', '/actividades')).toBe(true);
     expect(canAccessPath('recepcion', '/agenda')).toBe(true);
     expect(canAccessPath('recepcion', '/directorio')).toBe(true);
@@ -32,7 +32,7 @@ describe('navigation permissions by role', () => {
 
   it('permite todas las rutas del panel a titular y subdirección', () => {
     for (const role of ['titular', 'subdireccion'] as const) {
-      expect(getNavigationForRole(role)).toHaveLength(8);
+      expect(getNavigationForRole(role)).toHaveLength(7);
       expect(canAccessPath(role, '/estadisticas')).toBe(true);
       expect(canAccessPath(role, '/usuarios')).toBe(true);
     }
@@ -56,5 +56,36 @@ describe('navigation permissions by role', () => {
   it('devuelve lista vacía y niega acceso si no hay rol', () => {
     expect(getNavigationForRole(undefined)).toEqual([]);
     expect(canAccessPath(undefined, '/')).toBe(false);
+  });
+});
+
+describe('barra móvil calculada por rol', () => {
+  const paths = (role: Parameters<typeof getMobilePaths>[0]) => [...getMobilePaths(role)].sort();
+
+  it('las áreas de atención y la dirección llevan Tablero, Agenda, Expedientes, Solicitudes y Actividades', () => {
+    for (const role of ['titular', 'subdireccion', 'trabajo_social', 'psicologia', 'juridico'] as const) {
+      expect(paths(role)).toEqual(['/', '/agenda', '/actividades', '/expedientes', '/solicitudes'].sort());
+    }
+  });
+
+  it('recepción lleva todo lo que puede ver (Tablero, Agenda y Actividades) y UMECA solo el Tablero', () => {
+    expect(paths('recepcion')).toEqual(['/', '/actividades', '/agenda'].sort());
+    expect(paths('umeca')).toEqual(['/']);
+  });
+
+  it('nunca pasa de 5 botones ni incluye páginas a las que el rol no accede', () => {
+    for (const role of ['titular', 'subdireccion', 'trabajo_social', 'psicologia', 'juridico', 'recepcion', 'umeca'] as const) {
+      const mobile = getMobilePaths(role);
+      expect(mobile.size).toBeLessThanOrEqual(MOBILE_NAV_MAX);
+      const allowed = getNavigationForRole(role).map((p) => p.path);
+      for (const path of mobile) expect(allowed).toContain(path);
+    }
+    expect(getMobilePaths(undefined).size).toBe(0);
+  });
+
+  it('Actividades aparece en la barra móvil de todo el personal', () => {
+    for (const role of ['titular', 'subdireccion', 'trabajo_social', 'psicologia', 'juridico', 'recepcion'] as const) {
+      expect(getMobilePaths(role).has('/actividades')).toBe(true);
+    }
   });
 });

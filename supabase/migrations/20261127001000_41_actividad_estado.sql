@@ -1,5 +1,5 @@
 -- =====================================================================
--- 40_actividad_estado.sql (Sprint 02 · RF-16)
+-- 41_actividad_estado.sql (Sprint 02 · RF-16)
 -- Qué contiene:
 --   1. Enum public.estado_actividad ('pendiente','realizada','cancelada').
 --   2. Columnas en public.actividad_preventiva: estado, realizada_en,

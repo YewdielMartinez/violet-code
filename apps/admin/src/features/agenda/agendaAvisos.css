@@ -1,0 +1,128 @@
+/* Barra de avisos de la agenda: píldoras tonales pequeñas (ícono + contador + etiqueta corta).
+   Solo tokens neutros del tema: surface-container-*, secondary-container y error-container
+   (mezclados con la superficie para que se vean calmos también en black y oled). */
+.av-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  min-width: 0;
+  animation: av-bar-in 260ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+.av-bar--empty {
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.av-pill {
+  --av-bg: var(--md-sys-color-surface-container-high);
+  --av-icon: var(--md-sys-color-on-surface-variant);
+  display: inline-flex;
+  max-width: 100%;
+  height: 2.25rem;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.95rem 0 0.7rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--av-bg);
+  color: var(--md-sys-color-on-surface);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 180ms cubic-bezier(0.2, 0, 0, 1),
+    transform 120ms cubic-bezier(0.2, 0, 0, 1);
+}
+.av-pill:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, var(--av-bg));
+}
+.av-pill:active {
+  transform: scale(0.97);
+}
+.av-pill:focus-visible {
+  outline: 2px solid var(--md-sys-color-on-surface-variant);
+  outline-offset: 2px;
+}
+
+/* Por confirmar: tono secundario suave (el color de «agendada» en el calendario). */
+.av-pill--confirmar {
+  --av-bg: color-mix(in srgb, var(--md-sys-color-secondary-container) 38%, var(--md-sys-color-surface-container-high));
+  --av-icon: var(--md-sys-color-on-surface-variant);
+}
+
+/* Urgencias: error-container diluido; el ícono lleva el color de alerta. */
+.av-pill--urgencias {
+  --av-bg: color-mix(in srgb, var(--md-sys-color-error-container) 30%, var(--md-sys-color-surface-container-high));
+  --av-icon: var(--vc-status-danger);
+}
+
+.av-pill--muted {
+  --av-bg: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.8125rem;
+}
+
+.av-pill__icon {
+  display: inline-grid;
+  place-items: center;
+  color: var(--av-icon, inherit);
+}
+.av-bar--empty .av-pill__icon {
+  color: inherit;
+}
+.av-pill__icon .mk-icon {
+  font-size: 1.2rem;
+}
+
+.av-pill__count {
+  display: inline-block;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.av-pill__count[data-pop] {
+  animation: av-pop 420ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Teléfonos: etiqueta algo más corta de padding y pastillas a todo lo ancho si no caben. */
+@media (max-width: 480px) {
+  .av-pill {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: 0 0.75rem 0 0.6rem;
+  }
+}
+
+@keyframes av-bar-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes av-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  55% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .av-bar,
+  .av-pill__count[data-pop] {
+    animation: none !important;
+  }
+  .av-pill {
+    transition-duration: 0.01ms !important;
+  }
+}

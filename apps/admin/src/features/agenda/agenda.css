@@ -35,35 +35,16 @@
 /* ── Estructura de la página ───────────────────────────────────────────────────────── */
 .ag-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 20rem;
-  gap: 16px;
+  /* Una sola columna: la barra de avisos (si hay pendientes) va arriba y el calendario ocupa todo el ancho. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
   align-items: start;
   /* Espacio para que la barra de navegación (dock) no tape el final de la agenda. */
   padding-bottom: 5.5rem;
 }
 
-@media (max-width: 1180px) {
-  .ag-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
 .ag-main {
   min-width: 0;
-}
-
-.ag-side {
-  display: grid;
-  min-width: 0;
-  gap: 16px;
-}
-
-/* Calendario en una sola columna: los paneles van debajo, lado a lado si caben. */
-@media (max-width: 1180px) {
-  .ag-side {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
-    align-items: start;
-  }
 }
 
 .ag-card {

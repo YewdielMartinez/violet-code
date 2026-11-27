@@ -1,4 +1,5 @@
 import { supabase } from '../client';
+import type { Database } from '../database.types';
 import type { AuthSession, StaffRole, StaffUser, UmecaCita } from '@/domain/models/Auth';
 import { AuthError, type AuthRepository } from '@/domain/ports/AuthRepository';
 
@@ -103,6 +104,28 @@ function toAuthSession(accessToken: string, expiresAtSeconds: number | undefined
   return { accessToken, expiresAt, user };
 }
 
+type UmecaCitaBaseRow = Database['public']['Functions']['get_umeca_citas']['Returns'][number];
+
+/**
+ * `get_umeca_citas` añadirá `area_clave` y `area_nombre`; aún no están en `database.types.ts` (se regenera con
+ * `supabase gen types`), así que se tipan aquí como opcionales.
+ * TODO: retirar este tipo y usar el de `database.types.ts` al regenerar los tipos.
+ */
+type UmecaCitaRow = UmecaCitaBaseRow & { area_clave?: string | null; area_nombre?: string | null };
+
+export function mapUmecaCitaRow(row: UmecaCitaRow): UmecaCita {
+  return {
+    citaId: row.cita_id,
+    programadaEn: row.programada_en,
+    estado: row.estado,
+    nombres: row.nombres,
+    apellidoPaterno: row.apellido_paterno,
+    apellidoMaterno: row.apellido_materno || null,
+    areaClave: row.area_clave || null,
+    areaNombre: row.area_nombre?.trim() || null,
+  };
+}
+
 export const supabaseAuthRepository: AuthRepository = {
   async login(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -148,13 +171,6 @@ export const supabaseAuthRepository: AuthRepository = {
   async getUmecaCitas(): Promise<UmecaCita[]> {
     const { data, error } = await supabase.rpc('get_umeca_citas');
     if (error) throw error;
-    return (data ?? []).map((row) => ({
-      citaId: row.cita_id,
-      programadaEn: row.programada_en,
-      estado: row.estado,
-      nombres: row.nombres,
-      apellidoPaterno: row.apellido_paterno,
-      apellidoMaterno: row.apellido_materno || null,
-    }));
+    return ((data ?? []) as UmecaCitaRow[]).map(mapUmecaCitaRow);
   },
 };

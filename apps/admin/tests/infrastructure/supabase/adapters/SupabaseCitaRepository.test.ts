@@ -232,4 +232,40 @@ describe('supabaseCitaRepository', () => {
       }),
     ).rejects.toMatchObject({ code: '23505' });
   });
+
+  it('busca personas con buscar_personas_agenda y mapea las filas', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: [
+        {
+          persona_id: 'per-9',
+          ficha_id: 'ficha-9',
+          folio: 'SEM-2026-0009',
+          nombre_completo: ' María Meza ',
+          curp_enmascarada: 'MEZA91****MSLGRN04',
+          celular: '6671234567',
+        },
+      ],
+      error: null,
+    });
+
+    const personas = await supabaseCitaRepository.buscarPersonas('  mar ', 10);
+
+    expect(rpcMock).toHaveBeenCalledWith('buscar_personas_agenda', { p_q: 'mar', p_limite: 10 });
+    expect(personas).toEqual([
+      {
+        personaId: 'per-9',
+        fichaId: 'ficha-9',
+        folio: 'SEM-2026-0009',
+        nombreCompleto: 'María Meza',
+        curpEnmascarada: 'MEZA91****MSLGRN04',
+        celular: '6671234567',
+      },
+    ]);
+
+    rpcMock.mockResolvedValueOnce({ data: null, error: null });
+    expect(await supabaseCitaRepository.buscarPersonas('xyz')).toEqual([]);
+
+    rpcMock.mockResolvedValueOnce({ data: null, error: { code: '42501', message: 'sin permiso' } });
+    await expect(supabaseCitaRepository.buscarPersonas('abc')).rejects.toMatchObject({ code: '42501' });
+  });
 });

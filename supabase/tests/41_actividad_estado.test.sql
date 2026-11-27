@@ -1,6 +1,6 @@
 -- =====================================================================
--- 40_actividad_estado.test.sql (pgTAP · Sprint 02 · RF-16)
--- Pruebas para migración 20261127000900_40_actividad_estado.sql:
+-- 41_actividad_estado.test.sql (pgTAP · Sprint 02 · RF-16)
+-- Pruebas para migración 20261127001000_41_actividad_estado.sql:
 --   - Default 'pendiente' y backfill (programada_en < now() => 'realizada').
 --   - Constraint estado = 'realizada' => realizada_en not null.
 --   - actualizar_estado_actividad: transiciones válidas, mismo estado (22023),
@@ -13,7 +13,7 @@ create extension if not exists pgtap with schema extensions;
 
 begin;
 
-select plan(24);
+select plan(25);
 
 create or replace function pg_temp.as_user(p_uid uuid)
 returns void
@@ -229,9 +229,12 @@ select ok(
 -- 20. cancelada -> pendiente limpia motivo
 select ok(
   (select r.estado = 'pendiente'
-   from public.actualizar_estado_actividad('97000000-0000-4000-a000-0000000000c1', 'pendiente') r)
-  and (select ap.cancelada_motivo is null from public.actividad_preventiva ap
-       where ap.id = '97000000-0000-4000-a000-0000000000c1'),
+   from public.actualizar_estado_actividad('97000000-0000-4000-a000-0000000000c1', 'pendiente') r),
+  'cancelada -> pendiente permitido'
+);
+select ok(
+  (select ap.cancelada_motivo is null from public.actividad_preventiva ap
+   where ap.id = '97000000-0000-4000-a000-0000000000c1'),
   'cancelada -> pendiente limpia cancelada_motivo'
 );
 

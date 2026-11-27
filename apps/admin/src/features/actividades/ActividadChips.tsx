@@ -1,10 +1,12 @@
 import {
+  ESTADO_ACTIVIDAD_LABELS,
   NIVEL_EDUCATIVO_LABELS,
   TIPO_INSTITUCION_LABELS,
   type EstadoActividad,
   type TipoInstitucionActividad,
 } from '@/domain/models/ActividadPreventiva';
 import { Icon } from '@/shared/ui/Icon';
+import { StatusChip } from '@/shared/ui/StatusChip';
 
 export const TIPO_INSTITUCION_ICON: Record<TipoInstitucionActividad, string> = {
   escuela: 'school',
@@ -14,27 +16,31 @@ export const TIPO_INSTITUCION_ICON: Record<TipoInstitucionActividad, string> = {
   otro: 'location_on',
 };
 
-const ESTADO_STYLE: Record<EstadoActividad, { label: string; icon: string; className: string }> = {
-  pendiente: {
-    label: 'Pendiente',
-    icon: 'schedule',
-    className: 'bg-secondary-container text-on-secondary-container',
-  },
-  realizada: {
-    label: 'Realizada',
-    icon: 'check_circle',
-    className: 'bg-tertiary-container text-on-tertiary-container',
-  },
+/** Color por estado (mismos tokens que los chips de estado de la Agenda: info / éxito / peligro). */
+export const ESTADO_TONE: Record<EstadoActividad, string> = {
+  pendiente: 'bg-secondary-container text-on-secondary-container',
+  realizada: 'bg-status-success-bg text-status-success',
+  cancelada: 'bg-status-danger-bg text-status-danger',
 };
 
-/** Chip de estado inferido por fecha (la tabla no guarda estado): Pendiente / Realizada. */
+const NEUTRAL_TONE = 'bg-surface-container-high text-on-surface-variant';
+
+/** Chip de estado: al cambiar de estado se vuelve a montar y «salta». */
 export function ActividadEstadoChip({ estado }: { estado: EstadoActividad }) {
-  const style = ESTADO_STYLE[estado];
   return (
-    <span className={`act-chip ${style.className}`} data-estado={estado}>
-      <Icon name={style.icon} className="text-[14px]" />
-      {style.label}
-    </span>
+    <StatusChip value={estado} tone={ESTADO_TONE[estado]} data-estado={estado}>
+      {ESTADO_ACTIVIDAD_LABELS[estado]}
+    </StatusChip>
+  );
+}
+
+/** «Vencida»: la fecha de una pendiente ya pasó y hay que cerrarla (marcarla realizada o cancelarla). */
+export function ActividadVencidaChip() {
+  return (
+    <StatusChip value="vencida" tone="bg-status-warning-bg text-status-warning" data-vencida="" title="La fecha ya pasó: ciérrala como realizada o cancelada">
+      <Icon name="warning" />
+      Vencida
+    </StatusChip>
   );
 }
 
@@ -46,10 +52,14 @@ export function ActividadInstitucionChip({
   nivel?: keyof typeof NIVEL_EDUCATIVO_LABELS | null;
 }) {
   return (
-    <span className="act-chip bg-surface-container-high text-on-surface-variant">
-      <Icon name={TIPO_INSTITUCION_ICON[tipo]} className="text-[14px]" />
+    <span className={`vc-chip ${NEUTRAL_TONE}`}>
+      <Icon name={TIPO_INSTITUCION_ICON[tipo]} />
       {TIPO_INSTITUCION_LABELS[tipo]}
       {nivel ? ` · ${NIVEL_EDUCATIVO_LABELS[nivel]}` : ''}
     </span>
   );
+}
+
+export function ActividadTipoChip({ nombre }: { nombre: string }) {
+  return <span className={`vc-chip ${NEUTRAL_TONE}`}>{nombre}</span>;
 }

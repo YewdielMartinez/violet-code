@@ -47,9 +47,9 @@ describe('HojaSeguimiento (RF-09, RN-04, RN-13)', () => {
     }
   });
 
-  it('solo Jurídico agenda la próxima cita; las áreas de atención registran la hoja', () => {
+  it('Jurídico y Psicología agendan la próxima cita; Trabajo Social no; las áreas de atención registran la hoja', () => {
     expect(puedeAgendarProximaCita('juridico')).toBe(true);
-    expect(puedeAgendarProximaCita('psicologia')).toBe(false);
+    expect(puedeAgendarProximaCita('psicologia')).toBe(true);
     expect(puedeAgendarProximaCita('trabajo_social')).toBe(false);
     expect(puedeRegistrarHojaSeguimiento('psicologia')).toBe(true);
     expect(puedeRegistrarHojaSeguimiento('titular')).toBe(false);

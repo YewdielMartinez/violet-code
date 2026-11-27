@@ -20,17 +20,24 @@ const AREAS = [
   { id: 3, clave: 'juridico', nombre: 'Jurídico' },
 ];
 
-describe('areasPermitidas (regla de alta: solo Recepción y Jurídico)', () => {
+describe('areasPermitidas (regla única de alta)', () => {
   it('Recepción agenda en Trabajo Social, Psicología y Jurídico', () => {
     expect(areasPermitidas('recepcion', AREAS).map((a) => a.clave)).toEqual(['trabajo_social', 'psicologia', 'juridico']);
   });
 
-  it('Jurídico solo en Jurídico', () => {
+  it('Jurídico solo en Jurídico y Psicología solo en Psicología', () => {
     expect(areasPermitidas('juridico', AREAS).map((a) => a.clave)).toEqual(['juridico']);
+    expect(areasPermitidas('psicologia', AREAS).map((a) => a.clave)).toEqual(['psicologia']);
   });
 
-  it('el resto de los roles no agenda en ninguna área', () => {
-    for (const role of ['titular', 'subdireccion', 'trabajo_social', 'psicologia', 'umeca'] as const) {
+  it('Dirección y Subdirección agendan en todas las áreas', () => {
+    for (const role of ['titular', 'subdireccion'] as const) {
+      expect(areasPermitidas(role, AREAS).map((a) => a.clave)).toEqual(['trabajo_social', 'psicologia', 'juridico']);
+    }
+  });
+
+  it('Trabajo Social y UMECA no agendan en ninguna área', () => {
+    for (const role of ['trabajo_social', 'umeca'] as const) {
       expect(areasPermitidas(role, AREAS)).toEqual([]);
     }
     expect(areasPermitidas(undefined, AREAS)).toEqual([]);
@@ -63,30 +70,39 @@ describe('puedeGestionarCita', () => {
 describe('accionesDisponibles · reagendar sigue la regla de alta', () => {
   const agendada = (areaId: number, areaClave: string) => ({ estado: 'agendada' as const, areaId, areaClave });
 
-  it('Recepción reagenda en las tres áreas; Jurídico solo en Jurídico', () => {
+  it('Recepción y Dirección reagendan en las tres áreas; Jurídico y Psicología solo en la suya', () => {
     expect(accionesDisponibles(agendada(1, 'trabajo_social'), 'recepcion', null).reagendar).toBe(true);
     expect(accionesDisponibles(agendada(3, 'juridico'), 'recepcion', null).reagendar).toBe(true);
+    expect(accionesDisponibles(agendada(1, 'trabajo_social'), 'titular', null).reagendar).toBe(true);
+    expect(accionesDisponibles(agendada(1, 'trabajo_social'), 'subdireccion', null).reagendar).toBe(true);
     expect(accionesDisponibles(agendada(3, 'juridico'), 'juridico', 3).reagendar).toBe(true);
+    expect(accionesDisponibles(agendada(2, 'psicologia'), 'psicologia', 2).reagendar).toBe(true);
   });
 
-  it('Dirección, Trabajo Social y Psicología no reagendan (aunque gestionen la cita)', () => {
-    expect(accionesDisponibles(agendada(1, 'trabajo_social'), 'titular', null).reagendar).toBe(false);
-    expect(accionesDisponibles(agendada(1, 'trabajo_social'), 'subdireccion', null).reagendar).toBe(false);
+  it('Trabajo Social no reagenda (aunque gestione la cita) y nadie reagenda fuera de su área', () => {
     expect(accionesDisponibles(agendada(1, 'trabajo_social'), 'trabajo_social', 1).reagendar).toBe(false);
-    expect(accionesDisponibles(agendada(2, 'psicologia'), 'psicologia', 2).reagendar).toBe(false);
-    // Siguen pudiendo cancelar lo que gestionan.
-    expect(accionesDisponibles(agendada(1, 'trabajo_social'), 'titular', null).cancelar).toBe(true);
+    expect(accionesDisponibles(agendada(1, 'trabajo_social'), 'trabajo_social', 1).cancelar).toBe(true);
+    expect(accionesDisponibles(agendada(1, 'trabajo_social'), 'psicologia', 2).reagendar).toBe(false);
+    expect(accionesDisponibles(agendada(1, 'trabajo_social'), 'juridico', 3).reagendar).toBe(false);
   });
 });
 
 describe('accionesDisponibles', () => {
   const base = { areaId: 3, areaClave: 'juridico' };
 
-  it('«Agendar siguiente cita» solo para Jurídico sobre una cita atendida de su área', () => {
+  it('«Agendar siguiente cita» sigue la regla de alta sobre una cita atendida', () => {
     expect(accionesDisponibles({ ...base, estado: 'asistio' }, 'juridico', 3).agendarSiguiente).toBe(true);
-    expect(accionesDisponibles({ ...base, estado: 'agendada' }, 'juridico', 3).agendarSiguiente).toBe(false);
+    expect(accionesDisponibles({ ...base, estado: 'asistio' }, 'recepcion', null).agendarSiguiente).toBe(true);
+    expect(accionesDisponibles({ ...base, estado: 'asistio' }, 'titular', null).agendarSiguiente).toBe(true);
     expect(accionesDisponibles({ ...base, estado: 'asistio' }, 'psicologia', 2).agendarSiguiente).toBe(false);
-    expect(accionesDisponibles({ ...base, estado: 'asistio' }, 'titular', null).agendarSiguiente).toBe(false);
+    expect(
+      accionesDisponibles({ areaId: 2, areaClave: 'psicologia', estado: 'asistio' }, 'psicologia', 2).agendarSiguiente,
+    ).toBe(true);
+    expect(
+      accionesDisponibles({ areaId: 1, areaClave: 'trabajo_social', estado: 'asistio' }, 'trabajo_social', 1)
+        .agendarSiguiente,
+    ).toBe(false);
+    expect(accionesDisponibles({ ...base, estado: 'agendada' }, 'juridico', 3).agendarSiguiente).toBe(false);
   });
 
   it('solo el área de la cita registra la hoja (asistió)', () => {
@@ -97,9 +113,10 @@ describe('accionesDisponibles', () => {
 
   it('respeta las transiciones válidas', () => {
     const agendada = accionesDisponibles({ ...base, estado: 'agendada' }, 'titular', null);
-    expect(agendada).toMatchObject({ confirmar: true, noAsistio: true, cancelar: true, reagendar: false });
+    // Dirección puede crear citas en todas las áreas, así que también reagenda.
+    expect(agendada).toMatchObject({ confirmar: true, noAsistio: true, cancelar: true, reagendar: true });
     const confirmada = accionesDisponibles({ ...base, estado: 'confirmada' }, 'titular', null);
-    expect(confirmada).toMatchObject({ confirmar: false, noAsistio: true, cancelar: true, reagendar: false });
+    expect(confirmada).toMatchObject({ confirmar: false, noAsistio: true, cancelar: true, reagendar: true });
     for (const estado of ['cancelada', 'reagendada', 'no_asistio'] as const) {
       expect(Object.values(accionesDisponibles({ ...base, estado }, 'titular', null)).some(Boolean)).toBe(false);
     }

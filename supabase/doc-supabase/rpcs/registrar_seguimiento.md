@@ -14,7 +14,7 @@
 | `p_proxima_accion` | `text` | No | Acción siguiente sugerida (`<= 2000`). |
 | `p_prioridad` | `public.prioridad_nivel` | No | `'alta'`, `'media'`, `'baja'` o `null`. |
 | `p_observaciones` | `text` | No | Observaciones clínicas/operativas (`<= 5000`). |
-| `p_proxima_cita_en` | `timestamptz` | No | Si se envía, debe ser futura (`> now()`) y crea la próxima cita en la misma área. **Crear una cita exige `agenda.crear`** (desde la migración `20261127000800_39`): hoy solo `juridico` puede agendarla aquí; Trabajo Social y Psicología reciben `42501` y deben solicitarla a Recepción. |
+| `p_proxima_cita_en` | `timestamptz` | No | Si se envía, debe ser futura (`> now()`) y crea la próxima cita en la misma área. **Crear una cita exige `agenda.crear`** (regla vigente desde la migración `20261127001100_42`): `juridico` y `psicologia` pueden agendarla en su área; Trabajo Social recibe `42501` y debe solicitarla a Recepción. |
 
 ## 2. Salida
 | Columna | Tipo | Descripción |
@@ -33,6 +33,6 @@
 ## 4. Errores esperados
 | Código (`SQLSTATE`) | Cuándo ocurre |
 |---|---|
-| `42501` | Sin permiso `seguimiento.registrar` (`titular`, `subdireccion`, `recepcion`, `umeca`, sin sesión), o `p_proxima_cita_en` enviado por un rol sin `agenda.crear` en su área (Trabajo Social, Psicología): `Sin permiso para agendar la próxima cita; solicítela a Recepción`. |
+| `42501` | Sin permiso `seguimiento.registrar` (`titular`, `subdireccion`, `recepcion`, `umeca`, sin sesión), o `p_proxima_cita_en` enviado por un rol sin `agenda.crear` en su área (Trabajo Social): `Sin permiso para agendar la próxima cita; solicítela a Recepción`. |
 | `23514` | Ficha/cita inexistente, tipo de atención de otra área, cita de otra persona/área o estado no válido, fecha de próxima cita no futura o menor de edad en Psicología/Jurídico. |
 | `23505` | La cita ya tiene una hoja de seguimiento registrada (`atencion.cita_id` único). |

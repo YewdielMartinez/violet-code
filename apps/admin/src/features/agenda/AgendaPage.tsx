@@ -10,7 +10,7 @@ import { PageHeader } from '@/shared/ui/PageHeader';
 import { ToolbarButton, ToolbarIconButton } from '@/shared/ui/Toolbar';
 import { useAgenda } from './api';
 import { CitaDialog, type CitaDialogState } from './CitaDialog';
-import { CitasPorConfirmarPanel, ListaUrgenciasPanel } from './AgendaSidePanels';
+import { AgendaAvisos } from './AgendaAvisos';
 import { AgendaMonthView } from './AgendaMonthView';
 import { AgendaViewToggle, type AgendaView } from './AgendaViewToggle';
 import { AgendaWeekView } from './AgendaWeekView';
@@ -76,7 +76,7 @@ export default function AgendaPage() {
 
   // ── Alcance por rol ────────────────────────────────────────────────────────────────
   const scope = useMemo(() => areaScopeFor(user?.role, user?.areaId), [user?.role, user?.areaId]);
-  // Solo Recepción y Jurídico agendan: el resto ve la agenda sin ninguna interfaz de alta.
+  // Agendan Recepción, Jurídico, Psicología y Dirección (regla en `agendaPermisos`); Trabajo Social y UMECA no ven interfaz de alta.
   const puedeCrear = puedeCrearCita(user?.role);
   const canPickArea = scope.kind !== 'own';
   const areasQuery = useQuery({ ...catalogoQueryOptions('area'), enabled: canPickArea });
@@ -236,6 +236,7 @@ export default function AgendaPage() {
       />
 
       <div className="ag-layout">
+        <AgendaAvisos areaId={areaId} onOpenCita={openCita} />
         <section className="ag-main" aria-label="Calendario de citas">
           {isError ? (
             <div className="ag-card ag-card--center">
@@ -299,11 +300,6 @@ export default function AgendaPage() {
             </div>
           )}
         </section>
-
-        <aside className="ag-side" aria-label="Pendientes de la agenda">
-          <CitasPorConfirmarPanel areaId={areaId} onOpenCita={openCita} />
-          <ListaUrgenciasPanel areaId={areaId} />
-        </aside>
       </div>
 
       <CitaDialog state={liveDialogState} onClose={closeDialog} anchor={dialogAnchor} />

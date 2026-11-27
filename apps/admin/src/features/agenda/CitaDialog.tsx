@@ -124,7 +124,7 @@ export function CitaDialog({ state, onClose, anchor }: CitaDialogProps) {
 
   const view: CitaView | null = nav.stack[nav.stack.length - 1] ?? held;
   const citasDia = view?.kind === 'dia' ? view.citas.map(conParche) : [];
-  // Solo Recepción y Jurídico agendan (regla única en `agendaPermisos`).
+  // Quién agenda lo define la regla única de `agendaPermisos`.
   const puedeAgendar = puedeCrearCita(user?.role);
   const puedeVolver = nav.stack.length > 0;
   const dir: CitaDir = nav.navegado ? nav.dir : 'none';

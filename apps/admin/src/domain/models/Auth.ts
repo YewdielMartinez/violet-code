@@ -32,6 +32,9 @@ export interface UmecaCita {
   nombres: string;
   apellidoPaterno: string;
   apellidoMaterno: string | null;
+  /** Área que atiende la cita (`area_clave` / `area_nombre` de `get_umeca_citas`); `null` si el RPC aún no la devuelve. */
+  areaClave: string | null;
+  areaNombre: string | null;
 }
 
 export const ROLE_LABELS: Record<StaffRole, string> = {

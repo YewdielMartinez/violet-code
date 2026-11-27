@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Dialog } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
 import type { ActividadPreventivaItem } from '@/domain/models/ActividadPreventiva';
+import { DialogHeader } from '@/shared/ui/DialogHeader';
 import { ActividadCrearForm } from './ActividadCrearForm';
 import { ActividadDetalle } from './ActividadDetalle';
-import { fechaLargaActividad, horaActividad } from './actividadesList';
 import './actividades.css';
 
 export type ActividadDialogState = { kind: 'crear' } | { kind: 'detalle'; actividad: ActividadPreventivaItem };
@@ -15,15 +15,26 @@ export interface ActividadDialogProps {
   /** Elemento desde el que hace morph el `Dialog` del kit (el botón o la tarjeta clicada). */
   anchor?: HTMLElement | null;
   ahora: Date;
+  /** `actividad.registrar`: habilita las acciones de estado del detalle. */
+  puedeRegistrar?: boolean;
+}
+
+/** Firma estable de la vista de entrada: los cambios locales se descartan solo cuando cambia (no por identidad). */
+function firmaEstado(state: ActividadDialogState): string {
+  return state.kind === 'crear' ? 'crear' : `detalle:${state.actividad.id}`;
 }
 
 /**
- * Diálogo único de Actividades: alta («Nueva actividad») y detalle. Hace morph desde el elemento clicado; lo pesado
- * del formulario (selector de fecha, catálogos) espera al morph dentro de `ActividadCrearForm` (`useDialogSettled`).
+ * Diálogo único de Actividades: alta («Nueva actividad») y detalle, con la misma estructura que el de la Agenda
+ * (`CitaDialog`): hace morph desde el elemento clicado, encabezado con cerrar + título + menú ⋮ y vistas que se
+ * pintan al instante; lo pesado (selector de fecha, menú ⋮, catálogos) espera al morph (`useDialogSettled`).
  */
-export function ActividadDialog({ state, onClose, anchor, ahora }: ActividadDialogProps) {
+export function ActividadDialog({ state, onClose, anchor, ahora, puedeRegistrar = false }: ActividadDialogProps) {
   // El estado se conserva hasta que termina de cerrar: la animación de cierre aún muestra el contenido.
   const [held, setHeld] = useState<ActividadDialogState | null>(state);
+  // Cambios locales (estado) tras una acción, para reflejarlos sin esperar al refetch de la lista.
+  const [parche, setParche] = useState<{ sig: string; cambios: Partial<ActividadPreventivaItem> }>({ sig: '', cambios: {} });
+  const [accionesSlot, setAccionesSlot] = useState<HTMLElement | null>(null);
   const stateRef = useRef(state);
 
   useEffect(() => {
@@ -31,6 +42,8 @@ export function ActividadDialog({ state, onClose, anchor, ahora }: ActividadDial
   }, [state]);
 
   if (state && state !== held) setHeld(state);
+  const sig = state ? firmaEstado(state) : null;
+  if (sig && sig !== parche.sig) setParche({ sig, cambios: {} });
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
@@ -40,17 +53,24 @@ export function ActividadDialog({ state, onClose, anchor, ahora }: ActividadDial
   );
 
   const handleAfterClose = useCallback(() => {
-    if (!stateRef.current) setHeld(null);
+    if (!stateRef.current) {
+      setHeld(null);
+      setParche({ sig: '', cambios: {} });
+    }
+  }, []);
+
+  const onPatch = useCallback((_actividadId: string, cambios: Partial<ActividadPreventivaItem>) => {
+    setParche((prev) => ({ ...prev, cambios: { ...prev.cambios, ...cambios } }));
   }, []);
 
   const view = state ?? held;
-  const titulo = view?.kind === 'crear' ? 'Nueva actividad' : (view?.actividad.titulo ?? 'Actividad');
+  const actividad = view?.kind === 'detalle' ? { ...view.actividad, ...parche.cambios } : null;
+  const titulo = view?.kind === 'crear' ? 'Nueva actividad' : 'Actividad';
+  // El título de la actividad ya está en la tarjeta del detalle: el encabezado solo dice «Actividad».
   const descripcion =
     view?.kind === 'crear'
       ? 'Programa o registra una capacitación, taller o jornada en una escuela, empresa o comunidad.'
-      : view
-        ? `${fechaLargaActividad(view.actividad.programadaEn)} · ${horaActividad(view.actividad.programadaEn)}`
-        : null;
+      : null;
 
   return (
     <Dialog.Root
@@ -63,17 +83,26 @@ export function ActividadDialog({ state, onClose, anchor, ahora }: ActividadDial
       drag={false}
       autoResize={false}
     >
-      <Dialog.Content size="lg" dividers className="vc-perf-dialog act-dialog">
-        <Dialog.Header className="act-dialog__header">
-          <Dialog.Close label="Cerrar" />
-          <div className="act-dialog__title">
-            <Dialog.Title className="truncate">{titulo}</Dialog.Title>
-            {descripcion ? <Dialog.Description className="truncate">{descripcion}</Dialog.Description> : null}
-          </div>
-        </Dialog.Header>
+      <Dialog.Content size="lg" dividers className="vc-perf-dialog vc-dlg act-dialog">
+        <DialogHeader
+          title={titulo}
+          description={descripcion}
+          viewKey={view ? firmaEstado(view) : 'none'}
+          actionsSlotRef={view?.kind === 'detalle' ? setAccionesSlot : null}
+        />
 
         {view?.kind === 'crear' ? <ActividadCrearForm onCancel={onClose} onCreated={onClose} /> : null}
-        {view?.kind === 'detalle' ? <ActividadDetalle actividad={view.actividad} ahora={ahora} onClose={onClose} /> : null}
+        {actividad ? (
+          <ActividadDetalle
+            key={actividad.id}
+            actividad={actividad}
+            ahora={ahora}
+            dir="none"
+            puedeRegistrar={puedeRegistrar}
+            onPatch={onPatch}
+            accionesSlot={accionesSlot}
+          />
+        ) : null}
       </Dialog.Content>
     </Dialog.Root>
   );

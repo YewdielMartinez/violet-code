@@ -118,7 +118,7 @@ select throws_ok(
   $$select * from public.reagendar_cita('92000000-0000-4000-a000-000000000303', '2099-07-10T10:00:00-07:00')$$,
   '42501',
   null,
-  'trabajo_social no puede reagendar (reagendar = crear, solo recepcion y juridico) (42501)'
+  'trabajo_social no puede reagendar (reagendar = crear; TS no crea) (42501)'
 );
 select pg_temp.as_user('92000000-0000-4000-a000-000000000004');
 

@@ -27,12 +27,42 @@ declare
   v_uid_ts uuid := '11111111-1111-4111-8111-111111111103';
   v_per_1  uuid := '94000000-0000-4000-a000-000000000101';
   v_fic_1  uuid := '94000000-0000-4000-a000-000000000201';
+  v_per_2  uuid := '94000000-0000-4000-a000-000000000102';
+  v_fic_2  uuid := '94000000-0000-4000-a000-000000000202';
 begin
   insert into public.persona (id, curp, nombres, apellido_paterno, creado_por)
   values (v_per_1, 'MEEL910315MSLGRN01', 'Elena', 'Mendoza', v_uid_ts);
 
   insert into public.ficha_registro (id, folio, persona_id, estado, aviso_privacidad_aceptado_en, creado_por)
   values (v_fic_1, 'SEM-S2A2-0001', v_per_1, 'abierto', now(), v_uid_ts);
+
+  -- Derivacion "heredada" (previa a la tabla de eventos) para probar el backfill.
+  -- Las derivaciones del seed se insertan DESPUES de las migraciones, por lo que
+  -- el backfill de la migracion 34 nunca las ve tras un `db reset`. Aqui se
+  -- inserta una derivacion sin eventos y se ejecuta la misma sentencia de backfill.
+  insert into public.persona (id, curp, nombres, apellido_paterno, creado_por)
+  values (v_per_2, 'MEEL910315MSLGRN02', 'Backfill', 'Heredada', v_uid_ts);
+
+  insert into public.ficha_registro (id, folio, persona_id, estado, aviso_privacidad_aceptado_en, creado_por)
+  values (v_fic_2, 'SEM-S2A2-0002', v_per_2, 'abierto', now(), v_uid_ts);
+
+  insert into public.derivacion (
+    id, ficha_id, area_origen_id, institucion_id, destino, motivo, estado, creado_por
+  ) values (
+    '94000000-0000-4000-a000-000000000301', v_fic_2,
+    (select id from public.cat_area where clave = 'trabajo_social'),
+    (select id from public.directorio_institucion order by id limit 1),
+    'fiscalia', 'Derivacion heredada', 'en_proceso', v_uid_ts
+  );
+
+  insert into public.canalizacion_evento (
+    derivacion_id, estado_anterior, estado_nuevo, nota, creado_por, creado_en
+  )
+  select d.id, null::public.estado_derivacion, d.estado,
+         nullif(btrim(coalesce(d.motivo, '')), ''), d.creado_por, d.creado_en
+  from public.derivacion d
+  where d.id = '94000000-0000-4000-a000-000000000301'
+    and not exists (select 1 from public.canalizacion_evento ce where ce.derivacion_id = d.id);
 end;
 $$;
 
@@ -54,10 +84,17 @@ grant execute on function pg_temp.set_actor(uuid) to public;
 
 set local role authenticated;
 
--- 1) Backfill de canalizaciones existentes del seed
+-- 1) Backfill (misma sentencia que la migracion 34) sobre una derivacion heredada
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111101'::uuid); -- titular
 select ok(
-  (select count(*) >= 3 from public.canalizacion_evento where estado_anterior is null),
+  exists (
+    select 1
+    from public.canalizacion_evento ce
+    where ce.derivacion_id = '94000000-0000-4000-a000-000000000301'
+      and ce.estado_anterior is null
+      and ce.estado_nuevo = 'en_proceso'
+      and ce.nota = 'Derivacion heredada'
+  ),
   'backfill creo evento inicial (estado_anterior = null) para canalizaciones existentes'
 );
 

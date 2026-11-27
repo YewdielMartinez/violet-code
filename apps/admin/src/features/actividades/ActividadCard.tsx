@@ -1,12 +1,13 @@
 import { memo, type CSSProperties } from 'react';
-import { estadoActividad, type ActividadPreventivaItem } from '@/domain/models/ActividadPreventiva';
+import { esVencida } from '@/domain/models/ActividadEstado';
+import type { ActividadPreventivaItem } from '@/domain/models/ActividadPreventiva';
 import { Icon } from '@/shared/ui/Icon';
-import { ActividadEstadoChip, ActividadInstitucionChip } from './ActividadChips';
+import { ActividadEstadoChip, ActividadInstitucionChip, ActividadVencidaChip } from './ActividadChips';
 import { diaNumero, horaActividad, mesCorto, ubicacionActividad } from './actividadesList';
 
 export interface ActividadCardProps {
   actividad: ActividadPreventivaItem;
-  /** Momento de referencia de la pantalla (decide Pendiente / Realizada). */
+  /** Momento de referencia de la pantalla (decide si una pendiente está vencida). */
   ahora: Date;
   /** Posición en la lista: escalona la entrada (solo las primeras). */
   index: number;
@@ -14,7 +15,7 @@ export interface ActividadCardProps {
 
 /** Tarjeta de actividad: fecha, título, sede, ubicación y estado. El clic se delega a la lista (`data-actividad-id`). */
 export const ActividadCard = memo(function ActividadCard({ actividad, ahora, index }: ActividadCardProps) {
-  const estado = estadoActividad(actividad, ahora);
+  const vencida = esVencida(actividad, ahora);
   const ubicacion = ubicacionActividad(actividad);
   const hora = horaActividad(actividad.programadaEn);
 
@@ -23,9 +24,10 @@ export const ActividadCard = memo(function ActividadCard({ actividad, ahora, ind
       type="button"
       className="act-card"
       data-actividad-id={actividad.id}
-      data-estado={estado}
+      data-estado={actividad.estado}
+      data-vencida={vencida || undefined}
       style={{ '--act-i': Math.min(index, 10) } as CSSProperties}
-      aria-label={`${actividad.titulo}, ${actividad.sede}, ${hora}`}
+      aria-label={`${actividad.titulo}, ${actividad.sede}, ${hora}${vencida ? ', vencida' : ''}`}
     >
       <span className="act-card__date" aria-hidden>
         <span className="act-card__day">{diaNumero(actividad.programadaEn)}</span>
@@ -39,9 +41,9 @@ export const ActividadCard = memo(function ActividadCard({ actividad, ahora, ind
         </span>
         {ubicacion ? <span className="act-card__meta">{ubicacion}</span> : null}
         <span className="act-card__chips">
-          <ActividadEstadoChip estado={estado} />
+          <ActividadEstadoChip estado={actividad.estado} />
+          {vencida ? <ActividadVencidaChip /> : null}
           <ActividadInstitucionChip tipo={actividad.tipoInstitucion} nivel={actividad.nivelEducativo} />
-          <span className="act-chip bg-surface-container-high text-on-surface-variant">{actividad.tipoActividadNombre}</span>
         </span>
       </span>
       <span className="act-card__aside">
@@ -52,7 +54,6 @@ export const ActividadCard = memo(function ActividadCard({ actividad, ahora, ind
             {actividad.numeroAsistentes}
           </span>
         ) : null}
-        <Icon name="chevron_right" className="text-on-surface-variant" />
       </span>
     </button>
   );

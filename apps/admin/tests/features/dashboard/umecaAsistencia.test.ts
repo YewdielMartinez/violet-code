@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { asistenciaInfo, fechaCitaUmeca, resumenAsistencia } from '@/features/dashboard/umecaAsistencia';
+import {
+  AREA_SIN_DATO,
+  areaUmecaLabel,
+  asistenciaInfo,
+  fechaCitaUmeca,
+  opcionesArea,
+  resumenAsistencia,
+} from '@/features/dashboard/umecaAsistencia';
 
 describe('asistenciaInfo (estados de get_umeca_citas)', () => {
   it('traduce los cuatro valores del RPC a etiquetas legibles', () => {
@@ -39,5 +46,30 @@ describe('fechaCitaUmeca', () => {
 
   it('devuelve el texto original si la fecha es inválida', () => {
     expect(fechaCitaUmeca('no-fecha')).toBe('no-fecha');
+  });
+});
+
+describe('areaUmecaLabel', () => {
+  it('usa el nombre del RPC y, si falta, el de la clave conocida', () => {
+    expect(areaUmecaLabel('psicologia', 'Psicología')).toBe('Psicología');
+    expect(areaUmecaLabel('juridico', null)).toBe('Jurídico');
+    expect(areaUmecaLabel('trabajo_social', '  ')).toBe('Trabajo Social');
+    expect(areaUmecaLabel('area_nueva', null)).toBe('Area nueva');
+  });
+
+  it('sin datos del RPC muestra «Sin área»', () => {
+    expect(areaUmecaLabel(null, null)).toBe(AREA_SIN_DATO);
+    expect(areaUmecaLabel(undefined, undefined)).toBe('Sin área');
+  });
+});
+
+describe('opcionesArea', () => {
+  it('lista las áreas presentes sin repetir y en orden alfabético', () => {
+    expect(opcionesArea(['Psicología', 'Jurídico', 'Psicología', 'Trabajo Social'])).toEqual([
+      { value: 'Jurídico', label: 'Jurídico' },
+      { value: 'Psicología', label: 'Psicología' },
+      { value: 'Trabajo Social', label: 'Trabajo Social' },
+    ]);
+    expect(opcionesArea([])).toEqual([]);
   });
 });

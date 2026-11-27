@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DataTable, EmptyState } from '@yewdiel21/motion-kit/react';
 import type { DataTableProps } from '@yewdiel21/motion-kit/react';
@@ -10,12 +11,22 @@ import '@yewdiel21/motion-kit/css/components/empty-state';
 import { fetchUmecaCitas, type UmecaCita } from '@/shared/auth/session';
 import { Icon } from '@/shared/ui/Icon';
 import { PageHeader } from '@/shared/ui/PageHeader';
-import { ASISTENCIA_OPCIONES, asistenciaInfo, fechaCitaUmeca, resumenAsistencia, type AsistenciaInfo } from './umecaAsistencia';
+import {
+  ASISTENCIA_OPCIONES,
+  areaUmecaLabel,
+  asistenciaInfo,
+  fechaCitaUmeca,
+  opcionesArea,
+  resumenAsistencia,
+  type AsistenciaInfo,
+} from './umecaAsistencia';
 
 type UmecaRow = {
   id: string;
   persona: string;
   programadaEn: string;
+  /** Nombre del área que atiende la cita («Trabajo Social», «Psicología», «Jurídico» o «Sin área»). */
+  area: string;
   /** Clave de asistencia (`asistio`, `no_asistio`, `pendiente`, `cancelo`). */
   estado: string;
 } & Record<string, unknown>;
@@ -37,32 +48,48 @@ function renderEstado(value: unknown): HTMLElement {
   return chip;
 }
 
-const COLUMNS: DataTableProps<UmecaRow>['columns'] = [
-  { key: 'persona', label: 'Persona canalizada', sortable: true, searchable: true },
-  {
-    key: 'programadaEn',
-    label: 'Fecha y hora',
-    type: 'date',
-    sortable: true,
-    format: (value) => fechaCitaUmeca(String(value)),
-  },
-  {
-    key: 'estado',
-    label: 'Asistencia',
-    type: 'select',
-    options: ASISTENCIA_OPCIONES,
-    sortable: true,
-    filterable: true,
-    render: renderEstado,
-  },
-];
+function buildColumns(areas: readonly string[]): DataTableProps<UmecaRow>['columns'] {
+  return [
+    { key: 'persona', label: 'Persona canalizada', sortable: true, searchable: true },
+    {
+      key: 'programadaEn',
+      label: 'Fecha y hora',
+      type: 'date',
+      sortable: true,
+      format: (value) => fechaCitaUmeca(String(value)),
+    },
+    {
+      key: 'area',
+      label: 'Área',
+      type: 'select',
+      options: opcionesArea(areas),
+      sortable: true,
+      filterable: true,
+    },
+    {
+      key: 'estado',
+      label: 'Asistencia',
+      type: 'select',
+      options: ASISTENCIA_OPCIONES,
+      sortable: true,
+      filterable: true,
+      render: renderEstado,
+    },
+  ];
+}
 
 const SORT_RECIENTES = { key: 'programadaEn', direction: 'desc' } as const;
 const RETRY_ACTION = [{ id: 'retry', label: 'Reintentar' }];
 
 function toUmecaRow(c: UmecaCita): UmecaRow {
   const persona = [c.nombres, c.apellidoPaterno, c.apellidoMaterno].filter(Boolean).join(' ');
-  return { id: c.citaId, persona, programadaEn: c.programadaEn, estado: asistenciaInfo(c.estado).clave };
+  return {
+    id: c.citaId,
+    persona,
+    programadaEn: c.programadaEn,
+    area: areaUmecaLabel(c.areaClave, c.areaNombre),
+    estado: asistenciaInfo(c.estado).clave,
+  };
 }
 
 function ResumenChip({ info, total }: { info: AsistenciaInfo; total: number }) {
@@ -82,6 +109,8 @@ export function UmecaHomeView({ displayName }: { displayName: string }) {
     queryFn: fetchUmecaCitas,
     select: (rows) => ({ filas: rows.map(toUmecaRow), resumen: resumenAsistencia(rows.map((r) => r.estado)) }),
   });
+
+  const columns = useMemo(() => buildColumns((data?.filas ?? []).map((f) => f.area)), [data?.filas]);
 
   return (
     <>
@@ -122,7 +151,7 @@ export function UmecaHomeView({ displayName }: { displayName: string }) {
           <DataTable<UmecaRow>
             caption="Asistencia de citas UMECA"
             rows={data.filas}
-            columns={COLUMNS}
+            columns={columns}
             sort={SORT_RECIENTES}
             pageSize={10}
           />

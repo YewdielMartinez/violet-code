@@ -8,14 +8,44 @@ import type {
   EmpleadoParticipanteOpcion,
   TipoActividadItem,
 } from '@/domain/models/ActividadPreventiva';
+import type { ActividadEstadoCambioInput, ActividadEstadoCambioResult } from '@/domain/models/ActividadEstado';
 import type { ActividadPreventivaRepository } from '@/domain/ports/ActividadPreventivaRepository';
-import { mapActividadRow, toRegistrarPayload } from './actividadPreventiva.mapper';
+import {
+  mapActividadRow,
+  toActualizarEstadoArgs,
+  toRegistrarPayload,
+  type ActividadRow,
+  type ActualizarEstadoArgs,
+  type ActualizarEstadoRow,
+} from './actividadPreventiva.mapper';
+
+interface GetActividadesArgs {
+  p_desde?: string;
+  p_hasta?: string;
+  p_estado?: string;
+  p_limite: number;
+}
+
+type RpcResult<T> = PromiseLike<{ data: T | null; error: Error | null }>;
+
+/**
+ * `get_actividades_preventivas` (con `p_estado` y las columnas de estado) y `actualizar_estado_actividad` aún no
+ * están en `database.types.ts` (se regenera con `supabase gen types` tras la migración); mientras tanto se tipan
+ * aquí las llamadas. TODO: retirar este cast y usar `supabase.rpc(...)` directo al regenerar los tipos.
+ */
+const rpcActividades = supabase as unknown as {
+  rpc: {
+    (fn: 'get_actividades_preventivas', args: GetActividadesArgs): RpcResult<ActividadRow[]>;
+    (fn: 'actualizar_estado_actividad', args: ActualizarEstadoArgs): RpcResult<ActualizarEstadoRow[] | ActualizarEstadoRow>;
+  };
+};
 
 export const supabaseActividadPreventivaRepository: ActividadPreventivaRepository = {
   async list(filters?: ActividadPreventivaFilters): Promise<ActividadPreventivaItem[]> {
-    const { data, error } = await supabase.rpc('get_actividades_preventivas', {
+    const { data, error } = await rpcActividades.rpc('get_actividades_preventivas', {
       p_desde: filters?.desde ?? undefined,
       p_hasta: filters?.hasta ?? undefined,
+      p_estado: filters?.estado ?? undefined,
       p_limite: filters?.limite ?? 100,
     });
 
@@ -40,6 +70,19 @@ export const supabaseActividadPreventivaRepository: ActividadPreventivaRepositor
       actividadId: row.actividad_id,
       totalParticipantes: row.total_participantes,
     };
+  },
+
+  async actualizarEstado(input: ActividadEstadoCambioInput): Promise<ActividadEstadoCambioResult> {
+    const { data, error } = await rpcActividades.rpc('actualizar_estado_actividad', toActualizarEstadoArgs(input));
+
+    if (error) throw error;
+
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió el nuevo estado de la actividad.');
+    }
+
+    return { actividadId: row.actividad_id, estado: row.estado, realizadaEn: row.realizada_en ?? null };
   },
 
   async listTipos(): Promise<TipoActividadItem[]> {

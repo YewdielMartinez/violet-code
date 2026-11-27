@@ -91,3 +91,32 @@ export function fechaCitaUmeca(iso: string): string {
   if (Number.isNaN(date.getTime())) return iso;
   return FECHA_FMT.format(date).replace(/\./g, '');
 }
+
+/** Etiqueta del área cuando el RPC no la devuelve (citas anteriores al cambio o dato ausente). */
+export const AREA_SIN_DATO = 'Sin área';
+
+const AREA_NOMBRES: Record<string, string> = {
+  trabajo_social: 'Trabajo Social',
+  psicologia: 'Psicología',
+  juridico: 'Jurídico',
+};
+
+/** Nombre del área de la cita UMECA: el del RPC; si falta, el de la clave conocida; si no hay nada, «Sin área». */
+export function areaUmecaLabel(areaClave: string | null | undefined, areaNombre: string | null | undefined): string {
+  const nombre = areaNombre?.trim();
+  if (nombre) return nombre;
+  if (areaClave) {
+    const known = AREA_NOMBRES[areaClave];
+    if (known) return known;
+    const text = areaClave.replace(/_/g, ' ').trim();
+    if (text) return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+  return AREA_SIN_DATO;
+}
+
+/** Opciones del filtro «Área»: las áreas presentes en las citas, sin repetir y en orden alfabético (es-MX). */
+export function opcionesArea(areas: readonly string[]): { value: string; label: string }[] {
+  return [...new Set(areas)]
+    .sort((a, b) => a.localeCompare(b, 'es-MX'))
+    .map((area) => ({ value: area, label: area }));
+}

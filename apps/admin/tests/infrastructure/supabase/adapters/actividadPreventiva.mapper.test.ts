@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   mapActividadRow,
   mapParticipantes,
+  toActualizarEstadoArgs,
   toRegistrarPayload,
 } from '@/infrastructure/supabase/adapters/actividadPreventiva.mapper';
 
@@ -27,6 +28,10 @@ const ROW = {
   creado_por_nombre: null,
   creado_en: '2026-11-26T10:00:00Z',
   participantes: [],
+  estado: 'pendiente' as const,
+  realizada_en: null,
+  cancelada_motivo: null,
+  observaciones_cierre: null,
 };
 
 describe('actividadPreventiva.mapper', () => {
@@ -52,6 +57,66 @@ describe('actividadPreventiva.mapper', () => {
       creadoPorNombre: null,
       creadoEn: '2026-11-26T10:00:00Z',
       participantes: [],
+      estado: 'pendiente',
+      realizadaEn: null,
+      canceladaMotivo: null,
+      observacionesCierre: null,
+    });
+  });
+
+  it('mapea el estado explícito y sus datos de cierre', () => {
+    const realizada = mapActividadRow({
+      ...ROW,
+      estado: 'realizada',
+      realizada_en: '2026-12-02T18:00:00Z',
+      observaciones_cierre: 'Buen cierre',
+      numero_asistentes: 60,
+    } as unknown as Parameters<typeof mapActividadRow>[0]);
+    expect(realizada).toMatchObject({
+      estado: 'realizada',
+      realizadaEn: '2026-12-02T18:00:00Z',
+      observacionesCierre: 'Buen cierre',
+      numeroAsistentes: 60,
+    });
+
+    const cancelada = mapActividadRow({
+      ...ROW,
+      estado: 'cancelada',
+      cancelada_motivo: 'Lluvia',
+    } as unknown as Parameters<typeof mapActividadRow>[0]);
+    expect(cancelada).toMatchObject({ estado: 'cancelada', canceladaMotivo: 'Lluvia', realizadaEn: null });
+  });
+
+  it('si el servidor aún no manda estado (o manda uno desconocido) cae en pendiente', () => {
+    const sinEstado = { ...ROW } as Record<string, unknown>;
+    delete sinEstado.estado;
+    expect(mapActividadRow(sinEstado as unknown as Parameters<typeof mapActividadRow>[0]).estado).toBe('pendiente');
+    expect(
+      mapActividadRow({ ...ROW, estado: 'otro' } as unknown as Parameters<typeof mapActividadRow>[0]).estado,
+    ).toBe('pendiente');
+  });
+
+  it('arma los argumentos de actualizar_estado_actividad recortando texto y con null por omisión', () => {
+    expect(
+      toActualizarEstadoArgs({
+        actividadId: 'a1',
+        estado: 'realizada',
+        numeroAsistentes: 0,
+        observaciones: '  Todo bien ',
+      }),
+    ).toEqual({
+      p_actividad_id: 'a1',
+      p_estado: 'realizada',
+      p_numero_asistentes: 0,
+      p_observaciones: 'Todo bien',
+      p_motivo_cancelacion: null,
+    });
+    expect(toActualizarEstadoArgs({ actividadId: 'a1', estado: 'cancelada', motivoCancelacion: '   ' })).toEqual({
+      p_actividad_id: 'a1',
+      p_estado: 'cancelada',
+      p_numero_asistentes: null,
+      p_observaciones: null,
+      p_motivo_cancelacion: null,
     });
   });
 

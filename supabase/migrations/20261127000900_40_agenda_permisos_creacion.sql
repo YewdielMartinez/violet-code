@@ -1,5 +1,5 @@
 -- =====================================================================
--- 39_agenda_permisos_creacion.sql
+-- 40_agenda_permisos_creacion.sql
 -- Regla de producto para la agenda de citas (decisión de negocio):
 --   * CREAR citas: solo `recepcion` (áreas trabajo_social, psicologia y
 --     juridico) y `juridico` (únicamente el área jurídico). Nadie más

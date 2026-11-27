@@ -44,6 +44,10 @@ describe('supabaseActividadPreventivaRepository', () => {
           creado_por_nombre: 'Laura TS',
           creado_en: '2026-11-26T10:00:00Z',
           participantes: [{ empleado_id: 'emp-1', nombre: 'Laura TS', rol: 'trabajo_social' }],
+          estado: 'realizada',
+          realizada_en: '2026-12-01T18:00:00Z',
+          cancelada_motivo: null,
+          observaciones_cierre: 'Muy participativos',
         },
       ],
       error: null,
@@ -52,18 +56,23 @@ describe('supabaseActividadPreventivaRepository', () => {
     const rows = await supabaseActividadPreventivaRepository.list({
       desde: '2026-11-01T00:00:00Z',
       hasta: '2026-12-31T23:59:59Z',
+      estado: 'realizada',
       limite: 50,
     });
 
     expect(rpcMock).toHaveBeenCalledWith('get_actividades_preventivas', {
       p_desde: '2026-11-01T00:00:00Z',
       p_hasta: '2026-12-31T23:59:59Z',
+      p_estado: 'realizada',
       p_limite: 50,
     });
     expect(rows[0]).toMatchObject({
       id: 'act-1',
       asentamientoNombre: 'Centro',
       codigoPostal: '81200',
+      estado: 'realizada',
+      realizadaEn: '2026-12-01T18:00:00Z',
+      observacionesCierre: 'Muy participativos',
       participantes: [{ empleadoId: 'emp-1', nombre: 'Laura TS', rol: 'trabajo_social' }],
     });
   });
@@ -101,6 +110,58 @@ describe('supabaseActividadPreventivaRepository', () => {
     });
     expect(result).toEqual({ actividadId: 'act-9', totalParticipantes: 2 });
   });
+  it('sin estado en los filtros no manda p_estado (trae todos)', async () => {
+    rpcMock.mockResolvedValue({ data: [], error: null });
+    await supabaseActividadPreventivaRepository.list();
+    const args = rpcMock.mock.calls[0][1] as Record<string, unknown>;
+    expect(args.p_estado).toBeUndefined();
+    expect(args.p_limite).toBe(100);
+  });
+
+  it('actualiza el estado con actualizar_estado_actividad y devuelve el resultado mapeado', async () => {
+    rpcMock.mockResolvedValue({
+      data: [{ actividad_id: 'act-1', estado: 'realizada', realizada_en: '2026-12-03T18:00:00Z' }],
+      error: null,
+    });
+
+    const result = await supabaseActividadPreventivaRepository.actualizarEstado({
+      actividadId: 'act-1',
+      estado: 'realizada',
+      numeroAsistentes: 45,
+      observaciones: ' Sin novedades ',
+    });
+
+    expect(rpcMock).toHaveBeenCalledWith('actualizar_estado_actividad', {
+      p_actividad_id: 'act-1',
+      p_estado: 'realizada',
+      p_numero_asistentes: 45,
+      p_observaciones: 'Sin novedades',
+      p_motivo_cancelacion: null,
+    });
+    expect(result).toEqual({ actividadId: 'act-1', estado: 'realizada', realizadaEn: '2026-12-03T18:00:00Z' });
+  });
+
+  it('reabrir devuelve realizada_en nulo y acepta una fila sin arreglo', async () => {
+    rpcMock.mockResolvedValue({ data: { actividad_id: 'act-1', estado: 'pendiente', realizada_en: null }, error: null });
+    await expect(
+      supabaseActividadPreventivaRepository.actualizarEstado({ actividadId: 'act-1', estado: 'pendiente' }),
+    ).resolves.toEqual({ actividadId: 'act-1', estado: 'pendiente', realizadaEn: null });
+  });
+
+  it('propaga los errores del RPC de estado (42501, 22023, P0002) y la respuesta vacía', async () => {
+    for (const code of ['42501', '22023', 'P0002']) {
+      const boom = { code, message: 'x' };
+      rpcMock.mockResolvedValueOnce({ data: null, error: boom });
+      await expect(
+        supabaseActividadPreventivaRepository.actualizarEstado({ actividadId: 'a', estado: 'cancelada' }),
+      ).rejects.toBe(boom);
+    }
+    rpcMock.mockResolvedValueOnce({ data: [], error: null });
+    await expect(
+      supabaseActividadPreventivaRepository.actualizarEstado({ actividadId: 'a', estado: 'cancelada' }),
+    ).rejects.toThrow(/nuevo estado/);
+  });
+
   it('lista el catálogo de tipos de actividad', async () => {
     const order = vi.fn().mockResolvedValue({ data: [{ id: 1, clave: 'taller', nombre: 'Taller' }], error: null });
     const select = vi.fn().mockReturnValue({ order });

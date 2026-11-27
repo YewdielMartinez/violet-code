@@ -22,7 +22,7 @@ afterAll(() => {
   globalThis.ResizeObserver = originalResizeObserver;
 });
 
-const { useAuthMock, toastMock, cambiarEstadoMock, reagendarMock, crearMock, listCatalogoMock, getContextoMock, listExpedientesMock, verifyCurpMock } =
+const { useAuthMock, toastMock, cambiarEstadoMock, reagendarMock, crearMock, listCatalogoMock, getContextoMock, buscarPersonasMock } =
   vi.hoisted(() => ({
     useAuthMock: vi.fn(),
     toastMock: vi.fn(),
@@ -31,8 +31,7 @@ const { useAuthMock, toastMock, cambiarEstadoMock, reagendarMock, crearMock, lis
     crearMock: vi.fn(),
     listCatalogoMock: vi.fn(),
     getContextoMock: vi.fn(),
-    listExpedientesMock: vi.fn(),
-    verifyCurpMock: vi.fn(),
+    buscarPersonasMock: vi.fn(),
   }));
 
 vi.mock('@/shared/auth/useAuth', async (importOriginal) => ({
@@ -52,6 +51,7 @@ vi.mock('@/infrastructure/supabase/adapters/SupabaseCitaRepository', () => ({
     crear: crearMock,
     cambiarEstado: cambiarEstadoMock,
     reagendar: reagendarMock,
+    buscarPersonas: buscarPersonasMock,
   },
 }));
 
@@ -67,13 +67,6 @@ vi.mock('@/infrastructure/supabase/adapters/SupabaseSeguimientoRepository', () =
     getContextoHoja: getContextoMock,
     listarTiposAtencion: vi.fn().mockResolvedValue([]),
     registrar: vi.fn(),
-  },
-}));
-
-vi.mock('@/infrastructure/supabase/adapters/SupabaseExpedienteRepository', () => ({
-  supabaseExpedienteRepository: {
-    list: listExpedientesMock,
-    verifyByCurp: verifyCurpMock,
   },
 }));
 
@@ -136,7 +129,7 @@ const HIDDEN = { hidden: true } as const;
 beforeEach(() => {
   listCatalogoMock.mockResolvedValue(AREAS);
   getContextoMock.mockResolvedValue(null);
-  listExpedientesMock.mockResolvedValue([]);
+  buscarPersonasMock.mockResolvedValue([]);
   cambiarEstadoMock.mockImplementation(async (citaId: string, estado: AgendaItem['estado']) => ({
     citaId,
     estado,
@@ -208,12 +201,7 @@ describe('CitaDialog · vista día', () => {
 describe('CitaDialog · vista día sin permiso de alta', () => {
   const citas = [cita()];
 
-  it.each<[StaffRole, number | null]>([
-    ['titular', null],
-    ['subdireccion', null],
-    ['trabajo_social', 1],
-    ['psicologia', 2],
-  ])('%s ve las citas pero ningún «Nueva cita»', async (role, areaId) => {
+  it.each<[StaffRole, number | null]>([['trabajo_social', 1]])('%s ve las citas pero ningún «Nueva cita»', async (role, areaId) => {
     login(role, areaId);
     renderDialog({ kind: 'dia', fecha: DIA, citas });
 
@@ -222,7 +210,7 @@ describe('CitaDialog · vista día sin permiso de alta', () => {
   });
 
   it('un día vacío muestra el estado vacío sin botón de alta', async () => {
-    login('titular', null);
+    login('trabajo_social', 1);
     renderDialog({ kind: 'dia', fecha: DIA, citas: [] });
 
     expect(await screen.findByText('Sin citas este día')).toBeTruthy();
@@ -230,13 +218,14 @@ describe('CitaDialog · vista día sin permiso de alta', () => {
     expect(screen.queryByRole('button', { name: /Nueva cita/, ...HIDDEN })).toBeNull();
   });
 
-  it('Recepción y Jurídico sí ven «Nueva cita» en un día vacío', async () => {
-    login('recepcion', null);
-    renderDialog({ kind: 'dia', fecha: DIA, citas: [] });
-    expect(await screen.findByRole('button', { name: /Nueva cita/, ...HIDDEN })).toBeTruthy();
-    cleanup();
-
-    login('juridico', 3);
+  it.each<[StaffRole, number | null]>([
+    ['recepcion', null],
+    ['juridico', 3],
+    ['psicologia', 2],
+    ['titular', null],
+    ['subdireccion', null],
+  ])('%s sí ve «Nueva cita» en un día vacío', async (role, areaId) => {
+    login(role, areaId);
     renderDialog({ kind: 'dia', fecha: DIA, citas: [] });
     expect(await screen.findByRole('button', { name: /Nueva cita/, ...HIDDEN })).toBeTruthy();
   });
@@ -319,9 +308,9 @@ describe('CitaDialog · detalle y acciones', () => {
     expect(link.textContent).toBe('open_in_new');
   });
 
-  it('cita agendada: confirmar, asistió, no asistió, cancelar y reagendar', async () => {
+  it('cita agendada: confirmar, asistió, no asistió y cancelar (Trabajo Social no reagenda)', async () => {
     await abrirDetalle(cita());
-    // Reagendar crea una cita nueva: solo Recepción y Jurídico (en sus áreas) pueden, no Trabajo Social.
+    // Reagendar crea una cita nueva: sigue la regla de alta, y Trabajo Social no agenda.
     expect(botones()).toEqual({
       confirmar: true,
       asistio: true,
@@ -332,7 +321,7 @@ describe('CitaDialog · detalle y acciones', () => {
     });
   });
 
-  it('Jurídico reagenda sus citas; Dirección y Psicología no reagendan', async () => {
+  it('Jurídico, Psicología y Dirección reagendan según la regla de alta', async () => {
     login('juridico', 3);
     await abrirDetalle(cita({ areaId: 3, areaClave: 'juridico' }));
     expect(botones().reagendar).toBe(true);
@@ -340,12 +329,12 @@ describe('CitaDialog · detalle y acciones', () => {
 
     login('titular', null);
     await abrirDetalle(cita());
-    expect(botones()).toMatchObject({ confirmar: true, cancelar: true, reagendar: false });
+    expect(botones()).toMatchObject({ confirmar: true, cancelar: true, reagendar: true });
     cleanup();
 
     login('psicologia', 2);
     await abrirDetalle(cita({ areaId: 2, areaClave: 'psicologia' }));
-    expect(botones().reagendar).toBe(false);
+    expect(botones().reagendar).toBe(true);
   });
 
   it('Recepción gestiona y reagenda también las citas de Jurídico', async () => {
@@ -445,7 +434,7 @@ describe('CitaDialog · detalle y acciones', () => {
     expect(cambiarEstadoMock).not.toHaveBeenCalled();
   });
 
-  it('«Agendar siguiente cita» solo aparece para Jurídico tras la sesión', async () => {
+  it('«Agendar siguiente cita» aparece según la regla de alta, salvo para Trabajo Social', async () => {
     login('juridico', 3);
     await abrirDetalle(cita({ estado: 'asistio', areaId: 3, areaClave: 'juridico' }), false);
     expect(botones().siguiente).toBe(true);
@@ -453,7 +442,12 @@ describe('CitaDialog · detalle y acciones', () => {
 
     login('psicologia', 2);
     await abrirDetalle(cita({ estado: 'asistio', areaId: 2, areaClave: 'psicologia' }), false);
-    expect(botones().siguiente).toBe(false);
+    expect(botones().siguiente).toBe(true);
+    cleanup();
+
+    login('recepcion', null);
+    await abrirDetalle(cita({ estado: 'asistio', areaId: 3, areaClave: 'juridico' }), false);
+    expect(botones().siguiente).toBe(true);
     cleanup();
 
     login('trabajo_social', 1);
@@ -473,20 +467,23 @@ describe('CitaDialog · detalle y acciones', () => {
   });
 });
 
-const CURP_MARIA = 'MEZA910315MSLGRN04';
-
 describe('CitaDialog · crear', () => {
-  const EXPEDIENTE_MARIA = {
-    id: 'f1',
+  const MARIA = {
+    personaId: 'p9',
+    fichaId: 'f1',
     folio: 'SEM-2026-0001',
-    estado: 'abierto',
-    creadoEn: '',
-    actualizadoEn: '',
-    enListaUrgencias: false,
-    persona: { id: 'p9', curp: 'MEZA910315MSLGRN04', nombreCompleto: 'María Meza' },
+    nombreCompleto: 'María Meza',
+    curpEnmascarada: 'MEZA91****MSLGRN04',
+    celular: '6671234567',
   };
 
-  // Recepción no puede buscar por nombre (sin expediente.ver): resuelve a la persona con la CURP exacta.
+  async function buscarYElegirMaria() {
+    const input = await screen.findByRole('combobox', { name: 'Persona', ...HIDDEN });
+    fireEvent.change(input, { target: { value: 'Mar' } });
+    const opcion = await screen.findByRole('option', { name: /María Meza/, ...HIDDEN }, { timeout: 3000 });
+    fireEvent.click(opcion);
+  }
+
   it('Recepción agenda en Trabajo Social, Psicología y Jurídico', async () => {
     login('recepcion', null);
     renderDialog({ kind: 'crear', fecha: DIA });
@@ -494,7 +491,7 @@ describe('CitaDialog · crear', () => {
     await screen.findByRole('radio', { name: 'Psicología', ...HIDDEN });
     expect(screen.getByRole('radio', { name: 'Trabajo Social', ...HIDDEN })).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Jurídico', ...HIDDEN })).toBeTruthy();
-    expect(screen.getByText(/CURP completa/)).toBeTruthy();
+    expect(screen.getByText(/inicio de la CURP/)).toBeTruthy();
   });
 
   it('Jurídico solo ve Jurídico (preseleccionada)', async () => {
@@ -506,19 +503,59 @@ describe('CitaDialog · crear', () => {
     expect(screen.queryByRole('radio', { name: 'Psicología', ...HIDDEN })).toBeNull();
   });
 
+  it('Psicología solo ve Psicología (preseleccionada)', async () => {
+    login('psicologia', 2);
+    renderDialog({ kind: 'crear', fecha: DIA });
+
+    const psicologia = await screen.findByRole('radio', { name: 'Psicología', ...HIDDEN });
+    expect(psicologia.getAttribute('aria-checked')).toBe('true');
+    expect(screen.queryByRole('radio', { name: 'Jurídico', ...HIDDEN })).toBeNull();
+  });
+
+  it('Dirección agenda en todas las áreas', async () => {
+    login('titular', null);
+    renderDialog({ kind: 'crear', fecha: DIA });
+
+    await screen.findByRole('radio', { name: 'Psicología', ...HIDDEN });
+    expect(screen.getByRole('radio', { name: 'Trabajo Social', ...HIDDEN })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Jurídico', ...HIDDEN })).toBeTruthy();
+  });
+
+  it('no busca con menos de 3 caracteres; con 3 busca con retardo y muestra nombre, CURP enmascarada y folio', async () => {
+    login('recepcion', null);
+    buscarPersonasMock.mockResolvedValue([MARIA]);
+    renderDialog({ kind: 'crear', fecha: DIA });
+
+    const input = await screen.findByRole('combobox', { name: 'Persona', ...HIDDEN });
+    fireEvent.change(input, { target: { value: 'Ma' } });
+    await new Promise((r) => setTimeout(r, 450));
+    expect(buscarPersonasMock).not.toHaveBeenCalled();
+
+    fireEvent.change(input, { target: { value: 'Mar' } });
+    expect(buscarPersonasMock).not.toHaveBeenCalled();
+    const opcion = await screen.findByRole('option', { name: /María Meza/, ...HIDDEN }, { timeout: 3000 });
+    expect(buscarPersonasMock).toHaveBeenCalledTimes(1);
+    expect(buscarPersonasMock).toHaveBeenCalledWith('Mar', 10);
+    expect(opcion.textContent).toContain('MEZA91****MSLGRN04');
+    expect(opcion.textContent).toContain('SEM-2026-0001');
+  });
+
+  it('todos los roles que agendan usan el mismo RPC de búsqueda', async () => {
+    login('psicologia', 2);
+    buscarPersonasMock.mockResolvedValue([MARIA]);
+    renderDialog({ kind: 'crear', fecha: DIA });
+
+    await buscarYElegirMaria();
+    expect(buscarPersonasMock).toHaveBeenCalledWith('Mar', 10);
+  });
+
   it('busca la persona con retardo, agenda la cita y cierra', async () => {
     login('recepcion', null);
-    verifyCurpMock.mockResolvedValue({ kind: 'expediente_existente', expediente: EXPEDIENTE_MARIA });
+    buscarPersonasMock.mockResolvedValue([MARIA]);
     crearMock.mockResolvedValue({ id: 'n1', estado: 'agendada', programadaEn: '2026-11-26T16:00:00Z' });
     const { onClose } = renderDialog({ kind: 'crear', fecha: DIA });
 
-    const input = await screen.findByRole('combobox', { name: 'Persona', ...HIDDEN });
-    fireEvent.change(input, { target: { value: CURP_MARIA } });
-    expect(verifyCurpMock).not.toHaveBeenCalled();
-
-    const opcion = await screen.findByRole('option', { name: /María Meza/, ...HIDDEN }, { timeout: 3000 });
-    expect(verifyCurpMock).toHaveBeenCalledWith(CURP_MARIA, false);
-    fireEvent.click(opcion);
+    await buscarYElegirMaria();
 
     fireEvent.click(await screen.findByRole('radio', { name: 'Psicología', ...HIDDEN }));
     fireEvent.click(screen.getByRole('button', { name: 'Agendar cita', ...HIDDEN }));
@@ -550,15 +587,14 @@ describe('CitaDialog · crear', () => {
 
   it('muestra en un toast el error del servidor al agendar y no cierra', async () => {
     login('recepcion', null);
-    verifyCurpMock.mockResolvedValue({ kind: 'expediente_existente', expediente: EXPEDIENTE_MARIA });
+    buscarPersonasMock.mockResolvedValue([MARIA]);
     crearMock.mockRejectedValue({
       code: '23514',
       message: 'Psicología y Jurídico solo atienden a personas mayores de 18 años (RN-01)',
     });
     const { onClose } = renderDialog({ kind: 'crear', fecha: DIA });
 
-    fireEvent.change(await screen.findByRole('combobox', { name: 'Persona', ...HIDDEN }), { target: { value: CURP_MARIA } });
-    fireEvent.click(await screen.findByRole('option', { name: /María Meza/, ...HIDDEN }, { timeout: 3000 }));
+    await buscarYElegirMaria();
     fireEvent.click(await screen.findByRole('radio', { name: 'Psicología', ...HIDDEN }));
     fireEvent.click(screen.getByRole('button', { name: 'Agendar cita', ...HIDDEN }));
 
@@ -568,12 +604,11 @@ describe('CitaDialog · crear', () => {
 
   it('«Cita obligatoria (UMECA)» agenda con origen umeca', async () => {
     login('recepcion', null);
-    verifyCurpMock.mockResolvedValue({ kind: 'expediente_existente', expediente: EXPEDIENTE_MARIA });
+    buscarPersonasMock.mockResolvedValue([MARIA]);
     crearMock.mockResolvedValue({ id: 'n2', estado: 'agendada', programadaEn: '2026-11-26T16:00:00Z' });
     renderDialog({ kind: 'crear', fecha: DIA });
 
-    fireEvent.change(await screen.findByRole('combobox', { name: 'Persona', ...HIDDEN }), { target: { value: CURP_MARIA } });
-    fireEvent.click(await screen.findByRole('option', { name: /María Meza/, ...HIDDEN }, { timeout: 3000 }));
+    await buscarYElegirMaria();
     fireEvent.click(await screen.findByRole('radio', { name: 'Psicología', ...HIDDEN }));
     const umeca = screen.getByRole('checkbox', { name: /Cita obligatoria \(UMECA\)/, ...HIDDEN });
     expect((umeca as HTMLInputElement).checked).toBe(false);

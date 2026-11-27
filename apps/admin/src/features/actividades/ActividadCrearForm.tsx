@@ -15,8 +15,8 @@ import {
 } from '@/domain/models/ActividadPreventiva';
 import { ROLE_LABELS, type StaffRole } from '@/domain/models/Auth';
 import type { AsentamientoSepomex } from '@/domain/models/Domicilio';
-import { useDialogSettled } from '@/features/agenda/useDialogSettled';
 import { useAsentamientosSepomex } from '@/features/expedientes/api';
+import { useDialogSettled } from '@/shared/hooks/useDialogSettled';
 import { useEmpleadosParticipantes, useRegistrarActividadPreventiva, useTiposActividad } from './api';
 import { ColoniaSearchField } from './ColoniaSearchField';
 import { aIsoMazatlan, fechaLargaActividad, horaActividad, mensajeError } from './actividadesList';
@@ -167,7 +167,7 @@ export function ActividadCrearForm({ onCancel, onCreated }: ActividadCrearFormPr
 
   return (
     <>
-      <Dialog.Body className="act-view">
+      <Dialog.Body className="vc-dlg-view" data-dir="none">
         <form id={formId} noValidate onSubmit={onSubmit} className="grid gap-5" aria-label="Nueva actividad">
           <Campo label="Título *" error={errores.titulo}>
             <input
@@ -195,7 +195,7 @@ export function ActividadCrearForm({ onCancel, onCreated }: ActividadCrearFormPr
                   aria-checked={form.tipoActividadId === tipo.id}
                   disabled={pending}
                   onClick={() => patch({ tipoActividadId: tipo.id })}
-                  className={`mk-chip mk-chip--filter act-btn ${form.tipoActividadId === tipo.id ? CHIP_ON : ''}`}
+                  className={`mk-chip mk-chip--filter vc-press ${form.tipoActividadId === tipo.id ? CHIP_ON : ''}`}
                 >
                   {tipo.nombre}
                 </button>
@@ -213,7 +213,7 @@ export function ActividadCrearForm({ onCancel, onCreated }: ActividadCrearFormPr
                   aria-checked={form.tipoInstitucion === tipo}
                   disabled={pending}
                   onClick={() => patch({ tipoInstitucion: tipo, ...(tipo !== 'escuela' ? { nivelEducativo: '' } : {}) })}
-                  className={`mk-chip mk-chip--filter act-btn ${form.tipoInstitucion === tipo ? CHIP_ON : ''}`}
+                  className={`mk-chip mk-chip--filter vc-press ${form.tipoInstitucion === tipo ? CHIP_ON : ''}`}
                 >
                   {TIPO_INSTITUCION_LABELS[tipo]}
                 </button>
@@ -233,7 +233,7 @@ export function ActividadCrearForm({ onCancel, onCreated }: ActividadCrearFormPr
                       aria-checked={form.nivelEducativo === nivel}
                       disabled={pending}
                       onClick={() => patch({ nivelEducativo: form.nivelEducativo === nivel ? '' : nivel })}
-                      className={`mk-chip mk-chip--filter act-btn ${form.nivelEducativo === nivel ? CHIP_ON : ''}`}
+                      className={`mk-chip mk-chip--filter vc-press ${form.nivelEducativo === nivel ? CHIP_ON : ''}`}
                     >
                       {NIVEL_EDUCATIVO_LABELS[nivel]}
                     </button>
@@ -261,7 +261,7 @@ export function ActividadCrearForm({ onCancel, onCreated }: ActividadCrearFormPr
             />
           </Campo>
 
-          <Campo label="Fecha y hora *" error={errores.programadaEn} hint="Hora de Mazatlán. Puede ser una fecha futura (pendiente) o pasada (ya realizada).">
+          <Campo label="Fecha y hora *" error={errores.programadaEn} hint="Hora de Mazatlán. Se registra como pendiente; si la fecha ya pasó, ciérrala como realizada desde su detalle.">
             {pickerListo ? (
               <DateTimePicker
                 label="Fecha y hora de la actividad"
@@ -315,7 +315,7 @@ export function ActividadCrearForm({ onCancel, onCreated }: ActividadCrearFormPr
             </Campo>
           </div>
 
-          <Campo label="Número de asistentes (opcional)" error={errores.numeroAsistentes} hint="Esperados o, si ya se realizó, los que asistieron.">
+          <Campo label="Número de asistentes (opcional)" error={errores.numeroAsistentes} hint="Esperados; al marcarla como realizada registrarás los que asistieron.">
             <input
               type="number"
               inputMode="numeric"
@@ -349,7 +349,7 @@ export function ActividadCrearForm({ onCancel, onCreated }: ActividadCrearFormPr
                     disabled={pending}
                     title={ROLE_LABELS[empleado.rol as StaffRole] ?? empleado.rol}
                     onClick={() => alternarParticipante(empleado.id)}
-                    className={`mk-chip mk-chip--filter act-btn ${on ? CHIP_ON : ''}`}
+                    className={`mk-chip mk-chip--filter vc-press ${on ? CHIP_ON : ''}`}
                   >
                     {empleado.nombre}
                   </button>
@@ -366,10 +366,10 @@ export function ActividadCrearForm({ onCancel, onCreated }: ActividadCrearFormPr
         </form>
       </Dialog.Body>
       <Dialog.Footer>
-        <button type="button" className="mk-button mk-button--text act-btn" disabled={pending} onClick={onCancel}>
+        <button type="button" className="mk-button mk-button--text vc-press" disabled={pending} onClick={onCancel}>
           Cancelar
         </button>
-        <button type="submit" form={formId} className="mk-button mk-button--filled act-btn" disabled={pending}>
+        <button type="submit" form={formId} className="mk-button mk-button--filled vc-press" disabled={pending}>
           {pending ? 'Guardando…' : 'Registrar actividad'}
         </button>
       </Dialog.Footer>

@@ -1,15 +1,18 @@
 -- =====================================================================
--- 39_agenda_permisos_creacion.test.sql
--- Pruebas pgTAP para la migración 20261127000800_39_agenda_permisos_creacion.sql:
---   - Clave agenda.crear: solo recepcion y juridico.
+-- 40_agenda_permisos_creacion.test.sql
+-- Pruebas pgTAP para la migración 20261127000900_40_agenda_permisos_creacion.sql
+-- (con la regla de creación vigente tras 20261127001100_42_agenda_busqueda_umeca.sql):
+--   - Clave agenda.crear: recepcion, juridico, psicologia, titular y
+--     subdireccion (trabajo_social no).
 --   - Crear citas (RLS cita_insert): recepcion en TS/Psic/Juridico;
---     juridico solo en Juridico; psicologia, trabajo_social, titular y
---     subdireccion no pueden.
+--     juridico solo en Juridico; psicologia solo en Psicologia;
+--     titular/subdireccion en cualquier area; trabajo_social no puede.
 --   - Recepcion ve (get_agenda + SELECT) y gestiona (cambiar_estado_cita,
 --     reagendar_cita) citas de Juridico.
---   - reagendar_cita = crear: bloqueado para titular, subdireccion, TS y
---     Psicologia; permitido para recepcion (3 areas) y juridico (propia).
---   - registrar_seguimiento con proxima cita: permitido a juridico.
+--   - reagendar_cita = crear: bloqueado para TS (y para psicologia fuera de
+--     su area); permitido para recepcion (3 areas), juridico/psicologia
+--     (propia area) y titular/subdireccion.
+--   - registrar_seguimiento con proxima cita: permitido a juridico; TS no.
 --   - get_umeca_citas() sigue funcionando para UMECA.
 -- Usa los usuarios del seed (11111111-1111-4111-8111-1111111111xx).
 -- =====================================================================
@@ -67,11 +70,11 @@ select is(public.tiene_permiso('agenda.crear'), true, 'juridico: agenda.crear = 
 select pg_temp.as_user('11111111-1111-4111-8111-111111111103'); -- trabajo_social
 select is(public.tiene_permiso('agenda.crear'), false, 'trabajo_social: agenda.crear = false');
 select pg_temp.as_user('11111111-1111-4111-8111-111111111104'); -- psicologia
-select is(public.tiene_permiso('agenda.crear'), false, 'psicologia: agenda.crear = false');
+select is(public.tiene_permiso('agenda.crear'), true, 'psicologia: agenda.crear = true');
 select pg_temp.as_user('11111111-1111-4111-8111-111111111101'); -- titular
-select is(public.tiene_permiso('agenda.crear'), false, 'titular: agenda.crear = false');
+select is(public.tiene_permiso('agenda.crear'), true, 'titular: agenda.crear = true');
 select pg_temp.as_user('11111111-1111-4111-8111-111111111102'); -- subdireccion
-select is(public.tiene_permiso('agenda.crear'), false, 'subdireccion: agenda.crear = false');
+select is(public.tiene_permiso('agenda.crear'), true, 'subdireccion: agenda.crear = true');
 
 -- 7-9. recepcion crea en las 3 areas
 select pg_temp.as_user('11111111-1111-4111-8111-111111111106'); -- recepcion
@@ -103,11 +106,11 @@ select throws_ok(
   '42501', null, 'juridico no crea cita de trabajo_social'
 );
 
--- 13-16. Roles que no pueden crear
+-- 13-16. psicologia crea solo en su area; trabajo_social no crea; direccion crea en cualquiera
 select pg_temp.as_user('11111111-1111-4111-8111-111111111104'); -- psicologia
-select throws_ok(
+select lives_ok(
   $$insert into public.cita (persona_id, area_id, programada_en) values ('96000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'psicologia'), '2099-09-07T10:00:00-07:00')$$,
-  '42501', null, 'psicologia no crea cita (ni en su propia area)'
+  'psicologia crea cita de psicologia'
 );
 select pg_temp.as_user('11111111-1111-4111-8111-111111111103'); -- trabajo_social
 select throws_ok(
@@ -115,14 +118,14 @@ select throws_ok(
   '42501', null, 'trabajo_social no crea cita (ni en su propia area)'
 );
 select pg_temp.as_user('11111111-1111-4111-8111-111111111101'); -- titular
-select throws_ok(
+select lives_ok(
   $$insert into public.cita (persona_id, area_id, programada_en) values ('96000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'juridico'), '2099-09-09T10:00:00-07:00')$$,
-  '42501', null, 'titular no crea cita'
+  'titular crea cita de juridico'
 );
 select pg_temp.as_user('11111111-1111-4111-8111-111111111102'); -- subdireccion
-select throws_ok(
+select lives_ok(
   $$insert into public.cita (persona_id, area_id, programada_en) values ('96000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'psicologia'), '2099-09-10T10:00:00-07:00')$$,
-  '42501', null, 'subdireccion no crea cita'
+  'subdireccion crea cita de psicologia'
 );
 
 -- 17-19. recepcion ve y gestiona citas de Juridico
@@ -167,32 +170,34 @@ select throws_ok(
   '42501', null, 'juridico no reagenda cita de psicologia'
 );
 
--- 24-27. reagendar bloqueado para quienes no pueden crear
+-- 24-27. reagendar = crear: direccion en cualquier area; psicologia solo su area; TS no
 select pg_temp.as_user('11111111-1111-4111-8111-111111111101'); -- titular
-select throws_ok(
-  $$select * from public.reagendar_cita('96000000-0000-4000-a000-000000000305', '2099-10-04T10:00:00-07:00')$$,
-  '42501', null, 'titular no puede reagendar (reagendar = crear)'
+select is(
+  (select count(*)::int from public.reagendar_cita('96000000-0000-4000-a000-000000000305', '2099-10-04T10:00:00-07:00')),
+  1,
+  'titular reagenda cita de trabajo_social (direccion crea en cualquier area)'
 );
 select pg_temp.as_user('11111111-1111-4111-8111-111111111102'); -- subdireccion
-select throws_ok(
-  $$select * from public.reagendar_cita('96000000-0000-4000-a000-000000000305', '2099-10-04T10:00:00-07:00')$$,
-  '42501', null, 'subdireccion no puede reagendar (reagendar = crear)'
+select is(
+  (select count(*)::int from public.reagendar_cita('96000000-0000-4000-a000-000000000304', '2099-10-04T10:00:00-07:00')),
+  1,
+  'subdireccion reagenda cita de psicologia'
 );
 select pg_temp.as_user('11111111-1111-4111-8111-111111111104'); -- psicologia
 select throws_ok(
-  $$select * from public.reagendar_cita('96000000-0000-4000-a000-000000000304', '2099-10-04T10:00:00-07:00')$$,
-  '42501', null, 'psicologia no puede reagendar ni su propia cita'
+  $$select * from public.reagendar_cita('96000000-0000-4000-a000-000000000306', '2099-10-04T10:00:00-07:00')$$,
+  '42501', null, 'psicologia no puede reagendar citas de otra area (juridico)'
 );
 select pg_temp.as_user('11111111-1111-4111-8111-111111111103'); -- trabajo_social
 select throws_ok(
-  $$select * from public.reagendar_cita('96000000-0000-4000-a000-000000000305', '2099-10-04T10:00:00-07:00')$$,
-  '42501', null, 'trabajo_social no puede reagendar ni su propia cita'
+  $$select * from public.reagendar_cita('96000000-0000-4000-a000-000000000306', '2099-10-04T10:00:00-07:00')$$,
+  '42501', null, 'trabajo_social no puede reagendar (reagendar = crear)'
 );
 
 -- 28. Dirección y areas conservan cancelar/confirmar (no es crear)
 select pg_temp.as_user('11111111-1111-4111-8111-111111111101'); -- titular
 select lives_ok(
-  $$select * from public.cambiar_estado_cita('96000000-0000-4000-a000-000000000305', 'cancelada', 'Solicitud de la usuaria')$$,
+  $$select * from public.cambiar_estado_cita('96000000-0000-4000-a000-000000000306', 'cancelada', 'Solicitud de la usuaria')$$,
   'titular conserva cambiar_estado_cita (cancelar)'
 );
 
@@ -213,17 +218,17 @@ select is(
   1,
   'juridico agenda la proxima cita desde registrar_seguimiento'
 );
-select pg_temp.as_user('11111111-1111-4111-8111-111111111104'); -- psicologia
+select pg_temp.as_user('11111111-1111-4111-8111-111111111103'); -- trabajo_social
 select throws_ok(
   $$select * from public.registrar_seguimiento(
       '96000000-0000-4000-a000-000000000201'::uuid,
       null,
-      (select t.id from public.cat_tipo_atencion t join public.cat_area a on a.id = t.area_id where a.clave = 'psicologia' limit 1),
+      (select t.id from public.cat_tipo_atencion t join public.cat_area a on a.id = t.area_id where a.clave = 'trabajo_social' limit 1),
       'Valoracion.', null, 'media', null, now() + interval '10 days'
     )$$,
   '42501',
   'Sin permiso para agendar la próxima cita; solicítela a Recepción',
-  'psicologia no agenda proxima cita desde registrar_seguimiento'
+  'trabajo_social no agenda proxima cita desde registrar_seguimiento'
 );
 
 -- 31-32. UMECA: get_umeca_citas sigue funcionando y no lee cita directo

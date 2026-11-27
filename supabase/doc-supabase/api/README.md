@@ -85,9 +85,10 @@ En la base de datos **no se renombran** las tablas ni las columnas ya creadas; u
 |---|---|---|---|---|
 | `get_agenda` | Citas de un rango (máx. 31 días) filtradas por rol | empleado activo | Todos los empleados | Lectura |
 | `cambiar_estado_cita` | Confirmar, cancelar o marcar inasistencia | `agenda.gestionar` + área | Todos los empleados | Escritura |
-| `reagendar_cita` | Crea la cita nueva y marca la anterior como `reagendada` | `agenda.crear` + área | Rec (3 áreas), Jur (su área) | Escritura |
+| `buscar_personas_agenda` | Autocompletado de persona (nombre o CURP enmascarada) para crear una cita | `agenda.crear` | Rec, Jur, Psi, Tit, Sub | Lectura |
+| `reagendar_cita` | Crea la cita nueva y marca la anterior como `reagendada` | `agenda.crear` + área | Rec (3 áreas), Jur/Psi (su área), Tit/Sub (todas) | Escritura |
 | `get_lista_urgencias` | Prioridad alta sin cita próxima (RF-07) | rol | Tit, Sub, TS, Psi, Rec | Lectura |
-| `get_umeca_citas` | Citas de origen UMECA para la dependencia | `es_umeca()` | UMECA | Lectura + bitácora |
+| `get_umeca_citas` | Citas de origen UMECA (con área) para la dependencia | `es_umeca()` | UMECA | Lectura + bitácora |
 
 ### Alertas → [`alertas.md`](./alertas.md)
 
@@ -110,7 +111,8 @@ En la base de datos **no se renombran** las tablas ni las columnas ya creadas; u
 | RPC | Qué hace | Permiso | Roles | Tipo |
 |---|---|---|---|---|
 | `registrar_actividad_preventiva` | Alta de actividad con participantes | `actividad.registrar` | Tit, Sub, TS, Psi, Jur | Escritura |
-| `get_actividades_preventivas` | Lista de actividades con participantes | `actividad.ver` | Todos los empleados | Lectura |
+| `get_actividades_preventivas` | Lista de actividades con participantes y estado (filtro `p_estado`) | `actividad.ver` | Todos los empleados | Lectura |
+| `actualizar_estado_actividad` | Marca realizada/cancelada o reabre (pendiente) | `actividad.registrar` | Tit, Sub, TS, Psi, Jur | Escritura |
 
 ### Informes y auditoría → [`informes.md`](./informes.md)
 
@@ -151,10 +153,11 @@ En la base de datos **no se renombran** las tablas ni las columnas ya creadas; u
 | `archivar_ficha` | ✅ | ✅ | — | — | — | — | — |
 | `get_linea_tiempo` | ✅ | ⚠️ detalle solo propio | ⚠️ | ⚠️ | — | — | — |
 | `registrar_consulta` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — |
-| `registrar_seguimiento` | — | ⚠️ su área (sin próxima cita) | ⚠️ su área (sin próxima cita) | ⚠️ su área | — | — | — |
+| `registrar_seguimiento` | — | ⚠️ su área (sin próxima cita) | ⚠️ su área | ⚠️ su área | — | — | — |
 | `get_agenda` | ✅ | ⚠️ TS+Psi | ⚠️ su área | ⚠️ su área | ✅ TS+Psi+Jur | — | — |
 | `cambiar_estado_cita` | ✅ | ⚠️ su área | ⚠️ su área | ⚠️ su área | ✅ TS+Psi+Jur | — | — |
-| `reagendar_cita` (= crear cita) | — | — | — | ⚠️ su área | ✅ TS+Psi+Jur | — | — |
+| `buscar_personas_agenda` | ✅ | — | ✅ | ✅ | ✅ | — | — |
+| `reagendar_cita` (= crear cita) | ✅ todas | — | ⚠️ su área | ⚠️ su área | ✅ TS+Psi+Jur | — | — |
 | `get_lista_urgencias` | ✅ | ✅ | ✅ | — | ✅ | — | — |
 | `get_umeca_citas` | — | — | — | — | — | ✅ | — |
 | `get_cola_alertas` | ✅ | ✅ (solo ver) | ✅ (solo ver) | ✅ | — | — | — |
@@ -162,6 +165,7 @@ En la base de datos **no se renombran** las tablas ni las columnas ya creadas; u
 | `get_derivaciones` / `cambiar_estado_derivacion` | ✅ | ✅ | ⚠️ origen o destino su área | ⚠️ | — | — | — |
 | `registrar_actividad_preventiva` | ✅ | ✅ | ✅ | ✅ | — | — | — |
 | `get_actividades_preventivas` | ✅ | ✅ | ✅ | ✅ | ✅ | — | — |
+| `actualizar_estado_actividad` | ✅ | ✅ | ✅ | ✅ | — | — | — |
 | `get_informe` | ✅ | ⚠️ su área | ⚠️ su área | ⚠️ su área | — | — | — |
 | `get_bitacora` | ✅ | — | — | — | — | — | — |
 | `get_mapa_calor_asentamiento` | ✅ | ✅ | ✅ | ✅ | — | — | — |

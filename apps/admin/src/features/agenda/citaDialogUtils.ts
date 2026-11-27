@@ -111,8 +111,8 @@ export function mensajeError(error: unknown, fallback: string): string {
 }
 
 /**
- * Áreas en las que el rol puede agendar (regla única en `agendaPermisos`): Recepción en Trabajo Social, Psicología y
- * Jurídico; Jurídico solo en Jurídico; el resto de los roles, ninguna.
+ * Áreas en las que el rol puede agendar (regla única en `agendaPermisos`): Recepción y Dirección en las tres;
+ * Jurídico y Psicología solo en la suya; Trabajo Social, ninguna.
  */
 export function areasPermitidas(role: StaffRole | undefined, catalogo: readonly CatalogoItem[]): CatalogoItem[] {
   const claves = areasCreablesPorRol(role);
@@ -141,7 +141,7 @@ export interface AccionesCita {
   noAsistio: boolean;
   cancelar: boolean;
   reagendar: boolean;
-  /** Tras la sesión: solo Jurídico agenda directo la siguiente cita (`RN-04`). */
+  /** Tras la sesión: agenda la siguiente cita quien puede crear citas en esa área (misma regla de alta). */
   agendarSiguiente: boolean;
 }
 
@@ -164,13 +164,9 @@ export function accionesDisponibles(
     asistio: registraHoja,
     noAsistio: valida('no_asistio'),
     cancelar: valida('cancelada'),
-    // Reagendar crea una cita nueva: sigue la misma regla de alta (solo Recepción y Jurídico, en sus áreas).
+    // Reagendar crea una cita nueva: sigue la misma regla de alta (según rol y área).
     reagendar: gestiona && citaAdmiteHojaSeguimiento(cita.estado) && puedeCrearEnArea(role, cita.areaClave),
-    agendarSiguiente:
-      role === 'juridico' &&
-      cita.estado === 'asistio' &&
-      cita.areaId === userAreaId &&
-      puedeCrearEnArea(role, cita.areaClave),
+    agendarSiguiente: gestiona && cita.estado === 'asistio' && puedeCrearEnArea(role, cita.areaClave),
   };
 }
 

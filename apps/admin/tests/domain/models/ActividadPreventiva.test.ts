@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  estadoActividad,
+  esEstadoActividad,
   puedeRegistrarActividad,
   validateActividadCampos,
   validateActividadPreventiva,
@@ -67,11 +67,9 @@ describe('ActividadPreventiva (RF-16)', () => {
     expect(validateActividadPreventiva({ ...VALIDA, titulo: '' })).toMatch(/título/i);
   });
 
-  it('infiere pendiente / realizada de la fecha programada (la tabla no guarda estado)', () => {
-    const ahora = new Date('2026-12-03T17:00:00Z');
-    expect(estadoActividad({ programadaEn: '2026-12-03T17:00:00Z' }, ahora)).toBe('pendiente');
-    expect(estadoActividad({ programadaEn: '2026-12-10T17:00:00Z' }, ahora)).toBe('pendiente');
-    expect(estadoActividad({ programadaEn: '2026-12-03T16:59:00Z' }, ahora)).toBe('realizada');
+  it('reconoce solo los tres estados del enum estado_actividad', () => {
+    for (const estado of ['pendiente', 'realizada', 'cancelada']) expect(esEstadoActividad(estado)).toBe(true);
+    for (const raro of ['abierta', '', null, undefined, 3]) expect(esEstadoActividad(raro)).toBe(false);
   });
 
   it('actividad.registrar: dirección y áreas de atención; no recepción ni UMECA', () => {

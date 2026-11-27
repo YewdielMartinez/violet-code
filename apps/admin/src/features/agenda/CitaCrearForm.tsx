@@ -21,7 +21,7 @@ import {
   type CitaDir,
   type PersonaSeleccion,
 } from './citaDialogUtils';
-import { puedeBuscarPorNombre, useAreasCita } from './personaSearchApi';
+import { useAreasCita } from './personaSearchApi';
 import { useDialogSettled } from './useDialogSettled';
 
 /** Monta el selector de fecha a ~60 % del morph de apertura (ver `useDialogSettled`): es lo más pesado del formulario. */
@@ -125,7 +125,6 @@ export function CitaCrearForm({ fecha, areaId, persona: personaInicial, dir, onC
             <PersonaSearchField
               value={persona}
               onChange={setPersona}
-              porNombre={puedeBuscarPorNombre(user?.role)}
               disabled={pending}
               error={sinPersona ? 'Selecciona la persona para agendar la cita.' : null}
             />
@@ -153,6 +152,8 @@ export function CitaCrearForm({ fecha, areaId, persona: personaInicial, dir, onC
               <p className="text-xs text-on-surface-variant">Recepción agenda en Trabajo Social, Psicología y Jurídico.</p>
             ) : user?.role === 'juridico' ? (
               <p className="text-xs text-on-surface-variant">Jurídico agenda únicamente en Jurídico.</p>
+            ) : user?.role === 'psicologia' ? (
+              <p className="text-xs text-on-surface-variant">Psicología agenda únicamente en Psicología.</p>
             ) : null}
           </div>
 

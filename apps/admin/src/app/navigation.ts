@@ -3,7 +3,8 @@ import type { StaffRole } from '@/domain/models/Auth';
 /**
  * Mapa de navegación del panel alineado con los 7 roles reales en Supabase.
  * `ready: false` = módulo con página "en construcción".
- * `icon`: nombre de Material Symbols Rounded. `mobile`: barra inferior móvil (máx. 5).
+ * `icon`: nombre de Material Symbols Rounded. `mobilePriority`: prioridad en la barra inferior móvil (menor = antes);
+ * la barra de cada rol toma las `MOBILE_NAV_MAX` páginas de mayor prioridad a las que ese rol tiene acceso.
  */
 export interface NavPage {
   path: string;
@@ -13,7 +14,8 @@ export interface NavPage {
   title?: string;
   icon: string;
   ready: boolean;
-  mobile?: boolean;
+  /** Prioridad en la barra móvil (1 = la primera en entrar). Sin valor: nunca va en la barra. */
+  mobilePriority?: number;
   allowedRoles: readonly StaffRole[];
 }
 
@@ -42,7 +44,7 @@ export const NAVIGATION: NavPage[] = [
     label: 'Tablero',
     icon: 'space_dashboard',
     ready: true,
-    mobile: true,
+    mobilePriority: 1,
     allowedRoles: [...ALL_EMPLOYEES, 'umeca'],
   },
   {
@@ -51,7 +53,7 @@ export const NAVIGATION: NavPage[] = [
     title: 'Solicitudes y alertas',
     icon: 'notifications_active',
     ready: true,
-    mobile: true,
+    mobilePriority: 4,
     allowedRoles: ATTENTION_AND_DIRECTION,
   },
   {
@@ -59,7 +61,7 @@ export const NAVIGATION: NavPage[] = [
     label: 'Expedientes',
     icon: 'folder_shared',
     ready: true,
-    mobile: true,
+    mobilePriority: 3,
     allowedRoles: ATTENTION_AND_DIRECTION,
   },
   {
@@ -67,7 +69,7 @@ export const NAVIGATION: NavPage[] = [
     label: 'Agenda',
     icon: 'calendar_month',
     ready: true,
-    mobile: true,
+    mobilePriority: 2,
     allowedRoles: ALL_EMPLOYEES,
   },
   {
@@ -77,6 +79,7 @@ export const NAVIGATION: NavPage[] = [
     title: 'Actividades preventivas',
     icon: 'diversity_3',
     ready: true,
+    mobilePriority: 5,
     allowedRoles: ALL_EMPLOYEES,
   },
   {
@@ -96,6 +99,22 @@ export const NAVIGATION: NavPage[] = [
 ];
 
 export const ALL_PAGES = NAVIGATION;
+
+/** Máximo de botones en la barra inferior móvil. */
+export const MOBILE_NAV_MAX = 5;
+
+/**
+ * Rutas que van en la barra móvil del rol: las `MOBILE_NAV_MAX` páginas de mayor `mobilePriority` a las que el rol
+ * puede entrar (Tablero, Agenda, Expedientes, Solicitudes, Actividades, Directorio). El kit no ofrece «Más»,
+ * así que el resto solo se ve en el riel de escritorio.
+ */
+export function getMobilePaths(role: StaffRole | undefined): ReadonlySet<string> {
+  const top = getNavigationForRole(role)
+    .filter((page) => page.mobilePriority !== undefined)
+    .sort((a, b) => (a.mobilePriority as number) - (b.mobilePriority as number))
+    .slice(0, MOBILE_NAV_MAX);
+  return new Set(top.map((page) => page.path));
+}
 
 export function getNavigationForRole(role: StaffRole | undefined): NavPage[] {
   if (!role) return [];

@@ -18,9 +18,8 @@ vi.mock('@/features/agenda/CitaDialog', () => ({
     return null;
   },
 }));
-vi.mock('@/features/agenda/AgendaSidePanels', () => ({
-  CitasPorConfirmarPanel: () => <div data-testid="por-confirmar" />,
-  ListaUrgenciasPanel: () => <div data-testid="urgencias" />,
+vi.mock('@/features/agenda/AgendaAvisos', () => ({
+  AgendaAvisos: () => <div data-testid="avisos" />,
 }));
 vi.mock('@/features/expedientes/api', () => ({
   catalogoQueryOptions: (name: string) => ({
@@ -99,8 +98,9 @@ describe('AgendaPage', () => {
     expect(document.querySelectorAll('.ag-tile')).toHaveLength(42);
     const monthCalls = useAgendaMock.mock.calls.filter(([, enabled]) => enabled !== false);
     expect(monthCalls.length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByTestId('por-confirmar')).toBeTruthy();
-    expect(screen.getByTestId('urgencias')).toBeTruthy();
+    // Los avisos van en una barra compacta, no en una columna lateral permanente.
+    expect(screen.getByTestId('avisos')).toBeTruthy();
+    expect(document.querySelector('.ag-side')).toBeNull();
     // Hoy resaltado y citas con hora + nombre.
     expect(document.querySelector('.ag-tile[data-today]')?.getAttribute('data-day')).toBe('2026-11-26');
     expect(screen.getByRole('button', { name: /09:00, Persona a/ })).toBeTruthy();
@@ -187,7 +187,21 @@ describe('AgendaPage', () => {
     expect(within(week).getByRole('button', { name: /12:00, Persona u.*UMECA/ }).querySelector('.ag-chip__umeca')).not.toBeNull();
   });
 
-  describe.each(['titular', 'subdireccion', 'trabajo_social', 'psicologia'] as const)('rol %s (sin alta de citas)', (role) => {
+  describe.each(['titular', 'subdireccion', 'psicologia', 'juridico'] as const)('rol %s (con alta de citas)', (role) => {
+    beforeEach(() => {
+      useAuthMock.mockReturnValue({ status: 'authenticated', user: { id: 'u1', role, areaId: 2, areaNombre: null } });
+    });
+
+    it('un recuadro vacío abre el formulario de alta y en la semana los huecos son botones «Nueva cita»', () => {
+      renderPage();
+      fireEvent.click(screen.getByRole('tab', { name: 'Semana' }));
+      const week = screen.getByRole('group', { name: 'Semana por horas' });
+      fireEvent.click(within(week).getByRole('button', { name: /Nueva cita, .*28 de noviembre, 14:00/ }));
+      expect(lastDialogProps().state?.kind).toBe('crear');
+    });
+  });
+
+  describe.each(['trabajo_social'] as const)('rol %s (sin alta de citas)', (role) => {
     beforeEach(() => {
       useAuthMock.mockReturnValue({ status: 'authenticated', user: { id: 'u1', role, areaId: 2, areaNombre: null } });
     });

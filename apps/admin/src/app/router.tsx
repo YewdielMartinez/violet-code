@@ -10,6 +10,7 @@ import {
   DirectoryPage,
   ExpedienteDetailPage,
   ExpedientesPage,
+  IntervencionesPage,
   LoginPage,
   NuevaFichaPage,
   PendingModulePage,

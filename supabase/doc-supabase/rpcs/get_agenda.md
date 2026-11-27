@@ -1,6 +1,6 @@
 # RPC: `public.get_agenda`
 
-- **Migración:** `supabase/migrations/20261126001200_22_rpc_agenda.sql` (Recepción con Jurídico desde `supabase/migrations/20261127000800_39_agenda_permisos_creacion.sql`)
+- **Migración:** `supabase/migrations/20261126001200_22_rpc_agenda.sql` (Recepción con Jurídico desde `supabase/migrations/20261127000900_40_agenda_permisos_creacion.sql`)
 - **Cubre:** `RF-06`, `RN-04`, `RN-06` (SF-05, SF-06)
 
 ## Actores autorizados

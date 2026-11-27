@@ -1,13 +1,14 @@
 # RPC: `public.reagendar_cita`
 
-- **Migración:** `supabase/migrations/20261126001300_23_rpc_reagendar_y_urgencias.sql` (regla de creación vigente desde `supabase/migrations/20261127000800_39_agenda_permisos_creacion.sql`)
+- **Migración:** `supabase/migrations/20261126001300_23_rpc_reagendar_y_urgencias.sql` (regla de creación vigente desde `supabase/migrations/20261127001100_42_agenda_busqueda_umeca.sql`, que sustituye a la de `_40`)
 - **Cubre:** `RF-06`, `RN-04`, `RN-06` (SF-07)
 
 ## Actores autorizados
 Reagendar **crea una cita nueva**, por lo que sigue la regla de creación (permiso `agenda.crear`):
 - `recepcion`: citas de `trabajo_social`, `psicologia` y `juridico`.
-- `juridico`: únicamente citas de su propia área (`juridico`).
-- `titular`, `subdireccion`, `trabajo_social`, `psicologia`: **no pueden reagendar** (`42501`), aunque sí confirmar/cancelar con `cambiar_estado_cita`.
+- `juridico` y `psicologia`: únicamente citas de su propia área.
+- `titular` y `subdireccion`: citas de cualquier área.
+- `trabajo_social`: **no puede reagendar** (`42501`), aunque sí confirmar/cancelar con `cambiar_estado_cita`.
 
 ## Entrada
 ```ts
@@ -30,6 +31,6 @@ Reagendar **crea una cita nueva**, por lo que sigue la regla de creación (permi
 ```
 
 ## Errores
-- `42501`: sin autenticación, inactivo, rol sin `agenda.crear` (Dirección, TS, Psicología) o cita fuera del alcance (ej. Jurídico sobre Psicología).
+- `42501`: sin autenticación, inactivo, rol sin `agenda.crear` (TS) o cita fuera del alcance (ej. Jurídico o Psicología sobre otra área).
 - `23505`: la cita ya fue reagendada anteriormente (`reagendada_de` es `UNIQUE`).
 - `23514`: cita inexistente, fecha pasada/nula, motivo > 500 caracteres, estado no reagendable o menor de edad en Psicología/Jurídico (`RN-01`).

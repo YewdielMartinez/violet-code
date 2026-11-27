@@ -114,7 +114,7 @@ No hay RPC para crear una cita: es un `insert` directo. Leer, cambiar estado y r
 
 | Crear | Regla |
 |---|---|
-| `agenda.crear` + alcance (`puede_crear_cita_en_area`) | Solo Recepción (TS, Psicología y Jurídico) y Jurídico (solo su área). Tit, Sub, TS y Psicología **no pueden crear** (`42501`). Cambiar estado/reagendar: ver [agenda.md](./agenda.md). |
+| `agenda.crear` + alcance (`puede_crear_cita_en_area`) | Recepción (TS, Psicología y Jurídico), Jurídico y Psicología (solo su área), Tit y Sub (todas las áreas). TS **no puede crear** (`42501`). Para elegir la persona: `buscar_personas_agenda`. Cambiar estado/reagendar: ver [agenda.md](./agenda.md). |
 
 ```ts
 const { data, error } = await supabase

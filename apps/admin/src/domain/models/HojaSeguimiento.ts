@@ -1,5 +1,5 @@
 import { type StaffRole, isAttentionRole } from './Auth';
-import type { AgendaItem, EstadoCita } from './Cita';
+import { areasCreablesPorRol, type AgendaItem, type EstadoCita } from './Cita';
 import { type DomicilioDetalle, type DomicilioInput, validateDomicilio } from './Domicilio';
 import type { EstadoCivil } from './FichaRegistro';
 
@@ -57,9 +57,12 @@ export function puedeRegistrarHojaSeguimiento(role: StaffRole | undefined): bool
   return isAttentionRole(role);
 }
 
-/** Jurídico agenda directo (`RN-04`); las demás áreas solo registran la próxima acción. */
+/**
+ * La próxima cita sigue la regla de alta (`areasCreablesPorRol`): Jurídico y Psicología la agendan directo;
+ * Trabajo Social no (la agenda Recepción).
+ */
 export function puedeAgendarProximaCita(role: StaffRole | undefined): boolean {
-  return role === 'juridico';
+  return areasCreablesPorRol(role).length > 0;
 }
 
 export function domicilioInputDesdeDetalle(detalle: DomicilioDetalle | null): DomicilioInput {

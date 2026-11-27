@@ -1,6 +1,6 @@
 # Roles, Permisos y Seguridad en Base de Datos (RBAC + ABAC)
 
-Referencia técnica del modelo de autorización implementado en [20261125000700_07_rls.sql](../migrations/20261125000700_07_rls.sql), actualizado en [20261126000500_15_permisos_rbac_abac.sql](../migrations/20261126000500_15_permisos_rbac_abac.sql) y [20261127000100_32_permisos_sprint02.sql](../migrations/20261127000100_32_permisos_sprint02.sql) y [20261127000800_39_agenda_permisos_creacion.sql](../migrations/20261127000800_39_agenda_permisos_creacion.sql) sobre PostgreSQL Row Level Security (RLS), complementado con los privilegios SQL base a `authenticated` (sin abrir `anon`) en [20261125000900_09_grants_authenticated.sql](../migrations/20261125000900_09_grants_authenticated.sql).
+Referencia técnica del modelo de autorización implementado en [20261125000700_07_rls.sql](../migrations/20261125000700_07_rls.sql), actualizado en [20261126000500_15_permisos_rbac_abac.sql](../migrations/20261126000500_15_permisos_rbac_abac.sql) y [20261127000100_32_permisos_sprint02.sql](../migrations/20261127000100_32_permisos_sprint02.sql) y [20261127000900_40_agenda_permisos_creacion.sql](../migrations/20261127000900_40_agenda_permisos_creacion.sql) sobre PostgreSQL Row Level Security (RLS), complementado con los privilegios SQL base a `authenticated` (sin abrir `anon`) en [20261125000900_09_grants_authenticated.sql](../migrations/20261125000900_09_grants_authenticated.sql).
 
 ---
 
@@ -10,7 +10,7 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
 - **RBAC (Control por acción):** `public.tiene_permiso(p_permiso)` evalúa un `CASE` por rol de `public.empleado` (`titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico`, `recepcion`), exigiendo `auth.uid()` y `empleado.activo = true`.
 - **ABAC (Control por filas / atributos):** evalúa atributos del registro y del actor en el `WHERE` de cada RPC y en las políticas RLS:
   - `area_id = auth_area_id()` (por ejemplo `nota_area` privada por área o informes por área).
-  - Creación de `cita` (`agenda.crear` + `puede_crear_cita_en_area(area_id)`): `recepcion` en `trabajo_social`, `psicologia` y `juridico`; `juridico` solo en su propia área.
+  - Creación de `cita` (`agenda.crear` + `puede_crear_cita_en_area(area_id)`): `recepcion` en `trabajo_social`, `psicologia` y `juridico`; `juridico` y `psicologia` solo en su propia área; `titular` y `subdireccion` en cualquier área; `trabajo_social` en ninguna.
   - `activo = true`, `pre_registro.auth_user_id = auth.uid()` y `alerta.origen = 'app_movil'`.
 - **Actores fuera de `empleado.rol`:** UMECA (`public.usuario_externo` validado con `es_umeca()`) y la usuaria de la app móvil (`auth.users` + `pre_registro`, validada por propiedad con `auth.uid()`). Para ambos, `tiene_permiso()` siempre devuelve `false`.
 
@@ -21,10 +21,10 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
 | `catalogos.gestionar`, `directorio.gestionar`, `cuentas.gestionar`, `bitacora.ver` | `titular`, `subdireccion` |
 | `expediente.escribir` | `titular`, `subdireccion`, `trabajo_social` |
 | `expediente.reabrir` | `titular`, `subdireccion` |
-| `expediente.ver`, `agresor.acceder`, `derivacion.gestionar`, `actividad.registrar`, `informe.ver` | `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico` |
+| `expediente.ver`, `agresor.acceder`, `derivacion.gestionar`, `actividad.registrar` (alta y `actualizar_estado_actividad`), `informe.ver` | `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico` |
 | `canalizacion.crear` | `trabajo_social` |
 | `expediente.verificar_curp`, `agenda.ver`, `agenda.gestionar`, `actividad.ver` | Todos los empleados activos (incluye `recepcion`) |
-| `agenda.crear` | `recepcion` (TS, Psicología y Jurídico), `juridico` (solo su área). Reagendar = crear. Excluye `titular`, `subdireccion`, `trabajo_social`, `psicologia` |
+| `agenda.crear` | `recepcion` (TS, Psicología y Jurídico), `juridico` y `psicologia` (solo su área), `titular` y `subdireccion` (todas las áreas). Reagendar = crear y también la próxima cita de `registrar_seguimiento`. Excluye `trabajo_social`. También habilita `buscar_personas_agenda` |
 | `seguimiento.registrar` | `trabajo_social`, `psicologia`, `juridico` |
 | `seguimiento.corregir` | `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico` *(ABAC en B-04: lo propio y el mismo día para áreas; cualquiera para Dirección)* |
 | `urgencias.ver` | `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `recepcion` |
@@ -65,7 +65,7 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
 | `ficha_registro`, `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar` | S / I / U | S / I / U *(D en puente)* | S | S | — | — | — |
 | `agresor` | S / I / U | S / I / U | S / I / U | S / I / U | — | — | — |
 | `orden_proteccion` | S / I / U | S / I / U | S | S / I / U | — | — | — |
-| `cita` | S / U (todas; sin I) | S (`ts`+`psic`) / U (`ts`; sin I) | S / U (`psic`; sin I) | S / I / U (`jur`) | S / I / U (`ts`+`psic`+`jur`) | RPC `get_umeca_citas()` | — |
+| `cita` | S / I / U (todas) | S (`ts`+`psic`) / U (`ts`; sin I) | S / I / U (`psic`) | S / I / U (`jur`) | S / I / U (`ts`+`psic`+`jur`) | RPC `get_umeca_citas()` | — |
 | `atencion` | S / I / U (todas) | S / I / U (`ts`) | S / I / U (`psic`) | S / I / U (`jur`) | — | — | — |
 | `nota_area` | — *(privada)* | S / I / U (`ts`) | S / I / U (`psic`) | S / I / U (`jur`) | — | — | — |
 | `historial_clinico` | S / I / U | — | S / I / U | — | — | — | — |

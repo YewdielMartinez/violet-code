@@ -7,7 +7,7 @@
 --   3. Flujo completo con cita: marca cita 'asistio', inserta atención,
 --      cambia ficha 'abierto' -> 'en_seguimiento' y devuelve
 --      es_primera_vez_area. La próxima cita solo la puede agendar quien
---      tiene agenda.crear en su área (migración 39: hoy solo Jurídico);
+--      puede crear citas en su área (migración 42: Jurídico y Psicología);
 --      Trabajo Social recibe 42501 si la envía.
 --   4. Misma cita dos veces -> 23505; segunda atención -> es_primera_vez_area = false.
 -- =====================================================================
@@ -158,7 +158,7 @@ select throws_ok(
   )$$,
   '42501',
   'Sin permiso para agendar la próxima cita; solicítela a Recepción',
-  'trabajo_social no puede agendar proxima cita desde registrar_seguimiento (solo recepcion y juridico crean)'
+  'trabajo_social no puede agendar proxima cita desde registrar_seguimiento (TS no crea citas)'
 );
 
 create temp table tmp_seg_res as

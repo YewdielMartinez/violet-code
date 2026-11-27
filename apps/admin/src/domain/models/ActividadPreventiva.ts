@@ -47,11 +47,19 @@ export interface ActividadPreventivaItem {
   creadoPorNombre: string | null;
   creadoEn: string;
   participantes: ActividadParticipante[];
+  /** Estado explícito (`estado_actividad`): ya no se infiere de la fecha. */
+  estado: EstadoActividad;
+  /** Momento en que se marcó como realizada (`null` si no lo está). */
+  realizadaEn: string | null;
+  canceladaMotivo: string | null;
+  observacionesCierre: string | null;
 }
 
 export interface ActividadPreventivaFilters {
   desde?: string | null;
   hasta?: string | null;
+  /** Filtro del servidor (`p_estado`); sin valor trae todos los estados. */
+  estado?: EstadoActividad | null;
   limite?: number;
 }
 
@@ -83,13 +91,21 @@ export interface EmpleadoParticipanteOpcion {
 }
 
 /**
- * La tabla `actividad_preventiva` no guarda un estado: «pendiente» y «realizada» se infieren de `programada_en`
- * frente al momento actual (no hay RPC para marcarla como realizada ni para editarla).
+ * Estado explícito de la actividad (enum `estado_actividad`). Transiciones y validaciones en `ActividadEstado.ts`.
+ * TODO: alias de `Database['public']['Enums']['estado_actividad']` al regenerar `database.types.ts`.
  */
-export type EstadoActividad = 'pendiente' | 'realizada';
+export type EstadoActividad = 'pendiente' | 'realizada' | 'cancelada';
 
-export function estadoActividad(item: Pick<ActividadPreventivaItem, 'programadaEn'>, ahora: Date): EstadoActividad {
-  return new Date(item.programadaEn).getTime() >= ahora.getTime() ? 'pendiente' : 'realizada';
+export const ESTADOS_ACTIVIDAD: readonly EstadoActividad[] = ['pendiente', 'realizada', 'cancelada'];
+
+export const ESTADO_ACTIVIDAD_LABELS: Record<EstadoActividad, string> = {
+  pendiente: 'Pendiente',
+  realizada: 'Realizada',
+  cancelada: 'Cancelada',
+};
+
+export function esEstadoActividad(value: unknown): value is EstadoActividad {
+  return typeof value === 'string' && (ESTADOS_ACTIVIDAD as readonly string[]).includes(value);
 }
 
 export interface ActividadRegistradaResult {

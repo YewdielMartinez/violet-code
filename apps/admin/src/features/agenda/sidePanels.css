@@ -1,161 +1,37 @@
-/* Paneles laterales de Agenda: solo tokens del tema (claro/oscuro) y movimiento reducible.
-   Mismo lenguaje que el calendario: superficies tonales redondeadas, sin bordes duros.
-   Cada panel define su acento con --sp-accent / --sp-accent-bg / --sp-accent-fg. */
-.sp-card {
-  --sp-ease: cubic-bezier(0.2, 0, 0, 1);
-  --sp-accent: var(--md-sys-color-primary);
-  --sp-accent-bg: var(--md-sys-color-primary-container);
-  --sp-accent-fg: var(--md-sys-color-on-primary-container);
-  border-radius: 28px;
-  background: color-mix(in srgb, var(--sp-accent-bg) 38%, var(--md-sys-color-surface-container-low));
-  overflow: hidden;
-}
-
-/* Por confirmar: acento morado (el color de «confirmada» en el calendario). */
-.sp-card--confirmar {
-  --sp-accent: var(--md-sys-color-primary);
-  --sp-accent-bg: var(--md-sys-color-primary-container);
-  --sp-accent-fg: var(--md-sys-color-on-primary-container);
-}
-
-/* Lista de urgencias: acento rojo (el color de «prioridad alta»). */
-.sp-card--urgencias {
-  --sp-accent: var(--vc-status-danger);
-  --sp-accent-bg: var(--vc-status-danger-bg);
-  --sp-accent-fg: var(--vc-status-danger);
-}
-
-.sp-card__heading {
-  margin: 0;
-  font: inherit;
-}
-
-.sp-card__toggle {
-  display: flex;
-  width: 100%;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.9rem 1rem 0.75rem;
-  background: transparent;
-  border: 0;
-  color: var(--md-sys-color-on-surface);
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 160ms var(--sp-ease);
-}
-.sp-card__toggle:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent);
-}
-.sp-card__toggle:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: -2px;
-}
-
-.sp-card__icon {
-  display: grid;
-  place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  flex: none;
-  border-radius: 14px;
-  background: var(--sp-accent-bg);
-  color: var(--sp-accent-fg);
-}
-
-.sp-card__titles {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-.sp-card__title {
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.3;
-}
-.sp-card__subtitle {
-  font-size: 0.78rem;
-  line-height: 1.35;
-  color: var(--md-sys-color-on-surface-variant);
-}
-
-.sp-badge {
-  align-self: center;
-  min-width: 1.75rem;
-  padding: 0.15rem 0.55rem;
-  border-radius: 999px;
-  background: var(--sp-accent-bg);
-  color: var(--sp-accent-fg);
-  font-size: 0.85rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.3;
-  text-align: center;
-}
-.sp-badge[data-zero] {
-  background: var(--md-sys-color-surface-container-high);
-  color: var(--md-sys-color-on-surface-variant);
-}
-
-.sp-card__chevron {
-  display: grid;
-  align-self: center;
-  color: var(--md-sys-color-on-surface-variant);
-  transition: transform 260ms var(--sp-ease);
-}
-.sp-card[data-open='true'] .sp-card__chevron {
-  transform: rotate(180deg);
-}
-
-/* Altura animada sin medir: 0fr -> 1fr. */
-.sp-card__body {
-  display: grid;
-  grid-template-rows: 0fr;
-  opacity: 0;
-  visibility: hidden;
-  transition:
-    grid-template-rows 280ms var(--sp-ease),
-    opacity 200ms var(--sp-ease),
-    visibility 0s linear 280ms;
-}
-.sp-card[data-open='true'] .sp-card__body {
-  grid-template-rows: 1fr;
-  opacity: 1;
-  visibility: visible;
-  transition-delay: 0s;
-}
-.sp-card__inner {
-  min-height: 0;
-  overflow: hidden;
-}
-.sp-card[data-open='true'] .sp-card__inner {
-  padding: 0 0.6rem 0.7rem;
-}
-
-/* ── Listas y filas (fichas tonales como los recuadros del calendario) ─────────────── */
+/* Listas de «Por confirmar · mañana» y «Lista de urgencias» (dentro de la hoja lateral de los avisos).
+   Solo superficies tonales neutras del tema (surface-container-*, secondary-container) y un acento
+   de error muy fino para urgencias: nada de primary / primary-container, que en black y oled son
+   negro o blanco puro. El movimiento se reduce con prefers-reduced-motion. */
 .sp-list {
+  --sp-ease: cubic-bezier(0.2, 0, 0, 1);
   margin: 0;
   padding: 0;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  max-height: 24rem;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  gap: 8px;
 }
 
 .sp-row {
+  --sp-ease: cubic-bezier(0.2, 0, 0, 1);
+  --sp-accent: transparent;
   position: relative;
-  border-radius: 16px;
-  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: 18px;
+  background: var(--md-sys-color-surface-container);
   box-shadow: inset 3px 0 0 var(--sp-accent);
   transition: background-color 160ms var(--sp-ease);
+  /* Entrada escalonada al abrir la hoja (el retraso se limita a 8 filas en el componente). */
+  animation: sp-row-in 320ms var(--sp-ease) both;
+  animation-delay: calc(var(--sp-i, 0) * 45ms + 120ms);
 }
 .sp-row:hover,
 .sp-row:focus-within {
-  background: var(--md-sys-color-surface-container);
+  background: var(--md-sys-color-surface-container-high);
+}
+
+/* Urgencias: el único acento de color es una franja fina de error. */
+.sp-row--urgencia {
+  --sp-accent: var(--md-sys-color-error);
 }
 
 .sp-row__main {
@@ -172,12 +48,9 @@
   text-decoration: none;
   cursor: pointer;
 }
-.sp-row__main:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: -2px;
-}
+.sp-row__main:focus-visible,
 .sp-act:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
+  outline: 2px solid var(--md-sys-color-on-surface-variant);
   outline-offset: 2px;
 }
 
@@ -186,8 +59,8 @@
   min-width: 3.1rem;
   padding: 0.25rem 0.4rem;
   border-radius: 10px;
-  background: var(--sp-accent-bg);
-  color: var(--sp-accent-fg);
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
   font-size: 0.875rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -243,7 +116,7 @@
   min-height: 0;
   overflow: hidden;
   border-radius: inherit;
-  padding: 0.6rem 0.7rem 0.6rem 0.9rem;
+  padding: 0.65rem 0.75rem 0.65rem 0.9rem;
 }
 .sp-row--confirmar .sp-row__actions > * {
   flex: 1 1 0;
@@ -256,7 +129,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.6rem 0.7rem 0.6rem 0.9rem;
+  padding: 0.65rem 0.75rem 0.65rem 0.9rem;
 }
 .sp-row--urgencia .sp-row__main {
   min-width: 0;
@@ -301,7 +174,6 @@
   transition:
     background-color 200ms var(--sp-ease),
     color 200ms var(--sp-ease),
-    filter 160ms var(--sp-ease),
     transform 120ms var(--sp-ease);
 }
 .sp-act .mk-icon {
@@ -311,20 +183,22 @@
   transform: scale(0.96);
 }
 
-.sp-act--primary {
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-}
-.sp-act--primary:hover:not(:disabled) {
-  filter: brightness(1.1);
-}
-
+/* Llamar / Reintentar: tonal neutro. */
 .sp-act--tonal {
-  background: var(--md-sys-color-surface-container-high);
+  background: var(--md-sys-color-surface-container-highest);
   color: var(--md-sys-color-on-surface);
 }
 .sp-act--tonal:hover {
-  background: var(--md-sys-color-surface-container-highest);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, var(--md-sys-color-surface-container-highest));
+}
+
+/* Confirmar: tonal secundario (secondary-container), nunca primary. */
+.sp-act--confirm {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+.sp-act--confirm:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 12%, var(--md-sys-color-secondary-container));
 }
 
 .sp-act--done,
@@ -344,7 +218,7 @@
 .sp-chip {
   padding: 0 0.4rem;
   border-radius: 0.4rem;
-  background: var(--md-sys-color-surface-container-high);
+  background: var(--md-sys-color-surface-container-highest);
   color: var(--md-sys-color-on-surface-variant);
   font-size: 0.72rem;
   line-height: 1.4;
@@ -353,8 +227,8 @@
   font-family: var(--mk-font-mono, ui-monospace, monospace);
 }
 .sp-chip--danger {
-  background: var(--vc-status-danger-bg);
-  color: var(--vc-status-danger);
+  background: color-mix(in srgb, var(--md-sys-color-error-container) 55%, var(--md-sys-color-surface-container-highest));
+  color: var(--md-sys-color-on-error-container);
 }
 .sp-chip--umeca {
   background: var(--md-sys-color-tertiary-container);
@@ -362,25 +236,27 @@
   font-weight: 600;
 }
 
-/* Resalte sutil de filas nuevas */
+/* Resalte sutil de filas nuevas (tonal, sin color de marca). */
 .sp-row--new {
-  animation: sp-highlight 2400ms var(--sp-ease) both;
+  animation:
+    sp-row-in 320ms var(--sp-ease) both,
+    sp-highlight 2400ms var(--sp-ease) 120ms both;
 }
 
 /* ── Carga ─────────────────────────────────────────────────────────────────────────── */
 .sp-skeleton {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 .sp-skeleton__row {
   height: 3.6rem;
-  border-radius: 16px;
+  border-radius: 18px;
   background: linear-gradient(
     90deg,
-    var(--md-sys-color-surface-container-lowest) 25%,
-    var(--md-sys-color-surface-container) 50%,
-    var(--md-sys-color-surface-container-lowest) 75%
+    var(--md-sys-color-surface-container) 25%,
+    var(--md-sys-color-surface-container-high) 50%,
+    var(--md-sys-color-surface-container) 75%
   );
   background-size: 200% 100%;
   animation: sp-shimmer 1.4s linear infinite;
@@ -392,7 +268,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.15rem;
-  padding: 0.5rem 0.75rem 0.4rem;
+  padding: 1.25rem 0.75rem 0.75rem;
   text-align: center;
 }
 .sp-empty__icon {
@@ -402,12 +278,12 @@
   height: 2.5rem;
   margin-bottom: 0.25rem;
   border-radius: 999px;
-  background: var(--sp-accent-bg);
-  color: var(--sp-accent-fg);
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
 }
 .sp-empty--error .sp-empty__icon {
-  background: var(--vc-status-danger-bg);
-  color: var(--vc-status-danger);
+  background: color-mix(in srgb, var(--md-sys-color-error-container) 55%, var(--md-sys-color-surface-container-high));
+  color: var(--md-sys-color-on-error-container);
 }
 .sp-empty--error .sp-act {
   margin-top: 0.5rem;
@@ -424,18 +300,18 @@
   color: var(--md-sys-color-on-surface-variant);
 }
 
+@keyframes sp-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
 @keyframes sp-highlight {
   0% {
-    background: var(--sp-accent-bg);
-    transform: translateX(-6px);
-    opacity: 0;
-  }
-  20% {
-    transform: translateX(0);
-    opacity: 1;
+    background: var(--md-sys-color-secondary-container);
   }
   100% {
-    background: var(--md-sys-color-surface-container-lowest);
+    background: var(--md-sys-color-surface-container);
   }
 }
 @keyframes sp-pop {
@@ -456,21 +332,18 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sp-card__body,
-  .sp-card__chevron,
   .sp-row__collapse,
   .sp-row,
-  .sp-act,
-  .sp-card__toggle {
+  .sp-act {
     transition-duration: 0.01ms !important;
     transition-delay: 0s !important;
   }
-  .sp-row--new,
+  .sp-row,
   .sp-act--done .sp-act__icon,
   .sp-skeleton__row {
     animation: none !important;
   }
   .sp-row--new {
-    background: var(--sp-accent-bg);
+    background: var(--md-sys-color-secondary-container);
   }
 }

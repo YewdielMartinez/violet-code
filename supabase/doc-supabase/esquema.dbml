@@ -160,6 +160,12 @@ Enum tipo_institucion_actividad {
   otro
 }
 
+Enum estado_actividad {
+  pendiente
+  realizada
+  cancelada
+}
+
 Enum nivel_educativo {
   primaria
   secundaria
@@ -501,6 +507,10 @@ Table actividad_preventiva {
   asentamiento_id integer
   programada_en timestamptz [not null]
   numero_asistentes smallint
+  estado estado_actividad [not null, default: 'pendiente']
+  realizada_en timestamptz
+  cancelada_motivo text
+  observaciones_cierre text
   activo boolean [not null, default: true]
   creado_en timestamptz [not null, default: `now()`]
   actualizado_en timestamptz [not null, default: `now()`]

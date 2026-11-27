@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -23,7 +22,12 @@ vi.mock('@/features/agenda/api', () => ({
 
 vi.mock('@yewdiel21/motion-kit/react', () => ({ toast: toastMock }));
 
-import { CitasPorConfirmarPanel, ListaUrgenciasPanel } from '@/features/agenda/AgendaSidePanels';
+import {
+  PorConfirmarList,
+  UrgenciasList,
+  usePorConfirmar,
+  useUrgencias,
+} from '@/features/agenda/AgendaSidePanels';
 
 function tomorrowAt(hour: number): string {
   const d = new Date();
@@ -61,17 +65,38 @@ function urgencia(id: string, extra: Partial<ListaUrgenciasItem> = {}): ListaUrg
   };
 }
 
-function renderWithProviders(ui: ReactNode) {
-  const client = new QueryClient();
-  return render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter>{ui}</MemoryRouter>
-    </QueryClientProvider>,
+function queryOk<T>(data: T) {
+  return { data, isPending: false, isError: false, refetch: vi.fn() };
+}
+
+function PorConfirmarHarness({
+  areaId,
+  onOpenCita = vi.fn(),
+}: {
+  areaId?: number | null;
+  onOpenCita?: (c: AgendaItem, a: HTMLElement | null) => void;
+}) {
+  const state = usePorConfirmar(areaId);
+  return (
+    <MemoryRouter>
+      <output data-testid="count">{state.count === undefined ? 'cargando' : state.count}</output>
+      <PorConfirmarList state={state} onOpenCita={onOpenCita} />
+    </MemoryRouter>
   );
 }
 
-function queryOk<T>(data: T) {
-  return { data, isPending: false, isError: false, refetch: vi.fn() };
+function UrgenciasHarness({ areaId }: { areaId?: number | null }) {
+  const state = useUrgencias(areaId);
+  return (
+    <MemoryRouter>
+      <output data-testid="count">{state.count === undefined ? 'cargando' : state.count}</output>
+      <UrgenciasList state={state} />
+    </MemoryRouter>
+  );
+}
+
+function renderUi(ui: ReactNode) {
+  return render(<>{ui}</>);
 }
 
 beforeEach(() => {
@@ -81,8 +106,8 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-describe('CitasPorConfirmarPanel', () => {
-  it('lista las citas de mañana agendadas, con contador y teléfono', () => {
+describe('usePorConfirmar + PorConfirmarList', () => {
+  it('lista las citas de mañana agendadas por hora, con contador y teléfono', () => {
     useAgendaMock.mockReturnValue(
       queryOk([
         cita('b', 15),
@@ -91,92 +116,109 @@ describe('CitasPorConfirmarPanel', () => {
         cita('hoy', 9, { programadaEn: new Date().toISOString() }),
       ]),
     );
-    renderWithProviders(<CitasPorConfirmarPanel onOpenCita={vi.fn()} />);
+    renderUi(<PorConfirmarHarness />);
 
     const items = screen.getAllByRole('listitem');
     expect(items).toHaveLength(2);
     expect(items[0].textContent).toContain('Persona a');
     expect(items[1].textContent).toContain('Persona b');
-    expect(screen.getByLabelText('2 por confirmar')).toBeTruthy();
+    expect(screen.getByTestId('count').textContent).toBe('2');
     expect(screen.getAllByRole('link')[0].getAttribute('href')).toBe('tel:6671234567');
   });
 
-  it('explica su propósito y muestra las acciones con texto, no solo íconos', () => {
-    useAgendaMock.mockReturnValue(queryOk([cita('a', 9), cita('sin', 10, { celular: null })]));
-    renderWithProviders(<CitasPorConfirmarPanel onOpenCita={vi.fn()} />);
+  it('muestra las acciones con texto, no solo íconos, y marca la UMECA', () => {
+    useAgendaMock.mockReturnValue(
+      queryOk([cita('a', 9), cita('sin', 10, { celular: null }), cita('u', 11, { origen: 'umeca' })]),
+    );
+    renderUi(<PorConfirmarHarness />);
 
-    expect(screen.getByText('Por confirmar · mañana')).toBeTruthy();
-    expect(screen.getByText('Llama para confirmar asistencia')).toBeTruthy();
-    expect(screen.getAllByText('Confirmar')).toHaveLength(2);
-    expect(screen.getAllByText('Llamar')).toHaveLength(1);
+    expect(screen.getAllByText('Confirmar')).toHaveLength(3);
+    expect(screen.getAllByText('Llamar')).toHaveLength(2);
     expect(screen.getByText('Sin celular')).toBeTruthy();
+    expect(screen.getByText(/UMECA · obligatoria/)).toBeTruthy();
   });
 
   it('consulta solo agendadas de mañana para el área indicada', () => {
     useAgendaMock.mockReturnValue(queryOk([]));
-    renderWithProviders(<CitasPorConfirmarPanel areaId={3} onOpenCita={vi.fn()} />);
+    renderUi(<PorConfirmarHarness areaId={3} />);
     const query = useAgendaMock.mock.calls[0][0];
     expect(query.areaId).toBe(3);
     expect(query.estados).toEqual(['agendada']);
     expect(Date.parse(query.hasta) - Date.parse(query.desde)).toBeGreaterThanOrEqual(23 * 3600_000);
   });
 
-  it('Confirmar llama a la mutación, muestra el check y avisa con toast', async () => {
-    useAgendaMock.mockReturnValue(queryOk([cita('a', 9)]));
-    renderWithProviders(<CitasPorConfirmarPanel onOpenCita={vi.fn()} />);
+  it('Confirmar llama a la mutación, muestra el check, baja el contador y avisa con toast', async () => {
+    useAgendaMock.mockReturnValue(queryOk([cita('a', 9), cita('b', 10)]));
+    renderUi(<PorConfirmarHarness />);
 
     fireEvent.click(screen.getByRole('button', { name: /Confirmar cita de Persona a/ }));
 
     expect(mutateAsyncMock).toHaveBeenCalledWith({ citaId: 'a', estado: 'confirmada' });
     expect(screen.getByRole('button', { name: /confirmada/i }).hasAttribute('disabled')).toBe(true);
+    // Optimista: el contador ya no cuenta la cita recién confirmada.
+    expect(screen.getByTestId('count').textContent).toBe('1');
     await waitFor(() =>
       expect(toastMock).toHaveBeenCalledWith(expect.stringContaining('confirmada'), { tone: 'success' }),
     );
   });
 
-  it('revierte la UI y muestra error si la mutación falla', async () => {
+  it('revierte la UI y el contador, y muestra error, si la mutación falla', async () => {
     mutateAsyncMock.mockRejectedValueOnce(new Error('Sin permiso'));
     useAgendaMock.mockReturnValue(queryOk([cita('a', 9)]));
-    renderWithProviders(<CitasPorConfirmarPanel onOpenCita={vi.fn()} />);
+    renderUi(<PorConfirmarHarness />);
 
     fireEvent.click(screen.getByRole('button', { name: /Confirmar cita de Persona a/ }));
 
     await waitFor(() => expect(toastMock).toHaveBeenCalledWith('Sin permiso', { tone: 'error' }));
     expect(screen.getByRole('button', { name: /Confirmar cita de Persona a/ }).hasAttribute('disabled')).toBe(false);
+    expect(screen.getByTestId('count').textContent).toBe('1');
   });
 
   it('clic en la fila abre la cita con su elemento ancla', () => {
     const onOpenCita = vi.fn();
     const item = cita('a', 9);
     useAgendaMock.mockReturnValue(queryOk([item]));
-    renderWithProviders(<CitasPorConfirmarPanel onOpenCita={onOpenCita} />);
+    renderUi(<PorConfirmarHarness onOpenCita={onOpenCita} />);
 
     fireEvent.click(screen.getByRole('button', { name: /Abrir cita de Persona a/ }));
     expect(onOpenCita).toHaveBeenCalledWith(item, expect.any(HTMLElement));
   });
 
-  it('muestra el estado vacío cuando todo está confirmado', () => {
-    useAgendaMock.mockReturnValue(queryOk([]));
-    renderWithProviders(<CitasPorConfirmarPanel onOpenCita={vi.fn()} />);
-    expect(screen.getByText('Todo confirmado para mañana')).toBeTruthy();
+  it('las filas llevan su índice para la entrada escalonada', () => {
+    useAgendaMock.mockReturnValue(queryOk([cita('a', 9), cita('b', 10)]));
+    renderUi(<PorConfirmarHarness />);
+    const items = screen.getAllByRole('listitem');
+    expect(items[0].style.getPropertyValue('--sp-i')).toBe('0');
+    expect(items[1].style.getPropertyValue('--sp-i')).toBe('1');
   });
 
-  it('muestra carga y error', () => {
+  it('muestra el estado vacío cuando todo está confirmado', () => {
+    useAgendaMock.mockReturnValue(queryOk([]));
+    renderUi(<PorConfirmarHarness />);
+    expect(screen.getByText('Todo confirmado para mañana')).toBeTruthy();
+    expect(screen.getByTestId('count').textContent).toBe('0');
+  });
+
+  it('muestra carga (sin contador) y error con reintento', () => {
     useAgendaMock.mockReturnValue({ data: undefined, isPending: true, isError: false, refetch: vi.fn() });
-    const { unmount } = renderWithProviders(<CitasPorConfirmarPanel onOpenCita={vi.fn()} />);
+    const { unmount } = renderUi(<PorConfirmarHarness />);
     expect(screen.getByRole('status', { name: 'Cargando' })).toBeTruthy();
+    expect(screen.getByTestId('count').textContent).toBe('cargando');
     unmount();
 
-    useAgendaMock.mockReturnValue({ data: undefined, isPending: false, isError: true, refetch: vi.fn() });
-    renderWithProviders(<CitasPorConfirmarPanel onOpenCita={vi.fn()} />);
+    const refetch = vi.fn();
+    useAgendaMock.mockReturnValue({ data: undefined, isPending: false, isError: true, refetch });
+    renderUi(<PorConfirmarHarness />);
     expect(screen.getByText('No se pudo cargar')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Reintentar/ }));
+    expect(refetch).toHaveBeenCalled();
   });
 });
 
-describe('ListaUrgenciasPanel', () => {
+describe('useUrgencias + UrgenciasList', () => {
   it('renderiza folio, nombre, área, enlace al expediente y teléfono', () => {
     useListaUrgenciasMock.mockReturnValue(queryOk([urgencia('1'), urgencia('2', { celular: null })]));
-    renderWithProviders(<ListaUrgenciasPanel areaId={2} />);
+    renderUi(<UrgenciasHarness areaId={2} />);
 
     expect(useListaUrgenciasMock).toHaveBeenCalledWith(2);
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
@@ -186,43 +228,31 @@ describe('ListaUrgenciasPanel', () => {
     expect(link.getAttribute('href')).toBe('/expedientes/f-1');
     expect(screen.getByRole('link', { name: /Llamar a Urgente 1/ }).getAttribute('href')).toBe('tel:6679876543');
     expect(screen.getByLabelText('Sin celular registrado')).toBeTruthy();
-    expect(screen.getByLabelText('2 personas en espera')).toBeTruthy();
+    expect(screen.getByTestId('count').textContent).toBe('2');
   });
 
-  it('explica su propósito y rotula la acción de llamar', () => {
+  it('rotula la acción de llamar y la antigüedad de la prioridad', () => {
     useListaUrgenciasMock.mockReturnValue(queryOk([urgencia('1')]));
-    renderWithProviders(<ListaUrgenciasPanel />);
-    expect(screen.getByText('Lista de urgencias')).toBeTruthy();
-    expect(
-      screen.getByText('Personas con prioridad alta que pueden ocupar un espacio si alguien cancela'),
-    ).toBeTruthy();
+    renderUi(<UrgenciasHarness />);
     expect(screen.getByText('Llamar')).toBeTruthy();
+    expect(screen.getByText(/Desde/)).toBeTruthy();
   });
 
   it('muestra estado vacío sin personas en espera', () => {
     useListaUrgenciasMock.mockReturnValue(queryOk([]));
-    renderWithProviders(<ListaUrgenciasPanel />);
+    renderUi(<UrgenciasHarness />);
     expect(screen.getByText('Sin personas en espera')).toBeTruthy();
     expect(screen.queryAllByRole('listitem')).toHaveLength(0);
   });
 
   it('muestra carga y error con reintento', () => {
     useListaUrgenciasMock.mockReturnValue({ data: undefined, isPending: true, isError: false, refetch: vi.fn() });
-    const { unmount } = renderWithProviders(<ListaUrgenciasPanel />);
+    const { unmount } = renderUi(<UrgenciasHarness />);
     expect(screen.getByRole('status', { name: 'Cargando' })).toBeTruthy();
     unmount();
 
     useListaUrgenciasMock.mockReturnValue({ data: undefined, isPending: false, isError: true, refetch: vi.fn() });
-    renderWithProviders(<ListaUrgenciasPanel />);
+    renderUi(<UrgenciasHarness />);
     expect(screen.getByText('No se pudo cargar')).toBeTruthy();
-  });
-
-  it('se puede colapsar y expandir', () => {
-    useListaUrgenciasMock.mockReturnValue(queryOk([urgencia('1')]));
-    renderWithProviders(<ListaUrgenciasPanel />);
-    const toggle = screen.getByRole('button', { name: /Lista de urgencias/ });
-    expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    fireEvent.click(toggle);
-    expect(toggle.getAttribute('aria-expanded')).toBe('false');
   });
 });

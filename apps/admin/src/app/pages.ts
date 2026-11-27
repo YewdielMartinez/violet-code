@@ -9,6 +9,7 @@ const loadExpedienteDetail = () => import('@/features/expedientes/ExpedienteDeta
 const loadNuevaFicha = () => import('@/features/expedientes/ficha/NuevaFichaPage');
 const loadAgenda = () => import('@/features/agenda/AgendaPage');
 const loadActividades = () => import('@/features/actividades/ActividadesPage');
+const loadIntervenciones = () => import('@/features/intervenciones/IntervencionesPage');
 const loadAlertas = () => import('@/features/solicitudes/AlertasPage');
 const loadPending = () => import('@/shared/ui/PendingModulePage');
 
@@ -20,6 +21,7 @@ export const ExpedienteDetailPage = lazy(loadExpedienteDetail);
 export const NuevaFichaPage = lazy(loadNuevaFicha);
 export const AgendaPage = lazy(loadAgenda);
 export const ActividadesPage = lazy(loadActividades);
+export const IntervencionesPage = lazy(loadIntervenciones);
 export const AlertasPage = lazy(loadAlertas);
 export const PendingModulePage = lazy(loadPending);
 

@@ -1,15 +1,25 @@
-import {
-  estadoActividad,
-  type ActividadPreventivaFilters,
-  type ActividadPreventivaItem,
-  type EstadoActividad,
-  type TipoInstitucionActividad,
+import type {
+  ActividadPreventivaFilters,
+  ActividadPreventivaItem,
+  EstadoActividad,
+  TipoInstitucionActividad,
 } from '@/domain/models/ActividadPreventiva';
 
 /** Tope del RPC `get_actividades_preventivas` (`p_limite` 1..200). */
 export const ACTIVIDADES_LIMITE = 200;
 
-export type ActividadTab = 'pendientes' | 'realizadas' | 'todas';
+export type ActividadTab = 'pendientes' | 'realizadas' | 'canceladas' | 'todas';
+
+/** Estado que pide cada pestaña al servidor (`p_estado`); «Todas» no filtra. */
+export const TAB_ESTADO: Record<ActividadTab, EstadoActividad | null> = {
+  pendientes: 'pendiente',
+  realizadas: 'realizada',
+  canceladas: 'cancelada',
+  todas: null,
+};
+
+/** Orden de las pestañas: decide hacia dónde se desliza el contenido al cambiar. */
+export const TAB_ORDEN: readonly ActividadTab[] = ['pendientes', 'realizadas', 'canceladas', 'todas'];
 
 export interface ActividadListFilters {
   tab: ActividadTab;
@@ -89,20 +99,18 @@ export function mensajeError(error: unknown, fallback: string): string {
 }
 
 /**
- * Parámetros del RPC según la pestaña y el rango. «Pendientes» pide desde ahora; «Realizadas» hasta ahora.
- * Devuelve `null` si el rango elegido no puede contener resultados (evita el error `p_desde > p_hasta` del RPC).
+ * Parámetros del RPC: el estado de la pestaña (`p_estado`) y el rango de fechas elegido (día de Mazatlán).
+ * Devuelve `null` si el rango no puede contener resultados (evita el error `p_desde > p_hasta` del RPC).
  */
-export function construirFiltrosServidor(filtros: ActividadListFilters, ahora: Date): ActividadPreventivaFilters | null {
-  const ahoraMs = ahora.getTime();
-  let desde = filtros.desde ? new Date(`${filtros.desde}T00:00:00-07:00`).getTime() : null;
-  let hasta = filtros.hasta ? new Date(`${filtros.hasta}T23:59:59.999-07:00`).getTime() : null;
-  if (filtros.tab === 'pendientes') desde = desde === null ? ahoraMs : Math.max(desde, ahoraMs);
-  if (filtros.tab === 'realizadas') hasta = hasta === null ? ahoraMs : Math.min(hasta, ahoraMs);
+export function construirFiltrosServidor(filtros: ActividadListFilters): ActividadPreventivaFilters | null {
+  const desde = filtros.desde ? new Date(`${filtros.desde}T00:00:00-07:00`).getTime() : null;
+  const hasta = filtros.hasta ? new Date(`${filtros.hasta}T23:59:59.999-07:00`).getTime() : null;
   if ((desde !== null && Number.isNaN(desde)) || (hasta !== null && Number.isNaN(hasta))) return null;
   if (desde !== null && hasta !== null && desde > hasta) return null;
   return {
     desde: desde === null ? null : new Date(desde).toISOString(),
     hasta: hasta === null ? null : new Date(hasta).toISOString(),
+    estado: TAB_ESTADO[filtros.tab],
     limite: ACTIVIDADES_LIMITE,
   };
 }
@@ -123,17 +131,18 @@ function textoBusqueda(item: ActividadPreventivaItem): string {
   );
 }
 
-/** Búsqueda por institución/lugar, tipo de institución y coherencia con la pestaña (el reloj pudo cruzar el borde). */
+/**
+ * Búsqueda por institución/lugar, tipo de institución y coherencia con la pestaña (un cambio de estado optimista
+ * saca la actividad de la pestaña actual antes de que llegue la respuesta del servidor).
+ */
 export function filtrarActividades(
   items: readonly ActividadPreventivaItem[],
   filtros: ActividadListFilters,
-  ahora: Date,
 ): ActividadPreventivaItem[] {
   const termino = normalizar(filtros.busqueda);
-  const estadoBuscado: EstadoActividad | null =
-    filtros.tab === 'pendientes' ? 'pendiente' : filtros.tab === 'realizadas' ? 'realizada' : null;
+  const estadoBuscado = TAB_ESTADO[filtros.tab];
   return items.filter((item) => {
-    if (estadoBuscado && estadoActividad(item, ahora) !== estadoBuscado) return false;
+    if (estadoBuscado && item.estado !== estadoBuscado) return false;
     if (filtros.tipoInstitucion && item.tipoInstitucion !== filtros.tipoInstitucion) return false;
     return !termino || textoBusqueda(item).includes(termino);
   });
@@ -156,32 +165,40 @@ function etiquetaDia(dia: string, iso: string, ahora: Date): string {
   return capitalizar(texto);
 }
 
+const ORDEN_ESTADO: Record<EstadoActividad, number> = { pendiente: 0, realizada: 1, cancelada: 2 };
+
 /**
- * Agrupa por día (Mazatlán): primero lo pendiente, de lo más próximo a lo más lejano; después lo realizado,
- * de lo más reciente a lo más antiguo. Dentro de cada día, por hora.
+ * Agrupa por día (Mazatlán): primero lo pendiente, de lo más próximo a lo más lejano (las vencidas, por cerrar,
+ * quedan arriba); después lo realizado y lo cancelado, de lo más reciente a lo más antiguo. Dentro de cada día,
+ * por hora.
  */
 export function agruparActividadesPorDia(items: readonly ActividadPreventivaItem[], ahora: Date): ActividadGrupoDia[] {
   const grupos = new Map<string, ActividadGrupoDia>();
   for (const item of items) {
     const dia = diaMazatlan(item.programadaEn);
-    const estado = estadoActividad(item, ahora);
-    const key = `${estado}:${dia}`;
+    const key = `${item.estado}:${dia}`;
     const grupo = grupos.get(key);
     if (grupo) grupo.items.push(item);
-    else grupos.set(key, { key, estado, etiqueta: etiquetaDia(dia, item.programadaEn, ahora), items: [item] });
+    else grupos.set(key, { key, estado: item.estado, etiqueta: etiquetaDia(dia, item.programadaEn, ahora), items: [item] });
   }
   const lista = [...grupos.values()];
   for (const grupo of lista) {
     grupo.items.sort((a, b) => new Date(a.programadaEn).getTime() - new Date(b.programadaEn).getTime());
   }
   const inicio = (g: ActividadGrupoDia) => new Date(g.items[0].programadaEn).getTime();
-  const pendientes = lista.filter((g) => g.estado === 'pendiente').sort((a, b) => inicio(a) - inicio(b));
-  const realizadas = lista.filter((g) => g.estado === 'realizada').sort((a, b) => inicio(b) - inicio(a));
-  return [...pendientes, ...realizadas];
+  return lista.sort((a, b) => {
+    if (a.estado !== b.estado) return ORDEN_ESTADO[a.estado] - ORDEN_ESTADO[b.estado];
+    return a.estado === 'pendiente' ? inicio(a) - inicio(b) : inicio(b) - inicio(a);
+  });
 }
 
 /** «Colonia, Municipio» (lo que haya) de la actividad, o `null`. */
 export function ubicacionActividad(item: Pick<ActividadPreventivaItem, 'asentamientoNombre' | 'municipio'>): string | null {
   const partes = [item.asentamientoNombre, item.municipio].filter(Boolean);
   return partes.length ? partes.join(', ') : null;
+}
+
+/** ¿Hay algún filtro aparte de la pestaña (búsqueda, institución o rango de fechas)? */
+export function hayFiltrosActivos(filtros: ActividadListFilters): boolean {
+  return filtros.busqueda !== '' || filtros.tipoInstitucion !== '' || filtros.desde !== '' || filtros.hasta !== '';
 }

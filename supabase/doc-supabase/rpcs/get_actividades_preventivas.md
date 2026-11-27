@@ -3,7 +3,7 @@
 - **Migración:** `supabase/migrations/20261126001600_26_rpc_actividades_preventivas.sql`
 - **Permiso RBAC:** `public.tiene_permiso('actividad.ver')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico`, `recepcion`
-- **Cubre:** `RF-16` (B-05 · Sprint 01)
+- **Cubre:** `RF-16` (B-05 · Sprint 01); estado de actividad en `20261127001000_41_actividad_estado.sql`
 
 ## 1. Entrada (parámetros)
 
@@ -12,6 +12,7 @@
 | `p_desde` | `timestamptz` | No | Inicio del rango sobre `programada_en` (inclusive). Default `null` |
 | `p_hasta` | `timestamptz` | No | Fin del rango sobre `programada_en` (inclusive). Default `null`. Si ambos vienen definidos, `p_desde <= p_hasta` |
 | `p_limite` | `integer` | No | Máximo de filas a devolver, rango `1..200`. Default `100` |
+| `p_estado` | `public.estado_actividad` | No | Filtra por estado (`pendiente`, `realizada`, `cancelada`). Default `null` (todas) |
 
 ## 2. Salida (`table`)
 
@@ -39,6 +40,10 @@ Arreglo de actividades activas ordenadas por `programada_en DESC, creado_en DESC
 | `creado_por_nombre` | `text` | Nombre del empleado que registró |
 | `creado_en` | `timestamptz` | Fecha de creación del registro |
 | `participantes` | `jsonb` | Arreglo JSON de `{ empleado_id, nombre, rol }` ordenado por `nombre` (`[]` si no hay) |
+| `estado` | `estado_actividad` | `pendiente`, `realizada` o `cancelada` |
+| `realizada_en` | `timestamptz` | Momento en que se marcó realizada (`null` si no lo está) |
+| `cancelada_motivo` | `text` | Motivo de cancelación (opcional) |
+| `observaciones_cierre` | `text` | Observaciones al marcarla realizada (opcional) |
 
 ## 3. Reglas ABAC y efectos secundarios
 - Valida `public.tiene_permiso('actividad.ver')` (permite a todo empleado activo incluyendo `recepcion`; rechaza `anon`, UMECA y empleados inactivos).

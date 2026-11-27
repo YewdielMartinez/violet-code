@@ -6,6 +6,7 @@ import type {
   EstadoCita,
   EstadoCitaGestionable,
   ListaUrgenciasItem,
+  PersonaAgendaItem,
   ReagendarCitaInput,
   ReagendarCitaResult,
 } from '../models/Cita';
@@ -19,5 +20,7 @@ export interface CitaRepository {
     motivo?: string | null,
   ): Promise<CambiarEstadoCitaResult>;
   reagendar(input: ReagendarCitaInput): Promise<ReagendarCitaResult>;
+  /** Búsqueda por nombre/apellidos o prefijo de CURP (≥ 3 caracteres) para agendar; excluye fichas archivadas. */
+  buscarPersonas(termino: string, limite?: number): Promise<PersonaAgendaItem[]>;
   listarUrgencias(areaId?: number | null): Promise<ListaUrgenciasItem[]>;
 }

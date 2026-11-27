@@ -79,6 +79,7 @@ const { data, error } = await supabase.rpc('get_actividades_preventivas', {
   p_desde: '2026-12-01T00:00:00-07:00',
   p_hasta: '2026-12-31T23:59:59-07:00',
   p_limite: 100,
+  p_estado: 'realizada', // opcional: 'pendiente' | 'realizada' | 'cancelada'
 });
 ```
 
@@ -89,6 +90,7 @@ const { data, error } = await supabase.rpc('get_actividades_preventivas', {
 | `p_desde` | `string \| null` | No | Inclusivo, sobre `programada_en`. |
 | `p_hasta` | `string \| null` | No | **Inclusivo**. Si vienen ambos, `p_desde <= p_hasta`. |
 | `p_limite` | `number` | No | `1..200`, default 100. |
+| `p_estado` | `'pendiente' \| 'realizada' \| 'cancelada' \| null` | No | Filtra por estado. Default `null` (todas). |
 
 **Respuesta** (arreglo, más recientes primero)
 
@@ -114,6 +116,10 @@ interface ActividadPreventivaRow {
   creado_por_nombre: string;
   creado_en: string;
   participantes: Array<{ empleado_id: string; nombre: string; rol: RolEmpleado }>;  // [] si no hay
+  estado: EstadoActividad;            // 'pendiente' | 'realizada' | 'cancelada'
+  realizada_en: string | null;
+  cancelada_motivo: string | null;
+  observaciones_cierre: string | null;
 }
 ```
 
@@ -125,3 +131,48 @@ interface ActividadPreventivaRow {
 | `23514` | `p_limite` fuera de rango o `p_desde > p_hasta` | `error.message` |
 
 **En el front:** pendiente. Sugerido: `actividades/useActividades` · `queryKey ['actividades', desde, hasta]`.
+
+---
+
+## `actualizar_estado_actividad`
+
+> Marca una actividad como realizada, cancelada o la reabre (pendiente). Sirve para llevar el control de qué escuelas, instituciones o empresas ya fueron visitadas.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+|---|---|---|---|---|
+| `actividad.registrar` | Tit, Sub, TS, Psi, Jur | Escritura | Sí (`actualizar`) | `_41_actividad_estado` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('actualizar_estado_actividad', {
+    p_actividad_id: actividadId,
+    p_estado: 'realizada',
+    p_numero_asistentes: 80,           // opcional, 0..10000 (solo al realizar)
+    p_observaciones: 'Sin incidentes', // opcional, <= 1000 (solo al realizar)
+    p_motivo_cancelacion: null,        // opcional, <= 500 (solo al cancelar)
+  })
+  .single();
+// data: { actividad_id, estado, realizada_en }
+```
+
+**Transiciones**
+
+| Desde | Hacia | Efecto |
+|---|---|---|
+| `pendiente` | `realizada` | `realizada_en = now()`, guarda asistentes y observaciones |
+| `pendiente` | `cancelada` | Guarda el motivo (opcional) |
+| `realizada` / `cancelada` | `pendiente` | Reapertura: limpia `realizada_en`, motivo y observaciones |
+| `realizada` <-> `cancelada` | — | No directo: reabrir primero (`22023`) |
+
+**Errores**
+
+| Código | Cuándo | Mensaje UI |
+|---|---|---|
+| `42501` | Rec, UMECA, app, inactivo | Fijo de permiso |
+| `22023` | Mismo estado (`La actividad ya está en ese estado`) o transición realizada <-> cancelada | `error.message` |
+| `23514` | Asistentes fuera de `0..10000`, observaciones > 1000 o motivo > 500 | `error.message` |
+| `P0002` | Actividad inexistente o inactiva | `error.message` |
+
+**En el front:** pendiente. Sugerido: `actividades/useActualizarEstadoActividad` (invalida `['actividades']`).

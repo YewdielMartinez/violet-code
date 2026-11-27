@@ -22,6 +22,10 @@ export function act(id: string, programadaEn: string, extra: Partial<ActividadPr
     creadoPorNombre: null,
     creadoEn: '2026-11-20T00:00:00Z',
     participantes: [],
+    estado: 'pendiente',
+    realizadaEn: null,
+    canceladaMotivo: null,
+    observacionesCierre: null,
     ...extra,
   };
 }
