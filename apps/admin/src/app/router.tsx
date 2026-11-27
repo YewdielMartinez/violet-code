@@ -14,6 +14,7 @@ import {
   LoginPage,
   NuevaFichaPage,
   PendingModulePage,
+  UsuarioFormPage,
   UsuariosPage,
   preloadPage,
 } from './pages';
@@ -173,6 +174,22 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={pageFallback}>
             <ExpedienteDetailPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/usuarios/nuevo',
+        element: (
+          <Suspense fallback={pageFallback}>
+            <UsuarioFormPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/usuarios/:id',
+        element: (
+          <Suspense fallback={pageFallback}>
+            <UsuarioFormPage />
           </Suspense>
         ),
       },

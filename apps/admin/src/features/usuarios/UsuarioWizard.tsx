@@ -98,6 +98,9 @@ export function UsuarioWizardSteps({
       if (typeof scroller.scrollTo === 'function') scroller.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
       else scroller.scrollTop = 0;
     }
+    if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+      window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
+    }
     const activeEl = formRef.current?.querySelectorAll<HTMLElement>('[data-mk-step]')?.[next];
     if (activeEl && !reducedMotion && next !== previous) {
       const dir = next > previous ? 1 : -1;

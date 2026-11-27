@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { DataTable, EmptyState, Skeleton, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/data-table';
 import '@yewdiel21/motion-kit/css/components/empty-state';
@@ -8,6 +8,7 @@ import '@yewdiel21/motion-kit/css/components/menu';
 import '@yewdiel21/motion-kit/css/components/pagination';
 import '@yewdiel21/motion-kit/css/components/select';
 import '@yewdiel21/motion-kit/css/components/skeleton';
+import { preloadPage } from '@/app/pages';
 import { useAuth } from '@/shared/auth/useAuth';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { ToolbarPrimaryButton } from '@/shared/ui/Toolbar';
@@ -21,7 +22,6 @@ import {
   useUsuarios,
   type UsuarioCuenta,
 } from './api';
-import { UsuarioDrawer } from './UsuarioDrawer';
 import { UsuarioEstadoDialog } from './UsuarioEstadoDialog';
 import {
   COLUMNS,
@@ -84,8 +84,7 @@ export default function UsuariosPage() {
   const { data, isLoading, isError, refetch } = useUsuarios(canManage);
   const cambiarActivo = useCambiarActivoUsuario();
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editing, setEditing] = useState<UsuarioCuenta | null>(null);
+  const navigate = useNavigate();
   const [estadoTarget, setEstadoTarget] = useState<UsuarioCuenta | null>(null);
 
   const rawFilter = searchParams.get('filtro');
@@ -150,10 +149,14 @@ export default function UsuariosPage() {
     }));
   }, [data, quickFilter, user?.id]);
 
-  const openEditor = useCallback((cuenta: UsuarioCuenta | null) => {
-    setEditing(cuenta);
-    setDrawerOpen(true);
-  }, []);
+  const openEditor = useCallback(
+    (cuenta: UsuarioCuenta | null) => {
+      const target = cuenta ? `/usuarios/${encodeURIComponent(cuenta.id)}` : '/usuarios/nuevo';
+      preloadPage(target);
+      navigate(target);
+    },
+    [navigate],
+  );
 
   const requestToggle = useCallback(
     (cuenta: UsuarioCuenta) => {
@@ -240,6 +243,8 @@ export default function UsuariosPage() {
               label="Nuevo usuario"
               icon="person_add"
               showLabel
+              onPointerEnter={() => preloadPage('/usuarios/nuevo')}
+              onFocus={() => preloadPage('/usuarios/nuevo')}
               onClick={() => openEditor(null)}
             />
           </>
@@ -265,8 +270,6 @@ export default function UsuariosPage() {
           onTableKeyDown={handleTableKeyDown}
         />
       )}
-
-      <UsuarioDrawer open={drawerOpen} cuenta={editing} onClose={() => setDrawerOpen(false)} />
 
       <UsuarioEstadoDialog
         cuenta={estadoTarget}
