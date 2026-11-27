@@ -139,6 +139,7 @@ select throws_ok(
 );
 
 -- 7) Si un INSERT directo intenta enviar un folio manual, el trigger del servidor lo sobrescribe
+reset role;
 insert into public.atencion (
   id, ficha_id, cita_id, area_id, tipo_atencion_id, atendida_por, folio_seguimiento, creado_por
 )

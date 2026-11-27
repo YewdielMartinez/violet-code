@@ -92,6 +92,33 @@ interface RegistrarSeguimientoRow {
 
 - El área sale siempre del actor (`auth_area_id()`); el front no la manda.
 - El `folio_seguimiento` se genera siempre en servidor (`SEG-AAAA-NNNNN` provisional); el front no lo manda ni puede editarlo.
+- No copia `estado_civil`, `ocupacion_id`, `ocupacion_otra`, `celular` ni `domicilio_id` de la ficha en cada atención.
+
+---
+
+## `corregir_seguimiento`
+
+> Corrige un seguimiento ya registrado. Solo puede ejecutarlo quien creó la atención el mismo día (`America/Mazatlan`), o Dirección en cualquier momento. Exige `p_actualizado_en` para concurrencia optimista (`40001`).
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+|---|---|---|---|---|
+| `seguimiento.corregir` | Creador (mismo día) o Dirección | Escritura | Sí (`'actualizar'` sin valor anterior) | `_43_corregir_seguimiento` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('corregir_seguimiento', {
+    p_atencion_id: atencionId,
+    p_actualizado_en: actualizadoEn,
+    p_tipo_atencion_id: tipoAtencionId,
+    p_acciones_realizadas: 'Acción corregida',
+    p_proxima_accion: 'Siguiente paso',
+    p_prioridad: 'media',
+    p_observaciones: null,
+  })
+  .single();
+```
 - Exige `p_cita_id` de una cita programada para **hoy** (`America/Mazatlan`) y la pasa automáticamente a `asistio`. Si la persona llega sin cita previa, el flujo crea primero una cita del día (`estado = 'agendada'`) y luego registra el seguimiento.
 - Si el expediente estaba `abierto`, pasa a `en_seguimiento`.
 - Psicología y Jurídico no pueden atender a menores de 18 años (RN-01): lo bloquea un trigger con `23514`.

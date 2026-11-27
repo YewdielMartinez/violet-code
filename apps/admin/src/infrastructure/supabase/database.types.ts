@@ -1013,6 +1013,11 @@ isOneToOne: false
               "actualizado_en": string,"derivacion_id": string,"estado": Database["public"]['Enums']["estado_derivacion"]
             }[]
                            },
+"corregir_seguimiento":
+{ Args: { "p_acciones_realizadas"?: string,"p_actualizado_en": string,"p_atencion_id": string,"p_observaciones"?: string,"p_prioridad"?: Database["public"]['Enums']["prioridad_nivel"],"p_proxima_accion"?: string,"p_tipo_atencion_id"?: number }; Returns: {
+              "actualizado_en": string,"atencion_id": string,"folio_seguimiento": string
+            }[]
+                           },
 "crear_ficha_completa":
 { Args: { "p_payload": Json }; Returns: {
               "ficha_id": string,"folio": string,"persona_id": string

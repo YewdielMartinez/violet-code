@@ -335,12 +335,11 @@ select throws_ok(
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111104'::uuid); -- psicologia
-with upd as (
-  update public.atencion set observaciones = 'Act Psic'
-  where id = 'eeeeeeee-2100-4000-8000-000000000002'
-  returning 1
-)
-select is((select count(*)::int from upd), 1, 'psicologia actualiza su atencion');
+select throws_ok(
+  $$update public.atencion set observaciones = 'Act Psic'
+    where id = 'eeeeeeee-2100-4000-8000-000000000002'$$,
+  '42501', null, 'psicologia no actualiza atencion directamente (with check false)'
+);
 with upd as (
   update public.atencion set observaciones = 'Act TS'
   where id = 'eeeeeeee-2100-4000-8000-000000000001'
@@ -349,9 +348,9 @@ with upd as (
 select is((select count(*)::int from upd), 0, 'psicologia no actualiza atencion de TS');
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111105'::uuid); -- juridico
-select lives_ok(
+select throws_ok(
   $$insert into public.atencion (ficha_id, area_id, tipo_atencion_id) values ('55555555-5555-4555-8555-555555555501', (select id from public.cat_area where clave = 'juridico'), (select id from public.cat_tipo_atencion where clave = 'asesoria_juridica'))$$,
-  'juridico inserta atencion en su area'
+  '42501', null, 'juridico no inserta atencion directamente (with check false)'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111106'::uuid); -- recepcion
