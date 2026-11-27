@@ -84,8 +84,8 @@ En la base de datos **no se renombran** las tablas ni las columnas ya creadas; u
 | RPC | Qué hace | Permiso | Roles | Tipo |
 |---|---|---|---|---|
 | `get_agenda` | Citas de un rango (máx. 31 días) filtradas por rol | empleado activo | Todos los empleados | Lectura |
-| `cambiar_estado_cita` | Confirmar, cancelar o marcar inasistencia | empleado activo + área | Todos los empleados | Escritura |
-| `reagendar_cita` | Crea la cita nueva y marca la anterior como `reagendada` | empleado activo + área | Todos los empleados | Escritura |
+| `cambiar_estado_cita` | Confirmar, cancelar o marcar inasistencia | `agenda.gestionar` + área | Todos los empleados | Escritura |
+| `reagendar_cita` | Crea la cita nueva y marca la anterior como `reagendada` | `agenda.crear` + área | Rec (3 áreas), Jur (su área) | Escritura |
 | `get_lista_urgencias` | Prioridad alta sin cita próxima (RF-07) | rol | Tit, Sub, TS, Psi, Rec | Lectura |
 | `get_umeca_citas` | Citas de origen UMECA para la dependencia | `es_umeca()` | UMECA | Lectura + bitácora |
 
@@ -151,9 +151,10 @@ En la base de datos **no se renombran** las tablas ni las columnas ya creadas; u
 | `archivar_ficha` | ✅ | ✅ | — | — | — | — | — |
 | `get_linea_tiempo` | ✅ | ⚠️ detalle solo propio | ⚠️ | ⚠️ | — | — | — |
 | `registrar_consulta` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — |
-| `registrar_seguimiento` | — | ⚠️ su área | ⚠️ su área | ⚠️ su área | — | — | — |
-| `get_agenda` | ✅ | ⚠️ TS+Psi | ⚠️ su área | ⚠️ su área | ⚠️ TS+Psi | — | — |
-| `cambiar_estado_cita` / `reagendar_cita` | ✅ | ⚠️ su área | ⚠️ su área | ⚠️ su área | ⚠️ TS+Psi | — | — |
+| `registrar_seguimiento` | — | ⚠️ su área (sin próxima cita) | ⚠️ su área (sin próxima cita) | ⚠️ su área | — | — | — |
+| `get_agenda` | ✅ | ⚠️ TS+Psi | ⚠️ su área | ⚠️ su área | ✅ TS+Psi+Jur | — | — |
+| `cambiar_estado_cita` | ✅ | ⚠️ su área | ⚠️ su área | ⚠️ su área | ✅ TS+Psi+Jur | — | — |
+| `reagendar_cita` (= crear cita) | — | — | — | ⚠️ su área | ✅ TS+Psi+Jur | — | — |
 | `get_lista_urgencias` | ✅ | ✅ | ✅ | — | ✅ | — | — |
 | `get_umeca_citas` | — | — | — | — | — | ✅ | — |
 | `get_cola_alertas` | ✅ | ✅ (solo ver) | ✅ (solo ver) | ✅ | — | — | — |

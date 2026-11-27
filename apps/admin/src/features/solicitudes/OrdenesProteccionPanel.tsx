@@ -11,6 +11,7 @@ import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/hold-confirm';
 import '@yewdiel21/motion-kit/css/components/skeleton';
 import { useAuth } from '@/shared/auth/useAuth';
+import { DeferredDialogContent, DialogFormSkeleton } from '@/shared/ui/DeferredDialogContent';
 import { Icon } from '@/shared/ui/Icon';
 import { OrdenProteccionForm } from './OrdenProteccionForm';
 import {
@@ -38,6 +39,8 @@ const ESTADO_CHIP: Record<EstadoOrdenProteccion, string> = {
 };
 
 const RETRY_ACTION = [{ id: 'retry', label: 'Reintentar' }];
+/** Alturas (rem) de los bloques del marcador: aproximan el formulario para que el diálogo no cambie de alto al montarlo. */
+const FORM_SKELETON_BLOCKS = [5, 5, 5, 13] as const;
 
 /**
  * Panel de Órdenes de Protección para montar dentro del Drawer de un expediente (`RF-17`, `RN-17`).
@@ -331,7 +334,10 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
             </div>
           </Dialog.Header>
 
-          {formMounted ? (
+          <DeferredDialogContent
+            active={formMounted}
+            fallback={<DialogFormSkeleton blocks={FORM_SKELETON_BLOCKS} />}
+          >
             <OrdenProteccionForm
               key={editingOrden?.id ?? 'new'}
               fichaId={fichaId}
@@ -340,7 +346,7 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
               onCancel={closeForm}
               onSuccess={closeForm}
             />
-          ) : null}
+          </DeferredDialogContent>
         </Dialog.Content>
       </Dialog.Root>
     </section>

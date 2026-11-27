@@ -13,13 +13,16 @@ Estados de una cita: `agendada → confirmada → asistio | no_asistio`, o `canc
 
 **Alcance por rol** (lo aplican todas las RPC de este archivo y la RLS de `cita`):
 
-| Rol | Ve | Gestiona |
-|---|---|---|
-| Tit, Sub | Todas las áreas | Todas las áreas |
-| Recepción | Trabajo Social y Psicología | Trabajo Social y Psicología |
-| Trabajo Social | Trabajo Social y Psicología | Solo Trabajo Social |
-| Psicología, Jurídico | Solo su área | Solo su área |
+| Rol | Ve | Gestiona (confirmar / cancelar / no asistió) | Crea y reagenda |
+|---|---|---|---|
+| Tit, Sub | Todas las áreas | Todas las áreas | No |
+| Recepción | Trabajo Social, Psicología y Jurídico | Trabajo Social, Psicología y Jurídico | Trabajo Social, Psicología y Jurídico |
+| Trabajo Social | Trabajo Social y Psicología | Solo Trabajo Social | No |
+| Psicología | Solo su área | Solo su área | No |
+| Jurídico | Solo su área | Solo su área | Solo Jurídico |
 
+> **Regla de creación (permiso `agenda.crear`, migración `_39_agenda_permisos_creacion`):** solo Recepción (3 áreas) y Jurídico (su área) crean citas. Como reagendar genera una cita nueva, sigue la misma regla. Las citas UMECA (`origen = 'umeca'`) no cambian: se consultan con `get_umeca_citas()`.
+>
 > Crear una cita nueva no tiene RPC: es un `insert` directo sobre `cita`. Ver [tablas-directas.md](./tablas-directas.md#cita).
 
 ---
@@ -123,7 +126,7 @@ const { data, error } = await supabase
 
 | Código | Cuándo | Mensaje UI |
 |---|---|---|
-| `42501` | Sin permiso, o cita fuera del alcance del rol (por ejemplo, Recepción sobre Jurídico) | Fijo de permiso |
+| `42501` | Sin permiso, o cita fuera del alcance del rol (por ejemplo, Psicología sobre Jurídico) | Fijo de permiso |
 | `23514` | Cita inexistente, estado destino inválido, motivo largo o transición no permitida | `error.message` |
 
 **En el front:** `SupabaseCitaRepository.cambiarEstado` · `agenda/useCambiarEstadoCita` (invalida `['agenda']` y `['agenda','urgencias']`).
@@ -136,7 +139,7 @@ const { data, error } = await supabase
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| Empleado activo + alcance de área | Todos los empleados (ver tabla de alcance) | Escritura | Sí, por trigger | `_23_rpc_reagendar_y_urgencias` |
+| `agenda.crear` + alcance de área | Recepción (3 áreas) y Jurídico (su área). Dirección, TS y Psicología: `42501` | Escritura | Sí, por trigger | `_23_rpc_reagendar_y_urgencias` y `_39_agenda_permisos_creacion` |
 
 **Llamada**
 

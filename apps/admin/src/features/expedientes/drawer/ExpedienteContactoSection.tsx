@@ -1,12 +1,9 @@
 import { memo } from 'react';
 import { toast } from '@yewdiel21/motion-kit/react';
-import { ESTADO_FICHA_LABELS, type ExpedienteResumen } from '@/domain/models/Persona';
+import type { ExpedienteResumen } from '@/domain/models/Persona';
 import { Icon } from '@/shared/ui/Icon';
-import {
-  ESTADO_BADGE_STYLES,
-  copyTextToClipboard,
-  formatPhoneDisplay,
-} from './formatters';
+import { ExpedienteEstadoCard } from './ExpedienteEstado';
+import { copyTextToClipboard, formatPhoneDisplay } from './formatters';
 
 interface Props {
   expediente: ExpedienteResumen;
@@ -16,7 +13,6 @@ interface Props {
 export const ExpedienteContactoSection = memo(function ExpedienteContactoSection({
   expediente,
 }: Props) {
-  const statusStyle = ESTADO_BADGE_STYLES[expediente.estado];
   const rawPhone = expediente.persona.celular?.trim() ?? '';
   const formattedPhone = formatPhoneDisplay(expediente.persona.celular);
 
@@ -31,28 +27,7 @@ export const ExpedienteContactoSection = memo(function ExpedienteContactoSection
 
   return (
     <div className="grid gap-6">
-      <section aria-label="Estado del expediente" className="grid gap-2">
-        <p className="text-base font-semibold text-on-surface">Estado del expediente</p>
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-base font-medium ${statusStyle.pill}`}
-          >
-            <span aria-hidden className={`size-2 rounded-full ${statusStyle.dot}`} />
-            <span>{ESTADO_FICHA_LABELS[expediente.estado]}</span>
-          </span>
-
-          {expediente.enListaUrgencias ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-status-danger-bg px-4 py-1.5 text-base font-medium text-status-danger">
-              <span aria-hidden className="size-2 rounded-full bg-status-danger" />
-              <span>Prioritario</span>
-            </span>
-          ) : null}
-
-          <span className="text-sm text-on-surface-variant">
-            Consulta auditada en bitácora (RF-22)
-          </span>
-        </div>
-      </section>
+      <ExpedienteEstadoCard expediente={expediente} />
 
       <section aria-label="Contacto" className="grid gap-2.5">
         <h4 className="text-base font-semibold text-on-surface">Contacto</h4>

@@ -1,40 +1,45 @@
 /* Microinteracciones y transiciones de pestañas en /expedientes/:id.
    Usa únicamente transform + opacity para mantener 60 FPS sin reflows en cambio de sección. */
 
+/* Contenedor de las pestañas (cápsula con borde). */
+.vc-detail-tabs-shell {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container-low);
+  padding: 4px;
+}
+
+/* La lista es el scroller horizontal: motion-kit centra ahí la pestaña activa. El padding evita
+   recortar el anillo de foco. */
 .vc-detail-tabs {
+  --mk-tabs-indicator: var(--md-sys-color-primary);
+  --mk-tabs-indicator-radius: 999px;
   position: relative;
   display: flex;
-  min-width: max-content;
   align-items: center;
   gap: 6px;
-  contain: layout style;
+  padding: 3px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
 }
 
+.vc-detail-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* El tamaño y la posición del indicador los fija motion-kit (transform + width/height de un
+   elemento absoluto y aislado: no afecta el layout del panel inferior). */
 .vc-detail-tabs__indicator {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 0;
-  border-radius: 999px;
-  background: var(--md-sys-color-primary);
-  opacity: 0;
-  pointer-events: none;
-  will-change: transform, width;
-  transition:
-    transform 320ms var(--mk-ease-nav-move),
-    width 320ms var(--mk-ease-nav-move),
-    opacity 160ms ease;
-}
-
-.vc-detail-tabs__indicator--instant {
-  transition: none;
+  will-change: transform;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--md-sys-color-primary) 35%, transparent);
 }
 
 .vc-detail-tabs__tab {
   position: relative;
   z-index: 1;
   display: inline-flex;
+  flex: 0 0 auto;
   min-height: 44px;
   align-items: center;
   gap: 8px;
@@ -56,27 +61,35 @@
   color: var(--md-sys-color-on-surface);
 }
 
+/* Feedback de presión; el ícono se adelanta un poco al pasar el cursor. */
 .vc-detail-tabs__tab:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
+}
+
+.vc-detail-tabs__icon {
+  transition: transform 200ms var(--mk-ease-pop);
+}
+
+.vc-detail-tabs__tab:hover:not([aria-selected='true']) .vc-detail-tabs__icon {
+  transform: translateY(-1px) scale(1.12);
 }
 
 .vc-detail-tabs__tab[aria-selected='true'] {
   color: var(--md-sys-color-on-primary);
 }
 
-/* Respaldo cuando el indicador no se ha medido (p. ej. jsdom o primer instante sin ancho). */
-.vc-detail-tabs:not([data-indicator-ready]) .vc-detail-tabs__tab[aria-selected='true'] {
+/* Respaldo hasta que el motor mide el indicador (y en jsdom): la pestaña activa se pinta sola. */
+.vc-detail-tabs:not([data-mk-ready]) .vc-detail-tabs__tab[aria-selected='true'] {
   background: var(--md-sys-color-primary);
 }
 
 .vc-detail-tabs__tab:focus-visible {
   outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
-.vc-detail-tabs[data-tab-animated='true']
-  .vc-detail-tabs__tab[aria-selected='true']
-  .vc-detail-tabs__icon {
+/* El ícono de la pestaña recién activada «salta» una vez. */
+.vc-detail-tabs[data-tab-animated] .vc-detail-tabs__tab[aria-selected='true'] .vc-detail-tabs__icon {
   animation: vc-tab-icon-pop 300ms var(--mk-ease-pop);
 }
 
@@ -107,7 +120,7 @@
 @keyframes vc-tab-enter-right {
   from {
     opacity: 0;
-    transform: translate3d(18px, 0, 0);
+    transform: translate3d(var(--vc-tab-shift, 18px), 0, 0);
   }
   to {
     opacity: 1;
@@ -118,7 +131,7 @@
 @keyframes vc-tab-enter-left {
   from {
     opacity: 0;
-    transform: translate3d(-18px, 0, 0);
+    transform: translate3d(calc(var(--vc-tab-shift, 18px) * -1), 0, 0);
   }
   to {
     opacity: 1;
@@ -136,18 +149,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .vc-detail-tabs__indicator,
-  .vc-detail-tabs__tab {
+  .vc-detail-tabs__tab,
+  .vc-detail-tabs__icon {
     transition: none;
   }
 
-  .vc-detail-tabs__tab:active {
+  .vc-detail-tabs__tab:active,
+  .vc-detail-tabs__tab:hover:not([aria-selected='true']) .vc-detail-tabs__icon {
     transform: none;
   }
 
-  .vc-detail-tabs[data-tab-animated='true']
-    .vc-detail-tabs__tab[aria-selected='true']
-    .vc-detail-tabs__icon,
+  .vc-detail-tabs[data-tab-animated] .vc-detail-tabs__tab[aria-selected='true'] .vc-detail-tabs__icon,
   .vc-tab-panel--enter-right,
   .vc-tab-panel--enter-left,
   .vc-tab-panel--reveal {

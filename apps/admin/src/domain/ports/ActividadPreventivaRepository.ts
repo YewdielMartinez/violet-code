@@ -3,6 +3,8 @@ import type {
   ActividadPreventivaFilters,
   ActividadPreventivaItem,
   ActividadRegistradaResult,
+  EmpleadoParticipanteOpcion,
+  TipoActividadItem,
 } from '../models/ActividadPreventiva';
 
 export interface ActividadPreventivaRepository {
@@ -10,4 +12,8 @@ export interface ActividadPreventivaRepository {
   list(filters?: ActividadPreventivaFilters): Promise<ActividadPreventivaItem[]>;
   /** Registra una actividad preventiva y sus empleados participantes en una transacción (`RF-16`). */
   registrar(input: ActividadPreventivaCreateInput): Promise<ActividadRegistradaResult>;
+  /** Catálogo `cat_tipo_actividad` (conferencia, taller, capacitación…). */
+  listTipos(): Promise<TipoActividadItem[]>;
+  /** Empleados activos asignables como participantes (`empleado` visible para todo el personal activo). */
+  listEmpleados(): Promise<EmpleadoParticipanteOpcion[]>;
 }

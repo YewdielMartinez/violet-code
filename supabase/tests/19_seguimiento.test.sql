@@ -4,9 +4,11 @@
 --   1. Permisos RBAC (titular y recepcion -> 42501).
 --   2. Validaciones: tipo de atención de otra área (23514), cita de otra
 --      persona (23514), menor de edad en Psicología (23514).
---   3. Flujo completo con cita + próxima cita: marca cita 'asistio',
---      inserta atención, cambia ficha 'abierto' -> 'en_seguimiento',
---      crea cita futura 'agendada' y devuelve es_primera_vez_area.
+--   3. Flujo completo con cita: marca cita 'asistio', inserta atención,
+--      cambia ficha 'abierto' -> 'en_seguimiento' y devuelve
+--      es_primera_vez_area. La próxima cita solo la puede agendar quien
+--      tiene agenda.crear en su área (migración 39: hoy solo Jurídico);
+--      Trabajo Social recibe 42501 si la envía.
 --   4. Misma cita dos veces -> 23505; segunda atención -> es_primera_vez_area = false.
 -- =====================================================================
 
@@ -14,7 +16,7 @@ create extension if not exists pgtap with schema extensions;
 
 begin;
 
-select plan(12);
+select plan(13);
 
 create or replace function pg_temp.set_actor(p_uid uuid)
 returns void
@@ -143,6 +145,22 @@ from public.cat_area ca
 where ca.clave = 'trabajo_social'
 limit 1;
 
+select throws_ok(
+  $$select * from public.registrar_seguimiento(
+    '55555555-5555-4555-8555-555555555511'::uuid,
+    '99999999-9999-4999-8999-999999999992'::uuid,
+    (select id from public.cat_tipo_atencion where clave = 'entrevista_inicial'),
+    'Se realizó entrevista inicial completa.',
+    'Canalizar a Psicología.',
+    'media',
+    'Sin observaciones adicionales.',
+    now() + interval '7 days'
+  )$$,
+  '42501',
+  'Sin permiso para agendar la próxima cita; solicítela a Recepción',
+  'trabajo_social no puede agendar proxima cita desde registrar_seguimiento (solo recepcion y juridico crean)'
+);
+
 create temp table tmp_seg_res as
 select *
 from public.registrar_seguimiento(
@@ -153,13 +171,13 @@ from public.registrar_seguimiento(
   'Canalizar a Psicología.',
   'media',
   'Sin observaciones adicionales.',
-  now() + interval '7 days'
+  null
 );
 
 select is(
-  (select count(*)::int from tmp_seg_res where atencion_id is not null and cita_proxima_id is not null),
+  (select count(*)::int from tmp_seg_res where atencion_id is not null and cita_proxima_id is null),
   1,
-  'registrar_seguimiento crea atencion y proxima cita'
+  'registrar_seguimiento crea atencion sin proxima cita'
 );
 
 select is(

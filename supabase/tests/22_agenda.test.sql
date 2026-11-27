@@ -89,18 +89,16 @@ select throws_ok(
   'empleado inactivo no puede consultar get_agenda'
 );
 
--- 4-5. Aislamiento Recepción: ve TS y Psicología (2), nunca Jurídico (ni puede mutarla)
+-- 4-5. Recepción ve y gestiona las 3 áreas (TS, Psicología y Jurídico) desde la migración 39
 select pg_temp.as_user('91000000-0000-4000-a000-000000000004');
 select is(
   (select count(*)::int from public.get_agenda('2099-06-15T00:00:00-07:00', '2099-06-16T00:00:00-07:00')),
-  2,
-  'recepcion solo ve citas de TS y Psicologia (excluye Juridico)'
+  3,
+  'recepcion ve citas de TS, Psicologia y Juridico'
 );
-select throws_ok(
+select lives_ok(
   $$select * from public.cambiar_estado_cita('91000000-0000-4000-a000-000000000303', 'confirmada')$$,
-  '42501',
-  null,
-  'recepcion no puede cambiar estado de cita de Juridico (42501)'
+  'recepcion puede cambiar estado de cita de Juridico'
 );
 
 -- 6-7. Aislamiento Psicología: ve solo su área (1) y no puede cambiar cita de TS

@@ -112,14 +112,15 @@ select throws_ok(
   'juridico no puede consultar get_lista_urgencias'
 );
 
--- 4. Seguridad: recepcion no puede reagendar cita de Juridico (42501)
-select pg_temp.as_user('92000000-0000-4000-a000-000000000004');
+-- 4. Seguridad: TS (sin agenda.crear) no puede reagendar, ni siquiera citas de su area (42501)
+select pg_temp.as_user('92000000-0000-4000-a000-000000000001');
 select throws_ok(
-  $$select * from public.reagendar_cita('92000000-0000-4000-a000-000000000302', '2099-07-10T10:00:00-07:00')$$,
+  $$select * from public.reagendar_cita('92000000-0000-4000-a000-000000000303', '2099-07-10T10:00:00-07:00')$$,
   '42501',
   null,
-  'recepcion no puede reagendar cita de Juridico (42501)'
+  'trabajo_social no puede reagendar (reagendar = crear, solo recepcion y juridico) (42501)'
 );
+select pg_temp.as_user('92000000-0000-4000-a000-000000000004');
 
 -- 5-7. Camino no feliz reagendar_cita (23514)
 select throws_ok(

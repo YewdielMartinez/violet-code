@@ -1,11 +1,11 @@
 # RPC: `public.cambiar_estado_cita`
 
-- **Migración:** `supabase/migrations/20261126001200_22_rpc_agenda.sql`
+- **Migración:** `supabase/migrations/20261126001200_22_rpc_agenda.sql` (Recepción con Jurídico desde `supabase/migrations/20261127000800_39_agenda_permisos_creacion.sql`)
 - **Cubre:** `RF-06`, `RN-04`, `RN-06` (SF-06, SF-07, SF-09)
 
 ## Actores autorizados
 - `titular`, `subdireccion`: cualquier cita activa.
-- `recepcion`: únicamente citas de `trabajo_social` o `psicologia`.
+- `recepcion`: citas de `trabajo_social`, `psicologia` y `juridico`.
 - `trabajo_social`, `psicologia`, `juridico`: únicamente citas de su propia `area_id`.
 
 ## Entrada
@@ -28,5 +28,5 @@
 ```
 
 ## Errores
-- `42501`: sin permiso o intento de modificar cita de un área fuera de alcance (ej. Recepción sobre Jurídico).
+- `42501`: sin permiso `agenda.gestionar` o intento de modificar cita de un área fuera de alcance (ej. Psicología sobre Jurídico).
 - `23514`: cita inexistente/inactiva, estado destino inválido, motivo > 500 caracteres o transición no permitida.

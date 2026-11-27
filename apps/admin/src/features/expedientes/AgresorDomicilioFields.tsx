@@ -1,9 +1,34 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Select } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/select';
 import type { AgresorValidationField, AsentamientoOpcion } from './agresorApi';
 import { AnimatedReveal } from './agresor/AnimatedReveal';
 import { AgresorGlassSwitch } from './agresor/motionCompat';
+
+/** Espera máxima antes de cargar el catálogo completo si nadie toca el selector (ms). */
+const CATALOGO_IDLE_TIMEOUT_MS = 600;
+
+/**
+ * El catálogo de Ahome trae cientos de asentamientos y el `Select` del kit crea un botón (con su SVG) por opción,
+ * dos veces. Hacerlo al montar el formulario es lo más caro de la apertura, así que se monta con las opciones
+ * mínimas (vacía + la elegida) y el catálogo completo entra cuando el navegador queda libre o apenas la persona
+ * enfoca / presiona el selector (siempre antes de que el kit abra su menú).
+ */
+function useCatalogoListo(): [boolean, () => void] {
+  const [listo, setListo] = useState(false);
+
+  useEffect(() => {
+    if (listo) return;
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(() => setListo(true), { timeout: CATALOGO_IDLE_TIMEOUT_MS });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = window.setTimeout(() => setListo(true), 200);
+    return () => window.clearTimeout(id);
+  }, [listo]);
+
+  return [listo, () => setListo(true)];
+}
 
 export interface DomicilioValues {
   asentamientoId: number | null;
@@ -26,16 +51,18 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
     () => values.asentamientoId === null && values.codigoPostal.trim().length > 0,
   );
 
-  const asentamientoOptions = useMemo(
-    () => [
-      { value: '', label: 'Sin especificar colonia' },
-      ...asentamientos.map((item) => ({
-        value: String(item.id),
-        label: `${item.nombre} (${item.tipoAsentamiento} · CP ${item.codigoPostal})`,
-      })),
-    ],
-    [asentamientos],
-  );
+  const [catalogoListo, cargarCatalogo] = useCatalogoListo();
+
+  const asentamientoOptions = useMemo(() => {
+    const sinEspecificar = { value: '', label: 'Sin especificar colonia' };
+    const toOption = (item: AsentamientoOpcion) => ({
+      value: String(item.id),
+      label: `${item.nombre} (${item.tipoAsentamiento} · CP ${item.codigoPostal})`,
+    });
+    if (catalogoListo) return [sinEspecificar, ...asentamientos.map(toOption)];
+    const elegido = asentamientos.find((a) => a.id === values.asentamientoId);
+    return elegido ? [sinEspecificar, toOption(elegido)] : [sinEspecificar];
+  }, [asentamientos, catalogoListo, values.asentamientoId]);
 
   const selectedAsentamiento = asentamientos.find((a) => a.id === values.asentamientoId);
 
@@ -66,7 +93,11 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
       </div>
 
       <AnimatedReveal show={!modoCpManual} className="sm:col-span-2">
-        <div className="grid gap-1">
+        <div
+          className="grid gap-1"
+          onFocusCapture={cargarCatalogo}
+          onPointerDownCapture={cargarCatalogo}
+        >
           <span className="text-sm font-medium text-on-surface-variant">
             Colonia / Asentamiento (Ahome)
           </span>

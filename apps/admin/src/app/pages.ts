@@ -7,6 +7,8 @@ const loadDirectory = () => import('@/features/directory/DirectoryPage');
 const loadExpedientes = () => import('@/features/expedientes/ExpedientesPage');
 const loadExpedienteDetail = () => import('@/features/expedientes/ExpedienteDetailPage');
 const loadNuevaFicha = () => import('@/features/expedientes/ficha/NuevaFichaPage');
+const loadAgenda = () => import('@/features/agenda/AgendaPage');
+const loadActividades = () => import('@/features/actividades/ActividadesPage');
 const loadAlertas = () => import('@/features/solicitudes/AlertasPage');
 const loadIntervenciones = () => import('@/features/intervenciones/IntervencionesPage');
 const loadPending = () => import('@/shared/ui/PendingModulePage');
@@ -17,6 +19,8 @@ export const DirectoryPage = lazy(loadDirectory);
 export const ExpedientesPage = lazy(loadExpedientes);
 export const ExpedienteDetailPage = lazy(loadExpedienteDetail);
 export const NuevaFichaPage = lazy(loadNuevaFicha);
+export const AgendaPage = lazy(loadAgenda);
+export const ActividadesPage = lazy(loadActividades);
 export const AlertasPage = lazy(loadAlertas);
 export const IntervencionesPage = lazy(loadIntervenciones);
 export const PendingModulePage = lazy(loadPending);
@@ -35,6 +39,8 @@ const ROUTE_LOADERS: Record<string, () => Promise<unknown>> = {
   '/expedientes': loadExpedientes,
   '/expedientes/nuevo': loadNuevaFicha,
   '/solicitudes': loadAlertas,
+  '/agenda': loadAgenda,
+  '/actividades': loadActividades,
   '/intervenciones': loadIntervenciones,
 };
 
@@ -47,7 +53,7 @@ export function preloadPage(path: string): void {
   loadOnce(ROUTE_LOADERS[path] ?? loadPending);
 }
 
-const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadDirectory, loadNuevaFicha, loadAlertas, loadIntervenciones, loadPending];
+const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadDirectory, loadNuevaFicha, loadAlertas, loadAgenda, loadActividades, loadIntervenciones, loadPending];
 
 function scheduleIdle(cb: () => void): () => void {
   if (typeof window === 'undefined') return () => {};

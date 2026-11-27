@@ -1,0 +1,476 @@
+/* Paneles laterales de Agenda: solo tokens del tema (claro/oscuro) y movimiento reducible.
+   Mismo lenguaje que el calendario: superficies tonales redondeadas, sin bordes duros.
+   Cada panel define su acento con --sp-accent / --sp-accent-bg / --sp-accent-fg. */
+.sp-card {
+  --sp-ease: cubic-bezier(0.2, 0, 0, 1);
+  --sp-accent: var(--md-sys-color-primary);
+  --sp-accent-bg: var(--md-sys-color-primary-container);
+  --sp-accent-fg: var(--md-sys-color-on-primary-container);
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--sp-accent-bg) 38%, var(--md-sys-color-surface-container-low));
+  overflow: hidden;
+}
+
+/* Por confirmar: acento morado (el color de «confirmada» en el calendario). */
+.sp-card--confirmar {
+  --sp-accent: var(--md-sys-color-primary);
+  --sp-accent-bg: var(--md-sys-color-primary-container);
+  --sp-accent-fg: var(--md-sys-color-on-primary-container);
+}
+
+/* Lista de urgencias: acento rojo (el color de «prioridad alta»). */
+.sp-card--urgencias {
+  --sp-accent: var(--vc-status-danger);
+  --sp-accent-bg: var(--vc-status-danger-bg);
+  --sp-accent-fg: var(--vc-status-danger);
+}
+
+.sp-card__heading {
+  margin: 0;
+  font: inherit;
+}
+
+.sp-card__toggle {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem 0.75rem;
+  background: transparent;
+  border: 0;
+  color: var(--md-sys-color-on-surface);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 160ms var(--sp-ease);
+}
+.sp-card__toggle:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent);
+}
+.sp-card__toggle:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+.sp-card__icon {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  border-radius: 14px;
+  background: var(--sp-accent-bg);
+  color: var(--sp-accent-fg);
+}
+
+.sp-card__titles {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.sp-card__title {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.sp-card__subtitle {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.sp-badge {
+  align-self: center;
+  min-width: 1.75rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: var(--sp-accent-bg);
+  color: var(--sp-accent-fg);
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  text-align: center;
+}
+.sp-badge[data-zero] {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.sp-card__chevron {
+  display: grid;
+  align-self: center;
+  color: var(--md-sys-color-on-surface-variant);
+  transition: transform 260ms var(--sp-ease);
+}
+.sp-card[data-open='true'] .sp-card__chevron {
+  transform: rotate(180deg);
+}
+
+/* Altura animada sin medir: 0fr -> 1fr. */
+.sp-card__body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 280ms var(--sp-ease),
+    opacity 200ms var(--sp-ease),
+    visibility 0s linear 280ms;
+}
+.sp-card[data-open='true'] .sp-card__body {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+.sp-card__inner {
+  min-height: 0;
+  overflow: hidden;
+}
+.sp-card[data-open='true'] .sp-card__inner {
+  padding: 0 0.6rem 0.7rem;
+}
+
+/* ── Listas y filas (fichas tonales como los recuadros del calendario) ─────────────── */
+.sp-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 24rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.sp-row {
+  position: relative;
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container-lowest);
+  box-shadow: inset 3px 0 0 var(--sp-accent);
+  transition: background-color 160ms var(--sp-ease);
+}
+.sp-row:hover,
+.sp-row:focus-within {
+  background: var(--md-sys-color-surface-container);
+}
+
+.sp-row__main {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.sp-row__main:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+.sp-act:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.sp-row__time {
+  flex: none;
+  min-width: 3.1rem;
+  padding: 0.25rem 0.4rem;
+  border-radius: 10px;
+  background: var(--sp-accent-bg);
+  color: var(--sp-accent-fg);
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.sp-row__text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+.sp-row__name {
+  overflow: hidden;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sp-row__sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.4rem;
+  font-size: 0.78rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+.sp-row__meta {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.sp-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Confirmar: datos arriba, acciones debajo (Llamar + Confirmar, con ícono y texto). */
+.sp-row__collapse {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    grid-template-rows 260ms var(--sp-ease),
+    opacity 220ms var(--sp-ease);
+}
+.sp-row--confirmar[data-phase='leaving'] .sp-row__collapse {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+.sp-row__inner {
+  display: grid;
+  gap: 0.5rem;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  padding: 0.6rem 0.7rem 0.6rem 0.9rem;
+}
+.sp-row--confirmar .sp-row__actions > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Urgencias: datos a la izquierda, «Llamar» a la derecha. */
+.sp-row--urgencia {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.7rem 0.6rem 0.9rem;
+}
+.sp-row--urgencia .sp-row__main {
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+.sp-row--urgencia .sp-row__name {
+  display: block;
+  max-width: 100%;
+}
+
+.sp-row__nophone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--md-sys-color-on-surface-variant);
+  white-space: nowrap;
+}
+.sp-row__nophone .mk-icon {
+  font-size: 1.05rem;
+}
+
+/* ── Acciones con ícono + texto ────────────────────────────────────────────────────── */
+.sp-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  height: 2rem;
+  padding: 0 0.85rem 0 0.7rem;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 200ms var(--sp-ease),
+    color 200ms var(--sp-ease),
+    filter 160ms var(--sp-ease),
+    transform 120ms var(--sp-ease);
+}
+.sp-act .mk-icon {
+  font-size: 1.15rem;
+}
+.sp-act:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.sp-act--primary {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+.sp-act--primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.sp-act--tonal {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+}
+.sp-act--tonal:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.sp-act--done,
+.sp-act--done:disabled {
+  background: var(--vc-status-success-bg);
+  color: var(--vc-status-success);
+  cursor: default;
+}
+.sp-act--done .sp-act__icon {
+  display: inline-grid;
+  animation: sp-pop 360ms var(--sp-ease);
+}
+.sp-act__icon {
+  display: inline-grid;
+}
+
+.sp-chip {
+  padding: 0 0.4rem;
+  border-radius: 0.4rem;
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+.sp-chip--mono {
+  font-family: var(--mk-font-mono, ui-monospace, monospace);
+}
+.sp-chip--danger {
+  background: var(--vc-status-danger-bg);
+  color: var(--vc-status-danger);
+}
+.sp-chip--umeca {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  font-weight: 600;
+}
+
+/* Resalte sutil de filas nuevas */
+.sp-row--new {
+  animation: sp-highlight 2400ms var(--sp-ease) both;
+}
+
+/* ── Carga ─────────────────────────────────────────────────────────────────────────── */
+.sp-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sp-skeleton__row {
+  height: 3.6rem;
+  border-radius: 16px;
+  background: linear-gradient(
+    90deg,
+    var(--md-sys-color-surface-container-lowest) 25%,
+    var(--md-sys-color-surface-container) 50%,
+    var(--md-sys-color-surface-container-lowest) 75%
+  );
+  background-size: 200% 100%;
+  animation: sp-shimmer 1.4s linear infinite;
+}
+
+/* ── Estado vacío / error: corto y amable ──────────────────────────────────────────── */
+.sp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.5rem 0.75rem 0.4rem;
+  text-align: center;
+}
+.sp-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 0.25rem;
+  border-radius: 999px;
+  background: var(--sp-accent-bg);
+  color: var(--sp-accent-fg);
+}
+.sp-empty--error .sp-empty__icon {
+  background: var(--vc-status-danger-bg);
+  color: var(--vc-status-danger);
+}
+.sp-empty--error .sp-act {
+  margin-top: 0.5rem;
+}
+.sp-empty__title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+.sp-empty__text {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+@keyframes sp-highlight {
+  0% {
+    background: var(--sp-accent-bg);
+    transform: translateX(-6px);
+    opacity: 0;
+  }
+  20% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    background: var(--md-sys-color-surface-container-lowest);
+  }
+}
+@keyframes sp-pop {
+  0% {
+    transform: scale(0.4) rotate(-20deg);
+  }
+  60% {
+    transform: scale(1.25) rotate(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes sp-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sp-card__body,
+  .sp-card__chevron,
+  .sp-row__collapse,
+  .sp-row,
+  .sp-act,
+  .sp-card__toggle {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+  .sp-row--new,
+  .sp-act--done .sp-act__icon,
+  .sp-skeleton__row {
+    animation: none !important;
+  }
+  .sp-row--new {
+    background: var(--sp-accent-bg);
+  }
+}

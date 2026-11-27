@@ -3,6 +3,8 @@ import { createBrowserRouter } from 'react-router-dom';
 import { ALL_PAGES } from './navigation';
 import { queryClient } from './queryClient';
 import {
+  ActividadesPage,
+  AgendaPage,
   AlertasPage,
   DashboardPage,
   DirectoryPage,
@@ -114,6 +116,8 @@ const READY: Record<string, ComponentType> = {
   '/directorio': DirectoryPage,
   '/expedientes': ExpedientesPage,
   '/solicitudes': AlertasPage,
+  '/agenda': AgendaPage,
+  '/actividades': ActividadesPage,
   '/intervenciones': IntervencionesPage,
 };
 

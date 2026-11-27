@@ -1,0 +1,425 @@
+/* Actividades: lista de capacitaciones / talleres / jornadas agrupada por día.
+   Solo se animan `transform` y `opacity`; los colores salen de los tokens del tema (claro y oscuro). */
+
+.act-page {
+  display: grid;
+  gap: 16px;
+  /* Espacio para que la barra de navegación (dock) no tape el final de la lista. */
+  padding-bottom: 5.5rem;
+}
+
+/* ── Filtros ───────────────────────────────────────────────────────────────────────── */
+.act-filters {
+  display: grid;
+  gap: 12px;
+  border-radius: 28px;
+  background: var(--md-sys-color-surface-container-low);
+  padding: 14px;
+}
+
+.act-filters__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.act-filters__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Pestañas Pendientes / Realizadas / Todas: cápsula de 36 px; el indicador lo desliza el kit. */
+.act-tabs {
+  padding: 3px;
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.act-tabs > [data-mk-tab] {
+  height: 30px;
+  padding: 0 14px;
+  font-size: 0.875rem;
+}
+
+.act-tabs > [data-mk-tab][aria-selected='true'] {
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.act-search {
+  display: flex;
+  min-width: 14rem;
+  flex: 1 1 16rem;
+  align-items: center;
+  gap: 8px;
+}
+
+.act-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.act-date {
+  display: inline-flex;
+  height: 40px;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-high);
+  padding: 0 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.8125rem;
+}
+
+.act-date input {
+  border: 0;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  font: inherit;
+  outline: none;
+  color-scheme: light dark;
+}
+
+.act-date:focus-within {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.act-clear {
+  display: inline-flex;
+  height: 36px;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: transparent;
+  padding: 0 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.act-clear:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.act-count {
+  margin: 0 4px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+}
+
+/* ── Lista ─────────────────────────────────────────────────────────────────────────── */
+.act-list {
+  display: grid;
+  gap: 20px;
+}
+
+.act-panel {
+  border-radius: 28px;
+  background: var(--md-sys-color-surface-container-low);
+  padding: 14px;
+}
+
+.act-panel--center {
+  display: grid;
+  min-height: 20rem;
+  place-items: center;
+}
+
+.act-group {
+  display: grid;
+  gap: 10px;
+}
+
+.act-group__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 4px;
+  color: var(--md-sys-color-on-surface);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.act-group__title[data-estado='realizada'] {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.act-group__count {
+  border-radius: 999px;
+  background: var(--md-sys-color-surface-container-high);
+  padding: 1px 8px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.act-group__items {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr));
+}
+
+/* ── Tarjeta ───────────────────────────────────────────────────────────────────────── */
+.act-card {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+  gap: 14px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--md-sys-color-surface-container);
+  padding: 14px;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  text-align: left;
+  /* Entrada escalonada: las primeras tarjetas llegan una tras otra. */
+  animation: act-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--act-i, 0) * 38ms);
+  transition:
+    transform 160ms var(--mk-ease-click, ease-out),
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.act-card:hover {
+  transform: translateY(-2px);
+  background: var(--md-sys-color-surface-container-high);
+  box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--md-sys-color-shadow, #000) 70%, transparent);
+}
+
+.act-card:active {
+  transform: scale(0.98);
+}
+
+.act-card:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.act-card[data-estado='realizada'] .act-card__date {
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.act-card__date {
+  display: flex;
+  width: 3.5rem;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  line-height: 1;
+}
+
+.act-card__day {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.act-card__month {
+  margin-top: 3px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.act-card__body {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.act-card__title {
+  overflow: hidden;
+  font-size: 1rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.act-card__sede {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+}
+
+.act-card__meta {
+  overflow: hidden;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.act-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.act-card__aside {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.act-card__hora {
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.act-card__asistentes {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.8125rem;
+}
+
+/* ── Chips ─────────────────────────────────────────────────────────────────────────── */
+.act-chip {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+}
+
+/* ── Esqueleto ─────────────────────────────────────────────────────────────────────── */
+.act-skel {
+  height: 6.75rem;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+  animation: act-pulse 1.4s ease-in-out infinite;
+}
+
+/* ── Diálogo ───────────────────────────────────────────────────────────────────────── */
+/* Altura estable al abrir: el formulario no hace «brincar» el diálogo cuando monta el selector de fecha. */
+.act-dialog [data-mk-part='body'] {
+  min-height: min(26rem, 52dvh);
+  overflow-x: hidden;
+}
+
+.act-dialog [data-mk-part='header'] {
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.act-dialog__title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.act-view {
+  animation: act-in 220ms ease-out both;
+}
+
+.act-reveal {
+  animation: act-reveal 200ms ease-out both;
+}
+
+.act-pop {
+  animation: act-reveal 160ms ease-out both;
+}
+
+/* Misma caja que el `DateTimePicker` del kit mientras no está montado (sin salto al montar). */
+.act-dt-ghost {
+  display: flex;
+  height: 2.75rem;
+  align-items: center;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  background: var(--md-sys-color-surface);
+  padding: 0 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+}
+
+/* Feedback al presionar botones y chips. */
+.act-btn,
+.act-dialog .mk-button {
+  transition:
+    transform 0.14s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.act-btn:active:not(:disabled),
+.act-dialog .mk-button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+@keyframes act-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes act-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes act-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ── Accesibilidad: sin movimiento si la persona lo pidió al sistema ───────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .act-card,
+  .act-view,
+  .act-reveal,
+  .act-pop {
+    animation: none;
+  }
+
+  .act-card,
+  .act-btn,
+  .act-dialog .mk-button {
+    transition: none;
+  }
+
+  .act-card:hover,
+  .act-card:active,
+  .act-btn:active:not(:disabled),
+  .act-dialog .mk-button:active:not(:disabled) {
+    transform: none;
+  }
+
+  .act-skel {
+    animation: none;
+  }
+}

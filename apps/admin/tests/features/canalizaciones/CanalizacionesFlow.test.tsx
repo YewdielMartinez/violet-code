@@ -293,7 +293,8 @@ describe('Canalizaciones: diálogo de alta, detalle lateral y filtros', () => {
     const dialog = await openCreateDialog(screen.getByRole('button', { name: /Nueva canalización/i }));
 
     // Vacío: errores inline y no se llama al repositorio.
-    fireEvent.click(within(dialog).getByRole('button', { name: /Registrar canalización/i }));
+    // El cuerpo del formulario se monta tras el primer frame (skeleton mientras tanto).
+    fireEvent.click(await within(dialog).findByRole('button', { name: /Registrar canalización/i }));
     expect(await within(dialog).findByText('Selecciona el expediente a canalizar.')).toBeTruthy();
     expect(within(dialog).getByText('Describe el motivo de la canalización.')).toBeTruthy();
     expect(createDerivacionMock).not.toHaveBeenCalled();

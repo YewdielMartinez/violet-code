@@ -10,6 +10,35 @@ import type { DerivacionRepository } from '@/domain/ports/DerivacionRepository';
 
 type RpcDerivacionRow = Database['public']['Functions']['get_derivaciones']['Returns'][number];
 
+interface CrearCanalizacionArgs {
+  p_ficha_id: string;
+  p_destino: DerivacionCreateInput['destino'];
+  p_area_destino_id: number | null;
+  p_institucion_id: number | null;
+  p_institucion_otra: string | null;
+  p_motivo: string;
+}
+
+interface CrearCanalizacionRow {
+  derivacion_id: string;
+  estado: EstadoDerivacion;
+  aviso: string | null;
+}
+
+/**
+ * `crear_canalizacion` (migración 33) aún no está en `database.types.ts` (se regenera con
+ * `supabase gen types`); mientras tanto se tipa aquí la llamada. Retirar al regenerar los tipos.
+ */
+function rpcCrearCanalizacion(args: CrearCanalizacionArgs) {
+  const client = supabase as unknown as {
+    rpc: (
+      fn: 'crear_canalizacion',
+      args: CrearCanalizacionArgs,
+    ) => PromiseLike<{ data: CrearCanalizacionRow[] | CrearCanalizacionRow | null; error: Error | null }>;
+  };
+  return client.rpc('crear_canalizacion', args);
+}
+
 function mapRpcRow(row: RpcDerivacionRow): DerivacionItem {
   return {
     id: row.id,
@@ -52,26 +81,25 @@ export const supabaseDerivacionRepository: DerivacionRepository = {
     return (data ?? []).map(mapRpcRow);
   },
 
-  async create(input: DerivacionCreateInput): Promise<{ id: string }> {
+  async create(input: DerivacionCreateInput): Promise<{ id: string; aviso: string | null }> {
     const internal = isInternalDestino(input.destino);
     const otra = input.institucionOtra.trim();
 
-    const { data, error } = await supabase
-      .from('derivacion')
-      .insert({
-        ficha_id: input.fichaId,
-        area_origen_id: input.areaOrigenId,
-        destino: input.destino,
-        area_destino_id: internal ? input.areaDestinoId : null,
-        institucion_id: !internal ? input.institucionId : null,
-        institucion_otra: !internal && input.institucionId === null && otra ? otra : null,
-        motivo: input.motivo.trim(),
-      })
-      .select('id')
-      .single();
+    // `derivacion_insert` en RLS es `with check (false)` desde la migración 33: solo se crea vía RPC.
+    // El área de origen la deriva el servidor (`auth_area_id()`), por lo que `areaOrigenId` no se envía.
+    const { data, error } = await rpcCrearCanalizacion({
+      p_ficha_id: input.fichaId,
+      p_destino: input.destino,
+      p_area_destino_id: internal ? input.areaDestinoId : null,
+      p_institucion_id: !internal ? input.institucionId : null,
+      p_institucion_otra: !internal && input.institucionId === null && otra ? otra : null,
+      p_motivo: input.motivo.trim(),
+    });
 
     if (error) throw error;
-    return { id: data.id };
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row?.derivacion_id) throw new Error('La canalización no devolvió un identificador.');
+    return { id: row.derivacion_id, aviso: row.aviso ?? null };
   },
 
   async updateEstado(id: string, estado: EstadoDerivacion): Promise<void> {

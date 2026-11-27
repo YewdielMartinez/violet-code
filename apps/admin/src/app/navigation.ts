@@ -67,8 +67,17 @@ export const NAVIGATION: NavPage[] = [
     path: '/agenda',
     label: 'Agenda',
     icon: 'calendar_month',
-    ready: false,
+    ready: true,
     mobile: true,
+    allowedRoles: ALL_EMPLOYEES,
+  },
+  {
+    // `actividad.ver` = todo el personal activo; solo dirección y áreas de atención ven «Nueva actividad».
+    path: '/actividades',
+    label: 'Actividades',
+    title: 'Actividades preventivas',
+    icon: 'diversity_3',
+    ready: true,
     allowedRoles: ALL_EMPLOYEES,
   },
   {

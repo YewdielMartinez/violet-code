@@ -78,7 +78,13 @@
   transition:
   color 140ms ease,
   border-color 140ms ease,
-  background-color 140ms ease;
+  background-color 140ms ease,
+  transform 160ms var(--mk-ease-click);
+}
+
+/* Feedback de presión (solo transform). */
+.vc-drawer-tabs__tab:active {
+  transform: scale(0.96);
 }
 
 .vc-drawer-tabs__tab:hover:not([aria-selected='true']) {
@@ -145,5 +151,9 @@
   .mk-dialog.vc-expediente-dialog[data-mk-placement='side'],
   .vc-drawer-tabs__tab {
     transition: none;
+  }
+
+  .vc-drawer-tabs__tab:active {
+    transform: none;
   }
 }

@@ -1,11 +1,12 @@
 # RPC: `public.get_agenda`
 
-- **Migración:** `supabase/migrations/20261126001200_22_rpc_agenda.sql`
+- **Migración:** `supabase/migrations/20261126001200_22_rpc_agenda.sql` (Recepción con Jurídico desde `supabase/migrations/20261127000800_39_agenda_permisos_creacion.sql`)
 - **Cubre:** `RF-06`, `RN-04`, `RN-06` (SF-05, SF-06)
 
 ## Actores autorizados
 - `titular`, `subdireccion`: ven citas de todas las áreas.
-- `recepcion`, `trabajo_social`: ven únicamente citas de `trabajo_social` y `psicologia`.
+- `recepcion`: ve citas de `trabajo_social`, `psicologia` y `juridico`.
+- `trabajo_social`: ve únicamente citas de `trabajo_social` y `psicologia`.
 - `psicologia`, `juridico`: ven únicamente citas de su propia `area_id`.
 - `anon` o empleados inactivos: rechazados con `42501`.
 

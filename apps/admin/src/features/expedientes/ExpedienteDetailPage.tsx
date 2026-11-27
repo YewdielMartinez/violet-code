@@ -5,11 +5,10 @@ import {
   Suspense,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent,
+  type CSSProperties,
   type ReactNode,
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -22,7 +21,6 @@ import { Icon } from '@/shared/ui/Icon';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { puedeAccederAgresor } from './agresorApi';
 import {
-  ESTADO_FICHA_LABELS,
   canLookupPreRegistro,
   fichaDetailQueryOptions,
   useExpedienteById,
@@ -31,8 +29,9 @@ import {
 import './expediente-detail.css';
 import { ExpedienteContactoSection } from './drawer/ExpedienteContactoSection';
 import type { DrawerTab } from './drawer/ExpedienteDrawerTabs';
+import { ExpedienteDetailTabs } from './drawer/ExpedienteDetailTabs';
+import { EstadoPill, PrioridadPill } from './drawer/ExpedienteEstado';
 import {
-  ESTADO_BADGE_STYLES,
   calculateAge,
   copyTextToClipboard,
   formatFechaNacimiento,
@@ -211,7 +210,6 @@ interface SummaryStripProps {
 }
 
 const SummaryStrip = memo(function SummaryStrip({ expediente }: SummaryStripProps) {
-  const statusStyle = ESTADO_BADGE_STYLES[expediente.estado];
   const age = calculateAge(expediente.persona.fechaNacimiento);
   const formattedPhone = formatPhoneDisplay(expediente.persona.celular);
 
@@ -220,19 +218,9 @@ const SummaryStrip = memo(function SummaryStrip({ expediente }: SummaryStripProp
       aria-label="Resumen de la usuaria"
       className="mx-auto flex w-full flex-wrap items-center gap-x-3 gap-y-2 px-4 pb-3 sm:px-6"
     >
-      <span
-        className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-sm font-medium ${statusStyle.pill}`}
-      >
-        <span aria-hidden className={`size-2 rounded-full ${statusStyle.dot}`} />
-        <span>{ESTADO_FICHA_LABELS[expediente.estado]}</span>
-      </span>
+      <EstadoPill estado={expediente.estado} />
 
-      {expediente.enListaUrgencias ? (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-status-danger-bg px-3.5 py-1 text-sm font-medium text-status-danger">
-          <span aria-hidden className="size-2 rounded-full bg-status-danger" />
-          <span>Prioritario</span>
-        </span>
-      ) : null}
+      {expediente.enListaUrgencias ? <PrioridadPill /> : null}
 
       <span className="rounded-full bg-surface-container-high px-3 py-1 font-mono text-sm font-semibold text-on-surface">
         {expediente.folio}
@@ -363,41 +351,17 @@ export default function ExpedienteDetailPage() {
     };
   }, [activeExpedienteId, canAccessSensitiveTabs]);
 
-  const tablistRef = useRef<HTMLDivElement>(null);
-  const indicatorRef = useRef<HTMLSpanElement>(null);
   const [tabMotion, setTabMotion] = useState<{
     count: number;
     dir: 1 | -1;
+    distance: number;
     deferredReveal: boolean;
-  }>({ count: 0, dir: 1, deferredReveal: false });
+  }>({ count: 0, dir: 1, distance: 1, deferredReveal: false });
 
   const visibleTabs = useMemo(
     () => ALL_TABS.filter((tab) => !tab.sensitive || canAccessSensitiveTabs),
     [canAccessSensitiveTabs],
   );
-
-  // Posiciona la cápsula activa con transform + width (sin reflow en el panel inferior).
-  useLayoutEffect(() => {
-    const tablist = tablistRef.current;
-    const indicator = indicatorRef.current;
-    if (!tablist || !indicator) return;
-
-    const positionIndicator = () => {
-      const selectedBtn = tablist.querySelector<HTMLButtonElement>('[aria-selected="true"]');
-      if (!selectedBtn || selectedBtn.offsetWidth === 0) return;
-      indicator.style.width = `${selectedBtn.offsetWidth}px`;
-      indicator.style.transform = `translate3d(${selectedBtn.offsetLeft}px, 0, 0)`;
-      indicator.style.opacity = '1';
-      tablist.dataset.indicatorReady = 'true';
-    };
-
-    positionIndicator();
-
-    if (typeof ResizeObserver !== 'function') return;
-    const observer = new ResizeObserver(positionIndicator);
-    observer.observe(tablist);
-    return () => observer.disconnect();
-  }, [activeTab, visibleTabs.length, expediente?.id]);
 
   const selectTab = useCallback(
     (next: DrawerTab) => {
@@ -410,14 +374,10 @@ export default function ExpedienteDetailPage() {
       setTabMotion((prev) => ({
         count: prev.count + 1,
         dir,
+        distance: Math.max(1, Math.abs(nextIndex - prevIndex)),
         deferredReveal: !alreadyMounted,
       }));
       setLocalTab(next);
-
-      const nextButton = tablistRef.current?.querySelector<HTMLButtonElement>(`#tab-${next}`);
-      if (nextButton && typeof nextButton.scrollIntoView === 'function') {
-        nextButton.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
-      }
 
       startTransition(() => {
         setSearchParams(
@@ -439,30 +399,6 @@ export default function ExpedienteDetailPage() {
       if (canAccessSensitiveTabs) preloadExpedienteDrawerTab(tab);
     },
     [canAccessSensitiveTabs],
-  );
-
-  const handleTabKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLDivElement>) => {
-      const currentIndex = Math.max(
-        0,
-        visibleTabs.findIndex((tab) => tab.id === activeTab),
-      );
-      let nextIndex = -1;
-      if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % visibleTabs.length;
-      else if (event.key === 'ArrowLeft') {
-        nextIndex = (currentIndex - 1 + visibleTabs.length) % visibleTabs.length;
-      } else if (event.key === 'Home') nextIndex = 0;
-      else if (event.key === 'End') nextIndex = visibleTabs.length - 1;
-      else return;
-
-      event.preventDefault();
-      const target = visibleTabs[nextIndex];
-      if (!target) return;
-      const buttons = tablistRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
-      buttons?.[nextIndex]?.focus();
-      selectTab(target.id);
-    },
-    [visibleTabs, activeTab, selectTab],
   );
 
   const handleCopyFolio = useCallback(async () => {
@@ -609,52 +545,18 @@ export default function ExpedienteDetailPage() {
           <SummaryStrip expediente={expediente} />
 
           <div className="sticky top-0 z-20 mx-auto w-full bg-background/95 px-4 py-2.5 sm:px-6">
-            <div className="overflow-x-auto rounded-2xl border border-outline-variant bg-surface-container-low p-1.5">
-              <div
-                ref={tablistRef}
-                role="tablist"
-                aria-orientation="horizontal"
-                aria-label="Secciones del expediente"
-                data-tab-animated={tabMotion.count > 0 ? 'true' : undefined}
-                onKeyDown={handleTabKeyDown}
-                className="vc-detail-tabs"
-              >
-                <span
-                  ref={indicatorRef}
-                  aria-hidden
-                  className={`vc-detail-tabs__indicator ${tabMotion.count === 0 ? 'vc-detail-tabs__indicator--instant' : ''
-                    }`.trim()}
-                />
-                {visibleTabs.map((tab) => {
-                  const selected = tab.id === activeTab;
-                  return (
-                    <button
-                      key={tab.id}
-                      id={`tab-${tab.id}`}
-                      type="button"
-                      role="tab"
-                      aria-selected={selected}
-                      aria-controls={`panel-${tab.id}`}
-                      tabIndex={selected ? 0 : -1}
-                      onPointerEnter={() => handleTabIntent(tab.id)}
-                      onFocus={() => handleTabIntent(tab.id)}
-                      onClick={() => selectTab(tab.id)}
-                      className="vc-detail-tabs__tab"
-                    >
-                      <Icon
-                        name={tab.icon}
-                        className="vc-detail-tabs__icon text-[20px]"
-                        filled={selected}
-                      />
-                      <span>{tab.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <ExpedienteDetailTabs
+              tabs={visibleTabs}
+              activeTab={activeTab}
+              onChange={selectTab}
+              onTabIntent={handleTabIntent}
+            />
           </div>
 
-          <div className="mx-auto w-full min-w-0 px-4 pt-4 sm:px-6">
+          <div
+            className="mx-auto w-full min-w-0 px-4 pt-4 sm:px-6"
+            style={{ '--vc-tab-shift': `${Math.min(40, 14 + 8 * tabMotion.distance)}px` } as CSSProperties}
+          >
             {(() => {
               const enterClass =
                 tabMotion.count === 0

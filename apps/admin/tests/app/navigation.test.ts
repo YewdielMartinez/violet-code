@@ -10,8 +10,9 @@ describe('navigation permissions by role', () => {
     expect(canAccessPath('umeca', '/usuarios')).toBe(false);
   });
 
-  it('limita a recepción a Dashboard, Agenda y Directorio', () => {
-    expect(getNavigationForRole('recepcion').map((p) => p.path)).toEqual(['/', '/agenda', '/directorio']);
+  it('limita a recepción a Dashboard, Agenda, Actividades y Directorio', () => {
+    expect(getNavigationForRole('recepcion').map((p) => p.path)).toEqual(['/', '/agenda', '/actividades', '/directorio']);
+    expect(canAccessPath('recepcion', '/actividades')).toBe(true);
     expect(canAccessPath('recepcion', '/agenda')).toBe(true);
     expect(canAccessPath('recepcion', '/directorio')).toBe(true);
     expect(canAccessPath('recepcion', '/expedientes')).toBe(false);
@@ -35,6 +36,21 @@ describe('navigation permissions by role', () => {
       expect(canAccessPath(role, '/estadisticas')).toBe(true);
       expect(canAccessPath(role, '/usuarios')).toBe(true);
     }
+  });
+
+  it('muestra Agenda y Actividades a los 6 roles del personal y las niega a UMECA', () => {
+    for (const role of ['titular', 'subdireccion', 'trabajo_social', 'psicologia', 'juridico', 'recepcion'] as const) {
+      const paths = getNavigationForRole(role).map((p) => p.path);
+      expect(paths).toContain('/agenda');
+      expect(paths).toContain('/actividades');
+      expect(canAccessPath(role, '/actividades')).toBe(true);
+    }
+    expect(canAccessPath('umeca', '/actividades')).toBe(false);
+    expect(canAccessPath('umeca', '/agenda')).toBe(false);
+  });
+
+  it('no incluye Intervenciones en el menú', () => {
+    expect(getNavigationForRole('titular').map((p) => p.path)).not.toContain('/intervenciones');
   });
 
   it('devuelve lista vacía y niega acceso si no hay rol', () => {

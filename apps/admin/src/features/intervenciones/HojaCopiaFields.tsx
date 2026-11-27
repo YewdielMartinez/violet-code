@@ -76,7 +76,7 @@ export const HojaCopiaFields = memo(function HojaCopiaFields({
 
   return (
     <fieldset className="grid gap-4 rounded-2xl border border-outline-variant bg-surface-container-low p-4">
-      <legend className="px-1 text-sm font-medium text-on-surface">Datos del día</legend>
+      <legend className="px-1 text-sm font-medium text-on-surface">Datos al día de la sesión</legend>
       <p className="flex items-start gap-2 text-xs text-on-surface-variant">
         <Icon name="history" className="mt-0.5 shrink-0 text-base text-primary" />
         <span>

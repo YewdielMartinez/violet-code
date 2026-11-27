@@ -3,6 +3,6 @@ import type { DerivacionCreateInput, DerivacionItem, EstadoDerivacion } from '..
 export interface DerivacionRepository {
   list(estado?: EstadoDerivacion): Promise<DerivacionItem[]>;
   listByFicha(fichaId: string): Promise<DerivacionItem[]>;
-  create(input: DerivacionCreateInput): Promise<{ id: string }>;
+  create(input: DerivacionCreateInput): Promise<{ id: string; aviso?: string | null }>;
   updateEstado(id: string, estado: EstadoDerivacion): Promise<void>;
 }

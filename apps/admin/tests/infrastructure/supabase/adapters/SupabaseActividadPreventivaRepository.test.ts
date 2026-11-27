@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { rpcMock } = vi.hoisted(() => ({
+const { rpcMock, fromMock } = vi.hoisted(() => ({
   rpcMock: vi.fn(),
+  fromMock: vi.fn(),
 }));
 
 vi.mock('@/infrastructure/supabase/client', () => ({
   supabase: {
     rpc: rpcMock,
+    from: fromMock,
   },
 }));
 
@@ -15,6 +17,7 @@ import { supabaseActividadPreventivaRepository } from '@/infrastructure/supabase
 describe('supabaseActividadPreventivaRepository', () => {
   beforeEach(() => {
     rpcMock.mockReset();
+    fromMock.mockReset();
   });
 
   it('lista actividades preventivas mapeando asentamiento y participantes', async () => {
@@ -97,5 +100,32 @@ describe('supabaseActividadPreventivaRepository', () => {
       },
     });
     expect(result).toEqual({ actividadId: 'act-9', totalParticipantes: 2 });
+  });
+  it('lista el catálogo de tipos de actividad', async () => {
+    const order = vi.fn().mockResolvedValue({ data: [{ id: 1, clave: 'taller', nombre: 'Taller' }], error: null });
+    const select = vi.fn().mockReturnValue({ order });
+    fromMock.mockReturnValue({ select });
+
+    await expect(supabaseActividadPreventivaRepository.listTipos()).resolves.toEqual([
+      { id: 1, clave: 'taller', nombre: 'Taller' },
+    ]);
+    expect(fromMock).toHaveBeenCalledWith('cat_tipo_actividad');
+    expect(order).toHaveBeenCalledWith('id');
+  });
+
+  it('lista solo empleados activos como participantes posibles y propaga errores', async () => {
+    const order = vi.fn().mockResolvedValue({ data: [{ id: 'e1', nombre: 'Laura', rol: 'psicologia' }], error: null });
+    const eq = vi.fn().mockReturnValue({ order });
+    fromMock.mockReturnValue({ select: vi.fn().mockReturnValue({ eq }) });
+
+    await expect(supabaseActividadPreventivaRepository.listEmpleados()).resolves.toEqual([
+      { id: 'e1', nombre: 'Laura', rol: 'psicologia' },
+    ]);
+    expect(fromMock).toHaveBeenCalledWith('empleado');
+    expect(eq).toHaveBeenCalledWith('activo', true);
+
+    const boom = new Error('rls');
+    order.mockResolvedValue({ data: null, error: boom });
+    await expect(supabaseActividadPreventivaRepository.listEmpleados()).rejects.toBe(boom);
   });
 });

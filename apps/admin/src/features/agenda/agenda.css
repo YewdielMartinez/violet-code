@@ -1,0 +1,652 @@
+/* Agenda: calendario mensual / semanal.
+   Solo se animan `transform` y `opacity`; los colores salen de los tokens del tema (claro y oscuro). */
+
+/* ── Colores por tipo de cita (estado / prioridad) ─────────────────────────────────── */
+.ag-chip--pending {
+  --ag-bg: var(--md-sys-color-secondary-container);
+  --ag-fg: var(--md-sys-color-on-secondary-container);
+  --ag-bar: var(--md-sys-color-secondary);
+}
+
+.ag-chip--confirmed {
+  --ag-bg: var(--md-sys-color-primary-container);
+  --ag-fg: var(--md-sys-color-on-primary-container);
+  --ag-bar: var(--md-sys-color-primary);
+}
+
+.ag-chip--urgent {
+  --ag-bg: var(--md-sys-color-error-container);
+  --ag-fg: var(--md-sys-color-on-error-container);
+  --ag-bar: var(--md-sys-color-error);
+}
+
+.ag-chip--done {
+  --ag-bg: var(--md-sys-color-tertiary-container);
+  --ag-fg: var(--md-sys-color-on-tertiary-container);
+  --ag-bar: var(--md-sys-color-tertiary);
+}
+
+.ag-chip--muted {
+  --ag-bg: var(--md-sys-color-surface-container-highest);
+  --ag-fg: var(--md-sys-color-on-surface-variant);
+  --ag-bar: var(--md-sys-color-outline);
+}
+
+/* ── Estructura de la página ───────────────────────────────────────────────────────── */
+.ag-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  gap: 16px;
+  align-items: start;
+  /* Espacio para que la barra de navegación (dock) no tape el final de la agenda. */
+  padding-bottom: 5.5rem;
+}
+
+@media (max-width: 1180px) {
+  .ag-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.ag-main {
+  min-width: 0;
+}
+
+.ag-side {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+}
+
+/* Calendario en una sola columna: los paneles van debajo, lado a lado si caben. */
+@media (max-width: 1180px) {
+  .ag-side {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+    align-items: start;
+  }
+}
+
+.ag-card {
+  border-radius: 28px;
+  background: var(--md-sys-color-surface-container-low);
+  padding: 14px;
+}
+
+.ag-card--center {
+  display: grid;
+  min-height: 22rem;
+  place-items: center;
+}
+
+/* ── Barra de herramientas: todos los controles miden 36 px y se alinean en una fila ── */
+.ag-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ag-toolbar__nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Filtro de área: el select del kit con forma de píldora y la misma altura que el resto. */
+.ag-area-filter {
+  --mk-select-height: 36px;
+  --mk-select-radius: 999px;
+  --mk-select-padding: 0 0.55rem 0 1rem;
+  --mk-select-font-size: 0.875rem;
+  --mk-select-bg: var(--md-sys-color-surface-container-high);
+  min-width: 10rem;
+  max-width: 14rem;
+}
+
+.ag-area-pill {
+  display: inline-flex;
+  height: 36px;
+  align-items: center;
+  border-radius: 999px;
+  background: var(--md-sys-color-secondary-container);
+  padding: 0 14px;
+  color: var(--md-sys-color-on-secondary-container);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Mes / Semana: cápsula solo con íconos, 36 px de alto; el activo se resalta con el indicador del kit. */
+.ag-view-toggle {
+  padding: 3px;
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.ag-view-toggle > [data-mk-tab] {
+  width: 40px;
+  height: 30px;
+  padding: 0;
+  gap: 0;
+}
+
+.ag-view-toggle > [data-mk-tab][aria-selected='true'] {
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.ag-empty {
+  margin: 12px 4px 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+}
+
+.ag-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 14px 4px 2px;
+  padding: 0;
+  list-style: none;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.75rem;
+}
+
+.ag-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ag-legend__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--ag-bar);
+}
+
+/* ── Transición al cambiar de periodo / vista (dirección según data-direction) ─────── */
+.ag-stage {
+  animation-duration: 320ms;
+  animation-timing-function: var(--mk-ease-flow, cubic-bezier(0.22, 1, 0.36, 1));
+  animation-fill-mode: both;
+}
+
+.ag-stage[data-direction='next'] {
+  animation-name: ag-in-next;
+}
+
+.ag-stage[data-direction='prev'] {
+  animation-name: ag-in-prev;
+}
+
+.ag-stage[data-direction='swap'] {
+  animation-name: ag-in-swap;
+}
+
+@keyframes ag-in-next {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+
+@keyframes ag-in-prev {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+}
+
+@keyframes ag-in-swap {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes ag-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ── Chips de cita ─────────────────────────────────────────────────────────────────── */
+.ag-chip {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: 22px;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ag-bg);
+  padding: 0 8px;
+  box-shadow: inset 3px 0 0 var(--ag-bar);
+  color: var(--ag-fg);
+  font-size: 0.75rem;
+  line-height: 1;
+  text-align: start;
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    transform 140ms var(--mk-ease-click, ease-out),
+    filter 140ms ease;
+}
+
+.ag-chip:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.ag-chip:active {
+  transform: scale(0.97);
+}
+
+.ag-chip:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 1px;
+}
+
+.ag-chip--muted .ag-chip__name {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.ag-chip__hora {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.ag-chip__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ag-chip__area {
+  display: none;
+}
+
+/* Marca UMECA (asistencia obligatoria): etiqueta sólida en tertiary, legible sobre cualquier tono de chip. */
+.ag-chip__umeca {
+  display: inline-block;
+  flex: none;
+  margin-inline-end: 4px;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--md-sys-color-tertiary);
+  color: var(--md-sys-color-on-tertiary);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  vertical-align: 1px;
+}
+
+.ag-legend__umeca {
+  margin-inline-end: 0;
+}
+
+.ag-skel {
+  display: block;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
+  animation: ag-pulse 1.4s ease-in-out infinite;
+}
+
+.ag-skel--chip {
+  width: 78%;
+  height: 22px;
+}
+
+/* ── Vista mensual ─────────────────────────────────────────────────────────────────── */
+.ag-month__head,
+.ag-month__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ag-month__head {
+  margin-bottom: 6px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+  text-transform: lowercase;
+}
+
+.ag-tile {
+  position: relative;
+  display: flex;
+  min-height: clamp(5.75rem, 13vh, 8.5rem);
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container);
+  padding: 6px 8px 8px;
+  transition:
+    transform 160ms var(--mk-ease-click, ease-out),
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.ag-tile:hover {
+  transform: translateY(-2px);
+  background: var(--md-sys-color-surface-container-high);
+  box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--md-sys-color-shadow, #000) 70%, transparent);
+}
+
+.ag-tile:has(> .ag-tile__hit:active) {
+  transform: scale(0.98);
+}
+
+.ag-tile[data-out] {
+  background: color-mix(in srgb, var(--md-sys-color-surface-container) 45%, transparent);
+}
+
+.ag-tile[data-out] .ag-tile__num {
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.6;
+}
+
+.ag-tile[data-out] .ag-chip {
+  opacity: 0.7;
+}
+
+.ag-tile[data-today] {
+  box-shadow: inset 0 0 0 2px var(--md-sys-color-primary);
+}
+
+.ag-tile__hit {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ag-tile__hit:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.ag-tile__num {
+  position: relative;
+  display: grid;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  align-self: flex-end;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.ag-tile[data-today] .ag-tile__num {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.ag-tile__chips {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  /* Los huecos entre chips dejan pasar el clic al botón del día. */
+  pointer-events: none;
+}
+
+.ag-tile__more {
+  position: relative;
+  padding-inline: 4px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+/* Pantallas angostas: las citas del recuadro se vuelven puntos de color; el recuadro abre el día. */
+@media (max-width: 640px) {
+  .ag-card {
+    border-radius: 22px;
+    padding: 8px;
+  }
+
+  .ag-month__head,
+  .ag-month__grid {
+    gap: 3px;
+  }
+
+  .ag-tile {
+    min-height: 3.9rem;
+    border-radius: 12px;
+    padding: 3px 4px 5px;
+  }
+
+  .ag-tile__chips {
+    flex-flow: row wrap;
+    gap: 3px;
+  }
+
+  .ag-chip--month {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border-radius: 999px;
+    background: var(--ag-bar);
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  .ag-chip--month > * {
+    display: none;
+  }
+
+  /* En móvil la píldora es un punto: las citas UMECA llevan un anillo para distinguirlas. */
+  .ag-chip--month.ag-chip--umeca {
+    box-shadow: 0 0 0 1.5px var(--md-sys-color-surface), 0 0 0 3px var(--md-sys-color-tertiary);
+  }
+
+  .ag-skel--chip {
+    width: 100%;
+    height: 8px;
+  }
+
+  .ag-tile__more {
+    display: none;
+  }
+}
+
+/* ── Vista semanal ─────────────────────────────────────────────────────────────────── */
+.ag-week {
+  --ag-row: 3.5rem;
+  --ag-gutter: 2.75rem;
+  max-height: max(26rem, calc(100dvh - 15rem));
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.ag-week__head,
+.ag-week__body {
+  display: grid;
+  min-width: 40rem;
+  grid-template-columns: var(--ag-gutter) repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.ag-week__head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--md-sys-color-surface-container-low);
+  padding-bottom: 6px;
+}
+
+.ag-week__day {
+  display: grid;
+  gap: 1px;
+  justify-items: center;
+  border: 0;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container);
+  padding: 6px 4px;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  transition:
+    transform 160ms var(--mk-ease-click, ease-out),
+    background-color 160ms ease;
+}
+
+.ag-week__day:hover {
+  transform: translateY(-1px);
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.ag-week__day:active {
+  transform: scale(0.97);
+}
+
+.ag-week__day:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.ag-week__day[data-today] {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.ag-week__dow {
+  font-size: 0.75rem;
+  text-transform: lowercase;
+  opacity: 0.85;
+}
+
+.ag-week__date {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ag-week__hours {
+  display: grid;
+  grid-auto-rows: var(--ag-row);
+}
+
+.ag-week__hours > span {
+  padding: 2px 6px 0 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.ag-wcol {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-auto-rows: var(--ag-row);
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container);
+}
+
+.ag-wcol[data-today] {
+  box-shadow: inset 0 0 0 2px var(--md-sys-color-primary);
+}
+
+.ag-slot {
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 55%, transparent);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.ag-slot:first-child {
+  border-top: 0;
+}
+
+.ag-slot:hover {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+}
+
+/* Rol sin permiso para agendar: el hueco es solo rejilla, sin resalte ni cursor de acción. */
+.ag-slot--static,
+.ag-slot--static:hover {
+  background: transparent;
+  cursor: default;
+}
+
+.ag-wblock {
+  position: absolute;
+  top: calc(var(--ag-row) * var(--ag-top));
+  left: calc(100% / var(--ag-lanes) * var(--ag-lane) + 2px);
+  width: calc(100% / var(--ag-lanes) - 4px);
+  height: calc(var(--ag-row) - 3px);
+  pointer-events: none;
+}
+
+.ag-chip--week {
+  height: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 5px 7px;
+  overflow: hidden;
+}
+
+.ag-chip--week .ag-chip__name {
+  max-width: 100%;
+  font-weight: 500;
+}
+
+.ag-chip--week .ag-chip__area {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.6875rem;
+  opacity: 0.8;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Accesibilidad: sin movimiento si la persona lo pidió al sistema ───────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ag-stage {
+    animation: none;
+  }
+
+  .ag-tile,
+  .ag-chip,
+  .ag-week__day,
+  .ag-slot {
+    transition: none;
+  }
+
+  .ag-tile:hover,
+  .ag-chip:hover,
+  .ag-week__day:hover {
+    transform: none;
+  }
+
+  .ag-tile:has(> .ag-tile__hit:active),
+  .ag-chip:active,
+  .ag-week__day:active {
+    transform: none;
+  }
+
+  .ag-skel {
+    animation: none;
+  }
+}

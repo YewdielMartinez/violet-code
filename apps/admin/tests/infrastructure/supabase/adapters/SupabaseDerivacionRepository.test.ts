@@ -14,24 +14,17 @@ vi.mock('@/infrastructure/supabase/client', () => ({
 
 import { supabaseDerivacionRepository } from '@/infrastructure/supabase/adapters/SupabaseDerivacionRepository';
 
-function createChain(result: { data: unknown; error: unknown }) {
-  const chain = {
-    select: vi.fn(() => chain),
-    insert: vi.fn(() => chain),
-    single: vi.fn(() => Promise.resolve(result)),
-  };
-  return chain;
-}
-
 describe('supabaseDerivacionRepository', () => {
   beforeEach(() => {
     fromMock.mockReset();
     rpcMock.mockReset();
   });
 
-  it('inserta derivación interna anulando campos de institución externa', async () => {
-    const chain = createChain({ data: { id: 'der-1' }, error: null });
-    fromMock.mockReturnValue(chain);
+  it('crea la canalización interna vía RPC crear_canalizacion (RLS cerrada a insert directo)', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: [{ derivacion_id: 'der-1', estado: 'pendiente', aviso: null }],
+      error: null,
+    });
 
     const res = await supabaseDerivacionRepository.create({
       fichaId: 'ficha-1',
@@ -40,26 +33,28 @@ describe('supabaseDerivacionRepository', () => {
       areaDestinoId: 2,
       institucionId: 99,
       institucionOtra: 'Ignorar',
-      motivo: 'Atención psicológica inicial',
+      motivo: '  Atención psicológica inicial  ',
     });
 
-    expect(res).toEqual({ id: 'der-1' });
-    expect(chain.insert).toHaveBeenCalledWith({
-      ficha_id: 'ficha-1',
-      area_origen_id: 1,
-      destino: 'psicologia',
-      area_destino_id: 2,
-      institucion_id: null,
-      institucion_otra: null,
-      motivo: 'Atención psicológica inicial',
+    expect(res).toEqual({ id: 'der-1', aviso: null });
+    expect(fromMock).not.toHaveBeenCalled();
+    expect(rpcMock).toHaveBeenCalledWith('crear_canalizacion', {
+      p_ficha_id: 'ficha-1',
+      p_destino: 'psicologia',
+      p_area_destino_id: 2,
+      p_institucion_id: null,
+      p_institucion_otra: null,
+      p_motivo: 'Atención psicológica inicial',
     });
   });
 
-  it('inserta derivación externa respetando directorio vs texto libre', async () => {
-    const chain = createChain({ data: { id: 'der-ext' }, error: null });
-    fromMock.mockReturnValue(chain);
+  it('crea la canalización externa respetando directorio vs texto libre y devuelve el aviso RN-03', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: [{ derivacion_id: 'der-ext', estado: 'pendiente', aviso: 'Aviso RN-03' }],
+      error: null,
+    });
 
-    await supabaseDerivacionRepository.create({
+    const res = await supabaseDerivacionRepository.create({
       fichaId: 'ficha-1',
       areaOrigenId: 1,
       destino: 'otra_institucion',
@@ -69,15 +64,33 @@ describe('supabaseDerivacionRepository', () => {
       motivo: 'Apoyo asistencial',
     });
 
-    expect(chain.insert).toHaveBeenCalledWith({
-      ficha_id: 'ficha-1',
-      area_origen_id: 1,
-      destino: 'otra_institucion',
-      area_destino_id: null,
-      institucion_id: null,
-      institucion_otra: 'DIF Ahome',
-      motivo: 'Apoyo asistencial',
+    expect(res).toEqual({ id: 'der-ext', aviso: 'Aviso RN-03' });
+    expect(rpcMock).toHaveBeenCalledWith('crear_canalizacion', {
+      p_ficha_id: 'ficha-1',
+      p_destino: 'otra_institucion',
+      p_area_destino_id: null,
+      p_institucion_id: null,
+      p_institucion_otra: 'DIF Ahome',
+      p_motivo: 'Apoyo asistencial',
     });
+  });
+
+  it('propaga el error 42501 de crear_canalizacion (solo Trabajo Social)', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: null,
+      error: { code: '42501', message: 'Sin permiso para crear canalizaciones' },
+    });
+    await expect(
+      supabaseDerivacionRepository.create({
+        fichaId: 'ficha-1',
+        areaOrigenId: 1,
+        destino: 'juridico',
+        areaDestinoId: 3,
+        institucionId: null,
+        institucionOtra: '',
+        motivo: 'x',
+      }),
+    ).rejects.toMatchObject({ code: '42501' });
   });
 
   it('consulta get_derivaciones en list y listByFicha y mapea filas a camelCase', async () => {

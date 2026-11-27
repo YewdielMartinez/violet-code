@@ -1,4 +1,4 @@
-import type { EstadoFicha, SexoBiologico } from '@/domain/models/Persona';
+import type { SexoBiologico } from '@/domain/models/Persona';
 
 const BIRTH_DATE_FMT = new Intl.DateTimeFormat('es-MX', {
   day: '2-digit',
@@ -6,24 +6,39 @@ const BIRTH_DATE_FMT = new Intl.DateTimeFormat('es-MX', {
   year: 'numeric',
 });
 
-export const ESTADO_BADGE_STYLES: Record<EstadoFicha, { pill: string; dot: string }> = {
-  abierto: {
-    pill: 'bg-primary text-on-primary',
-    dot: 'bg-on-primary',
-  },
-  en_seguimiento: {
-    pill: 'bg-status-info-bg text-status-info',
-    dot: 'bg-status-info',
-  },
-  cerrado: {
-    pill: 'bg-surface-container-high text-on-surface-variant',
-    dot: 'bg-on-surface-variant',
-  },
-  archivado: {
-    pill: 'bg-status-warning-bg text-status-warning',
-    dot: 'bg-status-warning',
-  },
-};
+const FECHA_CORTA_FMT = new Intl.DateTimeFormat('es-MX', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+
+const RELATIVE_FMT = new Intl.RelativeTimeFormat('es-MX', { numeric: 'auto' });
+
+const RELATIVE_UNITS: ReadonlyArray<{ unit: Intl.RelativeTimeFormatUnit; ms: number }> = [
+  { unit: 'year', ms: 365 * 86_400_000 },
+  { unit: 'month', ms: 30 * 86_400_000 },
+  { unit: 'day', ms: 86_400_000 },
+  { unit: 'hour', ms: 3_600_000 },
+  { unit: 'minute', ms: 60_000 },
+];
+
+/** Fecha legible (`20 nov 2026`) a partir de un instante ISO; `null` si no es válida. */
+export function formatFechaCorta(iso: string): string | null {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? null : FECHA_CORTA_FMT.format(date).replace(/\./g, '');
+}
+
+/** Tiempo transcurrido en español («hace 3 días», «ayer»); `null` si la fecha no es válida. */
+export function formatTiempoRelativo(iso: string, now = Date.now()): string | null {
+  const time = new Date(iso).getTime();
+  if (Number.isNaN(time)) return null;
+
+  const diff = time - now;
+  for (const { unit, ms } of RELATIVE_UNITS) {
+    if (Math.abs(diff) >= ms) return RELATIVE_FMT.format(Math.round(diff / ms), unit);
+  }
+  return 'hace un momento';
+}
 
 function parseIsoCalendarDate(raw: string): { year: number; month: number; day: number } | null {
   const trimmed = raw.trim();

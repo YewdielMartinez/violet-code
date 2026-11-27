@@ -8,41 +8,71 @@ import '@yewdiel21/motion-kit/css/components/select';
 import '@yewdiel21/motion-kit/css/components/pagination';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import { fetchUmecaCitas, type UmecaCita } from '@/shared/auth/session';
+import { Icon } from '@/shared/ui/Icon';
 import { PageHeader } from '@/shared/ui/PageHeader';
-import { dayAndTime } from './widgets/format';
+import { ASISTENCIA_OPCIONES, asistenciaInfo, fechaCitaUmeca, resumenAsistencia, type AsistenciaInfo } from './umecaAsistencia';
 
 type UmecaRow = {
   id: string;
   persona: string;
-  fechaHora: string;
+  programadaEn: string;
+  /** Clave de asistencia (`asistio`, `no_asistio`, `pendiente`, `cancelo`). */
   estado: string;
 } & Record<string, unknown>;
 
-const ESTADO_LABELS: Record<string, string> = {
-  agendada: 'Agendada',
-  confirmada: 'Confirmada',
-  cancelada: 'Cancelada',
-  reagendada: 'Reagendada',
-  asistio: 'Asistió',
-  no_asistio: 'No asistió',
-};
+/** Píldora de estado: ícono + texto (no depende solo del color) con tokens del tema. */
+const CHIP_BASE =
+  'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[0.8125rem] font-semibold leading-none whitespace-nowrap';
+
+/** Celda de estado del `DataTable` (API vanilla). */
+function renderEstado(value: unknown): HTMLElement {
+  const info = asistenciaInfo(String(value));
+  const chip = document.createElement('span');
+  chip.className = `${CHIP_BASE} ${info.chipClass}`;
+  const icon = document.createElement('span');
+  icon.className = 'mk-icon text-[16px]';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.textContent = info.icon;
+  chip.append(icon, info.label);
+  return chip;
+}
 
 const COLUMNS: DataTableProps<UmecaRow>['columns'] = [
   { key: 'persona', label: 'Persona canalizada', sortable: true, searchable: true },
-  { key: 'fechaHora', label: 'Fecha y hora', sortable: true },
-  { key: 'estado', label: 'Estado', sortable: true },
+  {
+    key: 'programadaEn',
+    label: 'Fecha y hora',
+    type: 'date',
+    sortable: true,
+    format: (value) => fechaCitaUmeca(String(value)),
+  },
+  {
+    key: 'estado',
+    label: 'Asistencia',
+    type: 'select',
+    options: ASISTENCIA_OPCIONES,
+    sortable: true,
+    filterable: true,
+    render: renderEstado,
+  },
 ];
 
+const SORT_RECIENTES = { key: 'programadaEn', direction: 'desc' } as const;
 const RETRY_ACTION = [{ id: 'retry', label: 'Reintentar' }];
 
 function toUmecaRow(c: UmecaCita): UmecaRow {
   const persona = [c.nombres, c.apellidoPaterno, c.apellidoMaterno].filter(Boolean).join(' ');
-  return {
-    id: c.citaId,
-    persona,
-    fechaHora: dayAndTime(c.programadaEn),
-    estado: ESTADO_LABELS[c.estado] ?? c.estado,
-  };
+  return { id: c.citaId, persona, programadaEn: c.programadaEn, estado: asistenciaInfo(c.estado).clave };
+}
+
+function ResumenChip({ info, total }: { info: AsistenciaInfo; total: number }) {
+  return (
+    <li className={`${CHIP_BASE} !px-3.5 !py-2 ${info.chipClass}`}>
+      <Icon name={info.icon} className="text-[18px]" />
+      <span className="tabular-nums">{total}</span>
+      <span className="font-medium">{info.label}</span>
+    </li>
+  );
 }
 
 /** Vista de solo lectura para usuarios externos UMECA vía RPC `get_umeca_citas()`. */
@@ -50,7 +80,7 @@ export function UmecaHomeView({ displayName }: { displayName: string }) {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['umeca', 'citas'],
     queryFn: fetchUmecaCitas,
-    select: (rows) => rows.map(toUmecaRow),
+    select: (rows) => ({ filas: rows.map(toUmecaRow), resumen: resumenAsistencia(rows.map((r) => r.estado)) }),
   });
 
   return (
@@ -58,7 +88,7 @@ export function UmecaHomeView({ displayName }: { displayName: string }) {
       <PageHeader
         title={`Citas UMECA · ${displayName}`}
         documentTitle="Citas UMECA"
-        description="Consulta de solo lectura autorizada vía get_umeca_citas(). Sin acceso a expedientes ni datos clínicos."
+        description="Asistencia de las mujeres canalizadas por tu dependencia con cita obligatoria. Consulta de solo lectura, sin acceso a expedientes ni datos clínicos."
       />
 
       {isError ? (
@@ -66,14 +96,14 @@ export function UmecaHomeView({ displayName }: { displayName: string }) {
           <EmptyState
             illustration="error"
             title="No se pudieron consultar las citas UMECA"
-            description="Verifica tu sesión activa en Supabase."
+            description="Verifica tu sesión activa e inténtalo de nuevo."
             actions={RETRY_ACTION}
             onAction={() => refetch()}
           />
         </div>
       ) : isLoading ? (
         <div className="h-64 animate-pulse rounded-3xl bg-surface-container" />
-      ) : !data?.length ? (
+      ) : !data?.filas.length ? (
         <div className="rounded-3xl bg-surface-container-low p-10">
           <EmptyState
             illustration="inbox"
@@ -82,7 +112,21 @@ export function UmecaHomeView({ displayName }: { displayName: string }) {
           />
         </div>
       ) : (
-        <DataTable<UmecaRow> caption="Citas UMECA" rows={data} columns={COLUMNS} pageSize={10} />
+        <div className="grid gap-4">
+          <ul aria-label="Resumen de asistencia" className="flex flex-wrap gap-2">
+            <ResumenChip info={asistenciaInfo('asistio')} total={data.resumen.asistio} />
+            <ResumenChip info={asistenciaInfo('no_asistio')} total={data.resumen.no_asistio} />
+            <ResumenChip info={asistenciaInfo('pendiente')} total={data.resumen.pendiente} />
+            {data.resumen.cancelo > 0 ? <ResumenChip info={asistenciaInfo('cancelo')} total={data.resumen.cancelo} /> : null}
+          </ul>
+          <DataTable<UmecaRow>
+            caption="Asistencia de citas UMECA"
+            rows={data.filas}
+            columns={COLUMNS}
+            sort={SORT_RECIENTES}
+            pageSize={10}
+          />
+        </div>
       )}
     </>
   );

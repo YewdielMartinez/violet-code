@@ -36,7 +36,8 @@ export interface SeguimientoFormProps {
   areaId: number | null;
   /** Solo Jurídico agenda directo la siguiente cita (`RN-04`). */
   permiteAgendar: boolean;
-  onDone: () => void;
+  /** Se llama tras guardar; recibe la asistencia registrada (`asistio` genera la hoja, `no_asistio` solo cambia la cita). */
+  onDone: (asistencia: AsistenciaCita) => void;
 }
 
 type SubmitState = 'idle' | 'loading' | 'success' | 'error';
@@ -115,7 +116,7 @@ export function SeguimientoForm({ cita, contexto, areaId, permiteAgendar, onDone
     try {
       await (state.asistencia === 'no_asistio' ? registrarInasistencia() : registrarHoja());
       setSubmitState('success');
-      onDone();
+      onDone(state.asistencia);
     } catch (err) {
       const message =
         err instanceof Error && !('code' in err)
@@ -271,7 +272,11 @@ export function SeguimientoForm({ cita, contexto, areaId, permiteAgendar, onDone
                 />
               </div>
             </details>
-          ) : null}
+          ) : (
+            <p className="rounded-2xl bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+              La siguiente cita la agenda Recepción.
+            </p>
+          )}
         </>
       ) : (
         <p className="rounded-2xl bg-surface-container-low p-4 text-sm text-on-surface-variant">
