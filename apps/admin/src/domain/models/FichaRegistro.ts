@@ -168,6 +168,15 @@ export function validateFichaIdentidad(input: FichaIdentidadInput): string | nul
   if (input.celular.trim() && !CELULAR_REGEX.test(input.celular.trim())) {
     return 'El teléfono celular debe tener exactamente 10 dígitos.';
   }
+  if (!input.estadoCivil) {
+    return 'Selecciona el estado civil.';
+  }
+  if (input.ocupacionId === null) {
+    return 'Selecciona la ocupación.';
+  }
+  if (!input.escolaridad) {
+    return 'Selecciona la escolaridad.';
+  }
   if (input.servicioMedico === 'otro' && !input.servicioMedicoOtro.trim()) {
     return 'Especifica el servicio médico cuando selecciones «Otro».';
   }

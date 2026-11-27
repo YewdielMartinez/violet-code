@@ -35,6 +35,9 @@ export function validateStepIdentidad(input: FichaIdentidadInput): StepValidatio
   if (input.celular.trim() && !CELULAR_REGEX.test(input.celular.trim())) {
     return { error, field: 'celular' };
   }
+  if (!input.estadoCivil) return { error, field: 'estadoCivil' };
+  if (input.ocupacionId === null) return { error, field: 'ocupacionId' };
+  if (!input.escolaridad) return { error, field: 'escolaridad' };
   if (input.servicioMedico === 'otro' && !input.servicioMedicoOtro.trim()) {
     return { error, field: 'servicioMedicoOtro' };
   }

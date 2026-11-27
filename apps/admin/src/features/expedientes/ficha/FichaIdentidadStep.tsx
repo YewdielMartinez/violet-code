@@ -534,22 +534,38 @@ export function FichaIdentidadStep({
         <h4 className="text-base font-semibold text-on-surface">Perfil sociodemográfico</h4>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="grid gap-2">
-            <span className="vc-ficha-label">Estado civil</span>
+          <div
+            className="grid gap-2"
+            data-ficha-field="estadoCivil"
+            data-ficha-invalid={invalidField === 'estadoCivil' || undefined}
+          >
+            <span
+              className={`vc-ficha-label ${invalidField === 'estadoCivil' ? 'text-status-danger' : ''}`}
+            >
+              Estado civil *
+            </span>
             <Select
               size="lg"
-              label="Estado civil"
+              label="Estado civil *"
               placeholder="Selecciona…"
               options={ESTADO_CIVIL_OPTIONS}
               value={value.estadoCivil}
               onChange={(v) => update('estadoCivil', v as EstadoCivil)}
             />
           </div>
-          <div className="grid gap-2">
-            <span className="vc-ficha-label">Escolaridad</span>
+          <div
+            className="grid gap-2"
+            data-ficha-field="escolaridad"
+            data-ficha-invalid={invalidField === 'escolaridad' || undefined}
+          >
+            <span
+              className={`vc-ficha-label ${invalidField === 'escolaridad' ? 'text-status-danger' : ''}`}
+            >
+              Escolaridad *
+            </span>
             <Select
               size="lg"
-              label="Escolaridad"
+              label="Escolaridad *"
               placeholder="Selecciona…"
               options={ESCOLARIDAD_OPTIONS}
               value={value.escolaridad}
@@ -559,11 +575,19 @@ export function FichaIdentidadStep({
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="grid gap-2">
-            <span className="vc-ficha-label">Ocupación</span>
+          <div
+            className="grid gap-2"
+            data-ficha-field="ocupacionId"
+            data-ficha-invalid={invalidField === 'ocupacionId' || undefined}
+          >
+            <span
+              className={`vc-ficha-label ${invalidField === 'ocupacionId' ? 'text-status-danger' : ''}`}
+            >
+              Ocupación *
+            </span>
             <Select
               size="lg"
-              label="Ocupación"
+              label="Ocupación *"
               placeholder="Selecciona…"
               options={ocupacionOptions}
               value={value.ocupacionId ? String(value.ocupacionId) : ''}
