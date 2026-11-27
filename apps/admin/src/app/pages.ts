@@ -16,6 +16,7 @@ const loadAlertas = () => import('@/features/solicitudes/AlertasPage');
 const loadEstadisticas = () => import('@/features/informes/EstadisticasPage');
 const loadUsuarios = () => import('@/features/usuarios/UsuariosPage');
 const loadUsuarioForm = () => import('@/features/usuarios/UsuarioFormPage');
+const loadPerfil = () => import('@/features/perfil/PerfilPage');
 const loadBitacora = () => import('@/features/bitacora/BitacoraPage');
 const loadPending = () => import('@/shared/ui/PendingModulePage');
 
@@ -34,6 +35,7 @@ export const AlertasPage = lazy(loadAlertas);
 export const EstadisticasPage = lazy(loadEstadisticas);
 export const UsuariosPage = lazy(loadUsuarios);
 export const UsuarioFormPage = lazy(loadUsuarioForm);
+export const PerfilPage = lazy(loadPerfil);
 export const BitacoraPage = lazy(loadBitacora);
 export const PendingModulePage = lazy(loadPending);
 
@@ -61,6 +63,7 @@ const ROUTE_LOADERS: Record<string, () => Promise<unknown>> = {
   '/bitacora': loadBitacora,
   '/usuarios': loadUsuarios,
   '/usuarios/nuevo': loadUsuarioForm,
+  '/perfil': loadPerfil,
 };
 
 /** Precarga el chunk de una ruta al pasar el cursor o enfocar un enlace de navegación. */

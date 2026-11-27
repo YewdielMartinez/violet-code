@@ -10,7 +10,7 @@ import { Icon } from '@/shared/ui/Icon';
 import { ExpedienteTimeline } from './ExpedienteTimeline';
 import { NotasPrivadasPanel } from './NotasPrivadasPanel';
 import { SeguimientoForm } from './SeguimientoForm';
-import { useContextoHoja } from './api';
+import { useContextoCita } from './api';
 import { formatFechaHora } from './formatters';
 
 type Tab = 'hoja' | 'timeline' | 'notas';
@@ -38,7 +38,7 @@ interface BodyProps extends Omit<IntervencionDrawerProps, 'cita' | 'open' | 'onO
 
 function IntervencionDrawerBody({ cita, canRegister, permiteAgendar, areaId, onDone }: BodyProps) {
   const [tab, setTab] = useState<Tab>(canRegister ? 'hoja' : 'timeline');
-  const contextoQuery = useContextoHoja(cita.personaId);
+  const contextoQuery = useContextoCita(cita.citaId, cita.personaId);
   const contexto = contextoQuery.data;
   const { user } = useAuth();
   // Las notas de Psicología viven en su Historial clínico: la pestaña no aplica a ese rol.

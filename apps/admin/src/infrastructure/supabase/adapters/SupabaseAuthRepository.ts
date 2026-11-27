@@ -9,6 +9,34 @@ function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
   return value ?? null;
 }
 
+type MiPerfilBaseRow = Database['public']['Functions']['get_mi_perfil']['Returns'][number];
+
+type StaffMiPerfilRow = Omit<
+  MiPerfilBaseRow,
+  'area_id' | 'area_clave' | 'area_nombre' | 'dependencia' | 'permisos'
+> & {
+  area_id: number | null;
+  area_clave: string | null;
+  area_nombre: string | null;
+  dependencia: string | null;
+  permisos: string[] | null;
+};
+
+export function mapMiPerfilToStaffUser(row: StaffMiPerfilRow, fallbackEmail: string): StaffUser {
+  return {
+    id: row.id,
+    email: row.email || fallbackEmail,
+    displayName: row.nombre,
+    role: row.rol as StaffRole,
+    areaId: row.area_id ?? null,
+    areaClave: row.area_clave ?? null,
+    areaNombre: row.area_nombre ?? null,
+    dependencia: row.dependencia ?? null,
+    activo: row.activo,
+    permisos: row.permisos ?? [],
+  };
+}
+
 export function mapAuthErrorMessage(status: number | undefined, raw: string): string {
   const lower = raw.toLowerCase();
   if (status === 429 || lower.includes('rate limit') || lower.includes('too many')) {
@@ -26,64 +54,29 @@ export function mapAuthErrorMessage(status: number | undefined, raw: string): st
   return raw || 'No se pudo iniciar sesión con Supabase.';
 }
 
-async function resolveStaffUser(userId: string, email: string): Promise<StaffUser> {
-  const { data: empleado, error: empError } = await supabase
-    .from('empleado')
-    .select('id, nombre, rol, area_id, activo, cat_area(clave, nombre)')
-    .eq('id', userId)
-    .maybeSingle();
+async function resolveStaffUser(_userId: string, email: string): Promise<StaffUser> {
+  const { data, error } = await supabase.rpc('get_mi_perfil').maybeSingle();
 
-  if (empError) {
-    throw new AuthError(500, 'No se pudo consultar el perfil del personal.');
+  if (error) {
+    throw new AuthError(500, 'No se pudo consultar el perfil del usuario.');
   }
 
-  if (empleado) {
-    if (!empleado.activo) {
-      await supabase.auth.signOut();
-      throw new AuthError(403, 'Tu cuenta está desactivada. Contacta a la administración.');
-    }
-    const area = unwrapOne(empleado.cat_area);
-    return {
-      id: empleado.id,
-      email,
-      displayName: empleado.nombre,
-      role: empleado.rol as StaffRole,
-      areaId: empleado.area_id,
-      areaClave: area?.clave ?? null,
-      areaNombre: area?.nombre ?? null,
-      activo: empleado.activo,
-    };
+  if (!data) {
+    await supabase.auth.signOut();
+    throw new AuthError(403, 'Esta cuenta no tiene acceso al panel administrativo.');
   }
 
-  const { data: externo, error: extError } = await supabase
-    .from('usuario_externo')
-    .select('id, nombre, dependencia, activo')
-    .eq('id', userId)
-    .maybeSingle();
-
-  if (extError) {
-    throw new AuthError(500, 'No se pudo consultar el perfil externo.');
+  if (!data.activo) {
+    await supabase.auth.signOut();
+    throw new AuthError(
+      403,
+      data.tipo === 'externo'
+        ? 'Tu cuenta externa está desactivada. Contacta a SEMUJERES.'
+        : 'Tu cuenta está desactivada. Contacta a la administración.',
+    );
   }
 
-  if (externo && externo.dependencia === 'umeca') {
-    if (!externo.activo) {
-      await supabase.auth.signOut();
-      throw new AuthError(403, 'Tu cuenta externa está desactivada. Contacta a SEMUJERES.');
-    }
-    return {
-      id: externo.id,
-      email,
-      displayName: externo.nombre,
-      role: 'umeca',
-      areaId: null,
-      areaClave: 'umeca',
-      areaNombre: 'UMECA',
-      activo: externo.activo,
-    };
-  }
-
-  await supabase.auth.signOut();
-  throw new AuthError(403, 'Esta cuenta no tiene acceso al panel administrativo.');
+  return mapMiPerfilToStaffUser(data, email);
 }
 
 // Al cargar, getSession() y onAuthStateChange (INITIAL_SESSION / SIGNED_IN) piden el mismo perfil

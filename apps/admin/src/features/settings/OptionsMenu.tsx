@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Menu } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/menu';
 import { useCerrarSesion } from '@/shared/auth/useCerrarSesion';
@@ -7,6 +8,7 @@ import { AppearanceMenu } from './AppearanceMenu';
 import { SettingsDialog } from './SettingsDialog';
 
 const OPTIONS = [
+  { value: 'profile', label: 'Mi perfil', icon: 'person' },
   { value: 'settings', label: 'Configuración', icon: 'settings' },
   { value: 'appearance', label: 'Apariencia', icon: 'palette' },
   { value: 'reload', label: 'Recargar', icon: 'refresh' },
@@ -22,12 +24,16 @@ const AFTER_CLOSE_MS = 220;
  * Desde ahí: Configuración (diálogo) y Apariencia (panel del mismo menú).
  */
 export function OptionsMenu() {
+  const navigate = useNavigate();
   const cerrarSesion = useCerrarSesion();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
 
   async function onSelect(value: string) {
     switch (value) {
+      case 'profile':
+        navigate('/perfil');
+        break;
       case 'settings':
         setTimeout(() => setSettingsOpen(true), AFTER_CLOSE_MS);
         break;

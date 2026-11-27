@@ -139,7 +139,7 @@ select is(
 );
 select is(
   public.tiene_permiso('historial_clinico.acceder'),
-  true, 'titular conserva historial_clinico.acceder'
+  false, 'titular no tiene historial_clinico.acceder'
 );
 
 -- ---------------------------------------------------------------------

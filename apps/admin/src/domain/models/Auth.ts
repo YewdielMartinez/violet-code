@@ -16,7 +16,9 @@ export interface StaffUser {
   areaId: number | null;
   areaClave: string | null;
   areaNombre: string | null;
+  dependencia: string | null;
   activo: boolean;
+  permisos: string[];
 }
 
 export interface AuthSession {

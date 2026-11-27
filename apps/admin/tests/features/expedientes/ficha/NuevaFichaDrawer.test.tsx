@@ -140,7 +140,9 @@ function setTestRole(role: StaffRole) {
     areaId: 1,
     areaClave: role === 'recepcion' ? 'recepcion' : 'ts',
     areaNombre: role === 'recepcion' ? 'Recepción' : 'Trabajo Social',
+    dependencia: null,
     activo: true,
+    permisos: [],
   };
 }
 

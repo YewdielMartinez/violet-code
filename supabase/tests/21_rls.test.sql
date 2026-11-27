@@ -412,8 +412,9 @@ select is((select count(*)::int from public.nota_area), 0, 'recepcion no lee not
 -- 7. historial_clinico
 -- =====================================================================
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111101'::uuid); -- titular
-select ok((select count(*) >= 1 from public.historial_clinico), 'titular lee historial_clinico');
+select is((select count(*)::int from public.historial_clinico), 0, 'titular no lee historial_clinico (solo psicóloga autora)');
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111104'::uuid); -- psicologia
+select ok((select count(*) >= 1 from public.historial_clinico), 'psicologia autora lee historial_clinico');
 select throws_ok(
   $$insert into public.historial_clinico (ficha_id, motivo_consulta) values ('55555555-5555-4555-8555-555555555502', 'Motivo A06')$$,
   '42501', null, 'psicologia no inserta historial_clinico directo (cerrado en A-07 S2)'

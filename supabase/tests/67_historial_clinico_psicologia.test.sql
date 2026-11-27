@@ -312,8 +312,8 @@ select is(
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111101'::uuid); -- titular
 select is(
   public.tiene_permiso('historial_clinico.escribir')::text || '|' || public.tiene_permiso('historial_clinico.acceder')::text,
-  'false|true',
-  'titular: escribir = false y acceder = true'
+  'false|false',
+  'titular: escribir = false y acceder = false'
 );
 
 -- 31) Una escritura directa (sin RPC) también queda versionada por el trigger

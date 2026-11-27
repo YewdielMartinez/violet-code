@@ -18,6 +18,7 @@ import {
   NuevaFichaPage,
   ActividadFormPage,
   PendingModulePage,
+  PerfilPage,
   PrivacyNoticePage,
   UsuarioFormPage,
   UsuariosPage,
@@ -230,6 +231,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={pageFallback}>
             <UsuarioFormPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/perfil',
+        element: (
+          <Suspense fallback={pageFallback}>
+            <PerfilPage />
           </Suspense>
         ),
       },

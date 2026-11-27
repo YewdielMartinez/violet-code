@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { ContextoHojaSeguimiento, ContextoSeguimiento } from '@/domain/models/HojaSeguimiento';
 import type { NotaPrivadaCreateInput, NotaPrivadaUpdateInput } from '@/domain/models/NotaPrivada';
 import { supabaseSeguimientoRepository } from '@/infrastructure/supabase/adapters/SupabaseSeguimientoRepository';
 import { supabaseSepomexRepository } from '@/infrastructure/supabase/adapters/SupabaseSepomexRepository';
@@ -11,7 +12,7 @@ const CATALOGO_STALE_MS = 10 * 60_000;
 
 export const INTERVENCIONES_KEYS = {
   tiposAtencion: (areaId: number | null) => ['catalogos', 'tipo_atencion', areaId] as const,
-  contexto: (personaId: string) => ['intervenciones', 'contexto', personaId] as const,
+  contexto: (citaId: string) => ['intervenciones', 'contexto', citaId] as const,
   // Incluye al usuario: cada rol ve notas distintas del mismo expediente (RLS de `nota_area`).
   notas: (userId: string | null, fichaId: string) => ['intervenciones', 'notas', userId, fichaId] as const,
   // Misma clave que la Ficha Única para compartir la caché del catálogo.
@@ -48,11 +49,30 @@ export function useAsentamientosPorCp(codigoPostal: string) {
   });
 }
 
-export function useContextoHoja(personaId: string | null, enabled = true) {
+export type ContextoCitaSeguimiento = ContextoHojaSeguimiento & ContextoSeguimiento;
+
+function mapContextoToHoja(ctx: ContextoSeguimiento | null, personaId: string): ContextoCitaSeguimiento | null {
+  if (!ctx) return null;
+  return {
+    ...ctx,
+    folio: ctx.folioExpediente,
+    personaId,
+    estadoCivil: null,
+    ocupacionId: null,
+    ocupacionOtra: null,
+    celular: null,
+    domicilio: null,
+  };
+}
+
+export function useContextoCita(citaId: string | null, personaId = '', enabled = true) {
   return useQuery({
-    queryKey: INTERVENCIONES_KEYS.contexto(personaId ?? ''),
-    queryFn: () => supabaseSeguimientoRepository.getContextoHoja(personaId as string),
-    enabled: enabled && Boolean(personaId),
+    queryKey: INTERVENCIONES_KEYS.contexto(citaId ?? ''),
+    queryFn: async () => {
+      const ctx = await supabaseSeguimientoRepository.contexto(citaId as string);
+      return mapContextoToHoja(ctx, personaId);
+    },
+    enabled: enabled && Boolean(citaId),
   });
 }
 
