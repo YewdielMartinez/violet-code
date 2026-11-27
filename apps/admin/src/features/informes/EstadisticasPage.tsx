@@ -102,6 +102,7 @@ export default function EstadisticasPage({ now }: EstadisticasPageProps = {}) {
           mostrarPorArea={direccion && areaSeleccion === null}
           habilitado={habilitado}
           etiquetaPeriodo={etiquetaPeriodo(periodo)}
+          areaNombre={areaNombre}
         />
       ) : (
         <ReportesSection

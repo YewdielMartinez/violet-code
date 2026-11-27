@@ -1,7 +1,8 @@
 import { accionBitacoraLabel, tablaBitacoraLabel, type BitacoraEvento } from '@/domain/models/Bitacora';
 import { downloadBlob, toCsvBlob, toXlsx, type ExportColumn } from '@/shared/export';
+import type { PrintReportOptions } from '@/shared/print';
 import { actorRolLabel } from './bitacoraTableConfig';
-import { fechaHoraBitacora } from './bitacoraList';
+import { fechaHoraBitacora, type BitacoraListFilters } from './bitacoraList';
 
 /**
  * Columnas de la descarga: solo quién, qué, dónde y cuándo (lo mismo que muestra la tabla). La bitácora no guarda
@@ -30,4 +31,32 @@ export function descargarBitacora(eventos: readonly BitacoraEvento[], formato: B
       ? toCsvBlob(eventos, BITACORA_EXPORT_COLUMNS)
       : toXlsx(eventos, BITACORA_EXPORT_COLUMNS, 'Bitácora');
   downloadBlob(blob, nombreArchivo(formato));
+}
+
+/** Documento de impresión / PDF de la bitácora: mismas columnas que la descarga, con los filtros aplicados. */
+export function bitacoraParaImprimir(
+  eventos: readonly BitacoraEvento[],
+  filtros: BitacoraListFilters,
+  opciones: { total: number; truncado: boolean },
+): PrintReportOptions<BitacoraEvento> {
+  const tabla = filtros.tabla ? tablaBitacoraLabel(filtros.tabla) : 'Todas las tablas';
+  const accion = filtros.accion ? accionBitacoraLabel(filtros.accion) : 'Todas las acciones';
+  const periodo =
+    filtros.desde || filtros.hasta ? `${filtros.desde || 'inicio'} a ${filtros.hasta || 'hoy'}` : 'Sin límite de fechas';
+  const cantidad = opciones.truncado
+    ? `${eventos.length} eventos más recientes de ${opciones.total}`
+    : `${eventos.length} ${eventos.length === 1 ? 'evento' : 'eventos'}`;
+  return {
+    title: 'Bitácora de accesos y cambios',
+    subtitle: cantidad,
+    filtros: [
+      { label: 'Tabla', value: tabla },
+      { label: 'Acción', value: accion },
+      { label: 'Fechas', value: periodo },
+    ],
+    columns: BITACORA_EXPORT_COLUMNS,
+    rows: eventos,
+    monoKeys: ['registro', 'fecha'],
+    nota: 'Documento de uso interno · sin contenido de notas ni datos de las usuarias',
+  };
 }

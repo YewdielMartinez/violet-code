@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import type { StaffRole } from '@/domain/models/Auth';
 import type { ReporteRow, ReporteTipo } from '@/domain/models/Reporte';
 
@@ -487,5 +487,89 @@ describe('Reportes por área', () => {
     irAReportes();
     fireEvent.click(screen.getByRole('button', { name: 'Descargar CSV' }));
     expect(toastMock).toHaveBeenLastCalledWith('No se pudo generar el archivo del reporte.', { tone: 'error' });
+  });
+});
+
+describe('Imprimir / PDF', () => {
+  let print: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    print = vi.spyOn(window, 'print').mockImplementation(() => {});
+    vi.spyOn(HTMLImageElement.prototype, 'complete', 'get').mockReturnValue(true);
+  });
+  afterEach(() => {
+    document.getElementById('vc-print-root')?.remove();
+    vi.useRealTimers();
+    print.mockRestore();
+  });
+
+  async function imprimir() {
+    fireEvent.click(screen.getByRole('button', { name: 'Imprimir / PDF' }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+  }
+
+  it('Reportes: junto a CSV y Excel, imprime las mismas columnas con filtros, indicadores y nota', async () => {
+    render(<EstadisticasPage now={NOW} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Reportes' }));
+    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(
+      expect.arrayContaining(['Descargar CSV', 'Descargar Excel', 'Imprimir / PDF']),
+    );
+    await imprimir();
+    expect(print).toHaveBeenCalledTimes(1);
+    const root = document.getElementById('vc-print-root')!;
+    expect(root.querySelector('h1')?.textContent).toBe('Atenciones');
+    expect(root.textContent).toContain('Periodo:');
+    expect(root.textContent).toContain('Marzo 2026');
+    expect(root.textContent).toContain('Titular / Dirección');
+    expect(root.textContent).toContain('Documento sin datos personales');
+    const encabezados = [...root.querySelectorAll('thead th')].map((th) => th.textContent);
+    expect(encabezados.slice(0, 3)).toEqual(['Área', 'Tipo de atención', 'Primera vez / Seguimiento']);
+    expect(root.querySelectorAll('tbody tr').length).toBeGreaterThan(0);
+    expect(root.querySelector('.vcp-chart')).not.toBeNull();
+    expect(toastMock).toHaveBeenCalledWith(expect.stringContaining('Guardar como PDF'), { tone: 'success' });
+  });
+
+  it('Reportes: queda deshabilitado sin datos y no imprime', async () => {
+    useReporteMock.mockImplementation(() => ({ data: [], isPending: false, isError: false, refetch }));
+    render(<EstadisticasPage now={NOW} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Reportes' }));
+    const boton = screen.getByRole('button', { name: 'Imprimir / PDF' }) as HTMLButtonElement;
+    expect(boton.disabled).toBe(true);
+    fireEvent.click(boton);
+    await vi.advanceTimersByTimeAsync(300);
+    expect(print).not.toHaveBeenCalled();
+  });
+
+  it('Resumen: imprime indicadores, gráficas y la tendencia mensual', async () => {
+    render(<EstadisticasPage now={NOW} />);
+    await imprimir();
+    expect(print).toHaveBeenCalledTimes(1);
+    const root = document.getElementById('vc-print-root')!;
+    expect(root.querySelector('h1')?.textContent).toBe('Resumen de atenciones');
+    expect([...root.querySelectorAll('thead th')].map((th) => th.textContent)).toEqual([
+      'Mes',
+      'Atenciones',
+      'Primera vez',
+      'Seguimiento',
+    ]);
+    expect(root.querySelectorAll('tbody tr')).toHaveLength(12);
+    expect(root.querySelectorAll('.vcp-kpi').length).toBeGreaterThan(0);
+    expect([...root.querySelectorAll('.vcp-chart figcaption')].map((c) => c.textContent)).toEqual(
+      expect.arrayContaining(['Atenciones por mes', 'Mujeres y hombres atendidos', 'Atenciones por tipo de atención']),
+    );
+    expect(root.querySelector('.vcp-kpi p')?.textContent).toContain('vs. periodo anterior');
+  });
+
+  it('Ctrl/Cmd+P en Reportes monta el mismo documento (beforeprint) y lo retira (afterprint)', () => {
+    render(<EstadisticasPage now={NOW} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Reportes' }));
+    window.dispatchEvent(new Event('beforeprint'));
+    expect(document.querySelector('#vc-print-root h1')?.textContent).toBe('Atenciones');
+    window.dispatchEvent(new Event('afterprint'));
+    expect(document.getElementById('vc-print-root')).toBeNull();
+    expect(print).not.toHaveBeenCalled();
   });
 });

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { DataTable, EmptyState, Select, toast } from '@yewdiel21/motion-kit/react';
 import type { DataTableProps } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/data-table';
@@ -9,6 +9,13 @@ import '@yewdiel21/motion-kit/css/components/pagination';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import type { ReporteTipo } from '@/domain/models/Reporte';
 import { downloadBlob, toCsvBlob, toXlsx } from '@/shared/export';
+import {
+  NOTA_SIN_DATOS_PERSONALES,
+  chartFromContainer,
+  usePrintable,
+  type PrintBar,
+  type PrintReportOptions,
+} from '@/shared/print';
 import { SkeletonRows } from '@/shared/ui/SkeletonRows';
 import { SmallEmptyState } from '@/shared/ui/SmallEmptyState';
 import { ChartPanel, HBars, KitChart } from '../ChartPanel';
@@ -66,7 +73,7 @@ function GraficaReporte({ grafica, resumen }: { grafica: ReporteGrafica; resumen
 
 /**
  * Reportes por área: selector de tipo (atenciones, citas, canalizaciones, órdenes de protección, actividades
- * preventivas y alertas), indicadores, gráfica y tabla del periodo elegido, con descarga CSV y Excel. Solo agregados:
+ * preventivas y alertas), indicadores, gráfica y tabla del periodo elegido, con descarga CSV y Excel e impresión / PDF. Solo agregados:
  * nunca nombres ni CURP.
  */
 export function ReportesSection({ tipo, onTipo, periodo, rango, areaId, areaNombre, habilitado }: ReportesSectionProps) {
@@ -118,6 +125,34 @@ export function ReportesSection({ tipo, onTipo, periodo, rango, areaId, areaNomb
 
   const sinDatos = vista?.vacio ?? true;
 
+  // Imprimir / PDF: el mismo contenido que las descargas (columnas de `columnasExportacion`) más indicadores y gráfica.
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const construirImpresion = useCallback((): PrintReportOptions<ReporteFila> | null => {
+    if (!vista || vista.vacio) return null;
+    const { grafica } = vista;
+    const respaldo: PrintBar[] =
+      grafica.kind === 'hbars'
+        ? grafica.puntos.map((p) => ({ label: p.label, value: p.value }))
+        : grafica.labels.map((label, i) => ({ label, value: grafica.values[i] }));
+    const chart = chartFromContainer(bodyRef.current, grafica.titulo, respaldo);
+    return {
+      title: def.label,
+      subtitle: def.aplicaArea ? `${subtitulo} · ${areaNombre ?? 'Todas las áreas'}` : subtitulo,
+      filtros: [
+        { label: 'Tipo de reporte', value: def.label },
+        { label: 'Periodo', value: subtitulo },
+        { label: 'Área', value: def.aplicaArea ? (areaNombre ?? 'Todas las áreas') : 'No aplica a este reporte' },
+      ],
+      kpis: vista.kpis,
+      columns: columnasExportacion(vista.tabla),
+      rows: vista.tabla.filas,
+      charts: chart ? [chart] : [],
+      nota: NOTA_SIN_DATOS_PERSONALES,
+      isTotal: (fila) => fila.id === 'total',
+    };
+  }, [vista, def, subtitulo, areaNombre]);
+  const imprimir = usePrintable(construirImpresion);
+
   return (
     <section aria-label="Reportes" className="est-reportes">
       <header className="est-reportes__head">
@@ -152,6 +187,14 @@ export function ReportesSection({ tipo, onTipo, periodo, rango, areaId, areaNomb
           >
             Descargar Excel
           </button>
+          <button
+            type="button"
+            className="mk-button mk-button--tonal vc-press"
+            disabled={sinDatos}
+            onClick={() => imprimir()}
+          >
+            Imprimir / PDF
+          </button>
         </div>
       </header>
 
@@ -174,7 +217,7 @@ export function ReportesSection({ tipo, onTipo, periodo, rango, areaId, areaNomb
           description={`No hay registros de ${def.label.toLowerCase()} en ${subtitulo}. Prueba con otro periodo o área.`}
         />
       ) : (
-        <div className="est-body">
+        <div className="est-body" ref={bodyRef}>
           <KpiStrip items={kpis} label={`${def.label}, ${subtitulo}`} />
           <div className="est-report-grid">
             <GraficaReporte grafica={vista.grafica} resumen={vista.resumenGrafica} />

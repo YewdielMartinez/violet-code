@@ -26,6 +26,8 @@ export interface BitacoraToolbarProps {
   /** Con valor, muestra «Descargar» (CSV / Excel). */
   onDescargar?: (formato: BitacoraExportFormato) => void;
   descargando?: boolean;
+  /** Con valor, muestra «Imprimir / PDF» junto a «Descargar» (abre el diálogo de impresión del navegador). */
+  onImprimir?: () => void;
   /** Sin eventos que descargar: el menú se deshabilita. */
   sinDatos?: boolean;
 }
@@ -35,7 +37,7 @@ export interface BitacoraToolbarProps {
  * (filtros del servidor), fechas, limpiar filtros y descarga. Devuelve un fragmento: el contenedor flex lo pone
  * `PageHeader`.
  */
-export function BitacoraToolbar({ filtros, opciones, onChange, onDescargar, descargando, sinDatos }: BitacoraToolbarProps) {
+export function BitacoraToolbar({ filtros, opciones, onChange, onDescargar, descargando, onImprimir, sinDatos }: BitacoraToolbarProps) {
   const tablaOptions = useMemo<FilterMenuOption[]>(() => {
     const tablas = new Set(opciones?.tablas ?? []);
     // Si hay una tabla elegida que ya no está en la lista, se conserva para que el filtro siga visible.
@@ -100,6 +102,17 @@ export function BitacoraToolbar({ filtros, opciones, onChange, onDescargar, desc
             </Menu.Item>
           </Menu.Content>
         </Menu.Root>
+      ) : null}
+      {onImprimir ? (
+        <button
+          type="button"
+          className={toolbarPillClass(false)}
+          disabled={descargando || sinDatos}
+          aria-busy={descargando || undefined}
+          onClick={onImprimir}
+        >
+          Imprimir / PDF
+        </button>
       ) : null}
     </>
   );

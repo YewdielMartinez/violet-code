@@ -1,9 +1,17 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { EmptyState } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
+import {
+  NOTA_SIN_DATOS_PERSONALES,
+  chartFromContainer,
+  panelPorTitulo,
+  usePrintable,
+  type PrintChart,
+  type PrintReportOptions,
+} from '@/shared/print';
 import { SmallEmptyState } from '@/shared/ui/SmallEmptyState';
 import { ChartPanel, ChartSkeleton, HBars, KitChart } from './ChartPanel';
-import { KpiStrip, type KpiItem } from './KpiStrip';
+import { KpiStrip, deltaTexto, type KpiItem } from './KpiStrip';
 import { useReporte } from './api';
 import {
   distribucionPorArea,
@@ -38,7 +46,24 @@ export interface ResumenSectionProps {
   habilitado: boolean;
   /** Texto del periodo para el estado vacío («Marzo 2026»). */
   etiquetaPeriodo: string;
+  /** Nombre del área para el encabezado del PDF; `null` o ausente = todas. */
+  areaNombre?: string | null;
 }
+
+/** Fila de la tabla del PDF: la tendencia mensual (lo que hay detrás de las gráficas de serie). */
+interface FilaMensual {
+  mes: string;
+  atenciones: number;
+  primeraVez: number;
+  seguimiento: number;
+}
+
+const COLUMNAS_MENSUALES = [
+  { key: 'mes', header: 'Mes', value: (f: FilaMensual) => f.mes },
+  { key: 'atenciones', header: 'Atenciones', value: (f: FilaMensual) => f.atenciones },
+  { key: 'primeraVez', header: 'Primera vez', value: (f: FilaMensual) => f.primeraVez },
+  { key: 'seguimiento', header: 'Seguimiento', value: (f: FilaMensual) => f.seguimiento },
+];
 
 /**
  * Resumen analítico de atenciones: franja de KPI con variación contra el periodo anterior y gráficas (tendencia
@@ -53,6 +78,7 @@ export function ResumenSection({
   mostrarPorArea,
   habilitado,
   etiquetaPeriodo,
+  areaNombre = null,
 }: ResumenSectionProps) {
   const serieQuery = useReporte(
     { tipo: 'atenciones', desde: rangoTendencia.desde, hasta: rangoTendencia.hasta, areaId, agrupar: 'mes' },
@@ -104,6 +130,64 @@ export function ResumenSection({
   const labelsSexo = useMemo(() => sexo.map((p) => p.label), [sexo]);
   const labelsArea = useMemo(() => porArea.map((p) => p.label), [porArea]);
 
+  // Imprimir / PDF: KPI, gráficas visibles (SVG) y la tabla de la tendencia mensual.
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const construirImpresion = useCallback((): PrintReportOptions<FilaMensual> | null => {
+    if (!habilitado || serieQuery.isPending || totalQuery.isPending || serieQuery.isError || totalQuery.isError) {
+      return null;
+    }
+    const rows: FilaMensual[] = mensual.largas.map((mes, i) => ({
+      mes,
+      atenciones: mensual.values[i] ?? 0,
+      primeraVez: seguimiento.primeraVez[i] ?? 0,
+      seguimiento: seguimiento.seguimiento[i] ?? 0,
+    }));
+    const panel = (titulo: string) => panelPorTitulo(bodyRef.current, titulo);
+    const charts = [
+      chartFromContainer(
+        panel('Atenciones por mes'),
+        'Atenciones por mes',
+        mensual.largas.map((label, i) => ({ label, value: mensual.values[i] ?? 0 })),
+      ),
+      chartFromContainer(panel('Primera vez y seguimiento'), 'Primera vez y seguimiento'),
+      chartFromContainer(panel('Mujeres y hombres atendidos'), 'Mujeres y hombres atendidos', sexo),
+      chartFromContainer(panel('Atenciones por tipo de atención'), 'Atenciones por tipo de atención', porTipo),
+      ...(mostrarPorArea ? [chartFromContainer(panel('Atenciones por área'), 'Atenciones por área', porArea)] : []),
+    ].filter((c): c is PrintChart => c !== null);
+    return {
+      title: 'Resumen de atenciones',
+      subtitle: `${etiquetaPeriodo} · ${areaNombre ?? 'Todas las áreas'}`,
+      filtros: [
+        { label: 'Periodo', value: etiquetaPeriodo },
+        { label: 'Área', value: areaNombre ?? 'Todas las áreas' },
+      ],
+      kpis: kpis.map((kpi) => {
+        const cambio = kpi.delta ? deltaTexto(kpi.delta) : null;
+        return { label: kpi.label, value: kpi.value, ...(cambio ? { nota: cambio } : {}) };
+      }),
+      columns: COLUMNAS_MENSUALES,
+      rows,
+      charts,
+      nota: NOTA_SIN_DATOS_PERSONALES,
+    };
+  }, [
+    habilitado,
+    serieQuery.isPending,
+    serieQuery.isError,
+    totalQuery.isPending,
+    totalQuery.isError,
+    mensual,
+    seguimiento,
+    sexo,
+    porTipo,
+    porArea,
+    mostrarPorArea,
+    etiquetaPeriodo,
+    areaNombre,
+    kpis,
+  ]);
+  const imprimir = usePrintable(construirImpresion);
+
   if (!habilitado) return null;
 
   if (serieQuery.isError || totalQuery.isError) {
@@ -138,7 +222,12 @@ export function ResumenSection({
   const tendenciaBarras = meses.length < 3;
 
   return (
-    <div className="est-body">
+    <div className="est-body" ref={bodyRef}>
+      <div className="est-actions">
+        <button type="button" className="mk-button mk-button--tonal vc-press" onClick={() => imprimir()}>
+          Imprimir / PDF
+        </button>
+      </div>
       <KpiStrip items={kpis} label={`Indicadores de ${etiquetaPeriodo}`} />
 
       <div className="est-grid">

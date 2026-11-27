@@ -64,6 +64,14 @@
   animation: est-in 260ms var(--mk-ease-flow, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
+/* Acciones de la vista (Imprimir / PDF), alineadas a la derecha sobre los indicadores. */
+.est-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 /* ── Franja de KPI: cifras separadas por filetes, no tarjetas ───────────────────────────────────────────────────── */
 
 .est-kpis {

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import type { BitacoraEvento, BitacoraFiltros } from '@/domain/models/Bitacora';
 
@@ -18,7 +18,10 @@ vi.mock('@/features/bitacora/api', () => ({
   useBitacoraOpciones: useOpcionesMock,
   obtenerBitacoraParaExportar: exportarMock,
 }));
-vi.mock('@/features/bitacora/bitacoraExport', () => ({ descargarBitacora: descargarMock }));
+vi.mock('@/features/bitacora/bitacoraExport', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/bitacora/bitacoraExport')>()),
+  descargarBitacora: descargarMock,
+}));
 // Se evita el kit real (layout, GSAP): tabla, paginación y estados mínimos que respetan el contrato usado.
 vi.mock('@yewdiel21/motion-kit/react', async (importOriginal) => {
   const real = await importOriginal<typeof import('@yewdiel21/motion-kit/react')>();
@@ -235,5 +238,35 @@ describe('BitacoraPage', () => {
     login('subdireccion');
     renderPage();
     expect(screen.getByRole('heading', { name: 'Bitácora' })).toBeTruthy();
+  });
+
+  it('«Imprimir / PDF» junto a «Descargar» abre la impresión con los eventos y filtros', async () => {
+    const print = vi.spyOn(window, 'print').mockImplementation(() => {});
+    vi.spyOn(HTMLImageElement.prototype, 'complete', 'get').mockReturnValue(true);
+    exportarMock.mockResolvedValue({ eventos: [evento('e1'), evento('e2')], total: 2, truncado: false });
+    renderPage();
+    expect(screen.getByRole('button', { name: 'Descargar' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Imprimir / PDF' }));
+    await waitFor(() => expect(print).toHaveBeenCalledTimes(1));
+    const root = document.getElementById('vc-print-root')!;
+    expect(root.querySelector('h1')?.textContent).toBe('Bitácora de accesos y cambios');
+    expect([...root.querySelectorAll('thead th')].map((th) => th.textContent)).toEqual([
+      'Fecha y hora',
+      'Quién',
+      'Rol',
+      'Tabla',
+      'Acción',
+      'Registro',
+    ]);
+    expect(root.querySelectorAll('tbody tr')).toHaveLength(2);
+    expect(root.textContent).toContain('Todas las tablas');
+    root.remove();
+    print.mockRestore();
+  });
+
+  it('«Imprimir / PDF» se deshabilita sin eventos', () => {
+    mockQuery({ data: { eventos: [], total: 0 } });
+    renderPage();
+    expect((screen.getByRole('button', { name: 'Imprimir / PDF' }) as HTMLButtonElement).disabled).toBe(true);
   });
 });

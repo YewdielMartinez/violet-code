@@ -15,7 +15,7 @@ export interface KpiItem {
   text: string;
 }
 
-function deltaTexto(delta: Delta): string | null {
+export function deltaTexto(delta: Delta): string | null {
   if (delta.direccion === 'sin_dato') return null;
   if (delta.direccion === 'igual') return 'Igual que el periodo anterior';
   const signo = delta.direccion === 'sube' ? '+' : '−';

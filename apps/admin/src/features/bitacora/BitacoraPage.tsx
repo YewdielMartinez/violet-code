@@ -10,11 +10,12 @@ import '@yewdiel21/motion-kit/css/components/select';
 import '@yewdiel21/motion-kit/css/components/skeleton';
 import { puedeVerBitacora } from '@/domain/models/Bitacora';
 import { useAuth } from '@/shared/auth/useAuth';
+import { imprimirConAviso, useRolEtiqueta } from '@/shared/print';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { SmallEmptyState } from '@/shared/ui/SmallEmptyState';
 import { obtenerBitacoraParaExportar, useBitacora, useBitacoraOpciones } from './api';
 import { BitacoraToolbar } from './BitacoraToolbar';
-import { descargarBitacora, type BitacoraExportFormato } from './bitacoraExport';
+import { bitacoraParaImprimir, descargarBitacora, type BitacoraExportFormato } from './bitacoraExport';
 import {
   FILTROS_INICIALES,
   construirFiltrosServidor,
@@ -63,6 +64,7 @@ export default function BitacoraPage() {
   const [filtros, setFiltros] = useState<BitacoraListFilters>(FILTROS_INICIALES);
   const [pagina, setPagina] = useState(1);
   const [descargando, setDescargando] = useState(false);
+  const rolEtiqueta = useRolEtiqueta();
 
   const cambiarFiltros = useCallback((patch: Partial<BitacoraListFilters>) => {
     setFiltros((prev) => ({ ...prev, ...patch }));
@@ -109,6 +111,26 @@ export default function BitacoraPage() {
     [filtrosServidor, descargando],
   );
 
+  const handleImprimir = useCallback(async () => {
+    if (!filtrosServidor || descargando) return;
+    setDescargando(true);
+    try {
+      const { eventos, total: totalExportable, truncado } = await obtenerBitacoraParaExportar(filtrosServidor);
+      if (eventos.length === 0) {
+        toast('No hay eventos que imprimir con estos filtros.');
+        return;
+      }
+      imprimirConAviso({
+        ...bitacoraParaImprimir(eventos, filtros, { total: totalExportable, truncado }),
+        usuarioRol: rolEtiqueta,
+      });
+    } catch {
+      toast('No se pudo preparar la impresión. Inténtalo de nuevo.', { tone: 'error' });
+    } finally {
+      setDescargando(false);
+    }
+  }, [filtrosServidor, filtros, descargando, rolEtiqueta]);
+
   if (user && !puedeVer) {
     return <Navigate to="/" replace />;
   }
@@ -144,6 +166,7 @@ export default function BitacoraPage() {
             onChange={cambiarFiltros}
             onDescargar={(formato) => void handleDescargar(formato)}
             descargando={descargando}
+            onImprimir={() => void handleImprimir()}
             sinDatos={sinRango || (query.isSuccess && total === 0)}
           />
         }
