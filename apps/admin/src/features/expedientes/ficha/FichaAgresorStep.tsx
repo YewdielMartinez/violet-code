@@ -11,7 +11,6 @@ import { Icon } from '@/shared/ui/Icon';
 import { AgresorConsumoArmaFields } from '../AgresorConsumoArmaFields';
 import { AgresorDomicilioFields } from '../AgresorDomicilioFields';
 import { AnimatedReveal } from '../agresor/AnimatedReveal';
-import { useAsentamientosAhome } from '../agresorApi';
 
 interface Props {
   value: FichaAgresorInput;
@@ -33,7 +32,6 @@ export function FichaAgresorStep({
   errors = {},
   invalidField,
 }: Props) {
-  const { data: asentamientos = [] } = useAsentamientosAhome();
 
   const hasData = hasFichaAgresorData(value);
 
@@ -199,7 +197,7 @@ export function FichaAgresorStep({
           </span>
           <Select
             size="lg"
-            label="Ocupación *"
+            label="Ocupación de la persona agresora *"
             placeholder="Selecciona…"
             options={ocupacionOptions}
             value={value.ocupacionId ? String(value.ocupacionId) : ''}
@@ -264,7 +262,6 @@ export function FichaAgresorStep({
       </fieldset>
 
       <AgresorDomicilioFields
-        asentamientos={asentamientos}
         values={value}
         errores={errors}
         onPatch={patch}

@@ -14,7 +14,7 @@ function motionKitTheme(): Plugin {
     transformIndexHtml: () => [
       {
         tag: 'script',
-        children: themeHeadScript({ default: 'salmverse', mode: 'system', storageKey: 'vc-theme' }),
+        children: themeHeadScript({ default: 'salmverse', mode: 'system', storageKey: 'vc-theme-v2' }),
         injectTo: 'head-prepend',
       },
     ],
