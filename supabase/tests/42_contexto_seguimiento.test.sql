@@ -15,6 +15,7 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', p_user_id::text, 'role', 'authenticated')::text, true);
 end;
 $$;
+grant execute on function pg_temp.set_actor(uuid) to public;
 
 -- Datos aislados para #90
 insert into public.persona (

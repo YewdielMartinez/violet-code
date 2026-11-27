@@ -22,6 +22,7 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', p_uid::text, 'role', 'authenticated')::text, true);
 end;
 $$;
+grant execute on function pg_temp.as_user(uuid) to public;
 
 do $$
 declare

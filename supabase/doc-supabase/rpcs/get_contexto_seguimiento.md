@@ -1,6 +1,6 @@
 # `get_contexto_seguimiento`
 
-- **Migración:** [`20261127000300_42_rpc_contexto_seguimiento.sql`](../../migrations/20261127000300_42_rpc_contexto_seguimiento.sql)
+- **Migración:** [`20261127001000_42_rpc_contexto_seguimiento.sql`](../../migrations/20261127001000_42_rpc_contexto_seguimiento.sql)
 - **Permiso RBAC:** `tiene_permiso('seguimiento.registrar')` + `auth_area_id() is not null`
 - **Actores autorizados:** `trabajo_social`, `psicologia`, `juridico` (únicamente sobre citas de su propia área programadas para el día de hoy).
 

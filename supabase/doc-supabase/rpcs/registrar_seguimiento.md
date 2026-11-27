@@ -1,6 +1,6 @@
 # `registrar_seguimiento`
 
-- **Migración:** [`20261127000200_41_folio_seguimiento.sql`](../../migrations/20261127000200_41_folio_seguimiento.sql) *(actualiza [`20261127000100_40_seguimiento_con_asistencia.sql`](../../migrations/20261127000100_40_seguimiento_con_asistencia.sql) y [`20261126000900_19_rpc_registrar_seguimiento.sql`](../../migrations/20261126000900_19_rpc_registrar_seguimiento.sql))*
+- **Migración:** [`20261127000900_41_folio_seguimiento.sql`](../../migrations/20261127000900_41_folio_seguimiento.sql) *(actualiza [`20261127000800_40_seguimiento_con_asistencia.sql`](../../migrations/20261127000800_40_seguimiento_con_asistencia.sql) y [`20261126000900_19_rpc_registrar_seguimiento.sql`](../../migrations/20261126000900_19_rpc_registrar_seguimiento.sql))*
 - **Permiso RBAC:** `tiene_permiso('seguimiento.registrar')` + `auth_area_id() is not null`
 - **Actores autorizados:** `trabajo_social`, `psicologia`, `juridico` (cada área sobre sus propias citas del día y tipos de atención).
 
