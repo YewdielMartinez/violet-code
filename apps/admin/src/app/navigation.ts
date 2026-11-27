@@ -39,7 +39,7 @@ const DIRECTION_ONLY: readonly StaffRole[] = ['titular', 'subdireccion'];
 export const NAVIGATION: NavPage[] = [
   {
     path: '/',
-    label: 'Dashboard',
+    label: 'Tablero',
     icon: 'space_dashboard',
     ready: true,
     mobile: true,
