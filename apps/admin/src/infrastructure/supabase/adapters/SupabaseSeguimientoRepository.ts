@@ -1,7 +1,6 @@
 import { supabase } from '../client';
 import { mapSupabaseError } from './errors';
 import type {
-  ContextoHojaSeguimiento,
   ContextoSeguimiento,
   CorregirSeguimientoInput,
   CorregirSeguimientoResult,
@@ -19,9 +18,7 @@ import type {
 } from '@/domain/models/Seguimiento';
 import type { SeguimientoRepository } from '@/domain/ports/SeguimientoRepository';
 import {
-  DOMICILIO_SELECT,
   NOTA_SELECT,
-  mapDomicilioRow,
   mapEventType,
   mapNotaRow,
   mapTipoAtencionRow,
@@ -138,41 +135,6 @@ export const supabaseSeguimientoRepository: SeguimientoRepository = {
       .order('nombre', { ascending: true });
     if (error) throw error;
     return (data ?? []).map(mapTipoAtencionRow);
-  },
-
-  async getContextoHoja(personaId: string): Promise<ContextoHojaSeguimiento | null> {
-    const [ficha, persona, domicilio] = await Promise.all([
-      supabase
-        .from('ficha_registro')
-        .select('id, folio, persona_id, estado_civil, ocupacion_id, ocupacion_otra')
-        .eq('persona_id', personaId)
-        .eq('activo', true)
-        .maybeSingle(),
-      supabase.from('persona').select('celular').eq('id', personaId).maybeSingle(),
-      supabase
-        .from('domicilio')
-        .select(DOMICILIO_SELECT)
-        .eq('persona_id', personaId)
-        .eq('activo', true)
-        .eq('es_actual', true)
-        .maybeSingle(),
-    ]);
-
-    if (ficha.error) throw ficha.error;
-    if (persona.error) throw persona.error;
-    if (domicilio.error) throw domicilio.error;
-    if (!ficha.data) return null;
-
-    return {
-      fichaId: ficha.data.id,
-      folio: ficha.data.folio,
-      personaId: ficha.data.persona_id,
-      estadoCivil: ficha.data.estado_civil,
-      ocupacionId: ficha.data.ocupacion_id,
-      ocupacionOtra: ficha.data.ocupacion_otra,
-      celular: persona.data?.celular ?? null,
-      domicilio: mapDomicilioRow(domicilio.data),
-    };
   },
 
   async listarNotas(fichaId: string): Promise<NotaPrivada[]> {

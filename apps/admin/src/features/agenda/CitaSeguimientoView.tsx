@@ -4,7 +4,7 @@ import '@yewdiel21/motion-kit/css/components/skeleton';
 import type { AgendaItem } from '@/domain/models/Cita';
 import { puedeAgendarProximaCita, type AsistenciaCita } from '@/domain/models/HojaSeguimiento';
 import { SeguimientoForm } from '@/features/intervenciones/SeguimientoForm';
-import { useContextoHoja } from '@/features/intervenciones/api';
+import { useContextoCita } from '@/features/intervenciones/api';
 import { useAuth } from '@/shared/auth/useAuth';
 import type { CitaDir } from './citaDialogUtils';
 import { useDialogSettled } from './useDialogSettled';
@@ -27,7 +27,7 @@ const RETRY_ACTION = [{ id: 'retry', label: 'Reintentar' }];
  */
 export function CitaSeguimientoView({ cita, dir, onDone }: CitaSeguimientoViewProps) {
   const { user } = useAuth();
-  const contextoQuery = useContextoHoja(cita.personaId);
+  const contextoQuery = useContextoCita(cita.citaId, cita.personaId);
   const contexto = contextoQuery.data;
   const settled = useDialogSettled();
   const cargando = !settled || contextoQuery.isLoading;

@@ -11,7 +11,7 @@ import {
   type EstadoCitaGestionable,
 } from '@/domain/models/Cita';
 import { isAttentionRole, isSupervisor } from '@/domain/models/Auth';
-import { useContextoHoja } from '@/features/intervenciones/api';
+import { useContextoCita } from '@/features/intervenciones/api';
 import { formatHora } from '@/features/intervenciones/formatters';
 import { useAuth } from '@/shared/auth/useAuth';
 import { Icon } from '@/shared/ui/Icon';
@@ -159,7 +159,7 @@ export function CitaDetalle({
   const { user } = useAuth();
   const role = user?.role;
   const verExpediente = isSupervisor(role) || isAttentionRole(role);
-  const contexto = useContextoHoja(cita.personaId, verExpediente);
+  const contexto = useContextoCita(cita.citaId, cita.personaId, verExpediente);
   const original = useCitaOriginal(cita.reagendadaDe);
   const cambiarEstado = useCambiarEstadoCita();
   const reagendar = useReagendarCita();

@@ -1,5 +1,4 @@
 import type {
-  ContextoHojaSeguimiento,
   ContextoSeguimiento,
   CorregirSeguimientoInput,
   CorregirSeguimientoResult,
@@ -27,8 +26,6 @@ export interface SeguimientoRepository {
   getLineaTiempo(fichaId: string): Promise<LineaTiempoEvento[]>;
   /** Tipos de atención del catálogo para un área (`cat_tipo_atencion`). */
   listarTiposAtencion(areaId: number): Promise<TipoAtencion[]>;
-  /** Expediente activo de la persona y datos vigentes para precargar la hoja (`null` si no tiene ficha). */
-  getContextoHoja(personaId: string): Promise<ContextoHojaSeguimiento | null>;
   /** Notas privadas activas (`nota_area`, RLS: cada área ve las suyas; Titular y Subdirección ven todas en solo lectura — `RF-10`, `RN-18.1`). */
   listarNotas(fichaId: string): Promise<NotaPrivada[]>;
   crearNota(input: NotaPrivadaCreateInput): Promise<NotaPrivada>;

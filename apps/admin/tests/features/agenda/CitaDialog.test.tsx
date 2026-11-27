@@ -64,7 +64,7 @@ vi.mock('@/infrastructure/supabase/adapters/SupabaseSepomexRepository', () => ({
 
 vi.mock('@/infrastructure/supabase/adapters/SupabaseSeguimientoRepository', () => ({
   supabaseSeguimientoRepository: {
-    getContextoHoja: getContextoMock,
+    contexto: getContextoMock,
     listarTiposAtencion: vi.fn().mockResolvedValue([]),
     registrar: vi.fn(),
   },
@@ -295,13 +295,13 @@ describe('CitaDialog · detalle y acciones', () => {
   it('«Ver expediente» es un enlace con ícono open_in_new cuando la persona tiene ficha', async () => {
     getContextoMock.mockResolvedValue({
       fichaId: 'f1',
-      folio: 'SEM-2026-0001',
-      personaId: 'p1',
-      estadoCivil: null,
-      ocupacionId: null,
-      ocupacionOtra: null,
-      celular: null,
-      domicilio: null,
+      folioExpediente: 'SEM-2026-0001',
+      nombrePersona: 'Ana López Pérez',
+      edad: 28,
+      esPrimeraVezArea: true,
+      ultimaProximaAccion: null,
+      tieneOrdenVigente: false,
+      tieneHistorialClinico: null,
     });
     renderDialog({ kind: 'detalle', cita: cita() });
 
@@ -419,13 +419,13 @@ describe('CitaDialog · detalle y acciones', () => {
   it('«Marcar asistió» abre la hoja de seguimiento sin llamar a cambiar_estado_cita', async () => {
     getContextoMock.mockResolvedValue({
       fichaId: 'f1',
-      folio: 'SEM-2026-0001',
-      personaId: 'p1',
-      estadoCivil: null,
-      ocupacionId: null,
-      ocupacionOtra: null,
-      celular: null,
-      domicilio: null,
+      folioExpediente: 'SEM-2026-0001',
+      nombrePersona: 'Ana López Pérez',
+      edad: 28,
+      esPrimeraVezArea: true,
+      ultimaProximaAccion: null,
+      tieneOrdenVigente: false,
+      tieneHistorialClinico: null,
     });
     await abrirDetalle(cita());
 
