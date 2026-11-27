@@ -1,257 +1,28 @@
-/* Actividades: lista de capacitaciones / talleres / jornadas agrupada por día.
-   La estructura (barra, tarjeta tonal, diálogo, chips, vacíos) sale de `shared/ui/vc-ui.css`, la misma línea de
-   diseño que la Agenda; aquí solo lo propio de la lista. Solo se animan `transform` y `opacity`; los colores salen de
-   los tokens del tema (claro y oscuro). */
+/* Actividades: tabla operativa (mismo `DataTable` y cápsulas `vc-dt-pill` que Expedientes y Usuarios) y diálogo de
+   detalle. La estructura del diálogo sale de `shared/ui/vc-ui.css`. Los colores salen de los tokens del tema. */
 
-.act-page {
-  display: grid;
-  gap: 16px;
-  /* Espacio para que la barra de navegación (dock) no tape el final de la lista. */
-  padding-bottom: 5.5rem;
-}
-
-.act-count {
-  margin: 0 4px 12px;
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.875rem;
-}
-
-.act-empty {
-  display: grid;
-  min-height: 18rem;
-  place-items: center;
-}
-
-/* ── Lista ─────────────────────────────────────────────────────────────────────────── */
-.act-list {
-  display: grid;
-  gap: 20px;
-}
-
-.act-group {
-  display: grid;
-  gap: 10px;
-}
-
-.act-group__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 4px;
-  color: var(--md-sys-color-on-surface);
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.act-group__title[data-estado='realizada'],
-.act-group__title[data-estado='cancelada'] {
-  color: var(--md-sys-color-on-surface-variant);
-}
-
-.act-group__count {
-  border-radius: 999px;
-  background: var(--md-sys-color-surface-container-high);
-  padding: 1px 8px;
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.act-group__items {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr));
-}
-
-/* ── Tarjeta: ficha tonal con barra de acento por estado (como los chips de la Agenda) ─ */
-.act-card {
-  --act-bar: var(--md-sys-color-secondary);
-  --act-date-bg: var(--md-sys-color-secondary-container);
-  --act-date-fg: var(--md-sys-color-on-secondary-container);
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  align-items: stretch;
-  gap: 14px;
-  border: 0;
-  border-radius: 16px;
-  background: var(--md-sys-color-surface-container);
-  box-shadow: inset 3px 0 0 var(--act-bar);
-  padding: 14px;
-  color: var(--md-sys-color-on-surface);
+/* Filas clicables en la tabla de actividades (mismo criterio que Expedientes y Usuarios). */
+.vc-actividades-table [data-mk-dt-table] tbody tr[data-id]:not([data-mk-dt-loading]) {
   cursor: pointer;
-  text-align: left;
-  /* Entrada escalonada: las primeras tarjetas llegan una tras otra. */
-  animation: act-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  animation-delay: calc(var(--act-i, 0) * 38ms);
-  transition:
-    transform 160ms var(--mk-ease-click, ease-out),
-    background-color 160ms ease,
-    box-shadow 160ms ease;
 }
 
-.act-card[data-estado='realizada'] {
-  --act-bar: var(--vc-status-success);
-  --act-date-bg: var(--vc-status-success-bg);
-  --act-date-fg: var(--vc-status-success);
-}
-
-.act-card[data-estado='cancelada'] {
-  --act-bar: var(--vc-status-danger);
-  --act-date-bg: var(--md-sys-color-surface-container-highest);
-  --act-date-fg: var(--md-sys-color-on-surface-variant);
-}
-
-.act-card[data-vencida] {
-  --act-bar: var(--vc-status-warning);
-  --act-date-bg: var(--vc-status-warning-bg);
-  --act-date-fg: var(--vc-status-warning);
-}
-
-.act-card:hover {
-  transform: translateY(-2px);
-  background: var(--md-sys-color-surface-container-high);
-  box-shadow:
-    inset 3px 0 0 var(--act-bar),
-    0 8px 18px -10px color-mix(in srgb, var(--md-sys-color-shadow, #000) 70%, transparent);
-}
-
-.act-card:active {
-  transform: scale(0.98);
-}
-
-.act-card:focus-visible {
+.vc-actividades-table [data-mk-dt-table] tbody tr[data-id]:not([data-mk-dt-loading]):focus-visible {
   outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 
-.act-card[data-estado='cancelada'] .act-card__title {
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
-}
-
-.act-card__date {
-  display: flex;
-  width: 3.5rem;
-  flex: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16px;
-  background: var(--act-date-bg);
-  color: var(--act-date-fg);
-  line-height: 1;
-}
-
-.act-card__day {
-  font-size: 1.5rem;
+/* El título es la columna principal: mismo énfasis que el nombre en Expedientes. */
+.vc-actividades-table [data-mk-dt-table] td[data-key='titulo'] {
   font-weight: 600;
+  color: var(--md-sys-color-on-surface);
 }
 
-.act-card__month {
-  margin-top: 3px;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-}
-
-.act-card__body {
-  display: flex;
-  min-width: 0;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.act-card__title {
-  overflow: hidden;
-  font-size: 1rem;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.act-card__sede {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 4px;
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.875rem;
-}
-
-.act-card__meta {
-  overflow: hidden;
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.8125rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.act-card__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.act-card__aside {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 4px;
-}
-
-.act-card__hora {
-  font-size: 0.875rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.act-card__asistentes {
+/* Varias cápsulas en una celda (Estado + «Vencida»). */
+.vc-act-pills {
   display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.8125rem;
-}
-
-/* ── Leyenda de colores (al pie de la tarjeta, como en la Agenda) ───────────────────── */
-.act-legend {
-  display: flex;
   flex-wrap: wrap;
-  gap: 6px 16px;
-  margin: 14px 4px 2px;
-  padding: 0;
-  list-style: none;
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.75rem;
-}
-
-.act-legend li {
-  display: inline-flex;
   align-items: center;
-  gap: 6px;
-}
-
-.act-legend__dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--md-sys-color-secondary);
-}
-
-.act-legend__dot[data-tone='vencida'] {
-  background: var(--vc-status-warning);
-}
-
-.act-legend__dot[data-tone='realizada'] {
-  background: var(--vc-status-success);
-}
-
-.act-legend__dot[data-tone='cancelada'] {
-  background: var(--vc-status-danger);
+  gap: 0.375rem;
 }
 
 /* ── Detalle y formulario (dentro del diálogo compartido `vc-dlg`) ─────────────────── */
@@ -281,17 +52,6 @@
   font-size: 0.875rem;
 }
 
-@keyframes act-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 @keyframes act-reveal {
   from {
     opacity: 0;
@@ -305,17 +65,7 @@
 
 /* ── Accesibilidad: sin movimiento si la persona lo pidió al sistema ───────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .act-card,
   .act-reveal {
     animation: none;
-  }
-
-  .act-card {
-    transition: none;
-  }
-
-  .act-card:hover,
-  .act-card:active {
-    transform: none;
   }
 }

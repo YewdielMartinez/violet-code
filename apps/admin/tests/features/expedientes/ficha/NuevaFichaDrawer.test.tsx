@@ -123,6 +123,8 @@ vi.mock('@yewdiel21/motion-kit/react', () => {
         ))}
       </div>
     ),
+    // `agresor/motionCompat` lo lee al evaluar el módulo (el paso Agresor entra en el wizard).
+    useCascade: () => undefined,
     toast: toastMock,
   };
 });
@@ -164,11 +166,24 @@ function renderDrawer(props: Partial<Parameters<typeof NuevaFichaDrawer>[0]> = {
   };
 }
 
+// Estado civil, escolaridad y ocupación son obligatorios en la Ficha Única.
+function fillSelectsObligatorios() {
+  fireEvent.change(screen.getByLabelText(/Estado civil \*/i), { target: { value: 'soltero' } });
+  fireEvent.change(screen.getByLabelText(/Escolaridad \*/i), { target: { value: 'preparatoria' } });
+  fireEvent.change(screen.getByLabelText(/Ocupación \*/i), { target: { value: '2' } });
+}
+
 function fillStep0() {
   fireEvent.change(screen.getByLabelText(/CURP \*/i), { target: { value: 'GALA900512MSLNRR01' } });
   fireEvent.change(screen.getByLabelText(/Nombre\(s\) \*/i), { target: { value: 'Laura' } });
   fireEvent.change(screen.getByLabelText(/Apellido paterno \*/i), { target: { value: 'García' } });
+  fillSelectsObligatorios();
   fireEvent.change(screen.getByLabelText(/Servicios solicitados \*/i), { target: { value: '1' } });
+}
+
+// El número exterior es obligatorio (se admite "S/N").
+function fillNumeroExterior() {
+  fireEvent.change(screen.getByLabelText(/Número exterior \*/i), { target: { value: 'S/N' } });
 }
 
 const EXISTING_EXPEDIENTE: ExpedienteResumen = {
@@ -253,12 +268,18 @@ describe('NuevaFichaDrawer (verificación inline de CURP, validación, navegaci�
     fireEvent.change(screen.getByLabelText(/Código postal/i), { target: { value: '80000' } });
     await screen.findByText(/sin\s+asentamientos en catálogo local/i);
     fireEvent.change(screen.getByLabelText(/Calle \*/i), { target: { value: 'Av. Hidalgo 120' } });
+    fillNumeroExterior();
+    fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
+    // Paso opcional de persona agresora: se puede avanzar sin capturar datos.
+    expect(screen.getByText(/Datos de la persona agresora \(opcional\)/i)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     expect(screen.getByText(/Estudio socioeconómico y vivienda/i)).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /Atrás/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Atrás/i }));
     expect((screen.getByLabelText(/Calle \*/i) as HTMLInputElement).value).toBe('Av. Hidalgo 120');
 
+    fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     fireEvent.click(screen.getByRole('button', { name: /Guardar ficha/i }));
 
@@ -329,12 +350,15 @@ describe('NuevaFichaDrawer (verificación inline de CURP, validación, navegaci�
     expect((screen.getByLabelText(/Apellido materno/i) as HTMLInputElement).value).toBe('Lara');
     expect((screen.getByLabelText(/Teléfono celular/i) as HTMLInputElement).value).toBe('6681112233');
 
+    fillSelectsObligatorios();
     fireEvent.change(screen.getByLabelText(/Servicios solicitados \*/i), { target: { value: '1' } });
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     await waitFor(() => expect(listAsentamientosMock).toHaveBeenCalled());
     fireEvent.change(screen.getByLabelText(/Código postal/i), { target: { value: '80000' } });
     await screen.findByText(/sin\s+asentamientos en catálogo local/i);
     fireEvent.change(screen.getByLabelText(/Calle \*/i), { target: { value: 'Calle 5' } });
+    fillNumeroExterior();
+    fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     fireEvent.click(screen.getByRole('button', { name: /Guardar ficha/i }));
 
@@ -415,12 +439,16 @@ describe('NuevaFichaDrawer (verificación inline de CURP, validación, navegaci�
     fireEvent.click(screen.getByRole('button', { name: /Seguir editando/i }));
     expect(screen.queryByRole('dialog')).toBeNull();
 
+    // Los catálogos (ocupación) cargan de forma asíncrona: sin esperarlos el select obligatorio queda vacío.
+    await screen.findByRole('option', { name: 'Empleada' });
     fillStep0();
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     await waitFor(() => expect(listAsentamientosMock).toHaveBeenCalled());
     fireEvent.change(screen.getByLabelText(/Código postal/i), { target: { value: '80000' } });
     await screen.findByText(/sin\s+asentamientos en catálogo local/i);
     fireEvent.change(screen.getByLabelText(/Calle \*/i), { target: { value: 'Calle 10' } });
+    fillNumeroExterior();
+    fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     fireEvent.click(screen.getByRole('button', { name: /Guardar ficha/i }));
 

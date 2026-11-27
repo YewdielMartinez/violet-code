@@ -97,7 +97,7 @@ describe('supabaseSeguimientoRepository · notas privadas y copia de la hoja', (
     });
   });
 
-  it('guarda la copia del día y un domicilio histórico no vigente cuando cambió', async () => {
+  it('no escribe la copia del día desde el cliente: registrar_seguimiento ya no copia datos generales (migración 43)', async () => {
     rpcMock.mockResolvedValue({
       data: [
         { atencion_id: 'at-1', cita_proxima_id: null, es_primera_vez_area: false, tiene_historial_clinico: false },
@@ -129,20 +129,12 @@ describe('supabaseSeguimientoRepository · notas privadas y copia de la hoja', (
       },
     });
 
-    expect(result.copiaGuardada).toBe(true);
-    expect(callsOf('domicilio', 'insert')[0]).toEqual([
-      expect.objectContaining({ persona_id: 'p-1', codigo_postal: '81200', es_actual: false }),
-    ]);
-    expect(callsOf('atencion', 'update')[0]).toEqual([
-      {
-        estado_civil: 'separado',
-        ocupacion_id: 4,
-        ocupacion_otra: null,
-        celular: '6681234567',
-        domicilio_id: 'dom-2',
-      },
-    ]);
-    expect(callsOf('atencion', 'eq')[0]).toEqual(['id', 'at-1']);
+    // `atencion` bloquea INSERT/UPDATE directos (RLS `with check false`) y el RPC dejó de copiar
+    // datos generales: el adapter solo invoca el RPC y no toca `domicilio` ni `atencion`.
+    expect(result.atencionId).toBe('at-1');
+    expect(result.copiaGuardada).toBeUndefined();
+    expect(callsOf('domicilio', 'insert')).toHaveLength(0);
+    expect(callsOf('atencion', 'update')).toHaveLength(0);
   });
 
   it('descarta de la línea de tiempo cualquier tipo desconocido', async () => {

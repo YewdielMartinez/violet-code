@@ -288,7 +288,9 @@ describe('ExpedienteDrawer (RBAC, rediseño y bitácora RF-05 / RF-22)', () => {
     expect(screen.getByText('MEZA910315MSLGRN04')).toBeTruthy();
     expect(screen.getByText('668 100 0001')).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'Llamar' })).toBeNull();
-    expect(await screen.findByTestId('ficha-gestion')).toBeTruthy();
+    expect(await screen.findByTestId('ficha-resumen')).toBeTruthy();
+    // La zona de gestión ya no se monta en el drawer (archivar vive en el menú del listado).
+    expect(screen.queryByTestId('ficha-gestion')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copiar CURP' }));
     await waitFor(() => {
@@ -297,13 +299,12 @@ describe('ExpedienteDrawer (RBAC, rediseño y bitácora RF-05 / RF-22)', () => {
     });
   });
 
-  it('alterna el botón Expandir y oculta la zona de gestión cuando canManage es false', async () => {
+  it('alterna el botón Expandir', async () => {
     renderWithQuery(
       <ExpedienteDrawer expediente={SAMPLE_EXPEDIENTE} userRole="psicologia" canManage={false} onClose={vi.fn()} />,
     );
 
     await screen.findByTestId('ficha-resumen');
-    expect(screen.queryByTestId('ficha-gestion')).toBeNull();
 
     const dialog = document.querySelector<HTMLDialogElement>('dialog.vc-expediente-dialog');
     expect(dialog).not.toBeNull();
@@ -437,7 +438,6 @@ describe('ExpedienteDrawer (RBAC, rediseño y bitácora RF-05 / RF-22)', () => {
         />,
       );
       expect(screen.getByTestId('ficha-resumen')).toBeTruthy();
-      expect(screen.getByTestId('ficha-gestion')).toBeTruthy();
       const dialog = document.querySelector<HTMLDialogElement>('dialog.vc-expediente-dialog');
       expect(dialog?.style.transform ?? '').toBe('');
       expect(dialog?.style.translate ?? '').toBe('');
@@ -469,7 +469,6 @@ describe('ExpedienteDrawer (RBAC, rediseño y bitácora RF-05 / RF-22)', () => {
         />,
       );
       expect(screen.getByTestId('ficha-resumen')).toBeTruthy();
-      expect(screen.getByTestId('ficha-gestion')).toBeTruthy();
       const dialog = document.querySelector<HTMLDialogElement>('dialog.vc-expediente-dialog');
       expect(dialog?.style.transform ?? '').toBe('');
       expect(dialog?.style.translate ?? '').toBe('');

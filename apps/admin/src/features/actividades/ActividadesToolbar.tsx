@@ -1,13 +1,11 @@
 import { TIPO_INSTITUCION_LABELS, type TipoInstitucionActividad } from '@/domain/models/ActividadPreventiva';
-import { SegmentedTabs, type SegmentedOption } from '@/shared/ui/SegmentedTabs';
 import { ToolbarIconButton, ToolbarPrimaryButton } from '@/shared/ui/Toolbar';
 import { ToolbarDateRange } from '@/shared/ui/ToolbarDateRange';
 import { ToolbarFilterMenu, type FilterMenuOption } from '@/shared/ui/ToolbarFilterMenu';
-import { ToolbarSearch } from '@/shared/ui/ToolbarSearch';
 import { TIPO_INSTITUCION_ICON } from './ActividadChips';
 import { FILTROS_INICIALES, hayFiltrosActivos, type ActividadListFilters, type ActividadTab } from './actividadesList';
 
-const TABS: readonly SegmentedOption<ActividadTab>[] = [
+const ESTADO_OPTIONS: readonly FilterMenuOption[] = [
   { value: 'pendientes', label: 'Pendientes' },
   { value: 'realizadas', label: 'Realizadas' },
   { value: 'canceladas', label: 'Canceladas' },
@@ -29,22 +27,24 @@ export interface ActividadesToolbarProps {
   filtros: ActividadListFilters;
   onChange: (patch: Partial<ActividadListFilters>) => void;
   /** Con valor, muestra el botón primario «Nueva actividad» (`actividad.registrar`). */
-  onCrear?: (anchor: HTMLElement) => void;
+  onCrear?: () => void;
 }
 
 /**
- * Barra de la pantalla (mismo patrón que la Agenda): a la derecha del título, controles compactos de 36 px en una
- * fila — pestañas de estado, búsqueda, institución, fechas y la acción primaria.
+ * Acciones de `PageHeader` (mismo patrón que Expedientes y Usuarios): píldora «Estado» (filtro del servidor),
+ * institución, fechas y, al final, la acción primaria. La búsqueda va dentro de la tabla (`DataTable`).
+ * Devuelve un fragmento: el contenedor flex lo pone `PageHeader`.
  */
 export function ActividadesToolbar({ filtros, onChange, onCrear }: ActividadesToolbarProps) {
   return (
-    <div className="vc-toolbar">
-      <SegmentedTabs label="Estado de las actividades" options={TABS} value={filtros.tab} onChange={(tab) => onChange({ tab })} />
-      <ToolbarSearch
-        label="Buscar por institución o lugar"
-        placeholder="Buscar escuela, empresa, lugar o colonia…"
-        value={filtros.busqueda}
-        onChange={(busqueda) => onChange({ busqueda })}
+    <>
+      <ToolbarFilterMenu
+        label="Estado"
+        icon="filter_list"
+        options={ESTADO_OPTIONS}
+        value={filtros.tab}
+        defaultValue="todas"
+        onChange={(value) => onChange({ tab: value as ActividadTab })}
       />
       <ToolbarFilterMenu
         label="Institución"
@@ -64,7 +64,9 @@ export function ActividadesToolbar({ filtros, onChange, onCrear }: ActividadesTo
           onClick={() => onChange({ ...FILTROS_INICIALES, tab: filtros.tab })}
         />
       ) : null}
-      {onCrear ? <ToolbarPrimaryButton label="Nueva actividad" showLabel onClick={(event) => onCrear(event.currentTarget)} /> : null}
-    </div>
+      {onCrear ? (
+        <ToolbarPrimaryButton label="Nueva actividad" icon="event_available" showLabel onClick={onCrear} />
+      ) : null}
+    </>
   );
 }

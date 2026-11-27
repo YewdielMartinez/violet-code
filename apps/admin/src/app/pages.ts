@@ -2,6 +2,7 @@ import { lazy } from 'react';
 
 // Cada página es su propio chunk. Las funciones de carga se reutilizan para precargar.
 const loadLogin = () => import('@/features/auth/LoginPage');
+const loadPrivacyNotice = () => import('@/features/auth/PrivacyNoticePage');
 const loadDashboard = () => import('@/features/dashboard/DashboardPage');
 const loadDirectory = () => import('@/features/directory/DirectoryPage');
 const loadExpedientes = () => import('@/features/expedientes/ExpedientesPage');
@@ -17,6 +18,7 @@ const loadUsuarioForm = () => import('@/features/usuarios/UsuarioFormPage');
 const loadPending = () => import('@/shared/ui/PendingModulePage');
 
 export const LoginPage = lazy(loadLogin);
+export const PrivacyNoticePage = lazy(loadPrivacyNotice);
 export const DashboardPage = lazy(loadDashboard);
 export const DirectoryPage = lazy(loadDirectory);
 export const ExpedientesPage = lazy(loadExpedientes);

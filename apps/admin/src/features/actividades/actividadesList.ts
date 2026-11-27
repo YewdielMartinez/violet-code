@@ -18,15 +18,11 @@ export const TAB_ESTADO: Record<ActividadTab, EstadoActividad | null> = {
   todas: null,
 };
 
-/** Orden de las pestañas: decide hacia dónde se desliza el contenido al cambiar. */
-export const TAB_ORDEN: readonly ActividadTab[] = ['pendientes', 'realizadas', 'canceladas', 'todas'];
-
 export interface ActividadListFilters {
   tab: ActividadTab;
   /** `YYYY-MM-DD` (día de Mazatlán) o vacío. */
   desde: string;
   hasta: string;
-  busqueda: string;
   tipoInstitucion: TipoInstitucionActividad | '';
 }
 
@@ -34,13 +30,11 @@ export const FILTROS_INICIALES: ActividadListFilters = {
   tab: 'pendientes',
   desde: '',
   hasta: '',
-  busqueda: '',
   tipoInstitucion: '',
 };
 
 const TZ = 'America/Mazatlan';
 const DAY_FMT = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
-const LONG_DAY_FMT = new Intl.DateTimeFormat('es-MX', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long' });
 const LONG_DAY_YEAR_FMT = new Intl.DateTimeFormat('es-MX', {
   timeZone: TZ,
   weekday: 'long',
@@ -48,8 +42,7 @@ const LONG_DAY_YEAR_FMT = new Intl.DateTimeFormat('es-MX', {
   month: 'long',
   year: 'numeric',
 });
-const MONTH_FMT = new Intl.DateTimeFormat('es-MX', { timeZone: TZ, month: 'short' });
-const DAY_NUM_FMT = new Intl.DateTimeFormat('es-MX', { timeZone: TZ, day: 'numeric' });
+const SHORT_DATE_FMT = new Intl.DateTimeFormat('es-MX', { timeZone: TZ, day: '2-digit', month: 'short', year: 'numeric' });
 const TIME_FMT = new Intl.DateTimeFormat('es-MX', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 
 function capitalizar(text: string): string {
@@ -61,12 +54,9 @@ export function diaMazatlan(iso: string | Date): string {
   return DAY_FMT.format(typeof iso === 'string' ? new Date(iso) : iso);
 }
 
-export function diaNumero(iso: string): string {
-  return DAY_NUM_FMT.format(new Date(iso));
-}
-
-export function mesCorto(iso: string): string {
-  return MONTH_FMT.format(new Date(iso)).replace('.', '');
+/** «04 dic 2026» (día de Mazatlán) para la tabla. */
+export function fechaCortaActividad(iso: string): string {
+  return SHORT_DATE_FMT.format(new Date(iso)).replace(/\./g, '');
 }
 
 /** Hora de pared de Mazatlán en 24 h («09:30»). */
@@ -115,80 +105,33 @@ export function construirFiltrosServidor(filtros: ActividadListFilters): Activid
   };
 }
 
-function normalizar(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .toLowerCase()
-    .trim();
-}
-
-function textoBusqueda(item: ActividadPreventivaItem): string {
-  return normalizar(
-    [item.titulo, item.sede, item.direccion, item.asentamientoNombre, item.municipio, item.tipoActividadNombre]
-      .filter(Boolean)
-      .join(' '),
-  );
-}
-
 /**
- * Búsqueda por institución/lugar, tipo de institución y coherencia con la pestaña (un cambio de estado optimista
+ * Tipo de institución y coherencia con la pestaña (un cambio de estado optimista
  * saca la actividad de la pestaña actual antes de que llegue la respuesta del servidor).
  */
 export function filtrarActividades(
   items: readonly ActividadPreventivaItem[],
   filtros: ActividadListFilters,
 ): ActividadPreventivaItem[] {
-  const termino = normalizar(filtros.busqueda);
   const estadoBuscado = TAB_ESTADO[filtros.tab];
   return items.filter((item) => {
     if (estadoBuscado && item.estado !== estadoBuscado) return false;
     if (filtros.tipoInstitucion && item.tipoInstitucion !== filtros.tipoInstitucion) return false;
-    return !termino || textoBusqueda(item).includes(termino);
+    return true;
   });
-}
-
-export interface ActividadGrupoDia {
-  key: string;
-  estado: EstadoActividad;
-  /** «Hoy», «Mañana» o fecha larga. */
-  etiqueta: string;
-  items: ActividadPreventivaItem[];
-}
-
-function etiquetaDia(dia: string, iso: string, ahora: Date): string {
-  const hoy = diaMazatlan(ahora);
-  if (dia === hoy) return 'Hoy';
-  if (dia === diaMazatlan(new Date(ahora.getTime() + 24 * 3_600_000))) return 'Mañana';
-  const mismoAnio = dia.slice(0, 4) === hoy.slice(0, 4);
-  const texto = (mismoAnio ? LONG_DAY_FMT : LONG_DAY_YEAR_FMT).format(new Date(iso)).replace(',', '');
-  return capitalizar(texto);
 }
 
 const ORDEN_ESTADO: Record<EstadoActividad, number> = { pendiente: 0, realizada: 1, cancelada: 2 };
 
 /**
- * Agrupa por día (Mazatlán): primero lo pendiente, de lo más próximo a lo más lejano (las vencidas, por cerrar,
- * quedan arriba); después lo realizado y lo cancelado, de lo más reciente a lo más antiguo. Dentro de cada día,
- * por hora.
+ * Orden por defecto de la tabla: primero lo pendiente, de lo más próximo a lo más lejano (las vencidas, por cerrar,
+ * quedan arriba); después lo realizado y lo cancelado, de lo más reciente a lo más antiguo.
  */
-export function agruparActividadesPorDia(items: readonly ActividadPreventivaItem[], ahora: Date): ActividadGrupoDia[] {
-  const grupos = new Map<string, ActividadGrupoDia>();
-  for (const item of items) {
-    const dia = diaMazatlan(item.programadaEn);
-    const key = `${item.estado}:${dia}`;
-    const grupo = grupos.get(key);
-    if (grupo) grupo.items.push(item);
-    else grupos.set(key, { key, estado: item.estado, etiqueta: etiquetaDia(dia, item.programadaEn, ahora), items: [item] });
-  }
-  const lista = [...grupos.values()];
-  for (const grupo of lista) {
-    grupo.items.sort((a, b) => new Date(a.programadaEn).getTime() - new Date(b.programadaEn).getTime());
-  }
-  const inicio = (g: ActividadGrupoDia) => new Date(g.items[0].programadaEn).getTime();
-  return lista.sort((a, b) => {
-    if (a.estado !== b.estado) return ORDEN_ESTADO[a.estado] - ORDEN_ESTADO[b.estado];
-    return a.estado === 'pendiente' ? inicio(a) - inicio(b) : inicio(b) - inicio(a);
+export function ordenarActividades(items: readonly ActividadPreventivaItem[]): ActividadPreventivaItem[] {
+  const tiempo = (item: ActividadPreventivaItem) => new Date(item.programadaEn).getTime();
+  return [...items].sort((x, y) => {
+    if (x.estado !== y.estado) return ORDEN_ESTADO[x.estado] - ORDEN_ESTADO[y.estado];
+    return x.estado === 'pendiente' ? tiempo(x) - tiempo(y) : tiempo(y) - tiempo(x);
   });
 }
 
@@ -198,7 +141,7 @@ export function ubicacionActividad(item: Pick<ActividadPreventivaItem, 'asentami
   return partes.length ? partes.join(', ') : null;
 }
 
-/** ¿Hay algún filtro aparte de la pestaña (búsqueda, institución o rango de fechas)? */
+/** ¿Hay algún filtro aparte de la pestaña (institución o rango de fechas)? */
 export function hayFiltrosActivos(filtros: ActividadListFilters): boolean {
-  return filtros.busqueda !== '' || filtros.tipoInstitucion !== '' || filtros.desde !== '' || filtros.hasta !== '';
+  return filtros.tipoInstitucion !== '' || filtros.desde !== '' || filtros.hasta !== '';
 }

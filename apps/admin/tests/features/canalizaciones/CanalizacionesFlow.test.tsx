@@ -201,43 +201,18 @@ async function openCreateDialog(trigger: HTMLElement, expectedPlacement: 'side' 
 }
 
 describe('Canalizaciones: diálogo de alta, detalle lateral y filtros', () => {
-  it('registra una canalización desde el panel del expediente con un diálogo simple y avanza estado', async () => {
+  it('el panel del expediente es solo consulta (sin Canalizar) y avanza el estado de una canalización existente', async () => {
     renderWithApp(<DerivacionesExpedientePanel fichaId="ficha-1" folio="SEM-2026-0010" />);
 
     expect(await screen.findByText('Contención emocional inicial por crisis reciente.')).toBeTruthy();
+    // Las altas se hacen solo desde el módulo Canalizaciones.
+    expect(screen.queryByRole('button', { name: /Canalizar/i })).toBeNull();
     expect(screen.queryByRole('region', { name: /Registrar nueva canalización/i })).toBeNull();
-
-    const dialog = await openCreateDialog(screen.getByRole('button', { name: /Canalizar/i }), 'center');
-    await waitFor(() => expect(listCatalogoMock).toHaveBeenCalledWith('area'));
-
-    // Expediente fijo: no hay selector de expediente.
-    expect(within(dialog).queryByRole('combobox', { name: 'Expediente' })).toBeNull();
-    expect(within(dialog).getByText('SEM-2026-0010')).toBeTruthy();
-
-    fireEvent.change(within(dialog).getByRole('combobox', { name: 'Destino' }), { target: { value: 'juridico' } });
-    fireEvent.change(within(dialog).getByLabelText(/Motivo y observaciones/i), {
-      target: { value: 'Asesoría jurídica por pensión y guardia.' },
-    });
-    await waitFor(() => expect(listCatalogoMock).toHaveBeenCalled());
-    fireEvent.click(within(dialog).getByRole('button', { name: /Registrar canalización/i }));
-
-    await waitFor(() => {
-      expect(createDerivacionMock).toHaveBeenCalledWith({
-        fichaId: 'ficha-1',
-        areaOrigenId: 1,
-        destino: 'juridico',
-        areaDestinoId: 3,
-        institucionId: null,
-        institucionOtra: '',
-        motivo: 'Asesoría jurídica por pensión y guardia.',
-      });
-    });
-    await waitFor(() =>
-      expect(toastMock).toHaveBeenCalledWith('Canalización registrada correctamente.', { tone: 'success' }),
-    );
+    expect(getDialog()?.hasAttribute('open') ?? false).toBe(false);
 
     fireEvent.click(screen.getByRole('button', { name: /Pasar a en proceso/i }));
     await waitFor(() => expect(updateEstadoMock).toHaveBeenCalledWith('der-1', 'en_proceso'));
+    expect(createDerivacionMock).not.toHaveBeenCalled();
   });
 
   it('muestra la tabla a ancho completo, sin tarjeta fija de detalle ni formulario inline', async () => {

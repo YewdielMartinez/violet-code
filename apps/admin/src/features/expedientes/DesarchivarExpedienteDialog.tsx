@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Dialog } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
 
@@ -14,15 +14,18 @@ const MOTIVO_MAX = 1000;
 
 /** Confirmación (con motivo obligatorio, como exige `reabrir_ficha`) para desarchivar desde el menú de la tabla. */
 export function DesarchivarExpedienteDialog({ folio, busy, onCancel, onConfirm }: Props) {
+  const [prevFolio, setPrevFolio] = useState<string | null>(folio);
   const [motivo, setMotivo] = useState('');
   const [touched, setTouched] = useState(false);
 
-  useEffect(() => {
+  // Al cerrarse el diálogo se limpia el formulario (ajuste de estado durante el render, sin efecto).
+  if (folio !== prevFolio) {
+    setPrevFolio(folio);
     if (folio === null) {
       setMotivo('');
       setTouched(false);
     }
-  }, [folio]);
+  }
 
   const trimmed = motivo.trim();
   const invalid = touched && trimmed.length === 0;
