@@ -60,7 +60,7 @@ Propiedades al crear cada tarjeta: título tal cual (con prefijo `[Supabase]`), 
 - Archivos: migración, `tests/40_seguimiento_asistencia.test.sql`, `rpcs/registrar_seguimiento.md`, `api/atencion.md`
 - Hecho cuando: sin cita, con cita de ayer o de mañana, o de otra área da `23514`; la cita pasa a `asistio`.
 
-**10. [Supabase] Generar folio único de seguimiento en servidor con formato provisional** (carril B, después de la 9)
+**10. ~~[Supabase] Generar folio único de seguimiento en servidor con formato provisional~~** ❌ descartada el 27-nov (el seguimiento no lleva folio; se deshace con "Quitar el folio de seguimiento")
 - Incluye: columna `atencion.folio_seguimiento` única con secuencia propia; `generar_folio_seguimiento()` con formato provisional `SEG-AAAA-NNNNN` (el definitivo solo cambia esta función); folio para las filas existentes y después `not null`; `registrar_seguimiento` lo devuelve. ⏸ Formato definitivo pendiente de negocio.
 - Migración: `_41_folio_seguimiento.sql`
 - Archivos: migración, `tests/41_folio_seguimiento.test.sql`, `rpcs/registrar_seguimiento.md`, `api/atencion.md`
@@ -101,6 +101,48 @@ Propiedades al crear cada tarjeta: título tal cual (con prefijo `[Supabase]`), 
 - Migración: `_47_tiene_permiso_agenda_alertas.sql` · Permisos: `agenda.ver`, `agenda.gestionar`, `urgencias.ver`, `alerta.ver_cola`, `alerta.atender`
 - Archivos: migración, `tests/47_tiene_permiso_agenda.test.sql`, `api/README.md`, `api/agenda.md`, `api/alertas.md`
 - Hecho cuando: el resultado por rol es idéntico al Sprint 01 (correr también las pruebas `22_`, `23_` y `24_`).
+
+**17. [Supabase] Devolver la edad calculada en el detalle y en la búsqueda del expediente** (carril A, agregada 27-nov)
+- Incluye: función `calcular_edad(p_fecha)` con la fecha de hoy en `America/Mazatlan`; `get_expediente_detalle` devuelve `edad` en `persona` (y en agresores con fecha de nacimiento); `buscar_expedientes` agrega la columna `edad` (requiere `drop` y volver a crear). No se guarda en ninguna tabla.
+- Migración: `_48_edad_en_expediente.sql` · Permiso: `expediente.ver` (sin cambio)
+- Archivos: migración, `tests/48_edad_expediente.test.sql`, `rpcs/get_expediente_detalle.md`, `rpcs/buscar_expedientes.md`, `api/expedientes.md`
+- Hecho cuando: el cumpleaños de hoy da la edad completa, un día antes da un año menos, y las dos RPC traen `edad`. Avisar a front.
+
+**18. [Supabase] Crear RPC actualizar_domicilio y cerrar la edición directa del domicilio** (carril A, agregada 27-nov)
+- Incluye: `actualizar_domicilio(p_persona_id, p_actualizado_en, …)` con validación de expediente archivado, bloqueo optimista, asentamiento o CP (no ambos) y CP de 5 dígitos; crea el domicilio nuevo como actual y deja el anterior como no actual; `domicilio_insert`/`domicilio_update` en `with check (false)`.
+- Migración: `_49_rpc_actualizar_domicilio.sql` · Permiso: `expediente.escribir`
+- Archivos: migración, `tests/49_actualizar_domicilio.test.sql`, `rpcs/actualizar_domicilio.md`, `api/expedientes.md`, `api/tablas-directas.md`
+- Hecho cuando: Psicología da `42501`; archivado `23514`; fecha vieja `23505`; queda un solo domicilio actual; el `insert` directo falla. **El cierre de RLS se integra cuando front confirme** (hoy `SupabaseSeguimientoRepository` inserta domicilio directo).
+
+**[Supabase] Guardar la prioridad en el expediente y quitarla de la cita** (carril A, agregada 27-nov, después de la de edad)
+- Incluye: columnas `prioridad` y `prioridad_actualizada_en` en `ficha_registro`, llenadas con la prioridad de la última atención; RPC `cambiar_prioridad_expediente(p_ficha_id, p_prioridad)` para todos los roles menos Recepción; `crear_ficha_completa` la acepta y `get_expediente_detalle` la devuelve; se quita `cita.prioridad` de la tabla, de `get_agenda` y de `reagendar_cita`. `atencion.prioridad` no se toca.
+- Migración: `_50_prioridad_en_expediente.sql` (fecha `20261128001000`) · Permiso: todos los roles menos Recepción
+- Archivos: migración, `tests/50_prioridad_expediente.test.sql`, `rpcs/cambiar_prioridad_expediente.md`, `rpcs/get_expediente_detalle.md`, `rpcs/get_agenda.md`, `rpcs/reagendar_cita.md`, `api/expedientes.md`, `api/agenda.md`
+- Hecho cuando: el llenado inicial copia la última prioridad; Recepción da `42501`; archivado `23514`; `cita` ya no tiene prioridad. **Se integra cuando front confirme** (hoy `SupabaseCitaRepository` manda prioridad).
+
+**[Supabase] Crear RPC crear_cita y cerrar la inserción directa de citas** (carril A, agregada 27-nov)
+- Incluye: `crear_cita(p_persona_id, p_area_id, p_programada_en, p_recomendada_por, p_origen)` con reglas de área (Recepción solo TS y Psicología, áreas solo la suya, Dirección todas), fecha futura, persona activa, expediente no archivado y sin cita duplicada en la misma área y hora; la mayoría de edad la valida el trigger existente; `cita_insert` en `with check (false)`. `origen` se queda como está; el tipo de cita se descartó.
+- Migración: `_51_rpc_crear_cita.sql` (fecha `20261128001100`) · Permiso: `agenda.gestionar`
+- Archivos: migración, `tests/51_crear_cita.test.sql`, `rpcs/crear_cita.md`, `api/agenda.md`, `api/tablas-directas.md`
+- Hecho cuando: Recepción no agenda Jurídico (`42501`); fecha pasada, menor en Psicología o cita duplicada dan `23514`; el `insert` directo falla. **El cierre de RLS se integra cuando front confirme** (hoy `SupabaseCitaRepository` inserta directo).
+
+**[Supabase] Armar la lista de urgencias con la prioridad del expediente** (carril A, agregada 27-nov, después de la de prioridad)
+- Incluye: `get_lista_urgencias` y la vista de urgencias leen la prioridad alta del expediente en lugar de la última atención; se mantiene "sin cita próxima" y el filtro por área; la salida cambia a `prioridad_actualizada_en`.
+- Migración: `_52_urgencias_por_expediente.sql` (fecha `20261128001200`) · Permiso: `urgencias.ver`
+- Archivos: migración, `tests/52_urgencias_expediente.test.sql`, `rpcs/get_lista_urgencias.md`, `api/agenda.md`
+- Hecho cuando: aparece con prioridad alta y sin cita futura; desaparece al agendar o bajar la prioridad. Avisar a front.
+
+**[Supabase] Eliminar folios de Expediente** (carril A, tarjeta existente #71, Angel)
+- Incluye: folio del expediente `SEM-NN` sin año, mínimo 2 dígitos y sin límite (`SEM-01` … `SEM-100`), corrigiendo el corte a 4 dígitos de hoy; renumerar los folios existentes en orden de creación; devolver `folio` en `get_agenda`, `get_historial_clinico`, `get_historial_canalizaciones`, `get_linea_tiempo` y en la respuesta de las RPC de acción del expediente (seguimiento, canalización, archivar, reabrir, agresor, estudio, cambiar estado y reagendar cita). `get_umeca_citas` no.
+- Migración: `_53_folio_expediente_sem.sql` (fecha `20261128001300`, después de la 47)
+- Archivos: migración, `seeds/17_expedientes.sql`, `tests/53_folio_expediente.test.sql`, `rpcs/*.md` que cambian, `api/expedientes.md`
+- Hecho cuando: el primer folio es `SEM-01` y el 10000 es `SEM-10000`; los existentes quedan renumerados; las RPC de la lista traen `folio`. Avisar a front.
+
+**[Supabase] Quitar el folio de seguimiento** (carril B, agregada 27-nov, Iván)
+- Incluye: borrar `atencion.folio_seguimiento`, su secuencia y `generar_folio_seguimiento()`; `registrar_seguimiento` deja de devolverlo, `get_contexto_seguimiento` quita `ultimo_folio_seguimiento` y `get_linea_tiempo` deja de mostrarlo.
+- Migración: `_54_quitar_folio_seguimiento.sql` (fecha `20261128001400`, después de la 47)
+- Archivos: migración, `tests/54_quitar_folio_seguimiento.test.sql`, `rpcs/registrar_seguimiento.md`, `rpcs/get_contexto_seguimiento.md`, `api/atencion.md`
+- Hecho cuando: ninguna RPC devuelve folio de seguimiento y las pruebas `40_` a `47_` siguen en verde. Avisar a front.
 
 ---
 
