@@ -44,7 +44,7 @@ export function preloadPage(path: string): void {
   loadOnce(ROUTE_LOADERS[path] ?? loadPending);
 }
 
-const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadDirectory, loadNuevaFicha, loadAlertas, loadPending];
+const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadNuevaFicha, loadAlertas, loadPending];
 
 function scheduleIdle(cb: () => void): () => void {
   if (typeof window === 'undefined') return () => { };
