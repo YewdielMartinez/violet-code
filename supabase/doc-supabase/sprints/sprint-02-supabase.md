@@ -95,6 +95,9 @@ Solo **P-02** modifica `tiene_permiso()`. Solo **B-05** modifica `es_empleado_ac
 | A-12 | A (agregada 27-nov, tras A-10) | `20261128001200_52_urgencias_por_expediente.sql` | `get_lista_urgencias()`, vista de urgencias de `05_vistas.sql` | `api/agenda.md` |
 | A-13 | A (agregada 27-nov, después de la 47) | `20261128001300_53_folio_expediente_sem.sql` | `generar_folio_ficha()`, secuencia `ficha_folio_seq`, folios existentes, `get_agenda()`, `get_historial_clinico()`, `get_historial_canalizaciones()`, `get_linea_tiempo()` y respuestas de las RPC de acción del expediente | `api/expedientes.md`, `api/agenda.md` |
 | B-09 | B (agregada 27-nov, después de la 47) | `20261128001400_54_quitar_folio_seguimiento.sql` | columna `atencion.folio_seguimiento`, `generar_folio_seguimiento()`, `registrar_seguimiento()`, `get_contexto_seguimiento()`, `get_linea_tiempo()` | `api/atencion.md` |
+| A-14 | A (agregada 27-nov, después de la 47) | `20261128001500_57_ficha_campos_opcionales.sql` | `agresor.nombres` y `aportante_hogar.nombre` sin `not null`, `crear_ficha_completa()`, `actualizar_ficha()`, `guardar_agresor()`, `registrar_estudio_socioeconomico()` | `api/expedientes.md` |
+| A-15 | A (agregada 27-nov, después de A-14) | `20261128001600_58_consumo_como_lista.sql` | enum `tipo_droga` (+ `no_consume`), enum nuevo `consumo_alcohol`, columnas de consumo en `ficha_registro` y `agresor`, `crear_ficha_completa()`, `actualizar_ficha()`, `guardar_agresor()` | `api/expedientes.md` |
+| A-16 | A (agregada 27-nov, después de A-15) | `20261128001700_59_casillas_sin_dato.sql` | `crear_ficha_completa()`, `actualizar_ficha()` | `api/expedientes.md` |
 
 ---
 
@@ -521,6 +524,55 @@ Status: Sin empezar
   - `registrar_seguimiento` deja de devolverlo; `get_contexto_seguimiento` quita `ultimo_folio_seguimiento`; `get_linea_tiempo` deja de mostrarlo en los eventos de atención (todas cambian de firma: `drop function` y volver a crear).
 - **Pruebas:** `tests/54_quitar_folio_seguimiento.test.sql`: la columna ya no existe y ninguna RPC lo devuelve; correr también `40_` a `47_` y ajustar las que esperaban el folio.
 - **Contratos:** actualizar `rpcs/registrar_seguimiento.md`, `rpcs/get_contexto_seguimiento.md`, `api/atencion.md`. Avisar a front.
+
+---
+
+> **Ficha Única (27-nov):** negocio aceptó todas las sugerencias del PDF `reportes/cambios-ficha-unica-2026-11-27.pdf` excepto número de hijos, que se queda separado en hijas e hijos. Edad (A-08), domicilio (A-09) y prioridad (A-10) ya tienen tarea; nombre separado, catálogo de ocupación, apoyo o beca y nombre de la usuaria obligatorio ya están así y no llevan tarea.
+
+### A-14
+
+```text
+Tarea: [Supabase] Permitir expediente sin servicio solicitado y agresor y aportante sin nombre
+Status: Sin empezar
+```
+
+- **Migración `_57_`:**
+  - `agresor.nombres` y `aportante_hogar.nombre` pasan a permitir `null` (el largo se valida solo si viene).
+  - `crear_ficha_completa` ya no exige servicios solicitados; `actualizar_ficha` acepta lista vacía (hoy exige mínimo 1). El servicio se define en los seguimientos.
+  - `guardar_agresor` y `registrar_estudio_socioeconomico` (aportantes) ya no exigen nombre.
+- **Pruebas:** `tests/57_ficha_campos_opcionales.test.sql`: crear ficha sin servicios; agresor y aportante sin nombre se guardan; el resto de validaciones sigue igual.
+- **Contratos:** `rpcs/crear_ficha_completa.md`, `rpcs/actualizar_ficha.md`, `rpcs/guardar_agresor.md`, `rpcs/registrar_estudio_socioeconomico.md`. Avisar a front.
+
+---
+
+### A-15
+
+```text
+Tarea: [Supabase] Cambiar consumo de droga y de alcohol a listas con "No consume"
+Status: Sin empezar
+```
+
+- **Migración `_58_`** (usuaria en `ficha_registro` y persona agresora en `agresor`):
+  - Droga: agregar `no_consume` a `tipo_droga`; `drogas` pasa a ser la única fuente (si trae `no_consume`, no puede traer otra); se borra `tiene_consumo_droga`. Datos existentes: `false` → `{no_consume}`, `null` → `null`.
+  - Alcohol: enum nuevo `consumo_alcohol` (`no_consume`, `ocasional`, `frecuente`) que reemplaza `tiene_consumo_alcohol`. Datos existentes: `false` → `no_consume`, `true` → `ocasional`.
+  - `crear_ficha_completa`, `actualizar_ficha` y `guardar_agresor` usan los campos nuevos.
+- **Pruebas:** `tests/58_consumo_lista.test.sql`: `no_consume` con otra droga da `23514`; los datos se migran como arriba; las tres RPC guardan y `get_expediente_detalle` devuelve los campos nuevos.
+- **Contratos:** las RPC de arriba y `api/expedientes.md`. ⚠️ Rompe al front (cambian campos); se integra cuando front confirme.
+
+---
+
+### A-16
+
+```text
+Tarea: [Supabase] Guardar "sin dato" en las casillas de la ficha
+Status: Sin empezar
+```
+
+- **Migración `_59_`:**
+  - `crear_ficha_completa` deja de convertir en `false` las casillas vacías (`tieneTrabajo`, `tieneEmbarazo`, `tieneDenuncia`, `esVictimaDelito`) y en `0` los hijos vacíos: sin dato = `null`.
+  - `actualizar_ficha` recibe `p_campos_sin_dato text[]` para regresar una casilla a "sin dato" (hoy `null` significa "no cambiar").
+- **Pruebas:** `tests/59_casillas_sin_dato.test.sql`: crear sin casillas deja `null`; `actualizar_ficha` con `p_campos_sin_dato` las limpia; un nombre de campo inválido da `23514`.
+- **Contratos:** `rpcs/crear_ficha_completa.md`, `rpcs/actualizar_ficha.md`. Avisar a front (tres opciones: Sí, No, Sin dato).
 
 ---
 

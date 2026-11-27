@@ -144,6 +144,24 @@ Propiedades al crear cada tarjeta: título tal cual (con prefijo `[Supabase]`), 
 - Archivos: migración, `tests/54_quitar_folio_seguimiento.test.sql`, `rpcs/registrar_seguimiento.md`, `rpcs/get_contexto_seguimiento.md`, `api/atencion.md`
 - Hecho cuando: ninguna RPC devuelve folio de seguimiento y las pruebas `40_` a `47_` siguen en verde. Avisar a front.
 
+**[Supabase] Permitir expediente sin servicio solicitado y agresor y aportante sin nombre** (carril A, agregada 27-nov)
+- Incluye: `agresor.nombres` y `aportante_hogar.nombre` permiten `null`; `crear_ficha_completa` ya no exige servicios y `actualizar_ficha` acepta lista vacía; `guardar_agresor` y `registrar_estudio_socioeconomico` no exigen nombre.
+- Migración: `_57_ficha_campos_opcionales.sql` (fecha `20261128001500`)
+- Archivos: migración, `tests/57_ficha_campos_opcionales.test.sql`, `rpcs/crear_ficha_completa.md`, `rpcs/actualizar_ficha.md`, `rpcs/guardar_agresor.md`, `rpcs/registrar_estudio_socioeconomico.md`
+- Hecho cuando: se crea una ficha sin servicios y se guardan agresor y aportante sin nombre. Avisar a front.
+
+**[Supabase] Cambiar consumo de droga y de alcohol a listas con "No consume"** (carril A, agregada 27-nov, después de la anterior)
+- Incluye: en usuaria y persona agresora, `drogas` con la opción `no_consume` (exclusiva) reemplaza `tiene_consumo_droga`; enum nuevo `consumo_alcohol` (No consume, Ocasional, Frecuente) reemplaza `tiene_consumo_alcohol`; migra los datos existentes; `crear_ficha_completa`, `actualizar_ficha` y `guardar_agresor` usan los campos nuevos.
+- Migración: `_58_consumo_como_lista.sql` (fecha `20261128001600`)
+- Archivos: migración, `tests/58_consumo_lista.test.sql`, RPC de arriba, `api/expedientes.md`
+- Hecho cuando: `no_consume` junto con otra droga da `23514`; los datos se migran; las RPC guardan y devuelven los campos nuevos. **Se integra cuando front confirme.**
+
+**[Supabase] Guardar "sin dato" en las casillas de la ficha** (carril A, agregada 27-nov, después de la anterior)
+- Incluye: `crear_ficha_completa` deja de convertir en `false` las casillas vacías (trabaja, embarazo, denuncia, víctima) y en `0` los hijos; `actualizar_ficha` recibe `p_campos_sin_dato` para regresar una casilla a "sin dato".
+- Migración: `_59_casillas_sin_dato.sql` (fecha `20261128001700`)
+- Archivos: migración, `tests/59_casillas_sin_dato.test.sql`, `rpcs/crear_ficha_completa.md`, `rpcs/actualizar_ficha.md`
+- Hecho cuando: crear sin casillas deja `null` y `actualizar_ficha` las puede limpiar. Avisar a front.
+
 ---
 
 **Fuera del sprint (no crear tarjeta):** liga automática por CURP (riesgo aceptado el 26-nov), historial de valores anteriores, aviso a Recepción de canalizaciones, corrección de CURP, borrado de cuentas de Auth y todo el trabajo de `apps/admin` y la app Kotlin.
