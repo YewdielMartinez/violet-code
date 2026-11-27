@@ -6,12 +6,19 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirmDiscard: () => void;
+  /** Texto del cuerpo; por defecto, el de la Ficha Única (también lo reutiliza el alta de cuentas). */
+  message?: string;
 }
 
 const NO_ORIGIN = typeof document !== 'undefined' ? document.createElement('span') : null;
 
 /** Diálogo de confirmación para evitar perder datos capturados en la Ficha Única. */
-export function NuevaFichaDiscardDialog({ open, onOpenChange, onConfirmDiscard }: Props) {
+export function NuevaFichaDiscardDialog({
+  open,
+  onOpenChange,
+  onConfirmDiscard,
+  message = 'Tienes datos capturados en la Ficha Única. Si cierras ahora, perderás el avance.',
+}: Props) {
   return (
     <Dialog.Root anchor={NO_ORIGIN} open={open} onOpenChange={onOpenChange}>
       <Dialog.Content
@@ -27,7 +34,7 @@ export function NuevaFichaDiscardDialog({ open, onOpenChange, onConfirmDiscard }
         </Dialog.Header>
         <Dialog.Body>
           <p className="text-base leading-relaxed text-on-surface-variant">
-            Tienes datos capturados en la Ficha Única. Si cierras ahora, perderás el avance.
+            {message}
           </p>
         </Dialog.Body>
         <Dialog.Footer className="flex flex-wrap items-center justify-end gap-3 pt-2">
