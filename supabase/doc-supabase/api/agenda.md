@@ -185,7 +185,7 @@ interface ReagendarCitaRow {
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| Rol (valida en el SQL) | Tit, Sub, TS, Psi, Rec | Lectura | No | `_23_rpc_reagendar_y_urgencias` |
+| `urgencias.ver` | Tit, Sub, TS, Psi, Rec | Lectura | No | `_52_urgencias_por_expediente` |
 
 **Llamada**
 
@@ -202,14 +202,13 @@ interface UrgenciaRow {
   folio: string;
   nombre_completo: string;
   celular: string | null;
-  area_ultima_prioridad: string;   // clave del área que marcó la prioridad
-  fecha_ultima_prioridad: string;  // 'YYYY-MM-DD'
+  prioridad_actualizada_en: string | null;
 }
 ```
 
 **Comportamiento**
 
-- Toma la atención más reciente con prioridad de cada expediente `abierto` o `en_seguimiento`; si es `alta` y la persona no tiene cita futura `agendada`/`confirmada`, aparece.
+- Toma los expedientes `abierto` o `en_seguimiento` cuya `ficha_registro.prioridad` es `'alta'` y la persona no tiene cita futura `agendada`/`confirmada`.
 - En cuanto se agenda una cita, la persona sale de la lista.
 - No expone CURP ni notas.
 - Reemplaza la lectura directa de `vista_lista_urgencias`, que Recepción no podía usar.

@@ -68,10 +68,10 @@ begin
     (v_per_2, 'REAG910101MSLRRR02', 'Lucia',  'ConCita',    '6682222222', v_uid_ts),
     (v_per_3, 'REAG920101MSLRRR03', 'Marta',  'PriorMedia', '6683333333', v_uid_ts);
 
-  insert into public.ficha_registro (id, folio, persona_id, estado, aviso_privacidad_aceptado_en, creado_por) values
-    (v_fic_1, 'SEM-URG-0001', v_per_1, 'en_seguimiento', now(), v_uid_ts),
-    (v_fic_2, 'SEM-URG-0002', v_per_2, 'en_seguimiento', now(), v_uid_ts),
-    (v_fic_3, 'SEM-URG-0003', v_per_3, 'en_seguimiento', now(), v_uid_ts);
+  insert into public.ficha_registro (id, folio, persona_id, estado, prioridad, prioridad_actualizada_en, aviso_privacidad_aceptado_en, creado_por) values
+    (v_fic_1, 'SEM-URG-0001', v_per_1, 'en_seguimiento', 'alta',  now() - interval '3 days', now(), v_uid_ts),
+    (v_fic_2, 'SEM-URG-0002', v_per_2, 'en_seguimiento', 'alta',  now() - interval '2 days', now(), v_uid_ts),
+    (v_fic_3, 'SEM-URG-0003', v_per_3, 'en_seguimiento', 'media', now() - interval '1 day',  now(), v_uid_ts);
 
   -- Citas de prueba
   insert into public.cita (id, persona_id, area_id, programada_en, estado, recomendada_por, creado_por) values
@@ -168,10 +168,9 @@ select is(
   1,
   'get_lista_urgencias incluye solo a quien tiene ultima prioridad alta sin cita futura'
 );
-select is(
-  (select area_ultima_prioridad from public.get_lista_urgencias() where folio = 'SEM-URG-0001'),
-  'trabajo_social',
-  'get_lista_urgencias devuelve folio y area_ultima_prioridad sin CURP'
+select ok(
+  (select prioridad_actualizada_en is not null from public.get_lista_urgencias() where folio = 'SEM-URG-0001'),
+  'get_lista_urgencias devuelve folio y prioridad_actualizada_en sin CURP'
 );
 select is(
   (select count(*)::int from public.get_lista_urgencias((select id from public.cat_area where clave = 'psicologia')) where folio like 'SEM-URG-%'),

@@ -81,9 +81,9 @@ begin
   insert into public.cita (persona_id, area_id, programada_en, estado, origen, creado_por) values
     (v_per_ag, v_area_ts, now() + interval '2 days', 'agendada', 'regular', v_uid_rec);
 
-  -- Ficha + atención prioridad alta sin cita futura para comprobar get_lista_urgencias
-  insert into public.ficha_registro (id, folio, persona_id, aviso_privacidad_aceptado_en, creado_por) values
-    (v_fic_urg, 'SEM-TEST29-02', v_per_urg, now(), v_uid_ts);
+  -- Ficha + prioridad alta sin cita futura para comprobar get_lista_urgencias
+  insert into public.ficha_registro (id, folio, persona_id, prioridad, prioridad_actualizada_en, aviso_privacidad_aceptado_en, creado_por) values
+    (v_fic_urg, 'SEM-TEST29-02', v_per_urg, 'alta', now() - interval '2 days', now(), v_uid_ts);
 
   insert into public.atencion (ficha_id, area_id, tipo_atencion_id, atendida_por, atendida_en, prioridad, creado_por) values
     (v_fic_urg, v_area_ts, v_tipo_ts, v_uid_ts, now() - interval '2 days', 'alta', v_uid_ts);
