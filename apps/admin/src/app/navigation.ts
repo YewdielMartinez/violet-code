@@ -70,13 +70,6 @@ export const NAVIGATION: NavPage[] = [
     allowedRoles: ATTENTION_AND_DIRECTION,
   },
   {
-    path: '/canalizaciones',
-    label: 'Canalizaciones',
-    icon: 'alt_route',
-    ready: true,
-    allowedRoles: ATTENTION_AND_DIRECTION,
-  },
-  {
     path: '/agenda',
     label: 'Agenda',
     icon: 'calendar_month',

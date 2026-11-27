@@ -23,7 +23,7 @@ describe('navigation permissions by role', () => {
     for (const role of ['trabajo_social', 'psicologia', 'juridico'] as const) {
       expect(canAccessPath(role, '/expedientes')).toBe(true);
       expect(canAccessPath(role, '/solicitudes')).toBe(true);
-      expect(canAccessPath(role, '/canalizaciones')).toBe(true);
+      expect(canAccessPath(role, '/intervenciones')).toBe(true);
       expect(canAccessPath(role, '/estadisticas')).toBe(false);
       expect(canAccessPath(role, '/usuarios')).toBe(false);
     }
@@ -31,7 +31,7 @@ describe('navigation permissions by role', () => {
 
   it('permite todas las rutas del panel a titular y subdirección', () => {
     for (const role of ['titular', 'subdireccion'] as const) {
-      expect(getNavigationForRole(role)).toHaveLength(9);
+      expect(getNavigationForRole(role)).toHaveLength(8);
       expect(canAccessPath(role, '/estadisticas')).toBe(true);
       expect(canAccessPath(role, '/usuarios')).toBe(true);
     }
