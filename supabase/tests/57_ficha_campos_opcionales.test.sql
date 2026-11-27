@@ -243,7 +243,9 @@ from public.guardar_agresor(
   '57000000-0000-4000-a000-000000000201',
   null,
   null,
-  null, null, 30::smallint
+  null, null, 30::smallint,
+  p_parentesco_id => (select id from public.cat_parentesco order by id limit 1),
+  p_ocupacion_id => (select id from public.cat_ocupacion order by id limit 1)
 );
 
 select is(
@@ -260,7 +262,9 @@ from public.guardar_agresor(
   '57000000-0000-4000-a000-000000000201',
   null,
   '   ',
-  null, null, 31::smallint
+  null, null, 31::smallint,
+  p_parentesco_id => (select id from public.cat_parentesco order by id limit 1),
+  p_ocupacion_id => (select id from public.cat_ocupacion order by id limit 1)
 );
 
 select is(
