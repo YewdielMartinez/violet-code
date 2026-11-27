@@ -1,5 +1,6 @@
 # RPC: `public.guardar_historial_clinico`
 
+- **Versión:** [`20261127000600_37`](../../migrations/20261127000600_37_rpc_historial_clinico_y_estudio.sql)
 - **Migración:** `supabase/migrations/20261127000600_37_rpc_historial_clinico_y_estudio.sql`
 - **Cubre:** `RF-10`, `RN-01`, `RN-09`, `RN-15.1` (Sprint 02 · A-05)
 

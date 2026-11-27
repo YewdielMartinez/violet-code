@@ -12,7 +12,7 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
   - `area_id = auth_area_id()` (por ejemplo `nota_area` privada por área o informes por área).
   - Creación de `cita` (`agenda.crear` + `puede_crear_cita_en_area(area_id)`): `recepcion` en `trabajo_social`, `psicologia` y `juridico`; `juridico` y `psicologia` solo en su propia área; `titular` y `subdireccion` en cualquier área; `trabajo_social` en ninguna.
   - `activo = true`, `pre_registro.auth_user_id = auth.uid()` y `alerta.origen = 'app_movil'`.
-- **Actores fuera de `empleado.rol`:** UMECA (`public.usuario_externo` validado con `es_umeca()`) y la usuaria de la app móvil (`auth.users` + `pre_registro`, validada por propiedad con `auth.uid()`). Para ambos, `tiene_permiso()` siempre devuelve `false`.
+- **Actores fuera de `empleado.rol` y separación por `app_metadata.tipo` ([`20261128000500_44_tipos_de_cuenta.sql`](../migrations/20261128000500_44_tipos_de_cuenta.sql)):** cada cuenta en `auth.users` tiene `raw_app_meta_data.tipo` (`'empleado'`, `'externo'` o `'usuaria_app'` por defecto al registrarse). `es_empleado_activo()` y `auth_rol()` exigen `tipo = 'empleado'`, `es_umeca()` exige `tipo = 'externo'` y `es_usuaria_app()` exige `tipo = 'usuaria_app'`. Para externos y usuarias de la app, `tiene_permiso()` siempre devuelve `false`.
 
 ### Claves de permiso centralizadas en `tiene_permiso(p_permiso)`
 
@@ -43,7 +43,7 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
 
 | Actor | Origen en BD | Alcance operativo principal |
 |---|---|---|
-| `titular` / `subdireccion` (`es_direccion()`) | `empleado` | Supervisión global, catálogos, cuentas, directorio, bitácora, línea 24/7, expedientes e informes. **No** lee `nota_area`. |
+| `titular` / `subdireccion` (`es_direccion()`) | `empleado` | Supervisión global, catálogos, cuentas, directorio, bitácora, línea 24/7, expedientes, informes y lectura de todas las `nota_area` (sin crear ni editar). |
 | `trabajo_social` | `empleado` | Alta/edición de `persona`, `ficha_registro`, `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar`, precarga de `pre_registro`, agenda de TS y Psicología, atenciones de TS y órdenes de protección. |
 | `psicologia` | `empleado` | Lectura de Ficha Única, `historial_clinico` propio, `atencion` y `nota_area` de Psicología, su agenda (`cita`) y cola de alertas. |
 | `juridico` | `empleado` | Lectura de Ficha Única, su agenda directa (`cita`, puede crear/reagendar en su área), `atencion` y `nota_area` de Jurídico, `orden_proteccion` y línea 24/7 (`alerta`). |
@@ -65,9 +65,11 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
 | `ficha_registro`, `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar` | S / I / U | S / I / U *(D en puente)* | S | S | — | — | — |
 | `agresor` | S / I / U | S / I / U | S / I / U | S / I / U | — | — | — |
 | `orden_proteccion` | S / I / U | S / I / U | S | S / I / U | — | — | — |
+
+*(Regla transversal de archivado — migración `63`: `orden_proteccion`, `documento` y la subida en `storage.objects` requieren `ficha_editable(ficha_id)`, rechazando con `42501` cuando `ficha_registro.estado = 'archivado'`.)*
 | `cita` | S / I / U (todas) | S (`ts`+`psic`) / U (`ts`; sin I) | S / I / U (`psic`) | S / I / U (`jur`) | S / I / U (`ts`+`psic`+`jur`) | RPC `get_umeca_citas()` | — |
 | `atencion` | S / I / U (todas) | S / I / U (`ts`) | S / I / U (`psic`) | S / I / U (`jur`) | — | — | — |
-| `nota_area` | — *(privada)* | S / I / U (`ts`) | S / I / U (`psic`) | S / I / U (`jur`) | — | — | — |
+| `nota_area` | S (todas) | S / I / U (`ts`) | S / I / U (`psic`) | S / I / U (`jur`) | — | — | — |
 | `historial_clinico` | S / I / U | — | S / I / U | — | — | — | — |
 | `derivacion` | S / I / U | S / I / U | S (propia/destino) / I / U | S (propia/destino) / I / U | — | — | — |
 | `actividad_preventiva`, `actividad_empleado` | S / I / U | S / I / U | S / I / U | S / I / U | S | — | — |

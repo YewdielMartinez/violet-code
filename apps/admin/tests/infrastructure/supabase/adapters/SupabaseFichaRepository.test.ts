@@ -81,10 +81,15 @@ describe('supabaseFichaRepository', () => {
           id: 'ficha-1',
           folio: 'SEM-2026-0007',
           estado: 'abierto',
+          prioridad: 'alta',
+          prioridad_actualizada_en: '2026-11-26T10:30:00Z',
           registrada_en: '2026-11-26T10:00:00Z',
+          actualizado_en: '2026-11-26T11:00:00Z',
           aviso_privacidad_aceptado_en: '2026-11-26T10:00:00Z',
           estado_civil: 'soltero',
+          ocupacion_id: 2,
           ocupacion_nombre: 'Empleada(o)',
+          ocupacion_otra: null,
           servicio_medico: 'imss',
           servicio_medico_otro: null,
           tiene_trabajo: true,
@@ -93,6 +98,9 @@ describe('supabaseFichaRepository', () => {
           tiene_embarazo: false,
           tiene_denuncia: false,
           es_victima_delito: true,
+          drogas: ['no_consume'],
+          especificacion_droga: null,
+          consumo_alcohol: 'no_consume',
         },
         persona: {
           id: 'per-1',
@@ -104,6 +112,11 @@ describe('supabaseFichaRepository', () => {
           fecha_nacimiento: '1990-05-12',
           entidad_nacimiento: 'SL',
           celular: '6681234567',
+          escolaridad: 'preparatoria',
+          discapacidad: null,
+          grupo_etnico: null,
+          religion: null,
+          actualizado_en: '2026-11-26T11:01:00Z',
         },
         servicios_solicitados: [
           { area_id: 1, clave: 'trabajo_social', nombre: 'Trabajo Social' },
@@ -118,6 +131,7 @@ describe('supabaseFichaRepository', () => {
           numero_interior: null,
           referencias: 'Portón azul',
           zona: 'urbana',
+          actualizado_en: '2026-11-26T11:02:00Z',
         },
         estudio_actual: {
           id: 'est-1',
@@ -131,6 +145,7 @@ describe('supabaseFichaRepository', () => {
           material_otro: null,
           servicios: ['agua', 'luz'],
           bienes: ['estufa'],
+          actualizado_en: '2026-11-26T11:03:00Z',
           aportantes: [
             {
               id: 'ap-1',
@@ -159,18 +174,25 @@ describe('supabaseFichaRepository', () => {
     expect(detail).toMatchObject({
       id: 'ficha-1',
       folio: 'SEM-2026-0007',
+      actualizadoEn: '2026-11-26T11:00:00Z',
+      prioridad: 'alta',
+      ocupacionId: 2,
       ocupacionNombre: 'Empleada(o)',
       serviciosSolicitados: ['Trabajo Social'],
+      serviciosSolicitadosAreaIds: [1],
       persona: {
         curp: 'GALA900512MSLNRR01',
         nombreCompleto: 'Laura García Lara',
+        actualizadoEn: '2026-11-26T11:01:00Z',
       },
       domicilio: {
         asentamientoNombre: 'Centro',
         codigoPostal: '81200',
+        actualizadoEn: '2026-11-26T11:02:00Z',
       },
       estudio: {
         servicios: ['agua', 'luz'],
+        actualizadoEn: '2026-11-26T11:03:00Z',
         aportantes: [
           {
             id: 'ap-1',
@@ -203,5 +225,193 @@ describe('supabaseFichaRepository', () => {
 
     await supabaseFichaRepository.deactivate('ficha-1');
     expect(fichaChain.update).toHaveBeenCalledWith({ activo: false });
+  });
+
+  it('invoca actualizar_persona y actualizar_ficha con bloqueo optimista y campos sin dato', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'per-1',
+          curp: 'GORL920415MSLGRN01',
+          nombres: 'Lucía Fernanda',
+          apellido_paterno: 'Gómez',
+          apellido_materno: null,
+          sexo: 'M',
+          fecha_nacimiento: '1992-04-15',
+          entidad_nacimiento: 'SL',
+          celular: '6689998877',
+          escolaridad: 'preparatoria',
+          discapacidad: null,
+          grupo_etnico: null,
+          religion: null,
+          actualizado_en: '2026-11-27T10:05:00Z',
+        },
+      ],
+      error: null,
+    });
+
+    const persona = await supabaseFichaRepository.actualizarPersona({
+      personaId: 'per-1',
+      actualizadoEn: '2026-11-27T10:00:00Z',
+      nombres: ' Lucía Fernanda ',
+      celular: '6689998877',
+      religion: '',
+    });
+
+    expect(rpcMock).toHaveBeenCalledWith('actualizar_persona', {
+      p_persona_id: 'per-1',
+      p_actualizado_en: '2026-11-27T10:00:00Z',
+      p_nombres: 'Lucía Fernanda',
+      p_apellido_paterno: undefined,
+      p_apellido_materno: undefined,
+      p_celular: '6689998877',
+      p_escolaridad: undefined,
+      p_discapacidad: undefined,
+      p_grupo_etnico: undefined,
+      p_religion: '',
+    });
+    expect(persona.nombres).toBe('Lucía Fernanda');
+
+    rpcMock.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'ficha-1',
+          folio: 'SEM-2026-0001',
+          persona_id: 'per-1',
+          estado: 'abierto',
+          estado_civil: null,
+          ocupacion_id: null,
+          ocupacion_otra: null,
+          tiene_trabajo: null,
+          numero_hijas: 1,
+          numero_hijos_hombres: 0,
+          servicio_medico: 'imss',
+          servicio_medico_otro: null,
+          tiene_embarazo: false,
+          tiene_denuncia: true,
+          es_victima_delito: true,
+          drogas: ['no_consume'],
+          especificacion_droga: null,
+          consumo_alcohol: 'no_consume',
+          servicios_solicitados_area_ids: [1, 3],
+          actualizado_en: '2026-11-27T10:06:00Z',
+        },
+      ],
+      error: null,
+    });
+
+    const ficha = await supabaseFichaRepository.actualizar({
+      fichaId: 'ficha-1',
+      actualizadoEn: '2026-11-27T10:00:00Z',
+      drogas: ['no_consume'],
+      consumoAlcohol: 'no_consume',
+      serviciosSolicitadosAreaIds: [1, 3],
+      camposSinDato: ['tiene_trabajo'],
+    });
+
+    expect(rpcMock).toHaveBeenLastCalledWith(
+      'actualizar_ficha',
+      expect.objectContaining({
+        p_ficha_id: 'ficha-1',
+        p_actualizado_en: '2026-11-27T10:00:00Z',
+        p_drogas: ['no_consume'],
+        p_consumo_alcohol: 'no_consume',
+        p_servicios_solicitados_area_ids: [1, 3],
+        p_campos_sin_dato: ['tiene_trabajo'],
+      }),
+    );
+    expect(ficha.serviciosSolicitadosAreaIds).toEqual([1, 3]);
+    expect(ficha.tieneTrabajo).toBeNull();
+  });
+
+  it('invoca actualizar_domicilio, cambiar_prioridad_expediente y registrar_estudio_socioeconomico', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: [
+        {
+          domicilio_id: 'dom-2',
+          persona_id: 'per-1',
+          es_actual: true,
+          actualizado_en: '2026-11-27T11:00:00Z',
+        },
+      ],
+      error: null,
+    });
+
+    const dom = await supabaseFichaRepository.actualizarDomicilio({
+      personaId: 'per-1',
+      actualizadoEn: '2026-11-27T10:00:00Z',
+      asentamientoId: 12,
+      codigoPostal: '81200',
+      calle: '  Av. Leyva ',
+      zona: 'urbana',
+    });
+
+    expect(rpcMock).toHaveBeenCalledWith('actualizar_domicilio', {
+      p_persona_id: 'per-1',
+      p_actualizado_en: '2026-11-27T10:00:00Z',
+      p_asentamiento_id: 12,
+      p_codigo_postal: undefined,
+      p_calle: 'Av. Leyva',
+      p_numero_exterior: undefined,
+      p_numero_interior: undefined,
+      p_referencias: undefined,
+      p_zona: 'urbana',
+    });
+    expect(dom.domicilioId).toBe('dom-2');
+
+    rpcMock.mockResolvedValueOnce({
+      data: [
+        {
+          ficha_id: 'ficha-1',
+          prioridad: 'alta',
+          prioridad_actualizada_en: '2026-11-27T11:05:00Z',
+        },
+      ],
+      error: null,
+    });
+
+    const prio = await supabaseFichaRepository.cambiarPrioridad('ficha-1', 'alta');
+    expect(rpcMock).toHaveBeenLastCalledWith('cambiar_prioridad_expediente', {
+      p_ficha_id: 'ficha-1',
+      p_prioridad: 'alta',
+    });
+    expect(prio.prioridad).toBe('alta');
+
+    rpcMock.mockResolvedValueOnce({
+      data: [
+        {
+          estudio_id: 'est-2',
+          ficha_id: 'ficha-1',
+          fecha_estudio: '2026-11-27',
+          es_actual: true,
+          fue_correccion: false,
+          actualizado_en: '2026-11-27T11:10:00Z',
+        },
+      ],
+      error: null,
+    });
+
+    const est = await supabaseFichaRepository.registrarEstudioSocioeconomico({
+      fichaId: 'ficha-1',
+      ingresoMensualPropio: 7500,
+      numeroDependientes: 2,
+      tieneApoyo: false,
+      tipoVivienda: 'rentada',
+      aportantes: [{ monto: 2000, frecuencia: 'quincenal' }],
+    });
+
+    expect(rpcMock).toHaveBeenLastCalledWith(
+      'registrar_estudio_socioeconomico',
+      expect.objectContaining({
+        p_ficha_id: 'ficha-1',
+        p_ingreso_mensual_propio: 7500,
+        p_numero_dependientes: 2,
+        p_aportantes: [
+          expect.objectContaining({ nombre: null, monto: 2000, frecuencia: 'quincenal' }),
+        ],
+      }),
+    );
+    expect(est.estudioId).toBe('est-2');
+    expect(est.fueCorreccion).toBe(false);
   });
 });

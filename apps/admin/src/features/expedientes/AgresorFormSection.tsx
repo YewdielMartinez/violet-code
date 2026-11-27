@@ -3,6 +3,7 @@ import { EmptyState, Skeleton } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/skeleton';
 import { DeferredDialogContent, DialogFormSkeleton } from '@/shared/ui/DeferredDialogContent';
+import type { EstadoFicha } from '@/domain/models/Persona';
 import { Icon } from '@/shared/ui/Icon';
 import {
   useAgresores,
@@ -25,14 +26,16 @@ const CASCADE_OPTIONS = { trigger: 'load', duration: 0.42, step: 0.06, once: tru
 
 interface Props {
   fichaId: string;
+  estado?: EstadoFicha;
 }
 
 /**
  * Sección de Persona Agresora dentro del panel lateral del expediente (`RF-05`, `RF-22`).
  * Registra consulta en bitácora al montar la pestaña y al abrir un registro individual para edición.
  */
-export function AgresorFormSection({ fichaId }: Props) {
+export function AgresorFormSection({ fichaId, estado }: Props) {
   useRegistrarConsultaTabAgresor(fichaId);
+  const isArchivado = estado === 'archivado';
 
   const { data: agresores, isLoading, isError, refetch } = useAgresores(fichaId);
   const { data: parentescos = [] } = useParentescos();
@@ -76,18 +79,21 @@ export function AgresorFormSection({ fichaId }: Props) {
   );
 
   function handleStartCreate() {
+    if (isArchivado) return;
     consultedAgresorRef.current = null;
     setEditingAgresor(null);
     setFormMounted(true);
   }
 
   function handleOpenCreateFromEmpty() {
+    if (isArchivado) return;
     handleStartCreate();
     formOpenRef.current = true;
     setFormOpen(true);
   }
 
   function handleStartEdit(agresor: Agresor) {
+    if (isArchivado) return;
     if (consultedAgresorRef.current !== agresor.id) {
       consultedAgresorRef.current = agresor.id;
       registrarConsulta({ tabla: 'agresor', registroId: agresor.id });
@@ -96,11 +102,15 @@ export function AgresorFormSection({ fichaId }: Props) {
     setFormMounted(true);
   }
 
-  const handleDialogOpenChange = useCallback((nextOpen: boolean) => {
-    formOpenRef.current = nextOpen;
-    if (nextOpen) setFormMounted(true);
-    setFormOpen(nextOpen);
-  }, []);
+  const handleDialogOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (isArchivado && nextOpen) return;
+      formOpenRef.current = nextOpen;
+      if (nextOpen) setFormMounted(true);
+      setFormOpen(nextOpen);
+    },
+    [isArchivado],
+  );
 
   const handleAfterClose = useCallback(() => {
     if (formOpenRef.current) return;
@@ -144,14 +154,22 @@ export function AgresorFormSection({ fichaId }: Props) {
             </p>
           </div>
 
-          <AgresorDialog.Trigger
-            className="mk-button mk-button--primary"
-            onClick={handleStartCreate}
-          >
-            <Icon name="person_add" />
-            <span>Agregar persona agresora</span>
-          </AgresorDialog.Trigger>
+          {!isArchivado ? (
+            <AgresorDialog.Trigger
+              className="mk-button mk-button--primary"
+              onClick={handleStartCreate}
+            >
+              <Icon name="person_add" />
+              <span>Agregar persona agresora</span>
+            </AgresorDialog.Trigger>
+          ) : null}
         </div>
+
+        {isArchivado ? (
+          <p className="rounded-xl border border-outline-variant bg-surface-container-low px-3.5 py-2 text-xs font-medium text-on-surface-variant">
+            Expediente archivado: solo consulta
+          </p>
+        ) : null}
 
         <Skeleton loading={isLoading} shape="card" lines={4} label="Cargando personas agresoras">
           {!agresores || agresores.length === 0 ? (
@@ -159,9 +177,13 @@ export function AgresorFormSection({ fichaId }: Props) {
               <EmptyState
                 illustration="inbox"
                 title="Sin personas agresoras registradas"
-                description="Registra los datos disponibles de la persona agresora vinculada a este expediente."
-                actions={EMPTY_ADD_ACTION}
-                onAction={handleOpenCreateFromEmpty}
+                description={
+                  isArchivado
+                    ? 'No hay personas agresoras registradas en este expediente.'
+                    : 'Registra los datos disponibles de la persona agresora vinculada a este expediente.'
+                }
+                actions={isArchivado ? undefined : EMPTY_ADD_ACTION}
+                onAction={isArchivado ? undefined : handleOpenCreateFromEmpty}
               />
             </div>
           ) : (
@@ -193,6 +215,7 @@ export function AgresorFormSection({ fichaId }: Props) {
                       parentescoLabel={parentescoLabel}
                       ocupacionLabel={ocupacionLabel}
                       domicilioResumen={domicilioResumen}
+                      readOnly={isArchivado}
                       onEdit={handleStartEdit}
                     />
                   );

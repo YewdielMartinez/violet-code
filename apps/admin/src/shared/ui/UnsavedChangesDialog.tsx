@@ -16,8 +16,9 @@ export function UnsavedChangesDialog({
   message = 'Tienes datos capturados que aún no se han guardado. Si sales ahora, se perderán.',
 }: Props) {
   const isBlocked = blocker.state === 'blocked';
-  if (!isBlocked) return null;
 
+  // Se mantiene montado (como NuevaFichaDiscardDialog): montarlo ya abierto deja el diálogo sin mostrarse
+  // y la navegación bloqueada sin salida.
   return (
     <Dialog.Root
       anchor={NO_ORIGIN}

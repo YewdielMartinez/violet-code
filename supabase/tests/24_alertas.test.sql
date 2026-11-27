@@ -53,6 +53,7 @@ begin
     (v_uid_ts,  'TS Alerta',        'trabajo_social', v_area_ts, true),
     (v_uid_rec, 'Recepcion Alerta', 'recepcion',      null,      true)
   on conflict (id) do nothing;
+  update auth.users u set raw_app_meta_data = jsonb_set(coalesce(u.raw_app_meta_data, '{}'::jsonb), '{tipo}', to_jsonb('empleado'::text), true) where exists (select 1 from public.empleado e where e.id = u.id) and coalesce(u.raw_app_meta_data ->> 'tipo', '') <> 'empleado';
 
   insert into public.persona (id, curp, nombres, apellido_paterno, celular, creado_por) values
     (v_per_con_ord, 'AERT900512MSLRRR01', 'Patricia', 'ConOrden', '6684444444', v_uid_ts),
@@ -112,10 +113,11 @@ select throws_ok(
 );
 
 -- 6. Prioridad inicial: Patricia (con orden vigente) -> alerta app_movil entra en 'alta'
-select pg_temp.as_user('93000000-0000-4000-a000-000000000011');
+reset role;
 insert into public.alerta (id, origen, pre_registro_id)
 values ('93000000-0000-4000-a000-000000000501', 'app_movil', '93000000-0000-4000-a000-000000000401');
 
+select pg_temp.as_user('93000000-0000-4000-a000-000000000011');
 select is(
   (select prioridad from public.alerta where id = '93000000-0000-4000-a000-000000000501'),
   'alta'::public.prioridad_nivel,
@@ -123,10 +125,11 @@ select is(
 );
 
 -- 7. Prioridad inicial: Valeria (sin orden) -> alerta entra en 'media'
-select pg_temp.as_user('93000000-0000-4000-a000-000000000012');
+reset role;
 insert into public.alerta (id, origen, pre_registro_id)
 values ('93000000-0000-4000-a000-000000000502', 'app_movil', '93000000-0000-4000-a000-000000000402');
 
+select pg_temp.as_user('93000000-0000-4000-a000-000000000012');
 select is(
   (select prioridad from public.alerta where id = '93000000-0000-4000-a000-000000000502'),
   'media'::public.prioridad_nivel,

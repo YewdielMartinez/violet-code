@@ -1,5 +1,6 @@
 # RPC: `public.get_informe`
 
+- **Versión:** [`20261126001800_28`](../../migrations/20261126001800_28_rpc_informes_y_bitacora.sql)
 - **Migración:** `supabase/migrations/20261126001800_28_rpc_informes_y_bitacora.sql`
 - **Permiso RBAC:** `public.tiene_permiso('informe.ver')`
 - **Actores autorizados:** `titular`, `subdireccion` (ven todas las áreas), `trabajo_social`, `psicologia`, `juridico` (cada área ve solo la suya)

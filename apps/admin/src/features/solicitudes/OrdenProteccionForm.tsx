@@ -11,6 +11,7 @@ import {
 import '@yewdiel21/motion-kit/css/components/attachment';
 import '@yewdiel21/motion-kit/css/components/loading-button';
 import '@yewdiel21/motion-kit/css/components/select';
+import { formatErrorEscrituraExpediente } from '@/features/expedientes/api';
 import {
   AUTORIDAD_EMISORA_MAX_LENGTH,
   ESTADO_ORDEN_LABELS,
@@ -212,7 +213,7 @@ export function OrdenProteccionForm({
     } catch (err) {
       setSubmitState('error');
       toast(
-        err instanceof Error ? err.message : 'No se pudo guardar la orden de protección.',
+        formatErrorEscrituraExpediente(err, 'No se pudo guardar la orden de protección.'),
         { tone: 'error' },
       );
       return;

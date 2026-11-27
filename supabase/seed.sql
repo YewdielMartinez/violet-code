@@ -17,7 +17,7 @@
 
 do $$
 declare
-  v_pass text := extensions.crypt('Demo1234!', extensions.gen_salt('bf'));
+  v_pass text := extensions.crypt(' ', extensions.gen_salt('bf'));
 
   -- Cuentas fijas (7 roles Web/UMECA + 2 usuarias App Móvil)
   v_uid_titular   uuid := '11111111-1111-4111-8111-111111111101';
@@ -243,14 +243,14 @@ begin
     id, persona_id, estado, aviso_privacidad_aceptado_en,
     es_victima_delito, estado_civil, ocupacion_id, tiene_trabajo,
     servicio_medico, numero_hijas, numero_hijos_hombres,
-    tiene_embarazo, tiene_denuncia, tiene_consumo_droga, tiene_consumo_alcohol, creado_por
+    tiene_embarazo, tiene_denuncia, drogas, consumo_alcohol, creado_por
   ) values
     (v_ficha_1, v_per_1, 'en_seguimiento', now() - interval '7 days',
-      true, 'separado', v_oc_empleada, true, 'imss', 1, 1, false, true, false, false, v_uid_ts),
+      true, 'separado', v_oc_empleada, true, 'imss', 1, 1, false, true, array['no_consume']::public.tipo_droga[], 'no_consume'::public.consumo_alcohol, v_uid_ts),
     (v_ficha_2, v_per_2, 'abierto', now() - interval '2 days',
-      true, 'casado', v_oc_comerc, true, 'particular', 2, 0, false, false, false, false, v_uid_ts),
+      true, 'casado', v_oc_comerc, true, 'particular', 2, 0, false, false, array['no_consume']::public.tipo_droga[], 'no_consume'::public.consumo_alcohol, v_uid_ts),
     (v_ficha_3, v_per_3, 'cerrado', now() - interval '15 days',
-      false, 'soltero', v_oc_empleada, true, 'ninguno', 0, 0, false, false, false, false, v_uid_ts);
+      false, 'soltero', v_oc_empleada, true, 'ninguno', 0, 0, false, false, array['no_consume']::public.tipo_droga[], 'no_consume'::public.consumo_alcohol, v_uid_ts);
 
   insert into public.ficha_servicio_solicitado (ficha_id, area_id, creado_por) values
     (v_ficha_1, v_area_ts,   v_uid_ts),
@@ -285,17 +285,17 @@ begin
   insert into public.agresor (
     id, ficha_id, nombres, apellido_paterno, apellido_materno, edad,
     sexo, estado_civil, parentesco_id, asentamiento_id, calle, numero_exterior,
-    zona, ocupacion_id, tipo_trabajo, tiene_consumo_droga, drogas,
-    tiene_consumo_alcohol, observaciones, creado_por
+    zona, ocupacion_id, tipo_trabajo, drogas,
+    consumo_alcohol, observaciones, creado_por
   ) values
     (v_agr_1, v_ficha_1, 'Roberto', 'Salazar', 'Pineda', 36,
       'H', 'separado', v_par_expareja, v_asent_2, 'Calle Allende', '305',
-      'urbana', v_oc_empleada, 'temporal', true, array['marihuana']::public.tipo_droga[],
-      true, 'Antecedentes de hostigamiento telefónico.', v_uid_ts),
+      'urbana', v_oc_empleada, 'temporal', array['marihuana']::public.tipo_droga[],
+      'ocasional'::public.consumo_alcohol, 'Antecedentes de hostigamiento telefónico.', v_uid_ts),
     (v_agr_2, v_ficha_2, 'Héctor', 'Montoya', 'Castro', 39,
       'H', 'casado', v_par_pareja, v_asent_2, 'Calle Santos Degollado', '205',
-      'urbana', v_oc_comerc, 'negocio_propio', false, null,
-      true, 'Evaluación en curso.', v_uid_ts);
+      'urbana', v_oc_comerc, 'negocio_propio', array['no_consume']::public.tipo_droga[],
+      'ocasional'::public.consumo_alcohol, 'Evaluación en curso.', v_uid_ts);
 
   insert into public.orden_proteccion (
     id, ficha_id, agresor_id, numero_oficio, autoridad_emisora,
@@ -320,18 +320,18 @@ begin
   -- 11. Citas (incluye asistida, cancelada->reagendada para mañana y UMECA)
   -- Exp. 1 queda sin cita futura para aparecer en vista_lista_urgencias.
   insert into public.cita (
-    id, persona_id, reagendada_de, area_id, programada_en, prioridad,
+    id, persona_id, reagendada_de, area_id, programada_en,
     recomendada_por, estado, confirmada_en, motivo_cancelacion, origen, creado_por
   ) values
-    (v_cita_1_psic, v_per_1, null, v_area_psic, now() - interval '3 days', 'alta',
+    (v_cita_1_psic, v_per_1, null, v_area_psic, now() - interval '3 days',
       'Trabajo Social', 'asistio', now() - interval '4 days', null, 'regular', v_uid_recep),
-    (v_cita_2_orig, v_per_2, null, v_area_psic, now() - interval '1 day', 'media',
+    (v_cita_2_orig, v_per_2, null, v_area_psic, now() - interval '1 day',
       'Trabajo Social', 'reagendada', null, 'Usuaria solicitó cambio por horario laboral', 'regular', v_uid_recep),
-    (v_cita_2_reag, v_per_2, v_cita_2_orig, v_area_psic, now() + interval '1 day', 'media',
+    (v_cita_2_reag, v_per_2, v_cita_2_orig, v_area_psic, now() + interval '1 day',
       'Trabajo Social', 'agendada', null, null, 'regular', v_uid_recep),
-    (v_cita_2_umeca, v_per_2, null, v_area_jur, now() + interval '3 days', 'alta',
+    (v_cita_2_umeca, v_per_2, null, v_area_jur, now() + interval '3 days',
       'UMECA', 'confirmada', now(), null, 'umeca', v_uid_jur),
-    (v_cita_3_ts, v_per_3, null, v_area_ts, now() - interval '15 days', 'baja',
+    (v_cita_3_ts, v_per_3, null, v_area_ts, now() - interval '15 days',
       'Recepción', 'asistio', now() - interval '15 days', null, 'regular', v_uid_recep);
 
   -- 12. Atenciones (Hoja de Seguimiento), Historial Clínico y Notas Privadas

@@ -15,13 +15,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { EmptyState, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
+import { puedeAccederHistorialClinico } from '@/domain/models/FichaRegistro';
 import type { ExpedienteResumen } from '@/domain/models/Persona';
 import { useAuth } from '@/shared/auth/useAuth';
 import { Icon } from '@/shared/ui/Icon';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { puedeAccederAgresor } from './agresorApi';
 import {
-  canLookupPreRegistro,
   fichaDetailQueryOptions,
   useExpedienteById,
   useRegisterConsult,
@@ -31,6 +31,7 @@ import { ExpedienteContactoSection } from './drawer/ExpedienteContactoSection';
 import type { DrawerTab } from './drawer/ExpedienteDrawerTabs';
 import { ExpedienteDetailTabs } from './drawer/ExpedienteDetailTabs';
 import { EstadoPill, PrioridadPill } from './drawer/ExpedienteEstado';
+import { ExpedientePrioridadControl } from './drawer/ExpedientePrioridadControl';
 import {
   calculateAge,
   copyTextToClipboard,
@@ -40,7 +41,6 @@ import {
 } from './drawer/formatters';
 import { preloadExpedienteDrawerTab } from './ExpedienteDrawer';
 import { FichaDetalleResumen } from './ficha/FichaDetalleResumen';
-import { FichaGestionAcciones } from './ficha/FichaGestionAcciones';
 
 const AgresorFormSection = lazy(() =>
   import('./AgresorFormSection').then((m) => ({ default: m.AgresorFormSection })),
@@ -68,12 +68,18 @@ const NotasPrivadasPanel = lazy(() =>
     default: m.NotasPrivadasPanel,
   })),
 );
+const HistorialClinicoPanel = lazy(() =>
+  import('./HistorialClinicoPanel').then((m) => ({
+    default: m.HistorialClinicoPanel,
+  })),
+);
 
 interface TabDefinition {
   id: DrawerTab;
   label: string;
   icon: string;
   sensitive: boolean;
+  historialOnly?: boolean;
 }
 
 const ALL_TABS: readonly TabDefinition[] = [
@@ -84,6 +90,13 @@ const ALL_TABS: readonly TabDefinition[] = [
   { id: 'ordenes', label: 'Órdenes de Protección', icon: 'gavel', sensitive: true },
   { id: 'seguimiento', label: 'Seguimiento', icon: 'timeline', sensitive: true },
   { id: 'notas', label: 'Notas privadas', icon: 'lock', sensitive: true },
+  {
+    id: 'historial',
+    label: 'Historial clínico',
+    icon: 'psychology',
+    sensitive: true,
+    historialOnly: true,
+  },
 ];
 
 const SENSITIVE_TAB_ORDER: readonly DrawerTab[] = [
@@ -105,7 +118,8 @@ function parseRequestedTab(rawTab: string | null): DrawerTab {
     rawTab === 'canalizaciones' ||
     rawTab === 'ordenes' ||
     rawTab === 'seguimiento' ||
-    rawTab === 'notas'
+    rawTab === 'notas' ||
+    rawTab === 'historial'
   ) {
     return rawTab;
   }
@@ -236,6 +250,8 @@ const SummaryStrip = memo(function SummaryStrip({ expediente }: SummaryStripProp
           {formattedPhone}
         </span>
       ) : null}
+
+      <ExpedientePrioridadControl fichaId={expediente.id} estado={expediente.estado} />
     </section>
   );
 });
@@ -256,7 +272,7 @@ export default function ExpedienteDetailPage() {
   const { mutate: registerConsult } = useRegisterConsult();
 
   const canAccessSensitiveTabs = puedeAccederAgresor(user?.role);
-  const canCreate = user ? canLookupPreRegistro(user.role) : false;
+  const canAccessHistorial = puedeAccederHistorialClinico(user?.role);
 
   const consultedIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -278,7 +294,10 @@ export default function ExpedienteDetailPage() {
     setLocalTab(requestedTab);
   }
 
-  const activeTab: DrawerTab = canAccessSensitiveTabs ? localTab : 'resumen';
+  const activeTab: DrawerTab =
+    !canAccessSensitiveTabs || (localTab === 'historial' && !canAccessHistorial)
+      ? 'resumen'
+      : localTab;
   const activeExpedienteId = expediente?.id ?? null;
 
   const [mountedState, setMountedState] = useState<{
@@ -354,8 +373,12 @@ export default function ExpedienteDetailPage() {
   }>({ count: 0, dir: 1, distance: 1, deferredReveal: false });
 
   const visibleTabs = useMemo(
-    () => ALL_TABS.filter((tab) => !tab.sensitive || canAccessSensitiveTabs),
-    [canAccessSensitiveTabs],
+    () =>
+      ALL_TABS.filter((tab) => {
+        if (tab.historialOnly) return canAccessHistorial;
+        return !tab.sensitive || canAccessSensitiveTabs;
+      }),
+    [canAccessSensitiveTabs, canAccessHistorial],
   );
 
   const selectTab = useCallback(
@@ -426,12 +449,24 @@ export default function ExpedienteDetailPage() {
           {
             id: 'agresor',
             label: 'Cargando persona agresora',
-            node: <AgresorFormSection key={expediente.id} fichaId={expediente.id} />,
+            node: (
+              <AgresorFormSection
+                key={expediente.id}
+                fichaId={expediente.id}
+                estado={expediente.estado}
+              />
+            ),
           },
           {
             id: 'documentos',
             label: 'Cargando documentos',
-            node: <DocumentosAdjuntosPanel key={expediente.id} fichaId={expediente.id} />,
+            node: (
+              <DocumentosAdjuntosPanel
+                key={expediente.id}
+                fichaId={expediente.id}
+                estado={expediente.estado}
+              />
+            ),
           },
           {
             id: 'canalizaciones',
@@ -441,13 +476,20 @@ export default function ExpedienteDetailPage() {
                 key={expediente.id}
                 fichaId={expediente.id}
                 folio={expediente.folio}
+                estado={expediente.estado}
               />
             ),
           },
           {
             id: 'ordenes',
             label: 'Cargando órdenes de protección',
-            node: <OrdenesProteccionPanel key={expediente.id} fichaId={expediente.id} />,
+            node: (
+              <OrdenesProteccionPanel
+                key={expediente.id}
+                fichaId={expediente.id}
+                estado={expediente.estado}
+              />
+            ),
           },
           {
             id: 'seguimiento',
@@ -459,9 +501,24 @@ export default function ExpedienteDetailPage() {
             label: 'Cargando notas privadas',
             node: <NotasPrivadasPanel key={expediente.id} fichaId={expediente.id} />,
           },
+          ...(canAccessHistorial
+            ? [
+                {
+                  id: 'historial' as const,
+                  label: 'Cargando historial clínico',
+                  node: (
+                    <HistorialClinicoPanel
+                      key={expediente.id}
+                      fichaId={expediente.id}
+                      estado={expediente.estado}
+                    />
+                  ),
+                },
+              ]
+            : []),
         ] as const)
         : [],
-    [expediente],
+    [expediente, canAccessHistorial],
   );
 
   return (
@@ -569,9 +626,6 @@ export default function ExpedienteDetailPage() {
                     >
                       <ExpedienteContactoSection expediente={expediente} />
                       <FichaDetalleResumen expediente={expediente} />
-                      {canCreate ? (
-                        <FichaGestionAcciones expediente={expediente} onDone={handleBackToList} />
-                      ) : null}
                     </div>
                   ) : null}
 

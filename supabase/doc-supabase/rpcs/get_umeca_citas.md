@@ -1,5 +1,6 @@
 # `get_umeca_citas`
 
+- **Versión:** [`20261127001100_42`](../../migrations/20261127001100_42_agenda_busqueda_umeca.sql)
 - **Migración:** [`20261125000500_05_vistas.sql`](../../migrations/20261125000500_05_vistas.sql) (versión vigente con `area_clave` / `area_nombre`: [`20261127001100_42_agenda_busqueda_umeca.sql`](../../migrations/20261127001100_42_agenda_busqueda_umeca.sql))
 - **Permiso RBAC:** sin `tiene_permiso`; actor externo: `usuario_externo` activo con `dependencia = 'umeca'` (`es_umeca()`).
 - **Actores autorizados:** UMECA. Cualquier otro usuario recibe `42501`.

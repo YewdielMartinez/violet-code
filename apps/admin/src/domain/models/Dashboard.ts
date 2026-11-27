@@ -65,3 +65,17 @@ export interface SchedulingSummary {
   nextArea: string | null;
   nextUsuaria: string | null;
 }
+
+export interface MapaCalorAsentamientoItem {
+  asentamientoId: number;
+  codigoPostal: string;
+  nombre: string;
+  tipoAsentamiento: string;
+  municipio: string;
+  estado: string;
+  latitud: number;
+  longitud: number;
+  totalExpedientes: number;
+  totalAlertas: number;
+  totalActividades: number;
+}

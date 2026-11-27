@@ -1,3 +1,4 @@
+import { queryClient } from '@/app/queryClient';
 import { supabaseAuthRepository } from '@/infrastructure/supabase/adapters/SupabaseAuthRepository';
 import type { AuthSession, StaffRole, StaffUser, UmecaCita } from '@/domain/models/Auth';
 import { AuthError } from '@/domain/ports/AuthRepository';
@@ -20,7 +21,16 @@ let initialized = false;
 let sessionPromise: Promise<AuthSession | null> | null = null;
 let idleTimer: ReturnType<typeof setTimeout> | undefined;
 
+let cachedUserId: string | null = null;
+
 function setState(next: State) {
+  const nextUserId = next.session?.user.id ?? null;
+  // Al cerrar sesión o cambiar de usuario se vacía la caché de TanStack Query para que
+  // el siguiente usuario no vea datos cargados con los permisos del anterior.
+  if (nextUserId !== cachedUserId) {
+    if (cachedUserId !== null) queryClient.clear();
+    cachedUserId = nextUserId;
+  }
   state = next;
   listeners.forEach((l) => l());
 }
@@ -105,6 +115,7 @@ export async function logout(): Promise<void> {
     await supabaseAuthRepository.logout();
   } finally {
     setState({ status: 'anonymous', session: null });
+    queryClient.clear();
   }
 }
 

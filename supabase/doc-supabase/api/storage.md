@@ -10,14 +10,14 @@ Archivos del expediente (INE, comprobantes, oficios de órdenes de protección).
 | Tamaño máximo | 10 MB |
 | Tipos permitidos | `image/jpeg`, `image/png`, `application/pdf` |
 | Ruta | `<ficha_id>/<uuid>-<nombre-sanitizado>` (`construirRutaStorage` en `domain/models/DocumentoAdjunto.ts`) |
-| Migraciones | `_04_ficha` (bucket), `_07_rls` (select, insert, update), `_16_storage_y_bitacora` (delete) |
+| Migraciones | `_04_ficha` (bucket), `_07_rls` (select, insert, update), `_16_storage_y_bitacora` (delete), `_63_bloqueo_archivado_hijos` (`ficha_editable`) |
 
 **Quién puede qué**
 
 | Operación | Regla | Roles |
 |---|---|---|
 | Ver / descargar (`createSignedUrl`) | `expediente.ver` | Tit, Sub, TS, Psi, Jur |
-| Subir (`upload`) | `expediente.ver` | Tit, Sub, TS, Psi, Jur |
+| Subir (`upload`) | `expediente.ver` **y** `ficha_editable` (no archivada) | Tit, Sub, TS, Psi, Jur |
 | Reemplazar (`update`) | `expediente.ver` | Tit, Sub, TS, Psi, Jur |
 | Borrar (`remove`) | `expediente.ver` **y** ser quien lo subió (`owner_id = auth.uid()`) | Solo quien lo subió |
 | Cualquier cosa | — | Rec, UMECA, app: nada |

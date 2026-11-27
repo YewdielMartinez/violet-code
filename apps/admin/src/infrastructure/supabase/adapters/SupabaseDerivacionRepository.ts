@@ -1,14 +1,76 @@
 import { supabase } from '../client';
-import type { Database } from '../database.types';
+import type { Database, Json } from '../database.types';
+import { mapSupabaseError } from './errors';
 import {
   isInternalDestino,
+  type CanalizacionEvento,
   type DerivacionCreateInput,
   type DerivacionItem,
   type EstadoDerivacion,
+  type HistorialCanalizacionItem,
 } from '@/domain/models/Derivacion';
 import type { DerivacionRepository } from '@/domain/ports/DerivacionRepository';
 
 type RpcDerivacionRow = Database['public']['Functions']['get_derivaciones']['Returns'][number];
+type RpcHistorialCanalizacionRow =
+  Database['public']['Functions']['get_historial_canalizaciones']['Returns'][number];
+
+const ESTADOS_DERIVACION_VALIDOS: ReadonlySet<string> = new Set<EstadoDerivacion>([
+  'pendiente',
+  'en_proceso',
+  'concluida',
+  'cancelada',
+]);
+
+function asEstadoDerivacion(value: unknown): EstadoDerivacion | null {
+  return typeof value === 'string' && ESTADOS_DERIVACION_VALIDOS.has(value)
+    ? (value as EstadoDerivacion)
+    : null;
+}
+
+function asNullableString(value: unknown): string | null {
+  return typeof value === 'string' ? value : null;
+}
+
+function parseCanalizacionEventos(raw: Json | null | undefined): CanalizacionEvento[] {
+  if (!Array.isArray(raw)) return [];
+  const eventos: CanalizacionEvento[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
+    const record = item as Record<string, Json | undefined>;
+    eventos.push({
+      tipo: asNullableString(record.tipo) ?? '',
+      fecha: asNullableString(record.fecha) ?? '',
+      estadoAnterior: asEstadoDerivacion(record.estado_anterior),
+      estadoNuevo: asEstadoDerivacion(record.estado_nuevo),
+      actorId: asNullableString(record.actor_id),
+      actorNombre: asNullableString(record.actor_nombre),
+      nota: asNullableString(record.nota),
+    });
+  }
+  return eventos;
+}
+
+function mapHistorialRow(row: RpcHistorialCanalizacionRow): HistorialCanalizacionItem {
+  return {
+    id: row.id,
+    fichaId: row.ficha_id,
+    areaOrigenId: row.area_origen_id ?? null,
+    areaOrigenNombre: row.area_origen_nombre ?? null,
+    areaDestinoId: row.area_destino_id ?? null,
+    areaDestinoNombre: row.area_destino_nombre ?? null,
+    institucionId: row.institucion_id ?? null,
+    institucionNombre: row.institucion_nombre ?? null,
+    institucionOtra: row.institucion_otra ?? null,
+    destino: row.destino,
+    motivo: row.motivo ?? null,
+    fechaDerivacion: row.fecha_derivacion,
+    estado: row.estado,
+    creadoEn: row.creado_en,
+    actualizadoEn: row.actualizado_en,
+    eventos: parseCanalizacionEventos(row.eventos),
+  };
+}
 
 interface CrearCanalizacionArgs {
   p_ficha_id: string;
@@ -77,8 +139,17 @@ export const supabaseDerivacionRepository: DerivacionRepository = {
       p_limite: 200,
     });
 
-    if (error) throw error;
+    if (error) throw mapSupabaseError(error);
     return (data ?? []).map(mapRpcRow);
+  },
+
+  async historialCanalizaciones(fichaId: string): Promise<HistorialCanalizacionItem[]> {
+    const { data, error } = await supabase.rpc('get_historial_canalizaciones', {
+      p_ficha_id: fichaId,
+    });
+
+    if (error) throw mapSupabaseError(error);
+    return (data ?? []).map(mapHistorialRow);
   },
 
   async create(input: DerivacionCreateInput): Promise<{ id: string; aviso: string | null }> {

@@ -359,11 +359,11 @@ export function CitaDetalle({
       </Dialog.Body>
 
       {modo !== null ? (
-        <Dialog.Footer>
-          <button type="button" className="mk-button mk-button--text vc-cita-btn" disabled={pending} onClick={() => abrirModo(null)}>
+        <Dialog.Footer key="form">
+          <button key="volver" type="button" className="mk-button mk-button--text vc-cita-btn" disabled={pending} onClick={() => abrirModo(null)}>
             Volver
           </button>
-          <button type="submit" form={formId} className="mk-button mk-button--filled vc-cita-btn" disabled={pending}>
+          <button key="enviar" type="submit" form={formId} className="mk-button mk-button--filled vc-cita-btn" disabled={pending}>
             {modo === 'cancelar'
               ? pending
                 ? 'Cancelando…'
@@ -374,9 +374,10 @@ export function CitaDetalle({
           </button>
         </Dialog.Footer>
       ) : primarias ? (
-        <Dialog.Footer>
+        <Dialog.Footer key="acciones">
           {acciones.noAsistio ? (
             <button
+              key="no-asistio"
               type="button"
               className="mk-button mk-button--tonal vc-cita-btn"
               disabled={pending}
@@ -387,6 +388,7 @@ export function CitaDetalle({
           ) : null}
           {acciones.confirmar ? (
             <button
+              key="confirmar"
               type="button"
               className="mk-button mk-button--tonal vc-cita-btn"
               disabled={pending}
@@ -396,12 +398,12 @@ export function CitaDetalle({
             </button>
           ) : null}
           {acciones.asistio ? (
-            <button type="button" className="mk-button mk-button--filled vc-cita-btn" disabled={pending} onClick={() => onAbrirSeguimiento(cita)}>
+            <button key="asistio" type="button" className="mk-button mk-button--filled vc-cita-btn" disabled={pending} onClick={() => onAbrirSeguimiento(cita)}>
               Marcar asistió
             </button>
           ) : null}
           {acciones.agendarSiguiente ? (
-            <button type="button" className="mk-button mk-button--filled vc-cita-btn inline-flex items-center gap-1.5" onClick={() => onAgendarSiguiente(cita)}>
+            <button key="agendar-siguiente" type="button" className="mk-button mk-button--filled vc-cita-btn inline-flex items-center gap-1.5" onClick={() => onAgendarSiguiente(cita)}>
               <Icon name="calendar_month" />
               <span>Agendar siguiente cita</span>
             </button>

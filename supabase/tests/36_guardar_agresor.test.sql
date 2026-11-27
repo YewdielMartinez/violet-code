@@ -41,10 +41,9 @@ create temp table pg_temp.res_a04 (
   ocupacion_id          smallint,
   ocupacion_otra        text,
   tipo_trabajo          public.tipo_trabajo,
-  tiene_consumo_droga   boolean,
-  drogas                public.tipo_droga[],
-  especificacion_droga  text,
-  tiene_consumo_alcohol boolean,
+  drogas               public.tipo_droga[],
+  especificacion_droga text,
+  consumo_alcohol      public.consumo_alcohol,
   especificacion_arma   text,
   observaciones         text,
   activo                boolean,
@@ -143,8 +142,8 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$select * from public.guardar_agresor(null, '96000000-0000-4000-a000-000000000201', null, 'Carlos', null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, false, array['marihuana']::public.tipo_droga[])$$,
-  '23514', null, 'guardar_agresor rechaza drogas sin consumo verdadero'
+  $$select * from public.guardar_agresor(null, '96000000-0000-4000-a000-000000000201', null, 'Carlos', null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, array['no_consume', 'marihuana']::public.tipo_droga[])$$,
+  '23514', null, 'guardar_agresor rechaza no_consume combinado con otra droga'
 );
 
 select throws_ok(
@@ -173,10 +172,9 @@ from public.guardar_agresor(
   null,
   '81200',
   null, null, null, null, null, null, null, null,
-  true,
   array['marihuana']::public.tipo_droga[],
   'Consumo frecuente',
-  true,
+  'ocasional'::public.consumo_alcohol,
   'Ninguna',
   'Registro inicial'
 );
@@ -217,10 +215,9 @@ with upd as (
     'Carlos Alberto',
     null, null, null, null, null, null, null, null, null, null,
     null, null, null, null, null, null, null, null, null, null,
-    false,
+    array['no_consume']::public.tipo_droga[],
     null,
-    null,
-    null,
+    'no_consume'::public.consumo_alcohol,
     null,
     'Editado por Juridico'
   )

@@ -179,4 +179,41 @@ describe('supabaseDashboardRepository', () => {
     expect(builders[2].calls).toContainEqual(['eq', 'creado_por', 'emp-1']);
     expect(builders[2].calls).toContainEqual(['not', 'estado', 'in', '(cerrado,archivado)']);
   });
+
+  it('consulta get_mapa_calor_asentamiento con umbral por defecto y personalizado', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: [
+        {
+          asentamiento_id: 42,
+          codigo_postal: '81200',
+          nombre: 'Centro',
+          tipo_asentamiento: 'Colonia',
+          municipio: 'Ahome',
+          estado: 'Sinaloa',
+          latitud: 25.79,
+          longitud: -108.99,
+          total_expedientes: 5,
+          total_alertas: 2,
+          total_actividades: 1,
+        },
+      ],
+      error: null,
+    });
+
+    const items = await supabaseDashboardRepository.mapaCalor();
+    expect(rpcMock).toHaveBeenCalledWith('get_mapa_calor_asentamiento', { p_umbral_minimo: 3 });
+    expect(items[0]).toEqual({
+      asentamientoId: 42,
+      codigoPostal: '81200',
+      nombre: 'Centro',
+      tipoAsentamiento: 'Colonia',
+      municipio: 'Ahome',
+      estado: 'Sinaloa',
+      latitud: 25.79,
+      longitud: -108.99,
+      totalExpedientes: 5,
+      totalAlertas: 2,
+      totalActividades: 1,
+    });
+  });
 });

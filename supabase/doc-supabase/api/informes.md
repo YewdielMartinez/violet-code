@@ -8,6 +8,8 @@ Ninguna de estas RPC devuelve CURP ni nombres de usuarias.
 
 ## `get_informe`
 
+**Versión:** [`20261126001800_28`](../../migrations/20261126001800_28_rpc_informes_y_bitacora.sql)
+
 > Informe mensual o anual (RF-13): personas y atenciones por área, tipo de atención y primera vez/seguimiento.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
@@ -66,6 +68,8 @@ interface InformeRow {
 
 ## `get_bitacora`
 
+**Versión:** [`20261126001800_28`](../../migrations/20261126001800_28_rpc_informes_y_bitacora.sql)
+
 > Consulta de auditoría (RF-22): quién vio, creó o cambió qué y cuándo.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
@@ -119,6 +123,8 @@ interface BitacoraRow {
 ---
 
 ## `get_mapa_calor_asentamiento`
+
+**Versión:** [`20261126000500_15`](../../migrations/20261126000500_15_permisos_rbac_abac.sql)
 
 > Conteos por colonia para el mapa de calor: expedientes, alertas y actividades preventivas.
 

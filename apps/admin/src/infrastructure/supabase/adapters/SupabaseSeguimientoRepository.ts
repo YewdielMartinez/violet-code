@@ -1,7 +1,10 @@
 import { supabase } from '../client';
+import { mapSupabaseError } from './errors';
 import type {
   ContextoHojaSeguimiento,
-  HojaSeguimientoCopia,
+  ContextoSeguimiento,
+  CorregirSeguimientoInput,
+  CorregirSeguimientoResult,
   TipoAtencion,
 } from '@/domain/models/HojaSeguimiento';
 import type {
@@ -22,35 +25,18 @@ import {
   mapDomicilioRow,
   mapNotaRow,
   mapTipoAtencionRow,
-  toAtencionCopiaUpdate,
-  toDomicilioHistoricoInsert,
 } from './seguimiento.mapper';
 
-/** Guarda la copia histórica del día sobre la atención recién creada (RLS `atencion_update` por área). */
-async function guardarCopiaHoja(atencionId: string, copia: HojaSeguimientoCopia): Promise<void> {
-  let domicilioId: string | null = null;
-  if (copia.domicilio) {
-    const { data, error } = await supabase
-      .from('domicilio')
-      .insert(toDomicilioHistoricoInsert(copia.personaId, copia.domicilio))
-      .select('id')
-      .single();
-    if (error) throw error;
-    domicilioId = data.id;
-  }
-
-  const { error } = await supabase
-    .from('atencion')
-    .update(toAtencionCopiaUpdate(copia, domicilioId))
-    .eq('id', atencionId);
-  if (error) throw error;
+function toOptionalRpcText(value: string | null | undefined): string | undefined {
+  if (value === null || value === undefined) return undefined;
+  return value.trim();
 }
 
 export const supabaseSeguimientoRepository: SeguimientoRepository = {
   async registrar(input: SeguimientoCreateInput): Promise<SeguimientoResult> {
     const { data, error } = await supabase.rpc('registrar_seguimiento', {
       p_ficha_id: input.fichaId,
-      p_cita_id: input.citaId ?? undefined,
+      p_cita_id: input.citaId,
       p_tipo_atencion_id: input.tipoAtencionId,
       p_acciones_realizadas: input.accionesRealizadas?.trim() || undefined,
       p_proxima_accion: input.proximaAccion?.trim() || undefined,
@@ -59,31 +45,66 @@ export const supabaseSeguimientoRepository: SeguimientoRepository = {
       p_proxima_cita_en: input.proximaCitaEn ?? undefined,
     });
 
-    if (error) throw error;
+    if (error) throw mapSupabaseError(error);
 
     const row = Array.isArray(data) ? data[0] : data;
     if (!row) {
       throw new Error('El servidor no devolvió el resultado del seguimiento registrado.');
     }
 
-    const result: SeguimientoResult = {
+    return {
       atencionId: row.atencion_id,
+      folioSeguimiento: '',
       citaProximaId: row.cita_proxima_id ?? null,
       esPrimeraVezArea: row.es_primera_vez_area,
       tieneHistorialClinico: row.tiene_historial_clinico,
     };
+  },
 
-    if (input.copia) {
-      // La hoja ya quedó registrada: si la copia falla no se lanza (reintentar duplicaría la hoja).
-      try {
-        await guardarCopiaHoja(result.atencionId, input.copia);
-        result.copiaGuardada = true;
-      } catch {
-        result.copiaGuardada = false;
-      }
+  async contexto(citaId: string): Promise<ContextoSeguimiento> {
+    const { data, error } = await supabase.rpc('get_contexto_seguimiento', {
+      p_cita_id: citaId,
+    });
+
+    if (error) throw mapSupabaseError(error);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió el contexto de la cita.');
     }
 
-    return result;
+    return {
+      fichaId: row.ficha_id,
+      folioExpediente: row.folio_expediente,
+      nombrePersona: row.nombre_persona,
+      edad: row.edad ?? null,
+      esPrimeraVezArea: row.es_primera_vez_area,
+      ultimaProximaAccion: row.ultima_proxima_accion ?? null,
+      tieneOrdenVigente: row.tiene_orden_vigente,
+      tieneHistorialClinico: row.tiene_historial_clinico ?? null,
+    };
+  },
+
+  async corregir(input: CorregirSeguimientoInput): Promise<CorregirSeguimientoResult> {
+    const { data, error } = await supabase.rpc('corregir_seguimiento', {
+      p_atencion_id: input.atencionId,
+      p_actualizado_en: input.actualizadoEn,
+      p_tipo_atencion_id: input.tipoAtencionId ?? undefined,
+      p_acciones_realizadas: toOptionalRpcText(input.accionesRealizadas),
+      p_proxima_accion: toOptionalRpcText(input.proximaAccion),
+      p_prioridad: input.prioridad ?? undefined,
+      p_observaciones: toOptionalRpcText(input.observaciones),
+    });
+
+    if (error) throw mapSupabaseError(error);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió confirmación al corregir el seguimiento.');
+    }
+
+    return {
+      atencionId: row.atencion_id,
+      actualizadoEn: row.actualizado_en,
+    };
   },
 
   async getLineaTiempo(fichaId: string): Promise<LineaTiempoEvento[]> {

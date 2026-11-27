@@ -1,6 +1,7 @@
 # RPC: `public.registrar_estudio_socioeconomico`
 
-- **Migración:** `supabase/migrations/20261127000600_37_rpc_historial_clinico_y_estudio.sql`
+- **Versión:** [`20261128001500_57`](../../migrations/20261128001500_57_ficha_campos_opcionales.sql)
+- **Migración:** `supabase/migrations/20261128001500_57_ficha_campos_opcionales.sql` *(actualiza `_37_`)*
 - **Cubre:** `RF-01`, `RN-15.1` (Sprint 02 · A-05)
 
 ## Actores autorizados
@@ -20,7 +21,7 @@
   p_material_otro?: string | null;
   p_servicios?: ServicioVivienda[] | null;
   p_bienes?: BienVivienda[] | null;
-  p_aportantes?: AportanteInput[]; // JSONB array (acepta claves snake_case o camelCase)
+  p_aportantes?: AportanteInput[]; // JSONB array (snake_case o camelCase; nombre es opcional, máx. 150)
 }
 ```
 

@@ -60,6 +60,35 @@ export interface DerivacionItem {
   creadoEn: string;
 }
 
+export interface CanalizacionEvento {
+  tipo: string;
+  fecha: string;
+  estadoAnterior: EstadoDerivacion | null;
+  estadoNuevo: EstadoDerivacion | null;
+  actorId: string | null;
+  actorNombre: string | null;
+  nota: string | null;
+}
+
+export interface HistorialCanalizacionItem {
+  id: string;
+  fichaId: string;
+  areaOrigenId: number | null;
+  areaOrigenNombre: string | null;
+  areaDestinoId: number | null;
+  areaDestinoNombre: string | null;
+  institucionId: number | null;
+  institucionNombre: string | null;
+  institucionOtra: string | null;
+  destino: DestinoDerivacion;
+  motivo: string | null;
+  fechaDerivacion: string;
+  estado: EstadoDerivacion;
+  creadoEn: string;
+  actualizadoEn: string;
+  eventos: CanalizacionEvento[];
+}
+
 export interface DerivacionCreateInput {
   fichaId: string;
   areaOrigenId: number | null;

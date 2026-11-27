@@ -11,6 +11,7 @@ interface AgresorCardProps {
   parentescoLabel: string | null;
   ocupacionLabel: string | null;
   domicilioResumen: string;
+  readOnly?: boolean;
   onEdit: (agresor: Agresor) => void;
 }
 
@@ -30,6 +31,7 @@ export function AgresorCard({
   parentescoLabel,
   ocupacionLabel,
   domicilioResumen,
+  readOnly = false,
   onEdit,
 }: AgresorCardProps) {
   const subtitulo = [parentescoLabel, ocupacionLabel].filter(Boolean).join(' · ');
@@ -58,13 +60,15 @@ export function AgresorCard({
           </div>
         </div>
 
-        <AgresorDialog.Trigger
-          className="mk-button mk-button--tonal shrink-0"
-          onClick={() => onEdit(agresor)}
-        >
-          <Icon name="edit" />
-          <span>Editar</span>
-        </AgresorDialog.Trigger>
+        {!readOnly ? (
+          <AgresorDialog.Trigger
+            className="mk-button mk-button--tonal shrink-0"
+            onClick={() => onEdit(agresor)}
+          >
+            <Icon name="edit" />
+            <span>Editar</span>
+          </AgresorDialog.Trigger>
+        ) : null}
       </div>
 
       {domicilioResumen ? (

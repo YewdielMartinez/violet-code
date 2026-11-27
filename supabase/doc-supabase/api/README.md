@@ -40,7 +40,7 @@ La llamada vive en el **adaptador** (`infrastructure/supabase/adapters/Supabase<
 | "Hoy" | Las RPC que calculan "hoy" usan `America/Mazatlan`, no la hora del navegador. |
 | Enums | Se mandan como string (`'confirmada'`); los arreglos de enum como `string[]` (`['nueva','tomada']`). |
 | `smallint` / `integer` | Se mandan como `number`. |
-| Seguridad | Todas son `security definer`: la RPC valida el permiso y repite las reglas de RLS en su `where`. Si el rol no puede, responde `42501`; no devuelve "vacío". |
+| Seguridad | Todas son `security definer`: la RPC valida el permiso centralizado (`tiene_permiso()` o `es_usuaria_app()`) y repite las reglas ABAC en su `where`. Si el rol no puede, responde `42501`; no devuelve "vacío". |
 | Bitácora | Las RPC de lectura sensible registran el `'ver'` solas. No hace falta llamar `registrar_consulta` después de ellas. |
 | Tipos | Después de cada migración: `npx supabase gen types typescript --local > apps/admin/src/infrastructure/supabase/database.types.ts`. Si una RPC no aparece en los tipos, falta regenerar. |
 
@@ -77,7 +77,9 @@ En la base de datos **no se renombran** las tablas ni las columnas ya creadas; u
 
 | RPC | Qué hace | Permiso | Roles | Tipo |
 |---|---|---|---|---|
-| `registrar_seguimiento` | Hoja de seguimiento: asistencia, atención y próxima cita en una sola llamada | `seguimiento.registrar` | TS, Psi, Jur | Escritura |
+| `get_contexto_seguimiento` | Precarga datos mínimos de la cita del día (sin CURP ni notas ajenas) | `seguimiento.registrar` | TS, Psi, Jur | Lectura + bitácora |
+| `registrar_seguimiento` | Hoja de seguimiento: asistencia (cita de hoy), folio único y próxima cita | `seguimiento.registrar` | TS, Psi, Jur | Escritura |
+| `corregir_seguimiento` | Corrige un seguimiento (creador mismo día o Dirección) con `p_actualizado_en` | `seguimiento.corregir` | Tit, Sub, TS, Psi, Jur | Escritura |
 
 ### Agenda → [`agenda.md`](./agenda.md)
 
@@ -126,16 +128,19 @@ En la base de datos **no se renombran** las tablas ni las columnas ya creadas; u
 
 | RPC / tabla | Qué hace | Permiso | Roles | Tipo |
 |---|---|---|---|---|
-| `pre_registro` (insert) | La usuaria crea su pre-registro | propiedad `auth.uid()` | App | Escritura |
-| `get_mi_pre_registro` | Lee su pre-registro sin `persona_id` ni `estado` | propiedad `auth.uid()` | App | Lectura |
-| `actualizar_mi_pre_registro` | Edita nombre, apellidos o celular | propiedad `auth.uid()` | App | Escritura |
-| `alerta` (insert) | Botón de alerta desde la app | `mi_pre_registro_id()` | App | Escritura |
+| `registrar_mi_perfil` | Registra el perfil de la usuaria con aviso de privacidad obligatorio | `es_usuaria_app()` | App | Escritura |
+| `get_mi_estado_app` | Consulta si tiene perfil, si puede enviar alertas y conteo de última hora | `es_usuaria_app()` | App | Lectura |
+| `get_mi_pre_registro` | Lee su pre-registro sin `persona_id` ni `estado` | `auth.uid()` | App | Lectura |
+| `actualizar_mi_pre_registro` | Edita nombre, apellidos o celular | `auth.uid()` | App | Escritura |
+| `enviar_alerta` | Botón de alerta desde la app (límite de 3 por hora) | `es_usuaria_app()` | App | Escritura |
+| `desactivar_mi_cuenta` | Desactiva perfil y bloquea la cuenta para impedir alertas | `es_usuaria_app()` | App | Escritura |
 
 ### Fuera de RPC
 
 - [`storage.md`](./storage.md): bucket privado `documentos` (subir, URL firmada, limpiar huérfanos).
 - [`tablas-directas.md`](./tablas-directas.md): catálogos y tablas que el front usa con `.from()` (citas nuevas, historial clínico, notas, órdenes, agresores, derivaciones, documentos) y qué rol puede hacer qué.
 - [`errores.md`](./errores.md): códigos de error, qué significan y qué mensaje mostrar.
+- [`../estrategia-realtime-y-actualizacion.md`](../estrategia-realtime-y-actualizacion.md): guía de Realtime selectivo (`alerta`, `cita`, `derivacion`), caché de TanStack Query y plan de implementación futura.
 
 ---
 

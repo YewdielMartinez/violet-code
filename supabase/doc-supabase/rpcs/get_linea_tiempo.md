@@ -1,5 +1,6 @@
 # RPC: `public.get_linea_tiempo`
 
+- **Versión:** [`20261128001400_54`](../../migrations/20261128001400_54_quitar_folio_seguimiento.sql)
 - **Migración:** `supabase/migrations/20261126001000_20_rpc_linea_tiempo.sql`
 - **Permiso RBAC:** `public.tiene_permiso('expediente.ver')`
 - **Actores autorizados:** `titular`, `subdireccion` (ven todo), `trabajo_social`, `psicologia`, `juridico` (ven título/estado de todo y detalle solo de lo propio)

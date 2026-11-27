@@ -4,6 +4,7 @@ import '@yewdiel21/motion-kit/css/components/loading-button';
 import '@yewdiel21/motion-kit/css/components/select';
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard';
 import { UnsavedChangesDialog } from '@/shared/ui/UnsavedChangesDialog';
+import { formatErrorEscrituraExpediente } from './api';
 import {
   useGuardarAgresor,
   validarAgresor,
@@ -164,7 +165,7 @@ export function AgresorForm({
       }
     } catch (err) {
       setSubmitState('error');
-      toast(err instanceof Error ? err.message : 'No se pudo guardar el registro.', {
+      toast(formatErrorEscrituraExpediente(err, 'No se pudo guardar el registro.'), {
         tone: 'error',
       });
     }

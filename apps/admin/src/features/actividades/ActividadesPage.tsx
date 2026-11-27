@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, type MouseEvent, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { EmptyState } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import { puedeRegistrarActividad } from '@/domain/models/ActividadPreventiva';
@@ -70,6 +71,7 @@ function ahoraAlMinuto(): Date {
  */
 export default function ActividadesPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const puedeRegistrar = puedeRegistrarActividad(user?.role);
 
   const [filtros, setFiltros] = useState<ActividadListFilters>(FILTROS_INICIALES);
@@ -115,10 +117,7 @@ export default function ActividadesPage() {
   const hayFiltros = hayFiltrosActivos(filtros);
   const truncado = (query.data?.length ?? 0) >= ACTIVIDADES_LIMITE;
 
-  const openCrear = useCallback((el: HTMLElement | null) => {
-    setDialogAnchor(el);
-    setDialogState({ kind: 'crear' });
-  }, []);
+  const openCrear = useCallback(() => navigate('/actividades/nuevo'), [navigate]);
 
   const onListClick = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
@@ -160,7 +159,7 @@ export default function ActividadesPage() {
             icon={empty.icon}
             title={empty.title}
             description={empty.description}
-            action={puedeRegistrar && filtros.tab !== 'canceladas' ? { label: 'Nueva actividad', onClick: () => openCrear(null) } : undefined}
+            action={puedeRegistrar && filtros.tab !== 'canceladas' ? { label: 'Nueva actividad', onClick: openCrear } : undefined}
           />
         )}
       </div>

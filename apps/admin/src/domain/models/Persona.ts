@@ -64,3 +64,33 @@ export function formatFullName(
     .filter(Boolean)
     .join(' ');
 }
+
+export interface PersonaUpdateInput {
+  personaId: string;
+  actualizadoEn: string;
+  nombres?: string | null;
+  apellidoPaterno?: string | null;
+  apellidoMaterno?: string | null;
+  celular?: string | null;
+  escolaridad?: Database['public']['Enums']['escolaridad_nivel'] | null;
+  discapacidad?: string | null;
+  grupoEtnico?: string | null;
+  religion?: string | null;
+}
+
+export interface PersonaActualizada {
+  id: string;
+  curp: string;
+  nombres: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string | null;
+  sexo: SexoBiologico;
+  fechaNacimiento: string;
+  entidadNacimiento: string;
+  celular: string | null;
+  escolaridad: Database['public']['Enums']['escolaridad_nivel'] | null;
+  discapacidad: string | null;
+  grupoEtnico: string | null;
+  religion: string | null;
+  actualizadoEn: string;
+}

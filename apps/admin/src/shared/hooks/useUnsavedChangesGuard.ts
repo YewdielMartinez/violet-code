@@ -6,7 +6,7 @@ import { useBlocker } from 'react-router-dom';
  * - Activa `beforeunload` ante recarga (`F5`) o cierre de pestaña mientras `when === true`.
  * - Bloquea navegación interna en React Router para mostrar confirmación explícita.
  */
-export function useUnsavedChangesGuard(when: boolean) {
+export function useUnsavedChangesGuard(when: boolean, bypassRef?: { current: boolean }) {
   useEffect(() => {
     if (!when) return;
 
@@ -21,5 +21,7 @@ export function useUnsavedChangesGuard(when: boolean) {
     };
   }, [when]);
 
-  return useBlocker(when);
+  // `bypassRef` se evalúa al navegar: permite salir tras un guardado exitoso
+  // sin esperar a que React re-renderice el estado "limpio".
+  return useBlocker(() => when && !bypassRef?.current);
 }

@@ -58,7 +58,7 @@ flowchart TD
 13. **Acceso de Psicología:** la psicóloga inicia sesión en la plataforma web con su rol (`psicologia`).
 14. **Consulta de expediente (`RF-03`, `RF-22`):** busca a la usuaria por CURP, nombre o folio y abre su expediente (quedando registrada la consulta en `bitacora_acceso` mediante `registrar_consulta()`).
 15. **Asistencia (`RF-06`):** actualiza el estado de la cita correspondiente a `'asistio'` (o `'no_asistio'` si faltó).
-16. **Hoja de Seguimiento (`RF-09`, `RN-13`):** registra la atención de la sesión en `atencion` documentando `acciones_realizadas`, `proxima_accion`, copia actualizada de datos generales del día y la `prioridad` clínica del caso (`alta`, `media` o `baja`). Si lo requiere, registra notas confidenciales en `nota_area` (visibles únicamente para Psicología, `RF-10`, `RN-09`).
+16. **Hoja de Seguimiento (`RF-09`, `RN-13`):** registra la atención de la sesión en `atencion` documentando `acciones_realizadas`, `proxima_accion`, copia actualizada de datos generales del día y la `prioridad` clínica del caso (`alta`, `media` o `baja`). Si lo requiere, registra notas en `nota_area` (visibles y editables únicamente por Psicología, y consultables en solo lectura por Titular y Subdirección, `RF-10`, `RN-09`).
 17. **Historial Clínico (`RF-11`, `RF-12`):** abre `historial_clinico`; en la primera sesión captura antecedentes familiares, personales y motivo de consulta (con soporte de dictado por voz seguro, `RF-12.1`), y en sesiones posteriores revisa o complementa observaciones.
 
 ### 5. Flujo Paralelo de Alertas (App Móvil → Titular / Subdirección)

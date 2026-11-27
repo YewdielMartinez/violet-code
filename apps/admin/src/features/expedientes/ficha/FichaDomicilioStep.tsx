@@ -324,11 +324,14 @@ export function FichaDomicilioStep({ value, onChange, invalidField }: Props) {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="mk-field">
-            <span className="mk-field__label">Número exterior</span>
+            <span className="mk-field__label">Número exterior *</span>
             <input
               type="text"
+              required
               maxLength={30}
-              placeholder="Ej. 120"
+              placeholder="Ej. 120 (o S/N)"
+              data-ficha-field="numeroExterior"
+              aria-invalid={invalidField === 'numeroExterior' || undefined}
               value={value.numeroExterior}
               onChange={(e) => onChange({ ...value, numeroExterior: e.target.value })}
             />

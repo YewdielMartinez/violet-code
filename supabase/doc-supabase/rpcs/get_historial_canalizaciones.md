@@ -1,5 +1,6 @@
 # RPC: `public.get_historial_canalizaciones`
 
+- **Versión:** [`20261127000300_34`](../../migrations/20261127000300_34_historial_canalizaciones.sql)
 - **Migración:** `supabase/migrations/20261127000300_34_historial_canalizaciones.sql`
 - **Cubre:** `RF-08`, `RF-25` (Sprint 02 · A-02)
 

@@ -1,51 +1,38 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { fromMock, rpcMock } = vi.hoisted(() => ({
-  fromMock: vi.fn(),
+const { rpcMock } = vi.hoisted(() => ({
   rpcMock: vi.fn(),
 }));
 
 vi.mock('@/infrastructure/supabase/client', () => ({
   supabase: {
-    from: fromMock,
     rpc: rpcMock,
   },
 }));
 
 import { supabaseCitaRepository } from '@/infrastructure/supabase/adapters/SupabaseCitaRepository';
 
-function createChain(result: { data: unknown; error: unknown }) {
-  const chain = {
-    select: vi.fn(() => chain),
-    insert: vi.fn(() => chain),
-    single: vi.fn(() => Promise.resolve(result)),
-  };
-  return chain;
-}
-
 describe('supabaseCitaRepository', () => {
   beforeEach(() => {
-    fromMock.mockReset();
     rpcMock.mockReset();
   });
 
   it('consulta get_agenda y mapea las filas a AgendaItem', async () => {
     rpcMock.mockResolvedValueOnce({
       data: [
-        {
-          cita_id: 'cita-1',
-          programada_en: '2099-06-15T10:00:00-07:00',
-          estado: 'agendada',
-          prioridad: 'alta',
-          area_id: 2,
-          area_clave: 'psicologia',
-          recomendada_por: 'Trabajo Social',
-          reagendada_de: null,
-          origen: 'regular',
-          persona_id: 'per-1',
-          nombre_completo: 'Elena Rojas',
-          celular: '6681234567',
-        },
+      {
+        cita_id: 'cita-1',
+        programada_en: '2099-06-15T10:00:00-07:00',
+        estado: 'agendada',
+        area_id: 2,
+        area_clave: 'psicologia',
+        recomendada_por: 'Trabajo Social',
+        reagendada_de: null,
+        origen: 'regular',
+        persona_id: 'per-1',
+        nombre_completo: 'Elena Rojas',
+        celular: '6681234567',
+      },
       ],
       error: null,
     });
@@ -67,7 +54,7 @@ describe('supabaseCitaRepository', () => {
       citaId: 'cita-1',
       programadaEn: '2099-06-15T10:00:00-07:00',
       estado: 'agendada',
-      prioridad: 'alta',
+      prioridad: null,
       areaId: 2,
       areaClave: 'psicologia',
       recomendadaPor: 'Trabajo Social',
@@ -79,18 +66,25 @@ describe('supabaseCitaRepository', () => {
     });
   });
 
-  it('agenda cita directa en tabla y retorna el estado inicial', async () => {
-    const chain = createChain({
-      data: { id: 'cita-2', estado: 'agendada', programada_en: '2099-06-20T09:00:00-07:00' },
+  it('agenda cita mediante crear_cita sin prioridad y retorna el estado inicial', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: [
+        {
+          cita_id: 'cita-2',
+          persona_id: 'per-1',
+          area_id: 2,
+          estado: 'agendada',
+          programada_en: '2099-06-20T09:00:00-07:00',
+          origen: 'regular',
+        },
+      ],
       error: null,
     });
-    fromMock.mockReturnValue(chain);
 
     const created = await supabaseCitaRepository.crear({
       personaId: 'per-1',
       areaId: 2,
       programadaEn: '2099-06-20T09:00:00-07:00',
-      prioridad: 'media',
       recomendadaPor: '  TS  ',
     });
 
@@ -99,13 +93,12 @@ describe('supabaseCitaRepository', () => {
       estado: 'agendada',
       programadaEn: '2099-06-20T09:00:00-07:00',
     });
-    expect(chain.insert).toHaveBeenCalledWith({
-      persona_id: 'per-1',
-      area_id: 2,
-      programada_en: '2099-06-20T09:00:00-07:00',
-      prioridad: 'media',
-      recomendada_por: 'TS',
-      origen: 'regular',
+    expect(rpcMock).toHaveBeenCalledWith('crear_cita', {
+      p_persona_id: 'per-1',
+      p_area_id: 2,
+      p_programada_en: '2099-06-20T09:00:00-07:00',
+      p_recomendada_por: 'TS',
+      p_origen: 'regular',
     });
   });
 
@@ -183,7 +176,6 @@ describe('supabaseCitaRepository', () => {
       p_cita_id: 'cita-1',
       p_nueva_fecha: '2099-07-10T10:00:00-07:00',
       p_motivo: 'Cambio de horario',
-      p_prioridad: undefined,
     });
     expect(reagendada).toEqual({
       citaAnteriorId: 'cita-1',
@@ -200,8 +192,7 @@ describe('supabaseCitaRepository', () => {
           folio: 'SEM-URG-0001',
           nombre_completo: 'Carmen Urgente',
           celular: '6681111111',
-          area_ultima_prioridad: 'trabajo_social',
-          fecha_ultima_prioridad: '2026-11-23',
+          prioridad_actualizada_en: '2026-11-23T12:00:00Z',
         },
       ],
       error: null,
@@ -214,8 +205,9 @@ describe('supabaseCitaRepository', () => {
       folio: 'SEM-URG-0001',
       nombreCompleto: 'Carmen Urgente',
       celular: '6681111111',
-      areaUltimaPrioridad: 'trabajo_social',
-      fechaUltimaPrioridad: '2026-11-23',
+      prioridadActualizadaEn: '2026-11-23T12:00:00Z',
+      areaUltimaPrioridad: '',
+      fechaUltimaPrioridad: '2026-11-23T12:00:00Z',
     });
 
     rpcMock.mockResolvedValueOnce({ data: null, error: null });

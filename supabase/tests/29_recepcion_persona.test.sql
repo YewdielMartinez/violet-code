@@ -69,6 +69,7 @@ begin
     (v_uid_rec,   'Recepcion Persona Test',  'recepcion',      null,        true),
     (v_uid_inact, 'Inactivo Persona Test',   'trabajo_social', v_area_ts,   false)
   on conflict (id) do nothing;
+  update auth.users u set raw_app_meta_data = jsonb_set(coalesce(u.raw_app_meta_data, '{}'::jsonb), '{tipo}', to_jsonb('empleado'::text), true) where exists (select 1 from public.empleado e where e.id = u.id) and coalesce(u.raw_app_meta_data ->> 'tipo', '') <> 'empleado';
 
   insert into public.usuario_externo (id, nombre, dependencia, activo) values
     (v_uid_umeca, 'UMECA Persona Test', 'umeca', true)
@@ -79,12 +80,12 @@ begin
     (v_per_urg, 'TETU910315MSLRRR02', 'UrgenciaNombre', 'Prueba', '6681002002', v_uid_ts);
 
   -- Cita agendada en TS para comprobar get_agenda
-  insert into public.cita (persona_id, area_id, programada_en, estado, prioridad, origen, creado_por) values
-    (v_per_ag, v_area_ts, now() + interval '2 days', 'agendada', 'media', 'regular', v_uid_rec);
+  insert into public.cita (persona_id, area_id, programada_en, estado, origen, creado_por) values
+    (v_per_ag, v_area_ts, now() + interval '2 days', 'agendada', 'regular', v_uid_rec);
 
-  -- Ficha + atención prioridad alta sin cita futura para comprobar get_lista_urgencias
-  insert into public.ficha_registro (id, folio, persona_id, aviso_privacidad_aceptado_en, creado_por) values
-    (v_fic_urg, 'SEM-TEST29-02', v_per_urg, now(), v_uid_ts);
+  -- Ficha + prioridad alta sin cita futura para comprobar get_lista_urgencias
+  insert into public.ficha_registro (id, folio, persona_id, prioridad, prioridad_actualizada_en, aviso_privacidad_aceptado_en, creado_por) values
+    (v_fic_urg, 'SEM-TEST29-02', v_per_urg, 'alta', now() - interval '2 days', now(), v_uid_ts);
 
   insert into public.atencion (ficha_id, area_id, tipo_atencion_id, atendida_por, atendida_en, prioridad, creado_por) values
     (v_fic_urg, v_area_ts, v_tipo_ts, v_uid_ts, now() - interval '2 days', 'alta', v_uid_ts);

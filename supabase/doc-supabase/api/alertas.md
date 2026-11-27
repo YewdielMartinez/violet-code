@@ -6,7 +6,7 @@ Estados: `nueva → tomada → atendida`. Orígenes: `app_movil`, `telefono`, `p
 
 | Paso | Cómo | Quién |
 |---|---|---|
-| Alta desde la app | `.from('alerta').insert` (ver [app-movil.md](./app-movil.md#alerta-insert)) | Usuaria de la app |
+| Alta desde la app | `POST /rest/v1/rpc/enviar_alerta` (ver [app-movil.md](./app-movil.md#enviar_alerta)) | Usuaria de la app (`es_usuaria_app()`) |
 | Alta por teléfono o presencial | `.from('alerta').insert` con `origen: 'telefono' \| 'presencial'` | Tit, Sub, Jur (`alerta.atender`) |
 | Ver la cola | `get_cola_alertas` | Tit, Sub, Jur, TS, Psi |
 | Tomar | `tomar_alerta` | Tit, Sub, Jur |
@@ -19,11 +19,13 @@ Estados: `nueva → tomada → atendida`. Orígenes: `app_movil`, `telefono`, `p
 
 ## `get_cola_alertas`
 
+**Versión:** [`20261128000800_47`](../../migrations/20261128000800_47_tiene_permiso_agenda_alertas.sql)
+
 > La cola de la línea 24/7, ordenada por prioridad (alta → baja) y, dentro de cada prioridad, la más antigua primero.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| Rol (valida en el SQL) | Tit, Sub, Jur, TS, Psi | Lectura | Sí: un `'ver'` sobre `alerta` (registro `'cola'`) en **cada** llamada | `_24_rpc_cola_alertas` |
+| `tiene_permiso('alerta.ver_cola')` | Tit, Sub, Jur, TS, Psi | Lectura | Sí: un `'ver'` sobre `alerta` (registro `'cola'`) en **cada** llamada | `_47_tiene_permiso_agenda_alertas` *(actualiza `_24_rpc_cola_alertas`)* |
 
 **Llamada**
 
@@ -80,6 +82,8 @@ interface ColaAlertaRow {
 
 ## `tomar_alerta`
 
+**Versión:** [`20261128000800_47`](../../migrations/20261128000800_47_tiene_permiso_agenda_alertas.sql)
+
 > Asigna la alerta a quien la toma. Bloquea la fila, así que si dos personas pulsan "Tomar" al mismo tiempo, solo una gana.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
@@ -117,6 +121,8 @@ interface AlertaEstadoRow {
 ---
 
 ## `atender_alerta`
+
+**Versión:** [`20261128000800_47`](../../migrations/20261128000800_47_tiene_permiso_agenda_alertas.sql)
 
 > Concluye la atención de una alerta tomada.
 

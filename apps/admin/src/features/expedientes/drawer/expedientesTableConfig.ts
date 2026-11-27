@@ -1,7 +1,7 @@
 import type { DataAction, DataTableProps } from '@yewdiel21/motion-kit/react';
 import { ESTADO_FICHA_LABELS } from '../api';
 
-export type QuickFilter = 'todos' | 'abierto' | 'en_seguimiento' | 'prioritarios' | 'cerrado';
+export type QuickFilter = 'todos' | 'abierto' | 'en_seguimiento' | 'prioritarios' | 'cerrado' | 'archivado';
 
 export interface ExpedienteRow extends Record<string, unknown> {
   id: string;
@@ -46,7 +46,17 @@ export const COLUMNS: DataTableProps<ExpedienteRow>['columns'] = [
 ];
 
 export const ROW_ACTIONS: DataAction[] = [{ id: 'open', label: 'Abrir expediente' }];
-export const RETRY_ACTION = [{ id: 'retry', label: 'Reintentar' }];
+const ARCHIVE_ACTION: DataAction = { id: 'archive', label: 'Archivar expediente' };
+const REOPEN_ACTION: DataAction = { id: 'reopen', label: 'Desarchivar expediente' };
+
+/** Con «Archivar expediente» (roles con capacidad de gestión). */
+export const ROW_ACTIONS_WITH_ARCHIVE: DataAction[] = [...ROW_ACTIONS, ARCHIVE_ACTION];
+/** Con «Archivar» y «Desarchivar» (`expediente.reabrir`: solo titular y subdirección). */
+export const ROW_ACTIONS_WITH_ARCHIVE_AND_REOPEN: DataAction[] = [
+  ...ROW_ACTIONS,
+  ARCHIVE_ACTION,
+  REOPEN_ACTION,
+];export const RETRY_ACTION = [{ id: 'retry', label: 'Reintentar' }];
 
 export const QUICK_FILTERS: { id: QuickFilter; label: string }[] = [
   { id: 'todos', label: 'Todos' },
@@ -54,6 +64,7 @@ export const QUICK_FILTERS: { id: QuickFilter; label: string }[] = [
   { id: 'en_seguimiento', label: 'En seguimiento' },
   { id: 'prioritarios', label: 'Prioritarios' },
   { id: 'cerrado', label: 'Cerrados' },
+  { id: 'archivado', label: 'Archivados' },
 ];
 
 const TABLE_DATE_FMT = new Intl.DateTimeFormat('es-MX', {

@@ -1,5 +1,6 @@
 # `archivar_ficha`
 
+- **Versión:** [`20261127000700_38`](../../migrations/20261127000700_38_archivar_y_reabrir.sql)
 - **Migración:** [`20261126000800_18_rpc_detalle_y_archivo.sql`](../../migrations/20261126000800_18_rpc_detalle_y_archivo.sql), actualizada en [`20261127000700_38_archivar_y_reabrir.sql`](../../migrations/20261127000700_38_archivar_y_reabrir.sql)
 - **Permiso RBAC:** `tiene_permiso('expediente.escribir')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`.

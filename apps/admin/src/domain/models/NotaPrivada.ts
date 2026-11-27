@@ -1,16 +1,17 @@
-import { isAttentionRole, type StaffRole } from './Auth';
+import { isAttentionRole, isSupervisor, type StaffRole } from './Auth';
 
 /** Longitud máxima de `nota_area.contenido` (`CHECK char_length between 1 and 5000`). */
 export const NOTA_PRIVADA_MAX_LENGTH = 5000;
 
 /**
  * Nota privada de un área sobre un expediente (`RF-10`, `RN-09`, `RN-18.1`).
- * Solo la lee y edita la propia área; Dirección no tiene acceso.
+ * Cada área de atención lee y edita solo las suyas; Titular y Subdirección leen las de todas las áreas en solo lectura.
  */
 export interface NotaPrivada {
   id: string;
   fichaId: string;
   areaId: number;
+  areaNombre: string | null;
   contenido: string;
   creadoEn: string;
   actualizadoEn: string;
@@ -26,6 +27,11 @@ export interface NotaPrivadaCreateInput {
 export interface NotaPrivadaUpdateInput {
   id: string;
   contenido: string;
+}
+
+/** Trabajo Social, Psicología y Jurídico ven las suyas; Titular y Subdirección ven todas en solo lectura. */
+export function puedeVerNotasPrivadas(role: StaffRole | undefined): boolean {
+  return isAttentionRole(role) || isSupervisor(role);
 }
 
 /** Solo Trabajo Social, Psicología y Jurídico gestionan notas de área (permiso `seguimiento.registrar`). */

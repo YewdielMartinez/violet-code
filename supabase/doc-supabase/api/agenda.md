@@ -6,7 +6,7 @@ Estados de una cita: `agendada → confirmada → asistio | no_asistio`, o `canc
 
 | Quién pone el estado | Estado |
 |---|---|
-| Alta de cita (`.from('cita').insert`) | `agendada` |
+| `crear_cita` | `agendada` |
 | `cambiar_estado_cita` | `confirmada`, `cancelada`, `no_asistio` |
 | `reagendar_cita` | `reagendada` (vieja) + `agendada` (nueva) |
 | `registrar_seguimiento` | `asistio` |
@@ -25,17 +25,19 @@ Estados de una cita: `agendada → confirmada → asistio | no_asistio`, o `canc
 >
 > Para elegir a la persona al crear la cita, usar el autocompletado [`buscar_personas_agenda`](#buscar_personas_agenda).
 >
-> Crear una cita nueva no tiene RPC: es un `insert` directo sobre `cita`. Ver [tablas-directas.md](./tablas-directas.md#cita).
+> El `insert` directo sobre `cita` está cerrado (`42501`). Crear una cita va por [`crear_cita`](../rpcs/crear_cita.md), que aplica la misma regla de creación (migración `_60_integrar_develop_y_supabase`).
 
 ---
 
 ## `get_agenda`
 
+**Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
+
 > Citas de un rango de fechas, ya filtradas por lo que el rol puede ver.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| Empleado activo (valida rol en el SQL) | Todos los empleados | Lectura | No | `_22_rpc_agenda` |
+| `tiene_permiso('agenda.ver')` + filtro por área | Todos los empleados | Lectura | No | `_47_tiene_permiso_agenda_alertas` *(actualiza `_22_rpc_agenda`)* |
 
 **Llamada**
 
@@ -64,7 +66,6 @@ interface AgendaRow {
   cita_id: string;
   programada_en: string;
   estado: EstadoCita;
-  prioridad: 'alta' | 'media' | 'baja' | null;
   area_id: number;
   area_clave: 'trabajo_social' | 'psicologia' | 'juridico' | string;
   recomendada_por: string | null;
@@ -92,7 +93,64 @@ interface AgendaRow {
 
 ---
 
+## `crear_cita`
+
+**Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
+
+> Agenda una cita nueva para una persona en un área. Sustituye al `insert` directo sobre `cita`, que está cerrado (`42501`). Contrato: [`rpcs/crear_cita.md`](../rpcs/crear_cita.md).
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+|---|---|---|---|---|
+| `agenda.crear` + `puede_crear_cita_en_area` | Recepción (TS, Psi, Jur), Jurídico y Psicología (su área), Dirección (todas). TS: `42501` | Escritura | Sí, por trigger | `_51_rpc_crear_cita` y `_60_integrar_develop_y_supabase` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('crear_cita', {
+    p_persona_id: personaId,
+    p_area_id: areaId,
+    p_programada_en: '2026-12-01T10:00:00-07:00',
+    p_recomendada_por: 'Trabajo Social', // opcional, máx. 200
+    p_origen: 'regular',                 // opcional: 'regular' | 'umeca'
+  })
+  .single();
+```
+
+**Respuesta**
+
+```ts
+interface CrearCitaRow {
+  cita_id: string;
+  persona_id: string;
+  area_id: number;
+  programada_en: string;
+  estado: 'agendada';
+  origen: 'regular' | 'umeca';
+}
+```
+
+**Comportamiento**
+
+- La cita nace `agendada`. Para elegir a la persona usa `buscar_personas_agenda`.
+- No acepta prioridad: la prioridad vive en el expediente (`cambiar_prioridad_expediente`).
+- Rechaza una cita activa duplicada (`agendada`/`confirmada`) para la misma persona, área y hora.
+- RN-01: Psicología y Jurídico no pueden tener citas de menores de 18 años.
+
+**Errores**
+
+| Código | Cuándo | Mensaje UI |
+|---|---|---|
+| `42501` | Sin permiso (TS, UMECA, app) o área fuera del alcance del rol | Fijo de permiso |
+| `23514` | Parámetro nulo, persona o área inexistente o inactiva, fecha pasada, expediente archivado, menor de edad en Psi/Jur, cita duplicada | `error.message` |
+
+**En el front:** `SupabaseCitaRepository.crear` · invalida `['agenda']` y `['agenda','urgencias']`.
+
+---
+
 ## `cambiar_estado_cita`
+
+**Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
 
 > Confirmar, cancelar o marcar que no asistió.
 
@@ -137,11 +195,13 @@ const { data, error } = await supabase
 
 ## `reagendar_cita`
 
+**Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
+
 > Mueve una cita a otra fecha conservando el historial: la vieja queda `reagendada` y se crea una nueva `agendada` que apunta a ella.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| `agenda.crear` + alcance de área | Recepción (3 áreas), Jurídico y Psicología (su área), Dirección (todas). TS: `42501` | Escritura | Sí, por trigger | `_23_rpc_reagendar_y_urgencias`, `_40_agenda_permisos_creacion` y `_42_agenda_busqueda_umeca` |
+| `agenda.crear` + alcance de área | Recepción (3 áreas), Jurídico y Psicología (su área), Dirección (todas). TS: `42501` | Escritura | Sí, por trigger | `_23_rpc_reagendar_y_urgencias`, `_42_agenda_busqueda_umeca`, `_50_prioridad_en_expediente` y `_60_integrar_develop_y_supabase` |
 
 **Llamada**
 
@@ -151,7 +211,6 @@ const { data, error } = await supabase
     p_cita_id: citaId,
     p_nueva_fecha: '2026-12-02T09:30:00-07:00',
     p_motivo: 'Cambio de horario laboral',
-    p_prioridad: null,   // null = conserva la prioridad de la cita original
   })
   .single();
 ```
@@ -188,11 +247,13 @@ interface ReagendarCitaRow {
 
 ## `get_lista_urgencias`
 
+**Versión:** [`20261128001300_52`](../../migrations/20261128001300_52_urgencias_por_expediente.sql)
+
 > RF-07: expedientes cuya prioridad más reciente es alta y que todavía no tienen cita próxima. Sale primero quien lleva más tiempo esperando.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| Rol (valida en el SQL) | Tit, Sub, TS, Psi, Rec | Lectura | No | `_23_rpc_reagendar_y_urgencias` |
+| `urgencias.ver` | Tit, Sub, TS, Psi, Rec | Lectura | No | `_52_urgencias_por_expediente` |
 
 **Llamada**
 
@@ -209,14 +270,13 @@ interface UrgenciaRow {
   folio: string;
   nombre_completo: string;
   celular: string | null;
-  area_ultima_prioridad: string;   // clave del área que marcó la prioridad
-  fecha_ultima_prioridad: string;  // 'YYYY-MM-DD'
+  prioridad_actualizada_en: string | null;
 }
 ```
 
 **Comportamiento**
 
-- Toma la atención más reciente con prioridad de cada expediente `abierto` o `en_seguimiento`; si es `alta` y la persona no tiene cita futura `agendada`/`confirmada`, aparece.
+- Toma los expedientes `abierto` o `en_seguimiento` cuya `ficha_registro.prioridad` es `'alta'` y la persona no tiene cita futura `agendada`/`confirmada`.
 - En cuanto se agenda una cita, la persona sale de la lista.
 - No expone CURP ni notas.
 - Reemplaza la lectura directa de `vista_lista_urgencias`, que Recepción no podía usar.
@@ -228,6 +288,8 @@ interface UrgenciaRow {
 ---
 
 ## `buscar_personas_agenda`
+
+**Versión:** [`20261127001100_42`](../../migrations/20261127001100_42_agenda_busqueda_umeca.sql)
 
 > Autocompletado de la persona al crear una cita: nombre (sin acentos) o prefijo de CURP, solo personas con expediente activo y no archivado.
 
@@ -266,6 +328,8 @@ interface PersonaAgendaRow {
 ---
 
 ## `get_umeca_citas`
+
+**Versión:** [`20261127001100_42`](../../migrations/20261127001100_42_agenda_busqueda_umeca.sql)
 
 > Vista de UMECA: nombre, fecha, estado y área de las citas que UMECA canalizó.
 

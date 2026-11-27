@@ -1,6 +1,7 @@
 # RPC: `public.guardar_agresor`
 
-- **Migración:** `supabase/migrations/20261127000500_36_rpc_guardar_agresor.sql`
+- **Versión:** [`20261128001600_58`](../../migrations/20261128001600_58_consumo_como_lista.sql)
+- **Migración:** `supabase/migrations/20261128001600_58_consumo_como_lista.sql` *(actualiza `_36_`, `_57_`)*
 - **Cubre:** `RF-05`, `RN-15.1` (Sprint 02 · A-04)
 
 ## Actores autorizados
@@ -13,7 +14,7 @@
   p_agresor_id?: string | null;     // null = crear; UUID = editar con bloqueo optimista
   p_ficha_id?: string | null;       // Obligatorio al crear
   p_actualizado_en?: string | null; // Obligatorio al editar (bloqueo optimista)
-  p_nombres?: string | null;        // Obligatorio al crear (1..100)
+  p_nombres?: string | null;        // Opcional al crear y editar ('' limpia a null; si hay valor, 1..100)
   p_apellido_paterno?: string | null;
   p_apellido_materno?: string | null;
   p_edad?: number | null;
@@ -34,10 +35,9 @@
   p_ocupacion_id?: number | null;
   p_ocupacion_otra?: string | null;
   p_tipo_trabajo?: TipoTrabajo | null;
-  p_tiene_consumo_droga?: boolean | null;
-  p_drogas?: TipoDroga[] | null;     // Solo cuando p_tiene_consumo_droga = true
+  p_drogas?: TipoDroga[] | null;       // 'no_consume' es exclusivo en la lista
   p_especificacion_droga?: string | null;
-  p_tiene_consumo_alcohol?: boolean | null;
+  p_consumo_alcohol?: ConsumoAlcohol | null; // 'no_consume' | 'ocasional' | 'frecuente'
   p_especificacion_arma?: string | null;
   p_observaciones?: string | null;
 }
@@ -49,5 +49,5 @@ Fila única creada o actualizada de `public.agresor` con su nuevo `actualizado_e
 
 ## Errores
 - `42501`: sin permiso `agresor.acceder`.
-- `23514`: expediente inexistente/inactivo/archivado (`"Reabre el expediente para editarlo"`), `parentesco_otro` sin parentesco `'otro'`, `drogas` sin consumo, `asentamiento_id` + `codigo_postal` juntos o catálogos/formatos inválidos.
+- `23514`: expediente inexistente/inactivo/archivado (`"Reabre el expediente para editarlo"`), `parentesco_otro` sin parentesco `'otro'`, `'no_consume'` con otras drogas o `especificacion_droga` sin consumo, `asentamiento_id` + `codigo_postal` juntos o catálogos/formatos inválidos.
 - `23505`: `p_actualizado_en` obsoleto (`"Este registro fue modificado por otra persona. Recarga los datos."`).

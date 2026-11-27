@@ -12,10 +12,11 @@ import { formatFechaHora } from './formatters';
 interface Props {
   nota: NotaPrivada;
   fichaId: string;
+  readOnly?: boolean;
 }
 
 /** Una nota del área con edición en línea y archivado lógico (sin borrado físico). */
-export const NotaPrivadaItem = memo(function NotaPrivadaItem({ nota, fichaId }: Props) {
+export const NotaPrivadaItem = memo(function NotaPrivadaItem({ nota, fichaId, readOnly = false }: Props) {
   const [editando, setEditando] = useState(false);
   const [confirmarArchivo, setConfirmarArchivo] = useState(false);
   const [borrador, setBorrador] = useState(nota.contenido);
@@ -53,11 +54,18 @@ export const NotaPrivadaItem = memo(function NotaPrivadaItem({ nota, fichaId }: 
   return (
     <li className="grid gap-2 rounded-2xl border border-outline-variant bg-surface-container-lowest p-4">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-on-surface-variant">
-        <span>
-          {formatFechaHora(nota.creadoEn)}
-          {editada ? ` · editada ${formatFechaHora(nota.actualizadoEn)}` : ''}
-        </span>
-        {!editando ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {readOnly && nota.areaNombre ? (
+            <span className="inline-flex items-center rounded-full bg-secondary-container px-2.5 py-0.5 text-xs font-medium text-on-secondary-container">
+              {nota.areaNombre}
+            </span>
+          ) : null}
+          <span>
+            {formatFechaHora(nota.creadoEn)}
+            {editada ? ` · editada ${formatFechaHora(nota.actualizadoEn)}` : ''}
+          </span>
+        </div>
+        {!readOnly && !editando ? (
           <div className="flex gap-1">
             <button
               type="button"

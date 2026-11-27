@@ -69,7 +69,7 @@ Especificación técnica que vincula los requerimientos ([requerimientos-y-regla
 | **RN-02** | Una persona, un expediente único | Restricciones `UNIQUE` en `persona.curp` y `ficha_registro.persona_id`. |
 | **RN-03** | Trabajo Social atiende hombres; canaliza si no es jurídico | `persona.sexo` (`H`/`M`) + `derivacion` hacia `otra_institucion`. |
 | **RN-04** | Recepción solo agenda TS y Psicología; Jurídico directo | Políticas RLS en `cita` (`07_rls.sql`) restringiendo `recepcion` a áreas `trabajo_social` y `psicologia`. |
-| **RN-08, RN-09, RN-18, RN-18.1** | Visibilidad compartida de Ficha Única vs. notas privadas | Políticas RLS diferenciadas en `ficha_registro`, `historial_clinico`, `atencion`, `agresor` y aislamiento estricto por `area_id` en `nota_area`. |
+| **RN-08, RN-09, RN-18, RN-18.1** | Visibilidad compartida de Ficha Única vs. notas por área | Políticas RLS diferenciadas en `ficha_registro`, `historial_clinico`, `atencion`, `agresor` y aislamiento entre áreas en `nota_area` (con lectura en solo consulta para Titular y Subdirección). |
 | **RN-12, RN-12.1** | Formato y generación automática de folio | `ficha_folio_seq`, `generar_folio_ficha()` (`SEM-AAAA-NNNN`) y folio explícito permitido en importaciones históricas. |
 | **RN-15, RN-15.1** | Archivo histórico, baja lógica y derechos ARCO | `ON DELETE RESTRICT`, `activo = false` y `estado_ficha = 'archivado'` sin eliminación física. |
 | **RN-16, RN-17** | Línea 24/7 y elevación automática de alertas | Helpers `es_linea_24_7()` en `07_rls.sql` y trigger `asignar_prioridad_alerta()` + `tiene_orden_vigente()`. |

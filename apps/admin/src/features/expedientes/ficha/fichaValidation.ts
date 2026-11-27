@@ -1,3 +1,11 @@
+import {
+  hasFichaAgresorData,
+  toAgresorInput,
+  validarAgresor,
+  type AgresorValidationField,
+  type CatalogoOpcion,
+  type FichaAgresorInput,
+} from '@/domain/models/Agresor';
 import { validateDomicilio, type DomicilioInput } from '@/domain/models/Domicilio';
 import {
   validateEstudioSocioeconomico,
@@ -27,6 +35,9 @@ export function validateStepIdentidad(input: FichaIdentidadInput): StepValidatio
   if (input.celular.trim() && !CELULAR_REGEX.test(input.celular.trim())) {
     return { error, field: 'celular' };
   }
+  if (!input.estadoCivil) return { error, field: 'estadoCivil' };
+  if (input.ocupacionId === null) return { error, field: 'ocupacionId' };
+  if (!input.escolaridad) return { error, field: 'escolaridad' };
   if (input.servicioMedico === 'otro' && !input.servicioMedicoOtro.trim()) {
     return { error, field: 'servicioMedicoOtro' };
   }
@@ -38,7 +49,15 @@ export function validateStepIdentidad(input: FichaIdentidadInput): StepValidatio
 
 export function validateStepDomicilio(input: DomicilioInput): StepValidationFailure | null {
   const error = validateDomicilio(input);
-  if (!error) return null;
+  if (!error) {
+    if (!input.numeroExterior.trim()) {
+      return {
+        error: 'Captura el número exterior del domicilio (usa "S/N" si no tiene).',
+        field: 'numeroExterior',
+      };
+    }
+    return null;
+  }
 
   const cp = input.codigoPostalForaneo.trim();
   if (input.asentamientoId !== null && cp.length > 0) {
@@ -88,6 +107,54 @@ export function validateStepEstudio(
     }
   }
   return { error, field: 'ingresoMensualPropio' };
+}
+
+const AGRESOR_FIELD_ORDER: readonly AgresorValidationField[] = [
+  'nombres',
+  'apellidoPaterno',
+  'apellidoMaterno',
+  'parentescoOtro',
+  'ocupacionOtra',
+  'codigoPostal',
+  'calle',
+  'numeroExterior',
+  'numeroInterior',
+  'referencias',
+  'drogas',
+  'especificacionDroga',
+  'especificacionArma',
+  'observaciones',
+];
+
+export interface AgresorStepValidationResult {
+  failure: StepValidationFailure;
+  errors: Partial<Record<AgresorValidationField, string>>;
+}
+
+export function validateStepAgresor(
+  input: FichaAgresorInput,
+  parentescos: readonly CatalogoOpcion[] = [],
+  ocupaciones: readonly CatalogoOpcion[] = [],
+): AgresorStepValidationResult | null {
+  if (!hasFichaAgresorData(input)) return null;
+
+  const base = validarAgresor(toAgresorInput(input, '', parentescos, ocupaciones));
+  const errors: Partial<Record<AgresorValidationField, string>> = { ...base.errores };
+
+  if (!input.apellidoPaterno.trim()) {
+    errors.apellidoPaterno = 'El apellido paterno de la persona agresora es obligatorio.';
+  }
+
+  const firstKey = AGRESOR_FIELD_ORDER.find((key) => Boolean(errors[key]));
+  if (!firstKey) return null;
+
+  return {
+    failure: {
+      error: errors[firstKey] ?? 'Revisa los datos de la persona agresora.',
+      field: `agresor-${firstKey}`,
+    },
+    errors,
+  };
 }
 
 const FOCUSABLE_SELECTOR = [

@@ -1,9 +1,10 @@
 # `buscar_personas_agenda`
 
+- **Versión:** [`20261127001100_42`](../../migrations/20261127001100_42_agenda_busqueda_umeca.sql)
 - **Migración:** [`20261127001100_42_agenda_busqueda_umeca.sql`](../../migrations/20261127001100_42_agenda_busqueda_umeca.sql)
 - **Permiso RBAC:** `tiene_permiso('agenda.crear')`
 - **Actores autorizados:** `recepcion`, `juridico`, `psicologia`, `titular`, `subdireccion` (`trabajo_social` y `umeca` denegados).
-- **Uso:** autocompletado de la persona en el formulario de nueva cita. La cita se crea después con un `insert` directo sobre `cita` (ver [agenda.md](../api/agenda.md)).
+- **Uso:** autocompletado de la persona en el formulario de nueva cita. La cita se crea después con la RPC [`crear_cita`](./crear_cita.md) (el `insert` directo sobre `cita` está cerrado).
 
 ## 1. Entrada (`parámetros`)
 | Parámetro | Tipo | Obligatorio | Descripción / Regla |

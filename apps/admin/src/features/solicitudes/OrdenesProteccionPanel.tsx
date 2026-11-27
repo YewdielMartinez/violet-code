@@ -11,6 +11,8 @@ import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/hold-confirm';
 import '@yewdiel21/motion-kit/css/components/skeleton';
 import { useAuth } from '@/shared/auth/useAuth';
+import type { EstadoFicha } from '@/domain/models/Persona';
+import { formatErrorEscrituraExpediente } from '@/features/expedientes/api';
 import { DeferredDialogContent, DialogFormSkeleton } from '@/shared/ui/DeferredDialogContent';
 import { Icon } from '@/shared/ui/Icon';
 import { OrdenProteccionForm } from './OrdenProteccionForm';
@@ -29,6 +31,7 @@ import {
 
 export interface OrdenesProteccionPanelProps {
   fichaId: string;
+  estado?: EstadoFicha;
 }
 
 const ESTADO_CHIP: Record<EstadoOrdenProteccion, string> = {
@@ -48,10 +51,11 @@ const FORM_SKELETON_BLOCKS = [5, 5, 5, 13] as const;
  * - Escritura: Dirección, Jurídico y Trabajo Social (`orden_proteccion.escribir`).
  * - `recepcion` y `umeca` ven estado de acceso restringido.
  */
-export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps) {
+export function OrdenesProteccionPanel({ fichaId, estado }: OrdenesProteccionPanelProps) {
   const { user } = useAuth();
+  const isArchivado = estado === 'archivado';
   const canView = puedeVerOrdenesProteccion(user?.role);
-  const canWrite = puedeEscribirOrdenesProteccion(user?.role);
+  const canWrite = !isArchivado && puedeEscribirOrdenesProteccion(user?.role);
 
   const [formOpen, setFormOpen] = useState(false);
   const [formMounted, setFormMounted] = useState(false);
@@ -153,7 +157,11 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
       toast('Orden de protección archivada.', { tone: 'success' });
     } catch (err) {
       toast(
-        err instanceof Error ? err.message : 'No se pudo archivar la orden de protección.',
+        formatErrorEscrituraExpediente(
+          err,
+          'No se pudo archivar la orden de protección.',
+          isArchivado,
+        ),
         { tone: 'error' },
       );
     }
@@ -182,6 +190,12 @@ export function OrdenesProteccionPanel({ fichaId }: OrdenesProteccionPanelProps)
           </button>
         ) : null}
       </div>
+
+      {isArchivado ? (
+        <p className="rounded-xl border border-outline-variant bg-surface-container-low px-3.5 py-2 text-xs font-medium text-on-surface-variant">
+          Expediente archivado: solo consulta
+        </p>
+      ) : null}
 
       {hayOrdenVigente ? (
         <div className="flex items-center gap-2.5 rounded-2xl border border-outline-variant bg-status-danger-bg px-4 py-2.5 text-sm font-medium text-status-danger">

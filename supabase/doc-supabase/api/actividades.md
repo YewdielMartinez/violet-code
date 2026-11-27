@@ -6,6 +6,8 @@
 
 ## `registrar_actividad_preventiva`
 
+**Versión:** [`20261126001600_26`](../../migrations/20261126001600_26_rpc_actividades_preventivas.sql)
+
 > Alta de una plática, taller o campaña, con el personal que participó. Todo en una transacción.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
@@ -65,6 +67,8 @@ const { data, error } = await supabase
 ---
 
 ## `get_actividades_preventivas`
+
+**Versión:** [`20261127001000_41`](../../migrations/20261127001000_41_actividad_estado.sql)
 
 > Lista de actividades con sus participantes.
 
@@ -135,6 +139,8 @@ interface ActividadPreventivaRow {
 ---
 
 ## `actualizar_estado_actividad`
+
+**Versión:** [`20261127001000_41`](../../migrations/20261127001000_41_actividad_estado.sql)
 
 > Marca una actividad como realizada, cancelada o la reabre (pendiente). Sirve para llevar el control de qué escuelas, instituciones o empresas ya fueron visitadas.
 

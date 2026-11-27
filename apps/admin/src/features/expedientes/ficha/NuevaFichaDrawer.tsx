@@ -52,7 +52,8 @@ export function NuevaFichaDrawer({
     setPrevOpen(false);
   }
 
-  const form = useFichaForm();
+  const { data: catalogos } = useCatalogosFicha(open);
+  const form = useFichaForm(catalogos);
   const {
     step,
     initialize,
@@ -65,7 +66,6 @@ export function NuevaFichaDrawer({
     duplicateExpediente,
     setDuplicateExpediente,
   } = form;
-  const { data: catalogos } = useCatalogosFicha(open);
 
   const seedKey = seed
     ? JSON.stringify([seed.curp ?? '', seed.existingPersonaId ?? '', seed.preRegistro?.preRegistroId ?? ''])
@@ -197,6 +197,12 @@ export function NuevaFichaDrawer({
       if (!created) return;
 
       toast(`Expediente ${created.folio} registrado.`);
+      if (created.agresorError) {
+        toast(
+          `No se pudo guardar la persona agresora: ${created.agresorError}. Puedes agregarla desde el expediente.`,
+          { tone: 'error' },
+        );
+      }
       bypassCloseGuardRef.current = true;
       onCreated?.(created.fichaId);
       onClose();
@@ -208,7 +214,7 @@ export function NuevaFichaDrawer({
 
   const subtitle = seed?.preRegistro
     ? `Datos precargados desde app móvil para ${seed.preRegistro.nombreCompleto}.`
-    : 'Captura escalonada de identidad, domicilio y estudio socioeconómico.';
+    : 'Captura escalonada de identidad, domicilio, persona agresora y estudio socioeconómico.';
 
   return (
     <>
@@ -236,11 +242,14 @@ export function NuevaFichaDrawer({
                   step={step}
                   stepError={form.stepError}
                   invalidField={form.invalidField}
+                  agresorErrors={form.agresorErrors}
                   duplicateExpediente={duplicateExpediente}
                   identidad={form.identidad}
                   onIdentidadChange={form.setIdentidad}
                   domicilio={form.domicilio}
                   onDomicilioChange={form.setDomicilio}
+                  agresor={form.agresor}
+                  onAgresorChange={form.setAgresor}
                   estudio={form.estudio}
                   onEstudioChange={form.setEstudio}
                   catalogos={catalogos}

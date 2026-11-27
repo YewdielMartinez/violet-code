@@ -1,5 +1,6 @@
 import { supabase } from '../client';
 import type { Database } from '../database.types';
+import { mapSupabaseError } from './errors';
 import type {
   AgendaItem,
   AgendaQuery,
@@ -16,35 +17,7 @@ import type { CitaRepository } from '@/domain/ports/CitaRepository';
 
 type RpcAgendaRow = Database['public']['Functions']['get_agenda']['Returns'][number];
 type RpcUrgenciaRow = Database['public']['Functions']['get_lista_urgencias']['Returns'][number];
-
-interface BuscarPersonasAgendaArgs {
-  p_q: string;
-  p_limite?: number;
-}
-
-interface RpcPersonaAgendaRow {
-  persona_id: string;
-  ficha_id: string;
-  folio: string | null;
-  nombre_completo: string | null;
-  curp_enmascarada: string | null;
-  celular: string | null;
-}
-
-/**
- * `buscar_personas_agenda` aún no está en `database.types.ts` (se regenera con `supabase gen types`); mientras
- * tanto se tipa aquí la llamada.
- * TODO: retirar este helper y usar `supabase.rpc('buscar_personas_agenda', ...)` al regenerar los tipos.
- */
-function rpcBuscarPersonasAgenda(args: BuscarPersonasAgendaArgs) {
-  const client = supabase as unknown as {
-    rpc: (
-      fn: 'buscar_personas_agenda',
-      args: BuscarPersonasAgendaArgs,
-    ) => PromiseLike<{ data: RpcPersonaAgendaRow[] | null; error: Error | null }>;
-  };
-  return client.rpc('buscar_personas_agenda', args);
-}
+type RpcPersonaAgendaRow = Database['public']['Functions']['buscar_personas_agenda']['Returns'][number];
 
 function mapPersonaAgendaRow(row: RpcPersonaAgendaRow): PersonaAgendaItem {
   return {
@@ -62,7 +35,7 @@ function mapAgendaRow(row: RpcAgendaRow): AgendaItem {
     citaId: row.cita_id,
     programadaEn: row.programada_en,
     estado: row.estado,
-    prioridad: row.prioridad,
+    prioridad: null,
     areaId: row.area_id,
     areaClave: row.area_clave,
     recomendadaPor: row.recomendada_por,
@@ -81,8 +54,9 @@ function mapUrgenciaRow(row: RpcUrgenciaRow): ListaUrgenciasItem {
     folio: row.folio,
     nombreCompleto: row.nombre_completo?.trim() || '—',
     celular: row.celular,
-    areaUltimaPrioridad: row.area_ultima_prioridad,
-    fechaUltimaPrioridad: row.fecha_ultima_prioridad,
+    prioridadActualizadaEn: row.prioridad_actualizada_en,
+    areaUltimaPrioridad: '',
+    fechaUltimaPrioridad: row.prioridad_actualizada_en,
   };
 }
 
@@ -96,7 +70,7 @@ export const supabaseCitaRepository: CitaRepository = {
       p_limite: query.limite ?? 200,
     });
 
-    if (error) throw error;
+    if (error) throw mapSupabaseError(error);
     return (data ?? []).map(mapAgendaRow);
   },
 
@@ -105,24 +79,24 @@ export const supabaseCitaRepository: CitaRepository = {
   ): Promise<{ id: string; estado: EstadoCita; programadaEn: string }> {
     const recomendada = input.recomendadaPor?.trim();
 
-    const { data, error } = await supabase
-      .from('cita')
-      .insert({
-        persona_id: input.personaId,
-        area_id: input.areaId,
-        programada_en: input.programadaEn,
-        prioridad: input.prioridad ?? null,
-        recomendada_por: recomendada || null,
-        origen: input.origen ?? 'regular',
-      })
-      .select('id, estado, programada_en')
-      .single();
+    const { data, error } = await supabase.rpc('crear_cita', {
+      p_persona_id: input.personaId,
+      p_area_id: input.areaId,
+      p_programada_en: input.programadaEn,
+      p_recomendada_por: recomendada || undefined,
+      p_origen: input.origen ?? 'regular',
+    });
 
-    if (error) throw error;
+    if (error) throw mapSupabaseError(error);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('No se recibió confirmación al agendar la cita.');
+    }
+
     return {
-      id: data.id,
-      estado: data.estado,
-      programadaEn: data.programada_en,
+      id: row.cita_id,
+      estado: row.estado,
+      programadaEn: row.programada_en,
     };
   },
 
@@ -139,7 +113,7 @@ export const supabaseCitaRepository: CitaRepository = {
       p_motivo: cleanMotivo || undefined,
     });
 
-    if (error) throw error;
+    if (error) throw mapSupabaseError(error);
     const row = Array.isArray(data) ? data[0] : data;
     if (!row) {
       throw new Error('No se recibió confirmación al actualizar el estado de la cita.');
@@ -159,10 +133,9 @@ export const supabaseCitaRepository: CitaRepository = {
       p_cita_id: input.citaId,
       p_nueva_fecha: input.nuevaFecha,
       p_motivo: cleanMotivo || undefined,
-      p_prioridad: input.prioridad ?? undefined,
     });
 
-    if (error) throw error;
+    if (error) throw mapSupabaseError(error);
     const row = Array.isArray(data) ? data[0] : data;
     if (!row) {
       throw new Error('No se recibió confirmación al reagendar la cita.');
@@ -177,9 +150,12 @@ export const supabaseCitaRepository: CitaRepository = {
   },
 
   async buscarPersonas(termino: string, limite = 10): Promise<PersonaAgendaItem[]> {
-    const { data, error } = await rpcBuscarPersonasAgenda({ p_q: termino.trim(), p_limite: limite });
+    const { data, error } = await supabase.rpc('buscar_personas_agenda', {
+      p_q: termino.trim(),
+      p_limite: limite,
+    });
 
-    if (error) throw error;
+    if (error) throw mapSupabaseError(error);
     return (data ?? []).map(mapPersonaAgendaRow);
   },
 
@@ -188,7 +164,7 @@ export const supabaseCitaRepository: CitaRepository = {
       p_area_id: areaId ?? undefined,
     });
 
-    if (error) throw error;
+    if (error) throw mapSupabaseError(error);
     return (data ?? []).map(mapUrgenciaRow);
   },
 };

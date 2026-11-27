@@ -57,14 +57,14 @@ isOneToOne: false
                   ]
                 },"actividad_preventiva": {
                   Row: {
-                    "activo": boolean,"actualizado_en": string,"asentamiento_id": number | null,"creado_en": string,"creado_por": string | null,"direccion": string | null,"id": string,"nivel_educativo": Database["public"]['Enums']["nivel_educativo"] | null,"numero_asistentes": number | null,"programada_en": string,"referencias": string | null,"sede": string,"tipo_actividad_id": number,"tipo_institucion": Database["public"]['Enums']["tipo_institucion_actividad"],"titulo": string
+                    "activo": boolean,"actualizado_en": string,"asentamiento_id": number | null,"cancelada_motivo": string | null,"creado_en": string,"creado_por": string | null,"direccion": string | null,"estado": Database["public"]['Enums']["estado_actividad"],"id": string,"nivel_educativo": Database["public"]['Enums']["nivel_educativo"] | null,"numero_asistentes": number | null,"observaciones_cierre": string | null,"programada_en": string,"realizada_en": string | null,"referencias": string | null,"sede": string,"tipo_actividad_id": number,"tipo_institucion": Database["public"]['Enums']["tipo_institucion_actividad"],"titulo": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "activo"?: boolean,"actualizado_en"?: string,"asentamiento_id"?: number | null,"creado_en"?: string,"creado_por"?: string | null,"direccion"?: string | null,"id"?: string,"nivel_educativo"?: Database["public"]['Enums']["nivel_educativo"] | null,"numero_asistentes"?: number | null,"programada_en": string,"referencias"?: string | null,"sede": string,"tipo_actividad_id": number,"tipo_institucion": Database["public"]['Enums']["tipo_institucion_actividad"],"titulo": string
+                    "activo"?: boolean,"actualizado_en"?: string,"asentamiento_id"?: number | null,"cancelada_motivo"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"direccion"?: string | null,"estado"?: Database["public"]['Enums']["estado_actividad"],"id"?: string,"nivel_educativo"?: Database["public"]['Enums']["nivel_educativo"] | null,"numero_asistentes"?: number | null,"observaciones_cierre"?: string | null,"programada_en": string,"realizada_en"?: string | null,"referencias"?: string | null,"sede": string,"tipo_actividad_id": number,"tipo_institucion": Database["public"]['Enums']["tipo_institucion_actividad"],"titulo": string
                   }
                   Update: {
-                    "activo"?: boolean,"actualizado_en"?: string,"asentamiento_id"?: number | null,"creado_en"?: string,"creado_por"?: string | null,"direccion"?: string | null,"id"?: string,"nivel_educativo"?: Database["public"]['Enums']["nivel_educativo"] | null,"numero_asistentes"?: number | null,"programada_en"?: string,"referencias"?: string | null,"sede"?: string,"tipo_actividad_id"?: number,"tipo_institucion"?: Database["public"]['Enums']["tipo_institucion_actividad"],"titulo"?: string
+                    "activo"?: boolean,"actualizado_en"?: string,"asentamiento_id"?: number | null,"cancelada_motivo"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"direccion"?: string | null,"estado"?: Database["public"]['Enums']["estado_actividad"],"id"?: string,"nivel_educativo"?: Database["public"]['Enums']["nivel_educativo"] | null,"numero_asistentes"?: number | null,"observaciones_cierre"?: string | null,"programada_en"?: string,"realizada_en"?: string | null,"referencias"?: string | null,"sede"?: string,"tipo_actividad_id"?: number,"tipo_institucion"?: Database["public"]['Enums']["tipo_institucion_actividad"],"titulo"?: string
                   }
                   Relationships: [
                     {
@@ -89,14 +89,14 @@ isOneToOne: false
                   ]
                 },"agresor": {
                   Row: {
-                    "activo": boolean,"actualizado_en": string,"apellido_materno": string | null,"apellido_paterno": string | null,"asentamiento_id": number | null,"calle": string | null,"codigo_postal": string | null,"creado_en": string,"creado_por": string | null,"curp": string | null,"drogas": (Database["public"]['Enums']["tipo_droga"])[] | null,"edad": number | null,"entidad_nacimiento": string | null,"especificacion_arma": string | null,"especificacion_droga": string | null,"estado_civil": Database["public"]['Enums']["estado_civil"] | null,"fecha_nacimiento": string | null,"ficha_id": string,"id": string,"nombres": string,"numero_exterior": string | null,"numero_interior": string | null,"observaciones": string | null,"ocupacion_id": number | null,"ocupacion_otra": string | null,"parentesco_id": number | null,"parentesco_otro": string | null,"referencias": string | null,"sexo": Database["public"]['Enums']["sexo_biologico"] | null,"tiene_consumo_alcohol": boolean | null,"tiene_consumo_droga": boolean | null,"tipo_trabajo": Database["public"]['Enums']["tipo_trabajo"] | null,"zona": Database["public"]['Enums']["zona_geografica"] | null
+                    "activo": boolean,"actualizado_en": string,"apellido_materno": string | null,"apellido_paterno": string | null,"asentamiento_id": number | null,"calle": string | null,"codigo_postal": string | null,"consumo_alcohol": Database["public"]['Enums']["consumo_alcohol"] | null,"creado_en": string,"creado_por": string | null,"curp": string | null,"drogas": (Database["public"]['Enums']["tipo_droga"])[] | null,"edad": number | null,"entidad_nacimiento": string | null,"especificacion_arma": string | null,"especificacion_droga": string | null,"estado_civil": Database["public"]['Enums']["estado_civil"] | null,"fecha_nacimiento": string | null,"ficha_id": string,"id": string,"nombres": string | null,"numero_exterior": string | null,"numero_interior": string | null,"observaciones": string | null,"ocupacion_id": number | null,"ocupacion_otra": string | null,"parentesco_id": number | null,"parentesco_otro": string | null,"referencias": string | null,"sexo": Database["public"]['Enums']["sexo_biologico"] | null,"tipo_trabajo": Database["public"]['Enums']["tipo_trabajo"] | null,"zona": Database["public"]['Enums']["zona_geografica"] | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "activo"?: boolean,"actualizado_en"?: string,"apellido_materno"?: string | null,"apellido_paterno"?: string | null,"asentamiento_id"?: number | null,"calle"?: string | null,"codigo_postal"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"curp"?: string | null,"drogas"?: (Database["public"]['Enums']["tipo_droga"])[] | null,"edad"?: number | null,"entidad_nacimiento"?: string | null,"especificacion_arma"?: string | null,"especificacion_droga"?: string | null,"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"fecha_nacimiento"?: string | null,"ficha_id": string,"id"?: string,"nombres": string,"numero_exterior"?: string | null,"numero_interior"?: string | null,"observaciones"?: string | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"parentesco_id"?: number | null,"parentesco_otro"?: string | null,"referencias"?: string | null,"sexo"?: Database["public"]['Enums']["sexo_biologico"] | null,"tiene_consumo_alcohol"?: boolean | null,"tiene_consumo_droga"?: boolean | null,"tipo_trabajo"?: Database["public"]['Enums']["tipo_trabajo"] | null,"zona"?: Database["public"]['Enums']["zona_geografica"] | null
+                    "activo"?: boolean,"actualizado_en"?: string,"apellido_materno"?: string | null,"apellido_paterno"?: string | null,"asentamiento_id"?: number | null,"calle"?: string | null,"codigo_postal"?: string | null,"consumo_alcohol"?: Database["public"]['Enums']["consumo_alcohol"] | null,"creado_en"?: string,"creado_por"?: string | null,"curp"?: string | null,"drogas"?: (Database["public"]['Enums']["tipo_droga"])[] | null,"edad"?: number | null,"entidad_nacimiento"?: string | null,"especificacion_arma"?: string | null,"especificacion_droga"?: string | null,"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"fecha_nacimiento"?: string | null,"ficha_id": string,"id"?: string,"nombres"?: string | null,"numero_exterior"?: string | null,"numero_interior"?: string | null,"observaciones"?: string | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"parentesco_id"?: number | null,"parentesco_otro"?: string | null,"referencias"?: string | null,"sexo"?: Database["public"]['Enums']["sexo_biologico"] | null,"tipo_trabajo"?: Database["public"]['Enums']["tipo_trabajo"] | null,"zona"?: Database["public"]['Enums']["zona_geografica"] | null
                   }
                   Update: {
-                    "activo"?: boolean,"actualizado_en"?: string,"apellido_materno"?: string | null,"apellido_paterno"?: string | null,"asentamiento_id"?: number | null,"calle"?: string | null,"codigo_postal"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"curp"?: string | null,"drogas"?: (Database["public"]['Enums']["tipo_droga"])[] | null,"edad"?: number | null,"entidad_nacimiento"?: string | null,"especificacion_arma"?: string | null,"especificacion_droga"?: string | null,"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"fecha_nacimiento"?: string | null,"ficha_id"?: string,"id"?: string,"nombres"?: string,"numero_exterior"?: string | null,"numero_interior"?: string | null,"observaciones"?: string | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"parentesco_id"?: number | null,"parentesco_otro"?: string | null,"referencias"?: string | null,"sexo"?: Database["public"]['Enums']["sexo_biologico"] | null,"tiene_consumo_alcohol"?: boolean | null,"tiene_consumo_droga"?: boolean | null,"tipo_trabajo"?: Database["public"]['Enums']["tipo_trabajo"] | null,"zona"?: Database["public"]['Enums']["zona_geografica"] | null
+                    "activo"?: boolean,"actualizado_en"?: string,"apellido_materno"?: string | null,"apellido_paterno"?: string | null,"asentamiento_id"?: number | null,"calle"?: string | null,"codigo_postal"?: string | null,"consumo_alcohol"?: Database["public"]['Enums']["consumo_alcohol"] | null,"creado_en"?: string,"creado_por"?: string | null,"curp"?: string | null,"drogas"?: (Database["public"]['Enums']["tipo_droga"])[] | null,"edad"?: number | null,"entidad_nacimiento"?: string | null,"especificacion_arma"?: string | null,"especificacion_droga"?: string | null,"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"fecha_nacimiento"?: string | null,"ficha_id"?: string,"id"?: string,"nombres"?: string | null,"numero_exterior"?: string | null,"numero_interior"?: string | null,"observaciones"?: string | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"parentesco_id"?: number | null,"parentesco_otro"?: string | null,"referencias"?: string | null,"sexo"?: Database["public"]['Enums']["sexo_biologico"] | null,"tipo_trabajo"?: Database["public"]['Enums']["tipo_trabajo"] | null,"zona"?: Database["public"]['Enums']["zona_geografica"] | null
                   }
                   Relationships: [
                     {
@@ -189,14 +189,14 @@ isOneToOne: false
                   ]
                 },"aportante_hogar": {
                   Row: {
-                    "activo": boolean,"actualizado_en": string,"creado_en": string,"creado_por": string | null,"estudio_socioeconomico_id": string,"frecuencia": Database["public"]['Enums']["frecuencia_ingreso"] | null,"id": string,"monto": number | null,"nombre": string,"ocupacion_id": number | null,"ocupacion_otra": string | null,"parentesco_id": number | null,"parentesco_otro": string | null,"tipo_trabajo": Database["public"]['Enums']["tipo_trabajo"] | null
+                    "activo": boolean,"actualizado_en": string,"creado_en": string,"creado_por": string | null,"estudio_socioeconomico_id": string,"frecuencia": Database["public"]['Enums']["frecuencia_ingreso"] | null,"id": string,"monto": number | null,"nombre": string | null,"ocupacion_id": number | null,"ocupacion_otra": string | null,"parentesco_id": number | null,"parentesco_otro": string | null,"tipo_trabajo": Database["public"]['Enums']["tipo_trabajo"] | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "activo"?: boolean,"actualizado_en"?: string,"creado_en"?: string,"creado_por"?: string | null,"estudio_socioeconomico_id": string,"frecuencia"?: Database["public"]['Enums']["frecuencia_ingreso"] | null,"id"?: string,"monto"?: number | null,"nombre": string,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"parentesco_id"?: number | null,"parentesco_otro"?: string | null,"tipo_trabajo"?: Database["public"]['Enums']["tipo_trabajo"] | null
+                    "activo"?: boolean,"actualizado_en"?: string,"creado_en"?: string,"creado_por"?: string | null,"estudio_socioeconomico_id": string,"frecuencia"?: Database["public"]['Enums']["frecuencia_ingreso"] | null,"id"?: string,"monto"?: number | null,"nombre"?: string | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"parentesco_id"?: number | null,"parentesco_otro"?: string | null,"tipo_trabajo"?: Database["public"]['Enums']["tipo_trabajo"] | null
                   }
                   Update: {
-                    "activo"?: boolean,"actualizado_en"?: string,"creado_en"?: string,"creado_por"?: string | null,"estudio_socioeconomico_id"?: string,"frecuencia"?: Database["public"]['Enums']["frecuencia_ingreso"] | null,"id"?: string,"monto"?: number | null,"nombre"?: string,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"parentesco_id"?: number | null,"parentesco_otro"?: string | null,"tipo_trabajo"?: Database["public"]['Enums']["tipo_trabajo"] | null
+                    "activo"?: boolean,"actualizado_en"?: string,"creado_en"?: string,"creado_por"?: string | null,"estudio_socioeconomico_id"?: string,"frecuencia"?: Database["public"]['Enums']["frecuencia_ingreso"] | null,"id"?: string,"monto"?: number | null,"nombre"?: string | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"parentesco_id"?: number | null,"parentesco_otro"?: string | null,"tipo_trabajo"?: Database["public"]['Enums']["tipo_trabajo"] | null
                   }
                   Relationships: [
                     {
@@ -325,6 +325,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"canalizacion_evento": {
+                  Row: {
+                    "creado_en": string,"creado_por": string | null,"derivacion_id": string,"estado_anterior": Database["public"]['Enums']["estado_derivacion"] | null,"estado_nuevo": Database["public"]['Enums']["estado_derivacion"],"id": string,"nota": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "creado_en"?: string,"creado_por"?: string | null,"derivacion_id": string,"estado_anterior"?: Database["public"]['Enums']["estado_derivacion"] | null,"estado_nuevo": Database["public"]['Enums']["estado_derivacion"],"id"?: string,"nota"?: string | null
+                  }
+                  Update: {
+                    "creado_en"?: string,"creado_por"?: string | null,"derivacion_id"?: string,"estado_anterior"?: Database["public"]['Enums']["estado_derivacion"] | null,"estado_nuevo"?: Database["public"]['Enums']["estado_derivacion"],"id"?: string,"nota"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "canalizacion_evento_creado_por_fkey"
+      columns: ["creado_por"]
+isOneToOne: false
+      referencedRelation: "empleado"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "canalizacion_evento_derivacion_id_fkey"
+      columns: ["derivacion_id"]
+isOneToOne: false
+      referencedRelation: "derivacion"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"cat_area": {
                   Row: {
                     "clave": string,"id": number,"nombre": string
@@ -431,14 +457,14 @@ isOneToOne: false
                   ]
                 },"cita": {
                   Row: {
-                    "activo": boolean,"actualizado_en": string,"area_id": number,"confirmada_en": string | null,"creado_en": string,"creado_por": string | null,"estado": Database["public"]['Enums']["estado_cita"],"id": string,"motivo_cancelacion": string | null,"origen": Database["public"]['Enums']["origen_cita"],"persona_id": string,"prioridad": Database["public"]['Enums']["prioridad_nivel"] | null,"programada_en": string,"reagendada_de": string | null,"recomendada_por": string | null
+                    "activo": boolean,"actualizado_en": string,"area_id": number,"confirmada_en": string | null,"creado_en": string,"creado_por": string | null,"estado": Database["public"]['Enums']["estado_cita"],"id": string,"motivo_cancelacion": string | null,"origen": Database["public"]['Enums']["origen_cita"],"persona_id": string,"programada_en": string,"reagendada_de": string | null,"recomendada_por": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "activo"?: boolean,"actualizado_en"?: string,"area_id": number,"confirmada_en"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"estado"?: Database["public"]['Enums']["estado_cita"],"id"?: string,"motivo_cancelacion"?: string | null,"origen"?: Database["public"]['Enums']["origen_cita"],"persona_id": string,"prioridad"?: Database["public"]['Enums']["prioridad_nivel"] | null,"programada_en": string,"reagendada_de"?: string | null,"recomendada_por"?: string | null
+                    "activo"?: boolean,"actualizado_en"?: string,"area_id": number,"confirmada_en"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"estado"?: Database["public"]['Enums']["estado_cita"],"id"?: string,"motivo_cancelacion"?: string | null,"origen"?: Database["public"]['Enums']["origen_cita"],"persona_id": string,"programada_en": string,"reagendada_de"?: string | null,"recomendada_por"?: string | null
                   }
                   Update: {
-                    "activo"?: boolean,"actualizado_en"?: string,"area_id"?: number,"confirmada_en"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"estado"?: Database["public"]['Enums']["estado_cita"],"id"?: string,"motivo_cancelacion"?: string | null,"origen"?: Database["public"]['Enums']["origen_cita"],"persona_id"?: string,"prioridad"?: Database["public"]['Enums']["prioridad_nivel"] | null,"programada_en"?: string,"reagendada_de"?: string | null,"recomendada_por"?: string | null
+                    "activo"?: boolean,"actualizado_en"?: string,"area_id"?: number,"confirmada_en"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"estado"?: Database["public"]['Enums']["estado_cita"],"id"?: string,"motivo_cancelacion"?: string | null,"origen"?: Database["public"]['Enums']["origen_cita"],"persona_id"?: string,"programada_en"?: string,"reagendada_de"?: string | null,"recomendada_por"?: string | null
                   }
                   Relationships: [
                     {
@@ -691,17 +717,23 @@ isOneToOne: false
                   ]
                 },"ficha_registro": {
                   Row: {
-                    "activo": boolean,"actualizado_en": string,"aviso_privacidad_aceptado_en": string,"creado_en": string,"creado_por": string | null,"drogas": (Database["public"]['Enums']["tipo_droga"])[] | null,"es_victima_delito": boolean | null,"especificacion_droga": string | null,"estado": Database["public"]['Enums']["estado_ficha"],"estado_civil": Database["public"]['Enums']["estado_civil"] | null,"folio": string,"id": string,"numero_hijas": number | null,"numero_hijos_hombres": number | null,"ocupacion_id": number | null,"ocupacion_otra": string | null,"persona_id": string,"registrada_en": string,"servicio_medico": Database["public"]['Enums']["servicio_medico"] | null,"servicio_medico_otro": string | null,"tiene_consumo_alcohol": boolean | null,"tiene_consumo_droga": boolean | null,"tiene_denuncia": boolean | null,"tiene_embarazo": boolean | null,"tiene_trabajo": boolean | null
+                    "activo": boolean,"actualizado_en": string,"archivada_en": string | null,"archivada_por": string | null,"aviso_privacidad_aceptado_en": string,"consumo_alcohol": Database["public"]['Enums']["consumo_alcohol"] | null,"creado_en": string,"creado_por": string | null,"drogas": (Database["public"]['Enums']["tipo_droga"])[] | null,"es_victima_delito": boolean | null,"especificacion_droga": string | null,"estado": Database["public"]['Enums']["estado_ficha"],"estado_civil": Database["public"]['Enums']["estado_civil"] | null,"folio": string,"id": string,"motivo_archivo": string | null,"motivo_reapertura": string | null,"numero_hijas": number | null,"numero_hijos_hombres": number | null,"ocupacion_id": number | null,"ocupacion_otra": string | null,"persona_id": string,"prioridad": Database["public"]['Enums']["prioridad_nivel"] | null,"prioridad_actualizada_en": string | null,"reabierta_en": string | null,"reabierta_por": string | null,"registrada_en": string,"servicio_medico": Database["public"]['Enums']["servicio_medico"] | null,"servicio_medico_otro": string | null,"tiene_denuncia": boolean | null,"tiene_embarazo": boolean | null,"tiene_trabajo": boolean | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "activo"?: boolean,"actualizado_en"?: string,"aviso_privacidad_aceptado_en": string,"creado_en"?: string,"creado_por"?: string | null,"drogas"?: (Database["public"]['Enums']["tipo_droga"])[] | null,"es_victima_delito"?: boolean | null,"especificacion_droga"?: string | null,"estado"?: Database["public"]['Enums']["estado_ficha"],"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"folio"?: string,"id"?: string,"numero_hijas"?: number | null,"numero_hijos_hombres"?: number | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"persona_id": string,"registrada_en"?: string,"servicio_medico"?: Database["public"]['Enums']["servicio_medico"] | null,"servicio_medico_otro"?: string | null,"tiene_consumo_alcohol"?: boolean | null,"tiene_consumo_droga"?: boolean | null,"tiene_denuncia"?: boolean | null,"tiene_embarazo"?: boolean | null,"tiene_trabajo"?: boolean | null
+                    "activo"?: boolean,"actualizado_en"?: string,"archivada_en"?: string | null,"archivada_por"?: string | null,"aviso_privacidad_aceptado_en": string,"consumo_alcohol"?: Database["public"]['Enums']["consumo_alcohol"] | null,"creado_en"?: string,"creado_por"?: string | null,"drogas"?: (Database["public"]['Enums']["tipo_droga"])[] | null,"es_victima_delito"?: boolean | null,"especificacion_droga"?: string | null,"estado"?: Database["public"]['Enums']["estado_ficha"],"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"folio"?: string,"id"?: string,"motivo_archivo"?: string | null,"motivo_reapertura"?: string | null,"numero_hijas"?: number | null,"numero_hijos_hombres"?: number | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"persona_id": string,"prioridad"?: Database["public"]['Enums']["prioridad_nivel"] | null,"prioridad_actualizada_en"?: string | null,"reabierta_en"?: string | null,"reabierta_por"?: string | null,"registrada_en"?: string,"servicio_medico"?: Database["public"]['Enums']["servicio_medico"] | null,"servicio_medico_otro"?: string | null,"tiene_denuncia"?: boolean | null,"tiene_embarazo"?: boolean | null,"tiene_trabajo"?: boolean | null
                   }
                   Update: {
-                    "activo"?: boolean,"actualizado_en"?: string,"aviso_privacidad_aceptado_en"?: string,"creado_en"?: string,"creado_por"?: string | null,"drogas"?: (Database["public"]['Enums']["tipo_droga"])[] | null,"es_victima_delito"?: boolean | null,"especificacion_droga"?: string | null,"estado"?: Database["public"]['Enums']["estado_ficha"],"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"folio"?: string,"id"?: string,"numero_hijas"?: number | null,"numero_hijos_hombres"?: number | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"persona_id"?: string,"registrada_en"?: string,"servicio_medico"?: Database["public"]['Enums']["servicio_medico"] | null,"servicio_medico_otro"?: string | null,"tiene_consumo_alcohol"?: boolean | null,"tiene_consumo_droga"?: boolean | null,"tiene_denuncia"?: boolean | null,"tiene_embarazo"?: boolean | null,"tiene_trabajo"?: boolean | null
+                    "activo"?: boolean,"actualizado_en"?: string,"archivada_en"?: string | null,"archivada_por"?: string | null,"aviso_privacidad_aceptado_en"?: string,"consumo_alcohol"?: Database["public"]['Enums']["consumo_alcohol"] | null,"creado_en"?: string,"creado_por"?: string | null,"drogas"?: (Database["public"]['Enums']["tipo_droga"])[] | null,"es_victima_delito"?: boolean | null,"especificacion_droga"?: string | null,"estado"?: Database["public"]['Enums']["estado_ficha"],"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"folio"?: string,"id"?: string,"motivo_archivo"?: string | null,"motivo_reapertura"?: string | null,"numero_hijas"?: number | null,"numero_hijos_hombres"?: number | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"persona_id"?: string,"prioridad"?: Database["public"]['Enums']["prioridad_nivel"] | null,"prioridad_actualizada_en"?: string | null,"reabierta_en"?: string | null,"reabierta_por"?: string | null,"registrada_en"?: string,"servicio_medico"?: Database["public"]['Enums']["servicio_medico"] | null,"servicio_medico_otro"?: string | null,"tiene_denuncia"?: boolean | null,"tiene_embarazo"?: boolean | null,"tiene_trabajo"?: boolean | null
                   }
                   Relationships: [
                     {
+      foreignKeyName: "ficha_registro_archivada_por_fkey"
+      columns: ["archivada_por"]
+isOneToOne: false
+      referencedRelation: "empleado"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "ficha_registro_creado_por_fkey"
       columns: ["creado_por"]
 isOneToOne: false
@@ -725,6 +757,12 @@ isOneToOne: true
 isOneToOne: true
       referencedRelation: "vista_lista_urgencias"
       referencedColumns: ["persona_id"]
+    },{
+      foreignKeyName: "ficha_registro_reabierta_por_fkey"
+      columns: ["reabierta_por"]
+isOneToOne: false
+      referencedRelation: "empleado"
+      referencedColumns: ["id"]
     }
                   ]
                 },"ficha_servicio_solicitado": {
@@ -960,7 +998,7 @@ isOneToOne: false
                   ]
                 },"vista_lista_urgencias": {
                   Row: {
-                    "apellido_materno": string | null,"apellido_paterno": string,"celular": string | null,"fecha_ultima_prioridad": string | null,"ficha_id": string,"folio": string,"nombres": string,"persona_id": string
+                    "apellido_materno": string | null,"apellido_paterno": string,"celular": string | null,"ficha_id": string,"folio": string,"nombres": string,"persona_id": string,"prioridad_actualizada_en": string | null
                   }
                   ComputedFields: never
                   Relationships: [
@@ -969,9 +1007,29 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "actualizar_mi_pre_registro":
+            "actualizar_domicilio":
+{ Args: { "p_actualizado_en"?: string,"p_asentamiento_id"?: number,"p_calle"?: string,"p_codigo_postal"?: string,"p_numero_exterior"?: string,"p_numero_interior"?: string,"p_persona_id": string,"p_referencias"?: string,"p_zona"?: Database["public"]['Enums']["zona_geografica"] }; Returns: {
+              "actualizado_en": string,"domicilio_id": string,"es_actual": boolean,"persona_id": string
+            }[]
+                           },
+"actualizar_estado_actividad":
+{ Args: { "p_actividad_id": string,"p_estado": Database["public"]['Enums']["estado_actividad"],"p_motivo_cancelacion"?: string,"p_numero_asistentes"?: number,"p_observaciones"?: string }; Returns: {
+              "actividad_id": string,"estado": Database["public"]['Enums']["estado_actividad"],"realizada_en": string
+            }[]
+                           },
+"actualizar_ficha":
+{ Args: { "p_actualizado_en": string,"p_campos_sin_dato"?: (string)[],"p_consumo_alcohol"?: Database["public"]['Enums']["consumo_alcohol"],"p_drogas"?: (Database["public"]['Enums']["tipo_droga"])[],"p_es_victima_delito"?: boolean,"p_especificacion_droga"?: string,"p_estado_civil"?: Database["public"]['Enums']["estado_civil"],"p_ficha_id": string,"p_numero_hijas"?: number,"p_numero_hijos_hombres"?: number,"p_ocupacion_id"?: number,"p_ocupacion_otra"?: string,"p_servicio_medico"?: Database["public"]['Enums']["servicio_medico"],"p_servicio_medico_otro"?: string,"p_servicios_solicitados_area_ids"?: (number)[],"p_tiene_denuncia"?: boolean,"p_tiene_embarazo"?: boolean,"p_tiene_trabajo"?: boolean }; Returns: {
+              "actualizado_en": string,"consumo_alcohol": Database["public"]['Enums']["consumo_alcohol"],"drogas": (Database["public"]['Enums']["tipo_droga"])[],"es_victima_delito": boolean,"especificacion_droga": string,"estado": Database["public"]['Enums']["estado_ficha"],"estado_civil": Database["public"]['Enums']["estado_civil"],"folio": string,"id": string,"numero_hijas": number,"numero_hijos_hombres": number,"ocupacion_id": number,"ocupacion_otra": string,"persona_id": string,"servicio_medico": Database["public"]['Enums']["servicio_medico"],"servicio_medico_otro": string,"servicios_solicitados_area_ids": (number)[],"tiene_denuncia": boolean,"tiene_embarazo": boolean,"tiene_trabajo": boolean
+            }[]
+                           },
+"actualizar_mi_pre_registro":
 { Args: { "p_apellido_materno"?: string,"p_apellido_paterno"?: string,"p_celular"?: string,"p_nombres"?: string }; Returns: {
               "actualizado_en": string,"apellido_materno": string,"apellido_paterno": string,"celular": string,"curp": string,"id": string,"nombres": string
+            }[]
+                           },
+"actualizar_persona":
+{ Args: { "p_actualizado_en": string,"p_apellido_materno"?: string,"p_apellido_paterno"?: string,"p_celular"?: string,"p_discapacidad"?: string,"p_escolaridad"?: Database["public"]['Enums']["escolaridad_nivel"],"p_grupo_etnico"?: string,"p_nombres"?: string,"p_persona_id": string,"p_religion"?: string }; Returns: {
+              "actualizado_en": string,"apellido_materno": string,"apellido_paterno": string,"celular": string,"curp": string,"discapacidad": string,"entidad_nacimiento": string,"escolaridad": Database["public"]['Enums']["escolaridad_nivel"],"fecha_nacimiento": string,"grupo_etnico": string,"id": string,"nombres": string,"religion": string,"sexo": string
             }[]
                            },
 "archivar_ficha":
@@ -993,9 +1051,17 @@ isOneToOne: false
 "auth_rol":
 { Args: Record<PropertyKey, never>; Returns: Database["public"]['Enums']["rol_empleado"]
                            },
+"auth_tipo_cuenta":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
 "buscar_expedientes":
 { Args: { "p_incluir_archivados"?: boolean,"p_limite"?: number,"p_termino": string }; Returns: {
-              "coincidencia": string,"curp": string,"en_lista_urgencias": boolean,"estado": Database["public"]['Enums']["estado_ficha"],"fecha_nacimiento": string,"ficha_id": string,"folio": string,"nombre_completo": string,"persona_id": string,"sexo": string,"similitud": number
+              "coincidencia": string,"curp": string,"edad": number,"en_lista_urgencias": boolean,"estado": Database["public"]['Enums']["estado_ficha"],"fecha_nacimiento": string,"ficha_id": string,"folio": string,"nombre_completo": string,"persona_id": string,"sexo": string,"similitud": number
+            }[]
+                           },
+"buscar_personas_agenda":
+{ Args: { "p_limite"?: number,"p_q": string }; Returns: {
+              "celular": string,"curp_enmascarada": string,"ficha_id": string,"folio": string,"nombre_completo": string,"persona_id": string
             }[]
                            },
 "buscar_pre_registro_por_curp":
@@ -1003,19 +1069,55 @@ isOneToOne: false
               "apellido_materno": string,"apellido_paterno": string,"celular": string,"curp": string,"entidad_nacimiento": string,"fecha_nacimiento": string,"nombres": string,"persona_id": string,"pre_registro_id": string,"sexo": string
             }[]
                            },
+"calcular_edad":
+{ Args: { "p_fecha": string }; Returns: number
+                           },
 "cambiar_estado_cita":
 { Args: { "p_cita_id": string,"p_estado": Database["public"]['Enums']["estado_cita"],"p_motivo"?: string }; Returns: {
               "cita_id": string,"confirmada_en": string,"estado": Database["public"]['Enums']["estado_cita"]
             }[]
                            },
 "cambiar_estado_derivacion":
-{ Args: { "p_derivacion_id": string,"p_estado": Database["public"]['Enums']["estado_derivacion"] }; Returns: {
+{ Args: { "p_derivacion_id": string,"p_estado": Database["public"]['Enums']["estado_derivacion"],"p_nota"?: string }; Returns: {
               "actualizado_en": string,"derivacion_id": string,"estado": Database["public"]['Enums']["estado_derivacion"]
+            }[]
+                           },
+"cambiar_prioridad_expediente":
+{ Args: { "p_ficha_id": string,"p_prioridad": Database["public"]['Enums']["prioridad_nivel"] }; Returns: {
+              "ficha_id": string,"prioridad": Database["public"]['Enums']["prioridad_nivel"],"prioridad_actualizada_en": string
+            }[]
+                           },
+"corregir_seguimiento":
+{ Args: { "p_acciones_realizadas"?: string,"p_actualizado_en": string,"p_atencion_id": string,"p_observaciones"?: string,"p_prioridad"?: Database["public"]['Enums']["prioridad_nivel"],"p_proxima_accion"?: string,"p_tipo_atencion_id"?: number }; Returns: {
+              "actualizado_en": string,"atencion_id": string
+            }[]
+                           },
+"crear_canalizacion":
+{ Args: { "p_area_destino_id"?: number,"p_destino": Database["public"]['Enums']["destino_derivacion"],"p_ficha_id": string,"p_institucion_id"?: number,"p_institucion_otra"?: string,"p_motivo"?: string }; Returns: {
+              "aviso": string,"derivacion_id": string,"estado": Database["public"]['Enums']["estado_derivacion"]
+            }[]
+                           },
+"crear_cita":
+{ Args: { "p_area_id": number,"p_origen"?: Database["public"]['Enums']["origen_cita"],"p_persona_id": string,"p_programada_en": string,"p_recomendada_por"?: string }; Returns: {
+              "area_id": number,"cita_id": string,"estado": Database["public"]['Enums']["estado_cita"],"origen": Database["public"]['Enums']["origen_cita"],"persona_id": string,"programada_en": string
             }[]
                            },
 "crear_ficha_completa":
 { Args: { "p_payload": Json }; Returns: {
               "ficha_id": string,"folio": string,"persona_id": string
+            }[]
+                           },
+"desactivar_agresor":
+{ Args: { "p_agresor_id": string,"p_motivo"?: string }; Returns: {
+              "activo": boolean,"actualizado_en": string,"agresor_id": string
+            }[]
+                           },
+"desactivar_mi_cuenta":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"enviar_alerta":
+{ Args: { "p_asentamiento_id"?: number }; Returns: {
+              "alerta_id": string,"creado_en": string,"estado": Database["public"]['Enums']["estado_alerta"]
             }[]
                            },
 "es_area_atencion":
@@ -1033,17 +1135,23 @@ isOneToOne: false
 "es_umeca":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"es_usuaria_app":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"f_nombre_busqueda":
+{ Args: { "p_apellido_materno": string,"p_apellido_paterno": string,"p_nombres": string }; Returns: string
+                           },
 "generar_folio_ficha":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "get_actividades_preventivas":
-{ Args: { "p_desde"?: string,"p_hasta"?: string,"p_limite"?: number }; Returns: {
-              "asentamiento_id": number,"asentamiento_nombre": string,"codigo_postal": string,"creado_en": string,"creado_por": string,"creado_por_nombre": string,"direccion": string,"id": string,"municipio": string,"nivel_educativo": Database["public"]['Enums']["nivel_educativo"],"numero_asistentes": number,"participantes": Json,"programada_en": string,"referencias": string,"sede": string,"tipo_actividad_clave": string,"tipo_actividad_id": number,"tipo_actividad_nombre": string,"tipo_institucion": Database["public"]['Enums']["tipo_institucion_actividad"],"titulo": string
+{ Args: { "p_desde"?: string,"p_estado"?: Database["public"]['Enums']["estado_actividad"],"p_hasta"?: string,"p_limite"?: number }; Returns: {
+              "asentamiento_id": number,"asentamiento_nombre": string,"cancelada_motivo": string,"codigo_postal": string,"creado_en": string,"creado_por": string,"creado_por_nombre": string,"direccion": string,"estado": Database["public"]['Enums']["estado_actividad"],"id": string,"municipio": string,"nivel_educativo": Database["public"]['Enums']["nivel_educativo"],"numero_asistentes": number,"observaciones_cierre": string,"participantes": Json,"programada_en": string,"realizada_en": string,"referencias": string,"sede": string,"tipo_actividad_clave": string,"tipo_actividad_id": number,"tipo_actividad_nombre": string,"tipo_institucion": Database["public"]['Enums']["tipo_institucion_actividad"],"titulo": string
             }[]
                            },
 "get_agenda":
 { Args: { "p_area_id"?: number,"p_desde": string,"p_estados"?: (Database["public"]['Enums']["estado_cita"])[],"p_hasta": string,"p_limite"?: number }; Returns: {
-              "area_clave": string,"area_id": number,"celular": string,"cita_id": string,"estado": Database["public"]['Enums']["estado_cita"],"nombre_completo": string,"origen": Database["public"]['Enums']["origen_cita"],"persona_id": string,"prioridad": Database["public"]['Enums']["prioridad_nivel"],"programada_en": string,"reagendada_de": string,"recomendada_por": string
+              "area_clave": string,"area_id": number,"celular": string,"cita_id": string,"estado": Database["public"]['Enums']["estado_cita"],"nombre_completo": string,"origen": Database["public"]['Enums']["origen_cita"],"persona_id": string,"programada_en": string,"reagendada_de": string,"recomendada_por": string
             }[]
                            },
 "get_bitacora":
@@ -1056,6 +1164,11 @@ isOneToOne: false
               "alerta_id": string,"asentamiento_nombre": string,"atendida_por_nombre": string,"celular": string,"creado_en": string,"estado": Database["public"]['Enums']["estado_alerta"],"ficha_id": string,"folio": string,"nombre_completo": string,"origen": Database["public"]['Enums']["origen_alerta"],"persona_id": string,"prioridad": Database["public"]['Enums']["prioridad_nivel"],"tiene_orden_vigente": boolean,"tomada_en": string
             }[]
                            },
+"get_contexto_seguimiento":
+{ Args: { "p_cita_id": string }; Returns: {
+              "edad": number,"es_primera_vez_area": boolean,"ficha_id": string,"folio_expediente": string,"nombre_persona": string,"tiene_historial_clinico": boolean,"tiene_orden_vigente": boolean,"ultima_proxima_accion": string
+            }[]
+                           },
 "get_derivaciones":
 { Args: { "p_estado"?: Database["public"]['Enums']["estado_derivacion"],"p_ficha_id"?: string,"p_limite"?: number }; Returns: {
               "area_destino_id": number,"area_destino_nombre": string,"area_origen_id": number,"area_origen_nombre": string,"creado_en": string,"destino": Database["public"]['Enums']["destino_derivacion"],"estado": Database["public"]['Enums']["estado_derivacion"],"fecha_derivacion": string,"ficha_id": string,"folio": string,"id": string,"institucion_id": number,"institucion_nombre": string,"institucion_otra": string,"motivo": string,"usuaria_nombre": string
@@ -1063,6 +1176,16 @@ isOneToOne: false
                            },
 "get_expediente_detalle":
 { Args: { "p_ficha_id": string,"p_incluir_agresores"?: boolean }; Returns: Json
+                           },
+"get_historial_canalizaciones":
+{ Args: { "p_ficha_id": string }; Returns: {
+              "actualizado_en": string,"area_destino_id": number,"area_destino_nombre": string,"area_origen_id": number,"area_origen_nombre": string,"creado_en": string,"destino": Database["public"]['Enums']["destino_derivacion"],"estado": Database["public"]['Enums']["estado_derivacion"],"eventos": Json,"fecha_derivacion": string,"ficha_id": string,"id": string,"institucion_id": number,"institucion_nombre": string,"institucion_otra": string,"motivo": string
+            }[]
+                           },
+"get_historial_clinico":
+{ Args: { "p_ficha_id": string }; Returns: {
+              "actualizado_en": string,"antecedentes_familiares": string,"antecedentes_personales": string,"creado_en": string,"ficha_id": string,"id": string,"motivo_consulta": string,"observaciones_iniciales": string,"tiene_atencion_psicologica_previa": boolean
+            }[]
                            },
 "get_informe":
 { Args: { "p_anio": number,"p_area_id"?: number,"p_mes"?: number }; Returns: {
@@ -1076,12 +1199,17 @@ isOneToOne: false
                            },
 "get_lista_urgencias":
 { Args: { "p_area_id"?: number }; Returns: {
-              "area_ultima_prioridad": string,"celular": string,"fecha_ultima_prioridad": string,"ficha_id": string,"folio": string,"nombre_completo": string,"persona_id": string
+              "celular": string,"ficha_id": string,"folio": string,"nombre_completo": string,"persona_id": string,"prioridad_actualizada_en": string
             }[]
                            },
 "get_mapa_calor_asentamiento":
 { Args: { "p_umbral_minimo"?: number }; Returns: {
               "asentamiento_id": number,"codigo_postal": string,"estado": string,"latitud": number,"longitud": number,"municipio": string,"nombre": string,"tipo_asentamiento": string,"total_actividades": number,"total_alertas": number,"total_expedientes": number
+            }[]
+                           },
+"get_mi_estado_app":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "alertas_ultima_hora": number,"puede_enviar_alerta": boolean,"tiene_perfil": boolean
             }[]
                            },
 "get_mi_pre_registro":
@@ -1091,14 +1219,32 @@ isOneToOne: false
                            },
 "get_umeca_citas":
 { Args: Record<PropertyKey, never>; Returns: {
-              "apellido_materno": string,"apellido_paterno": string,"cita_id": string,"estado": string,"nombres": string,"programada_en": string
+              "apellido_materno": string,"apellido_paterno": string,"area_clave": string,"area_nombre": string,"cita_id": string,"estado": string,"nombres": string,"programada_en": string
+            }[]
+                           },
+"guardar_agresor":
+{ Args: { "p_actualizado_en"?: string,"p_agresor_id"?: string,"p_apellido_materno"?: string,"p_apellido_paterno"?: string,"p_asentamiento_id"?: number,"p_calle"?: string,"p_codigo_postal"?: string,"p_consumo_alcohol"?: Database["public"]['Enums']["consumo_alcohol"],"p_curp"?: string,"p_drogas"?: (Database["public"]['Enums']["tipo_droga"])[],"p_edad"?: number,"p_entidad_nacimiento"?: string,"p_especificacion_arma"?: string,"p_especificacion_droga"?: string,"p_estado_civil"?: Database["public"]['Enums']["estado_civil"],"p_fecha_nacimiento"?: string,"p_ficha_id"?: string,"p_nombres"?: string,"p_numero_exterior"?: string,"p_numero_interior"?: string,"p_observaciones"?: string,"p_ocupacion_id"?: number,"p_ocupacion_otra"?: string,"p_parentesco_id"?: number,"p_parentesco_otro"?: string,"p_referencias"?: string,"p_sexo"?: Database["public"]['Enums']["sexo_biologico"],"p_tipo_trabajo"?: Database["public"]['Enums']["tipo_trabajo"],"p_zona"?: Database["public"]['Enums']["zona_geografica"] }; Returns: {
+              "activo": boolean,"actualizado_en": string,"apellido_materno": string,"apellido_paterno": string,"asentamiento_id": number,"calle": string,"codigo_postal": string,"consumo_alcohol": Database["public"]['Enums']["consumo_alcohol"],"curp": string,"drogas": (Database["public"]['Enums']["tipo_droga"])[],"edad": number,"entidad_nacimiento": string,"especificacion_arma": string,"especificacion_droga": string,"estado_civil": Database["public"]['Enums']["estado_civil"],"fecha_nacimiento": string,"ficha_id": string,"id": string,"nombres": string,"numero_exterior": string,"numero_interior": string,"observaciones": string,"ocupacion_id": number,"ocupacion_otra": string,"parentesco_id": number,"parentesco_otro": string,"referencias": string,"sexo": Database["public"]['Enums']["sexo_biologico"],"tipo_trabajo": Database["public"]['Enums']["tipo_trabajo"],"zona": Database["public"]['Enums']["zona_geografica"]
+            }[]
+                           },
+"guardar_historial_clinico":
+{ Args: { "p_actualizado_en"?: string,"p_antecedentes_familiares"?: string,"p_antecedentes_personales"?: string,"p_ficha_id": string,"p_motivo_consulta"?: string,"p_observaciones_iniciales"?: string,"p_tiene_atencion_psicologica_previa"?: boolean }; Returns: {
+              "actualizado_en": string,"antecedentes_familiares": string,"antecedentes_personales": string,"ficha_id": string,"id": string,"motivo_consulta": string,"observaciones_iniciales": string,"tiene_atencion_psicologica_previa": boolean
             }[]
                            },
 "mi_pre_registro_id":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"puede_crear_cita_en_area":
+{ Args: { "p_area_id": number }; Returns: boolean
+                           },
+"reabrir_ficha":
+{ Args: { "p_ficha_id": string,"p_motivo"?: string }; Returns: {
+              "actualizado_en": string,"estado": Database["public"]['Enums']["estado_ficha"],"ficha_id": string
+            }[]
+                           },
 "reagendar_cita":
-{ Args: { "p_cita_id": string,"p_motivo"?: string,"p_nueva_fecha": string,"p_prioridad"?: Database["public"]['Enums']["prioridad_nivel"] }; Returns: {
+{ Args: { "p_cita_id": string,"p_motivo"?: string,"p_nueva_fecha": string }; Returns: {
               "cita_anterior_id": string,"cita_nueva_id": string,"estado": Database["public"]['Enums']["estado_cita"],"programada_en": string
             }[]
                            },
@@ -1109,6 +1255,16 @@ isOneToOne: false
                            },
 "registrar_consulta":
 { Args: { "p_registro_id": string,"p_tabla": string }; Returns: undefined
+                           },
+"registrar_estudio_socioeconomico":
+{ Args: { "p_aportantes"?: Json,"p_bienes"?: (Database["public"]['Enums']["bien_vivienda"])[],"p_especificacion_apoyo"?: string,"p_ficha_id": string,"p_ingreso_mensual_propio"?: number,"p_material"?: Database["public"]['Enums']["material_vivienda"],"p_material_otro"?: string,"p_numero_dependientes"?: number,"p_servicios"?: (Database["public"]['Enums']["servicio_vivienda"])[],"p_tiene_apoyo"?: boolean,"p_tipo_vivienda"?: Database["public"]['Enums']["tipo_vivienda"] }; Returns: {
+              "actualizado_en": string,"es_actual": boolean,"estudio_id": string,"fecha_estudio": string,"ficha_id": string,"fue_correccion": boolean
+            }[]
+                           },
+"registrar_mi_perfil":
+{ Args: { "p_apellido_materno"?: string,"p_apellido_paterno": string,"p_aviso_privacidad_aceptado"?: boolean,"p_celular"?: string,"p_curp": string,"p_nombres": string }; Returns: {
+              "apellido_materno": string,"apellido_paterno": string,"aviso_privacidad_aceptado_en": string,"celular": string,"creado_en": string,"curp": string,"id": string,"nombres": string
+            }[]
                            },
 "registrar_seguimiento":
 { Args: { "p_acciones_realizadas"?: string,"p_cita_id"?: string,"p_ficha_id": string,"p_observaciones"?: string,"p_prioridad"?: Database["public"]['Enums']["prioridad_nivel"],"p_proxima_accion"?: string,"p_proxima_cita_en"?: string,"p_tipo_atencion_id"?: number }; Returns: {
@@ -1133,7 +1289,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "accion_bitacora": "ver"|"crear"|"actualizar"|"desactivar","bien_vivienda": "estufa"|"refrigerador"|"lavadora"|"aire_acondicionado"|"abanico"|"tv"|"microondas"|"computadora","categoria_institucion": "emergencia"|"denuncia"|"orientacion_legal"|"atencion_psicologica"|"trabajo_social"|"refugio"|"salud"|"linea_apoyo","destino_derivacion": "trabajo_social"|"psicologia"|"juridico"|"fiscalia"|"refugio"|"capacitacion"|"otra_institucion","escolaridad_nivel": "ninguna"|"primaria"|"secundaria"|"preparatoria"|"carrera"|"otros_estudios","estado_alerta": "nueva"|"tomada"|"atendida","estado_cita": "agendada"|"confirmada"|"cancelada"|"reagendada"|"asistio"|"no_asistio","estado_civil": "soltero"|"casado"|"union_libre"|"separado"|"divorciado"|"viudo","estado_derivacion": "pendiente"|"en_proceso"|"concluida"|"cancelada","estado_ficha": "abierto"|"en_seguimiento"|"cerrado"|"archivado","estado_orden_proteccion": "vigente"|"vencida"|"cancelada"|"en_tramite","frecuencia_ingreso": "diario"|"semanal"|"quincenal"|"mensual"|"variable","material_vivienda": "ladrillo"|"lamina"|"block"|"madera"|"carton"|"otro","nivel_educativo": "primaria"|"secundaria"|"preparatoria"|"universidad","origen_alerta": "app_movil"|"telefono"|"presencial","origen_cita": "regular"|"umeca","prioridad_nivel": "alta"|"media"|"baja","rol_empleado": "titular"|"subdireccion"|"trabajo_social"|"psicologia"|"juridico"|"recepcion","servicio_medico": "ninguno"|"imss"|"issste"|"imss_bienestar"|"particular"|"otro","servicio_vivienda": "agua"|"drenaje"|"luz"|"pavimento"|"cable"|"internet","sexo_biologico": "H"|"M","tipo_droga": "marihuana"|"cristal"|"cocaina"|"inhalantes"|"medicamento_controlado"|"otra","tipo_institucion_actividad": "escuela"|"empresa_privada"|"sector_publico"|"comunidad"|"otro","tipo_trabajo": "fijo"|"temporal"|"negocio_propio","tipo_vivienda": "propia"|"hipotecada"|"rentada"|"invasion"|"infonavit"|"prestada","zona_geografica": "urbana"|"rural"
+            "accion_bitacora": "ver"|"crear"|"actualizar"|"desactivar","bien_vivienda": "estufa"|"refrigerador"|"lavadora"|"aire_acondicionado"|"abanico"|"tv"|"microondas"|"computadora","categoria_institucion": "emergencia"|"denuncia"|"orientacion_legal"|"atencion_psicologica"|"trabajo_social"|"refugio"|"salud"|"linea_apoyo","consumo_alcohol": "no_consume"|"ocasional"|"frecuente","destino_derivacion": "trabajo_social"|"psicologia"|"juridico"|"fiscalia"|"refugio"|"capacitacion"|"otra_institucion","escolaridad_nivel": "ninguna"|"primaria"|"secundaria"|"preparatoria"|"carrera"|"otros_estudios","estado_actividad": "pendiente"|"realizada"|"cancelada","estado_alerta": "nueva"|"tomada"|"atendida","estado_cita": "agendada"|"confirmada"|"cancelada"|"reagendada"|"asistio"|"no_asistio","estado_civil": "soltero"|"casado"|"union_libre"|"separado"|"divorciado"|"viudo","estado_derivacion": "pendiente"|"en_proceso"|"concluida"|"cancelada","estado_ficha": "abierto"|"en_seguimiento"|"cerrado"|"archivado","estado_orden_proteccion": "vigente"|"vencida"|"cancelada"|"en_tramite","frecuencia_ingreso": "diario"|"semanal"|"quincenal"|"mensual"|"variable","material_vivienda": "ladrillo"|"lamina"|"block"|"madera"|"carton"|"otro","nivel_educativo": "primaria"|"secundaria"|"preparatoria"|"universidad","origen_alerta": "app_movil"|"telefono"|"presencial","origen_cita": "regular"|"umeca","prioridad_nivel": "alta"|"media"|"baja","rol_empleado": "titular"|"subdireccion"|"trabajo_social"|"psicologia"|"juridico"|"recepcion","servicio_medico": "ninguno"|"imss"|"issste"|"imss_bienestar"|"particular"|"otro","servicio_vivienda": "agua"|"drenaje"|"luz"|"pavimento"|"cable"|"internet","sexo_biologico": "H"|"M","tipo_droga": "no_consume"|"marihuana"|"cristal"|"cocaina"|"inhalantes"|"medicamento_controlado"|"otra","tipo_institucion_actividad": "escuela"|"empresa_privada"|"sector_publico"|"comunidad"|"otro","tipo_trabajo": "fijo"|"temporal"|"negocio_propio","tipo_vivienda": "propia"|"hipotecada"|"rentada"|"invasion"|"infonavit"|"prestada","zona_geografica": "urbana"|"rural"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -1253,7 +1409,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "accion_bitacora": ["ver", "crear", "actualizar", "desactivar"],"bien_vivienda": ["estufa", "refrigerador", "lavadora", "aire_acondicionado", "abanico", "tv", "microondas", "computadora"],"categoria_institucion": ["emergencia", "denuncia", "orientacion_legal", "atencion_psicologica", "trabajo_social", "refugio", "salud", "linea_apoyo"],"destino_derivacion": ["trabajo_social", "psicologia", "juridico", "fiscalia", "refugio", "capacitacion", "otra_institucion"],"escolaridad_nivel": ["ninguna", "primaria", "secundaria", "preparatoria", "carrera", "otros_estudios"],"estado_alerta": ["nueva", "tomada", "atendida"],"estado_cita": ["agendada", "confirmada", "cancelada", "reagendada", "asistio", "no_asistio"],"estado_civil": ["soltero", "casado", "union_libre", "separado", "divorciado", "viudo"],"estado_derivacion": ["pendiente", "en_proceso", "concluida", "cancelada"],"estado_ficha": ["abierto", "en_seguimiento", "cerrado", "archivado"],"estado_orden_proteccion": ["vigente", "vencida", "cancelada", "en_tramite"],"frecuencia_ingreso": ["diario", "semanal", "quincenal", "mensual", "variable"],"material_vivienda": ["ladrillo", "lamina", "block", "madera", "carton", "otro"],"nivel_educativo": ["primaria", "secundaria", "preparatoria", "universidad"],"origen_alerta": ["app_movil", "telefono", "presencial"],"origen_cita": ["regular", "umeca"],"prioridad_nivel": ["alta", "media", "baja"],"rol_empleado": ["titular", "subdireccion", "trabajo_social", "psicologia", "juridico", "recepcion"],"servicio_medico": ["ninguno", "imss", "issste", "imss_bienestar", "particular", "otro"],"servicio_vivienda": ["agua", "drenaje", "luz", "pavimento", "cable", "internet"],"sexo_biologico": ["H", "M"],"tipo_droga": ["marihuana", "cristal", "cocaina", "inhalantes", "medicamento_controlado", "otra"],"tipo_institucion_actividad": ["escuela", "empresa_privada", "sector_publico", "comunidad", "otro"],"tipo_trabajo": ["fijo", "temporal", "negocio_propio"],"tipo_vivienda": ["propia", "hipotecada", "rentada", "invasion", "infonavit", "prestada"],"zona_geografica": ["urbana", "rural"]
+            "accion_bitacora": ["ver", "crear", "actualizar", "desactivar"],"bien_vivienda": ["estufa", "refrigerador", "lavadora", "aire_acondicionado", "abanico", "tv", "microondas", "computadora"],"categoria_institucion": ["emergencia", "denuncia", "orientacion_legal", "atencion_psicologica", "trabajo_social", "refugio", "salud", "linea_apoyo"],"consumo_alcohol": ["no_consume", "ocasional", "frecuente"],"destino_derivacion": ["trabajo_social", "psicologia", "juridico", "fiscalia", "refugio", "capacitacion", "otra_institucion"],"escolaridad_nivel": ["ninguna", "primaria", "secundaria", "preparatoria", "carrera", "otros_estudios"],"estado_actividad": ["pendiente", "realizada", "cancelada"],"estado_alerta": ["nueva", "tomada", "atendida"],"estado_cita": ["agendada", "confirmada", "cancelada", "reagendada", "asistio", "no_asistio"],"estado_civil": ["soltero", "casado", "union_libre", "separado", "divorciado", "viudo"],"estado_derivacion": ["pendiente", "en_proceso", "concluida", "cancelada"],"estado_ficha": ["abierto", "en_seguimiento", "cerrado", "archivado"],"estado_orden_proteccion": ["vigente", "vencida", "cancelada", "en_tramite"],"frecuencia_ingreso": ["diario", "semanal", "quincenal", "mensual", "variable"],"material_vivienda": ["ladrillo", "lamina", "block", "madera", "carton", "otro"],"nivel_educativo": ["primaria", "secundaria", "preparatoria", "universidad"],"origen_alerta": ["app_movil", "telefono", "presencial"],"origen_cita": ["regular", "umeca"],"prioridad_nivel": ["alta", "media", "baja"],"rol_empleado": ["titular", "subdireccion", "trabajo_social", "psicologia", "juridico", "recepcion"],"servicio_medico": ["ninguno", "imss", "issste", "imss_bienestar", "particular", "otro"],"servicio_vivienda": ["agua", "drenaje", "luz", "pavimento", "cable", "internet"],"sexo_biologico": ["H", "M"],"tipo_droga": ["no_consume", "marihuana", "cristal", "cocaina", "inhalantes", "medicamento_controlado", "otra"],"tipo_institucion_actividad": ["escuela", "empresa_privada", "sector_publico", "comunidad", "otro"],"tipo_trabajo": ["fijo", "temporal", "negocio_propio"],"tipo_vivienda": ["propia", "hipotecada", "rentada", "invasion", "infonavit", "prestada"],"zona_geografica": ["urbana", "rural"]
           }
         }
 } as const

@@ -3,6 +3,7 @@ import { EmptyState, Skeleton, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/skeleton';
 import { Icon } from '@/shared/ui/Icon';
+import type { EstadoFicha } from '@/domain/models/Persona';
 import {
   ESTADO_DERIVACION_LABELS,
   extraerMensajeErrorDerivacion,
@@ -16,6 +17,7 @@ import { DerivacionTimelineList } from './canalizaciones/DerivacionTimelineList'
 interface Props {
   fichaId: string;
   folio: string;
+  estado?: EstadoFicha;
 }
 
 const EMPTY_CREATE_ACTIONS = [{ id: 'create', label: 'Nueva canalización' }];
@@ -25,7 +27,8 @@ const RETRY_ACTIONS = [{ id: 'retry', label: 'Reintentar' }];
  * Pestaña de canalizaciones dentro del Drawer de un expediente (`RF-08`).
  * Alta en un diálogo simple (prefijado con este expediente) y línea de tiempo con transiciones de estado.
  */
-export function DerivacionesExpedientePanel({ fichaId, folio }: Props) {
+export function DerivacionesExpedientePanel({ fichaId, folio, estado }: Props) {
+  const isArchivado = estado === 'archivado';
   const { data: derivaciones = [], isLoading, isError, refetch } = useDerivacionesByFicha(fichaId);
   const updateEstado = useUpdateEstadoDerivacion();
 
@@ -92,19 +95,27 @@ export function DerivacionesExpedientePanel({ fichaId, folio }: Props) {
           </p>
         </div>
 
-        <button
-          ref={toggleBtnRef}
-          type="button"
-          aria-haspopup="dialog"
-          className="mk-button mk-button--sm mk-button--primary"
-          onClick={openCreate}
-        >
-          <Icon name="alt_route" />
-          <span>Canalizar</span>
-        </button>
+        {!isArchivado ? (
+          <button
+            ref={toggleBtnRef}
+            type="button"
+            aria-haspopup="dialog"
+            className="mk-button mk-button--sm mk-button--primary"
+            onClick={openCreate}
+          >
+            <Icon name="alt_route" />
+            <span>Canalizar</span>
+          </button>
+        ) : null}
       </div>
 
-      {creating || dialogMounted ? (
+      {isArchivado ? (
+        <p className="rounded-xl border border-outline-variant bg-surface-container-low px-3.5 py-2 text-xs font-medium text-on-surface-variant">
+          Expediente archivado: solo consulta
+        </p>
+      ) : null}
+
+      {!isArchivado && (creating || dialogMounted) ? (
         <CanalizacionFormDialog
           open={creating}
           onOpenChange={handleDialogOpenChange}
@@ -131,9 +142,13 @@ export function DerivacionesExpedientePanel({ fichaId, folio }: Props) {
               <EmptyState
                 illustration="inbox"
                 title="Sin canalizaciones en este expediente"
-                description="Registra una derivación interna o externa cuando el caso lo requiera."
-                actions={EMPTY_CREATE_ACTIONS}
-                onAction={openCreate}
+                description={
+                  isArchivado
+                    ? 'No hay canalizaciones registradas en este expediente.'
+                    : 'Registra una derivación interna o externa cuando el caso lo requiera.'
+                }
+                actions={isArchivado ? undefined : EMPTY_CREATE_ACTIONS}
+                onAction={isArchivado ? undefined : openCreate}
               />
             </div>
           ) : (

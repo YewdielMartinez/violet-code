@@ -1,5 +1,6 @@
 # RPC: `public.desactivar_agresor`
 
+- **Versión:** [`20261127000500_36`](../../migrations/20261127000500_36_rpc_guardar_agresor.sql)
 - **Migración:** `supabase/migrations/20261127000500_36_rpc_guardar_agresor.sql`
 - **Cubre:** `RF-05`, `RN-15.1` (Sprint 02 · A-04)
 

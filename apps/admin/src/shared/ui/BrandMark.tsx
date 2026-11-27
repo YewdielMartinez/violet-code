@@ -1,7 +1,9 @@
+/** Proporción del recorte del logotipo (`public/logo-ahome.png`: 1260 × 408 px, fondo transparente). */
+const LOGO_ASPECT = 1260 / 408;
+
 /**
- * Marca de Violet Code: una "V" abierta con un punto encima.
- * Se lee como una persona con los brazos en alto (pedir ayuda) y como un punto en el mapa (Punto Violeta).
- * Mismo dibujo que public/favicon.svg. Los colores van en `style` (los atributos SVG no aceptan var()).
+ * Logotipo institucional «Ahome» (sin lema).
+ * `size` es el alto en px; el ancho se deriva de la proporción para no deformarlo.
  */
 export function BrandMark({ size = 36, className = '' }: { size?: number; className?: string }) {
   return (

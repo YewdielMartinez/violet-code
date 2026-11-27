@@ -33,10 +33,13 @@ export default function NuevaFichaPage() {
 
   const canCreate = user ? canLookupPreRegistro(user.role) : false;
 
+  const { data: catalogos } = useCatalogosFicha(canCreate);
+
   const {
     step,
     stepError,
     invalidField,
+    agresorErrors,
     duplicateExpediente,
     setDuplicateExpediente,
     isDirty,
@@ -44,6 +47,8 @@ export default function NuevaFichaPage() {
     setIdentidad,
     domicilio,
     setDomicilio,
+    agresor,
+    setAgresor,
     estudio,
     setEstudio,
     initialize,
@@ -52,11 +57,10 @@ export default function NuevaFichaPage() {
     goBack,
     submit,
     isSubmitting,
-  } = useFichaForm();
+  } = useFichaForm(catalogos);
 
-  const blocker = useUnsavedChangesGuard(canCreate && isDirty);
-
-  const { data: catalogos } = useCatalogosFicha(canCreate);
+  const savedRef = useRef(false);
+  const blocker = useUnsavedChangesGuard(canCreate && isDirty, savedRef);
 
   useEffect(() => {
     initialize(seed ?? undefined);
@@ -87,8 +91,17 @@ export default function NuevaFichaPage() {
         else pendingFocusFieldRef.current = field;
       });
       if (!created) return;
-      toast(`Expediente ${created.folio} registrado.`);
-      navigate('/expedientes', { replace: true });
+      savedRef.current = true;
+      toast(`Expediente ${created.folio} registrado.`, { tone: 'success' });
+      if (created.agresorError) {
+        toast(
+          `No se pudo guardar la persona agresora: ${created.agresorError}. Puedes agregarla desde el expediente.`,
+          { tone: 'error' },
+        );
+      }
+      // Vuelve a la vista anterior; si no hay historial interno, respalda en /expedientes.
+      if (window.history.state?.idx > 0) navigate(-1);
+      else navigate('/expedientes', { replace: true });
     } catch (err) {
       const msg =
         typeof err === 'object' &&
@@ -120,7 +133,7 @@ export default function NuevaFichaPage() {
         subtitle={
           seed?.preRegistro
             ? `Datos precargados desde app móvil para ${seed.preRegistro.nombreCompleto}.`
-            : 'Captura inicial del expediente, domicilio y estudio socioeconómico.'
+            : 'Captura inicial del expediente, domicilio, persona agresora y estudio socioeconómico.'
         }
       />
 
@@ -136,11 +149,14 @@ export default function NuevaFichaPage() {
             step={step}
             stepError={stepError}
             invalidField={invalidField}
+            agresorErrors={agresorErrors}
             duplicateExpediente={duplicateExpediente}
             identidad={identidad}
             onIdentidadChange={setIdentidad}
             domicilio={domicilio}
             onDomicilioChange={setDomicilio}
+            agresor={agresor}
+            onAgresorChange={setAgresor}
             estudio={estudio}
             onEstudioChange={setEstudio}
             catalogos={catalogos}

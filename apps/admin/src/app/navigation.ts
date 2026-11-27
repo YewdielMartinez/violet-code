@@ -1,3 +1,4 @@
+import { puedeRegistrarActividad } from '@/domain/models/ActividadPreventiva';
 import type { StaffRole } from '@/domain/models/Auth';
 
 /**
@@ -93,7 +94,7 @@ export const NAVIGATION: NavPage[] = [
     path: '/usuarios',
     label: 'Usuarios',
     icon: 'manage_accounts',
-    ready: false,
+    ready: true,
     allowedRoles: DIRECTION_ONLY,
   },
 ];
@@ -125,6 +126,12 @@ export function canAccessPath(role: StaffRole | undefined, pathname: string): bo
   if (!role) return false;
   if (pathname === '/expedientes/nuevo') {
     return role === 'titular' || role === 'subdireccion' || role === 'trabajo_social';
+  }
+  if (pathname === '/actividades/nuevo') {
+    return puedeRegistrarActividad(role);
+  }
+  if (pathname.startsWith('/usuarios/')) {
+    return DIRECTION_ONLY.includes(role);
   }
   if (pathname.startsWith('/expedientes/')) {
     return ATTENTION_AND_DIRECTION.includes(role);

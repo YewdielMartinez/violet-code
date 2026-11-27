@@ -1,6 +1,7 @@
 # `get_expediente_detalle`
 
-- **Migración:** [`20261126000800_18_rpc_detalle_y_archivo.sql`](../../migrations/20261126000800_18_rpc_detalle_y_archivo.sql)
+- **Versión:** [`20261128002100_62`](../../migrations/20261128002100_62_detalle_actualizado_en.sql)
+- **Migración:** [`20261128001800_60_integrar_develop_y_supabase.sql`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql) *(actualiza [`20261128001100_50_prioridad_en_expediente.sql`](../../migrations/20261128001100_50_prioridad_en_expediente.sql), [`20261128000900_48_edad_en_expediente.sql`](../../migrations/20261128000900_48_edad_en_expediente.sql) y [`20261126000800_18_rpc_detalle_y_archivo.sql`](../../migrations/20261126000800_18_rpc_detalle_y_archivo.sql))*
 - **Permiso RBAC:** `tiene_permiso('expediente.ver')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico` (`recepcion` y `umeca` denegados).
 
@@ -12,14 +13,14 @@
 
 ## 2. Salida
 Objeto `jsonb` único con:
-- `ficha`: datos de `ficha_registro` + `ocupacion_nombre`.
-- `persona`: datos de `persona`.
+- `ficha`: datos de `ficha_registro` (incluyendo `prioridad`, `prioridad_actualizada_en` y `actualizado_en`) + `ocupacion_nombre`.
+- `persona`: datos de `persona` (incluyendo `actualizado_en`) + `edad` calculada en servidor (`calcular_edad()`).
 - `servicios_solicitados`: arreglo `{ area_id, clave, nombre }`.
-- `domicilio_actual`: domicilio actual activo (o `null`).
-- `estudio_actual`: estudio socioeconómico actual activo + `aportantes` (o `null`).
+- `domicilio_actual`: domicilio actual activo con `actualizado_en` (o `null`).
+- `estudio_actual`: estudio socioeconómico actual activo con `actualizado_en` + `aportantes` (o `null`).
 - `orden_vigente`: `boolean`.
 - `citas_hoy`: citas activas del día (`America/Mazatlan`) filtradas por el rol del actor.
-- `agresores`: arreglo de agresores activos *(solo si `p_incluir_agresores = true`)*.
+- `agresores`: arreglo de agresores activos *(solo si `p_incluir_agresores = true`)*, incluyendo `edad` calculada cuando tiene `fecha_nacimiento`.
 
 ## 3. Reglas ABAC y efectos secundarios
 - Inserta `'ver'` en `public.bitacora_acceso` para `ficha_registro` (y para `agresor` si `p_incluir_agresores = true`).

@@ -13,7 +13,7 @@ create extension if not exists pgtap with schema extensions;
 
 begin;
 
-select plan(79);
+select plan(80);
 
 -- Fixtures deterministas (como superusuario antes de activar authenticated)
 do $$
@@ -63,11 +63,11 @@ begin
 
   -- Citas fijas por área (TS, Psicología, Jurídico)
   insert into public.cita (
-    id, persona_id, area_id, programada_en, prioridad, estado, origen, creado_por
+    id, persona_id, area_id, programada_en, estado, origen, creado_por
   ) values
-    ('cccccccc-2100-4000-8000-000000000001', v_per_1, v_area_ts,   now() + interval '10 days', 'media', 'agendada', 'regular', v_uid_ts),
-    ('cccccccc-2100-4000-8000-000000000002', v_per_1, v_area_psic, now() + interval '11 days', 'media', 'agendada', 'regular', v_uid_psic),
-    ('cccccccc-2100-4000-8000-000000000003', v_per_1, v_area_jur,  now() + interval '12 days', 'media', 'agendada', 'regular', v_uid_jur)
+    ('cccccccc-2100-4000-8000-000000000001', v_per_1, v_area_ts,   now() + interval '10 days', 'agendada', 'regular', v_uid_ts),
+    ('cccccccc-2100-4000-8000-000000000002', v_per_1, v_area_psic, now() + interval '11 days', 'agendada', 'regular', v_uid_psic),
+    ('cccccccc-2100-4000-8000-000000000003', v_per_1, v_area_jur,  now() + interval '12 days', 'agendada', 'regular', v_uid_jur)
   on conflict (id) do nothing;
 
   -- Atenciones fijas por área (TS, Psicología, Jurídico)
@@ -119,13 +119,13 @@ select pg_temp.set_actor('11111111-1111-4111-8111-111111111101'::uuid); -- titul
 select ok((select count(*) >= 1 from public.domicilio), 'titular lee domicilio');
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111103'::uuid); -- trabajo_social
-select lives_ok(
+select throws_ok(
   $$insert into public.domicilio (id, persona_id, calle, es_actual) values ('44444444-2100-4000-8000-000000000091', '33333333-3333-4333-8333-333333333301', 'Calle A06', false)$$,
-  'trabajo_social inserta domicilio'
+  '42501', null, 'trabajo_social no inserta domicilio directamente (with check false)'
 );
-select lives_ok(
-  $$update public.domicilio set referencias = 'Ref A06' where id = '44444444-2100-4000-8000-000000000091'$$,
-  'trabajo_social actualiza domicilio'
+select throws_ok(
+  $$update public.domicilio set referencias = 'Ref A06' where persona_id = '33333333-3333-4333-8333-333333333301'$$,
+  '42501', null, 'trabajo_social no actualiza domicilio directamente (with check false)'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111104'::uuid); -- psicologia
@@ -261,9 +261,9 @@ select is(
   (select count(*)::int from public.cita where id in ('cccccccc-2100-4000-8000-000000000001','cccccccc-2100-4000-8000-000000000002','cccccccc-2100-4000-8000-000000000003')),
   3, 'titular ve citas de todas las areas'
 );
-select lives_ok(
+select throws_ok(
   $$insert into public.cita (persona_id, area_id, programada_en) values ('33333333-3333-4333-8333-333333333301', (select id from public.cat_area where clave = 'juridico'), now() + interval '20 days')$$,
-  'titular inserta cita en cualquier area (direccion crea)'
+  '42501', null, 'titular no inserta cita directo (usa crear_cita)'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111106'::uuid); -- recepcion
@@ -271,13 +271,13 @@ select is(
   (select count(*)::int from public.cita where id in ('cccccccc-2100-4000-8000-000000000001','cccccccc-2100-4000-8000-000000000002','cccccccc-2100-4000-8000-000000000003')),
   3, 'recepcion ve citas de TS, Psic y Jur'
 );
-select lives_ok(
+select throws_ok(
   $$insert into public.cita (persona_id, area_id, programada_en) values ('33333333-3333-4333-8333-333333333301', (select id from public.cat_area where clave = 'psicologia'), now() + interval '21 days')$$,
-  'recepcion agenda cita de psicologia'
+  '42501', null, 'recepcion no inserta cita directo (usa crear_cita)'
 );
-select lives_ok(
+select throws_ok(
   $$insert into public.cita (persona_id, area_id, programada_en) values ('33333333-3333-4333-8333-333333333301', (select id from public.cat_area where clave = 'juridico'), now() + interval '22 days')$$,
-  'recepcion agenda cita de juridico'
+  '42501', null, 'recepcion no inserta cita de juridico directo (usa crear_cita)'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111103'::uuid); -- trabajo_social
@@ -287,7 +287,7 @@ select is(
 );
 select throws_ok(
   $$insert into public.cita (persona_id, area_id, programada_en) values ('33333333-3333-4333-8333-333333333301', (select id from public.cat_area where clave = 'trabajo_social'), now() + interval '23 days')$$,
-  '42501', null, 'trabajo_social no inserta cita (nunca crea)'
+  '42501', null, 'trabajo_social no inserta cita directo (usa crear_cita)'
 );
 select throws_ok(
   $$insert into public.cita (persona_id, area_id, programada_en) values ('33333333-3333-4333-8333-333333333301', (select id from public.cat_area where clave = 'psicologia'), now() + interval '24 days')$$,
@@ -309,9 +309,9 @@ select is(
   (select count(*)::int from public.cita where id in ('cccccccc-2100-4000-8000-000000000001','cccccccc-2100-4000-8000-000000000002','cccccccc-2100-4000-8000-000000000003')),
   1, 'juridico solo ve su cita'
 );
-select lives_ok(
+select throws_ok(
   $$insert into public.cita (persona_id, area_id, programada_en) values ('33333333-3333-4333-8333-333333333301', (select id from public.cat_area where clave = 'juridico'), now() + interval '26 days')$$,
-  'juridico inserta cita en su area'
+  '42501', null, 'juridico no inserta cita directo (usa crear_cita)'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111107'::uuid); -- umeca
@@ -339,12 +339,11 @@ select throws_ok(
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111104'::uuid); -- psicologia
-with upd as (
-  update public.atencion set observaciones = 'Act Psic'
-  where id = 'eeeeeeee-2100-4000-8000-000000000002'
-  returning 1
-)
-select is((select count(*)::int from upd), 1, 'psicologia actualiza su atencion');
+select throws_ok(
+  $$update public.atencion set observaciones = 'Act Psic'
+    where id = 'eeeeeeee-2100-4000-8000-000000000002'$$,
+  '42501', null, 'psicologia no actualiza atencion directamente (with check false)'
+);
 with upd as (
   update public.atencion set observaciones = 'Act TS'
   where id = 'eeeeeeee-2100-4000-8000-000000000001'
@@ -353,22 +352,31 @@ with upd as (
 select is((select count(*)::int from upd), 0, 'psicologia no actualiza atencion de TS');
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111105'::uuid); -- juridico
-select lives_ok(
+select throws_ok(
   $$insert into public.atencion (ficha_id, area_id, tipo_atencion_id) values ('55555555-5555-4555-8555-555555555501', (select id from public.cat_area where clave = 'juridico'), (select id from public.cat_tipo_atencion where clave = 'asesoria_juridica'))$$,
-  'juridico inserta atencion en su area'
+  '42501', null, 'juridico no inserta atencion directamente (with check false)'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111106'::uuid); -- recepcion
 select is((select count(*)::int from public.atencion), 0, 'recepcion no lee atencion');
 
 -- =====================================================================
--- 6. nota_area (privada por área; Dirección sin acceso)
+-- 6. nota_area (privada entre áreas; Dirección lee todas sin escribir)
 -- =====================================================================
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111101'::uuid); -- titular
-select is((select count(*)::int from public.nota_area), 0, 'titular no lee nota_area');
+select is(
+  (select count(*)::int from public.nota_area where id in ('ffffffff-2100-4000-8000-000000000001','ffffffff-2100-4000-8000-000000000002','ffffffff-2100-4000-8000-000000000003')),
+  3, 'titular lee las 3 nota_area'
+);
 select throws_ok(
   $$insert into public.nota_area (ficha_id, area_id, contenido) values ('55555555-5555-4555-8555-555555555501', (select id from public.cat_area where clave = 'trabajo_social'), 'Nota titular')$$,
   '42501', null, 'titular no inserta nota_area'
+);
+
+select pg_temp.set_actor('11111111-1111-4111-8111-111111111102'::uuid); -- subdireccion
+select is(
+  (select count(*)::int from public.nota_area where id in ('ffffffff-2100-4000-8000-000000000001','ffffffff-2100-4000-8000-000000000002','ffffffff-2100-4000-8000-000000000003')),
+  3, 'subdireccion lee las 3 nota_area'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111103'::uuid); -- trabajo_social

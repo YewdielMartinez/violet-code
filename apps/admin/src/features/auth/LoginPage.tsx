@@ -8,7 +8,7 @@ import '@yewdiel21/motion-kit/css/components/pill-button';
 import { AuthError, login, refreshSession } from '@/shared/auth/session';
 import { useAuth } from '@/shared/auth/useAuth';
 import { PasswordField } from './PasswordField';
-import { BrandMark } from '@/shared/ui/BrandMark';
+import { BrandMark, BrandName } from '@/shared/ui/BrandMark';
 import { useDocumentTitle } from '@/shared/ui/PageHeader';
 import { ThemeToggleButton } from '@/shared/ui/ThemeToggleButton';
 import { LoginHero } from './LoginHero';

@@ -12,40 +12,56 @@ import {
   type CSSProperties,
   type ReactNode,
   type RefObject,
-} from 'react';
-import { useSearchParams } from 'react-router-dom';
-import gsap from 'gsap';
-import { Dialog } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/dialog';
-import type { StaffRole } from '@/domain/models/Auth';
-import type { ExpedienteResumen } from '@/domain/models/Persona';
-import { puedeAccederAgresor } from './agresorApi';
-import { ExpedienteContactoSection } from './drawer/ExpedienteContactoSection';
-import { ExpedienteDrawerTabs, type DrawerTab } from './drawer/ExpedienteDrawerTabs';
-import { ExpedienteHeroCard } from './drawer/ExpedienteHeroCard';
-import { ExpedienteTopBar } from './drawer/ExpedienteTopBar';
-import { prefersReducedMotion } from './drawer/formatters';
-import './drawer/expediente-drawer.css';
-import { FichaDetalleResumen } from './ficha/FichaDetalleResumen';
-import { FichaGestionAcciones } from './ficha/FichaGestionAcciones';
+} from "react";
+import { useSearchParams } from "react-router-dom";
+import gsap from "gsap";
+import { Dialog } from "@yewdiel21/motion-kit/react";
+import "@yewdiel21/motion-kit/css/components/dialog";
+import type { StaffRole } from "@/domain/models/Auth";
+import { puedeAccederHistorialClinico } from "@/domain/models/FichaRegistro";
+import type { ExpedienteResumen } from "@/domain/models/Persona";
+import { puedeAccederAgresor } from "./agresorApi";
+import { ExpedienteContactoSection } from "./drawer/ExpedienteContactoSection";
+import {
+  ExpedienteDrawerTabs,
+  type DrawerTab,
+} from "./drawer/ExpedienteDrawerTabs";
+import { ExpedienteHeroCard } from "./drawer/ExpedienteHeroCard";
+import { ExpedienteTopBar } from "./drawer/ExpedienteTopBar";
+import { prefersReducedMotion } from "./drawer/formatters";
+import "./drawer/expediente-drawer.css";
+import { FichaDetalleResumen } from "./ficha/FichaDetalleResumen";
 
 // Pestañas sensibles en chunks propios: solo las descarga quien tiene acceso y las abre.
-const loadAgresorFormSection = () => import('./AgresorFormSection');
-const loadDocumentosAdjuntosPanel = () => import('./DocumentosAdjuntosPanel');
-const loadDerivacionesExpedientePanel = () => import('./DerivacionesExpedientePanel');
-const loadOrdenesProteccionPanel = () => import('@/features/solicitudes/OrdenesProteccionPanel');
-const loadExpedienteTimeline = () => import('@/features/intervenciones/ExpedienteTimeline');
-const loadNotasPrivadasPanel = () => import('@/features/intervenciones/NotasPrivadasPanel');
-const AgresorFormSection = lazy(() => loadAgresorFormSection().then((m) => ({ default: m.AgresorFormSection })));
+const loadAgresorFormSection = () => import("./AgresorFormSection");
+const loadDocumentosAdjuntosPanel = () => import("./DocumentosAdjuntosPanel");
+const loadDerivacionesExpedientePanel = () =>
+  import("./DerivacionesExpedientePanel");
+const loadOrdenesProteccionPanel = () =>
+  import("@/features/solicitudes/OrdenesProteccionPanel");
+const loadExpedienteTimeline = () =>
+  import("@/features/intervenciones/ExpedienteTimeline");
+const loadNotasPrivadasPanel = () =>
+  import("@/features/intervenciones/NotasPrivadasPanel");
+const loadHistorialClinicoPanel = () => import("./HistorialClinicoPanel");
+const AgresorFormSection = lazy(() =>
+  loadAgresorFormSection().then((m) => ({ default: m.AgresorFormSection })),
+);
 const DocumentosAdjuntosPanel = lazy(() =>
-  loadDocumentosAdjuntosPanel().then((m) => ({ default: m.DocumentosAdjuntosPanel })),
+  loadDocumentosAdjuntosPanel().then((m) => ({
+    default: m.DocumentosAdjuntosPanel,
+  })),
 );
 const DerivacionesExpedientePanel = lazy(() =>
-  loadDerivacionesExpedientePanel().then((m) => ({ default: m.DerivacionesExpedientePanel })),
+  loadDerivacionesExpedientePanel().then((m) => ({
+    default: m.DerivacionesExpedientePanel,
+  })),
 );
 
 const OrdenesProteccionPanel = lazy(() =>
-  loadOrdenesProteccionPanel().then((m) => ({ default: m.OrdenesProteccionPanel })),
+  loadOrdenesProteccionPanel().then((m) => ({
+    default: m.OrdenesProteccionPanel,
+  })),
 );
 
 const ExpedienteTimeline = lazy(() =>
@@ -53,6 +69,11 @@ const ExpedienteTimeline = lazy(() =>
 );
 const NotasPrivadasPanel = lazy(() =>
   loadNotasPrivadasPanel().then((m) => ({ default: m.NotasPrivadasPanel })),
+);
+const HistorialClinicoPanel = lazy(() =>
+  loadHistorialClinicoPanel().then((m) => ({
+    default: m.HistorialClinicoPanel,
+  })),
 );
 
 const TAB_LOADERS: Partial<Record<DrawerTab, () => Promise<unknown>>> = {
@@ -62,15 +83,16 @@ const TAB_LOADERS: Partial<Record<DrawerTab, () => Promise<unknown>>> = {
   ordenes: loadOrdenesProteccionPanel,
   seguimiento: loadExpedienteTimeline,
   notas: loadNotasPrivadasPanel,
+  historial: loadHistorialClinicoPanel,
 };
 
 const IDLE_TAB_ORDER: readonly DrawerTab[] = [
-  'agresor',
-  'documentos',
-  'canalizaciones',
-  'ordenes',
-  'seguimiento',
-  'notas',
+  "agresor",
+  "documentos",
+  "canalizaciones",
+  "ordenes",
+  "seguimiento",
+  "notas",
 ];
 
 const preloadedTabs = new Set<DrawerTab>();
@@ -90,15 +112,15 @@ let tabsPreloaded = false;
 export function preloadExpedienteDrawerTabs(): void {
   if (tabsPreloaded) return;
   tabsPreloaded = true;
-  preloadExpedienteDrawerTab('agresor');
-  preloadExpedienteDrawerTab('documentos');
-  preloadExpedienteDrawerTab('canalizaciones');
-  preloadExpedienteDrawerTab('ordenes');
+  preloadExpedienteDrawerTab("agresor");
+  preloadExpedienteDrawerTab("documentos");
+  preloadExpedienteDrawerTab("canalizaciones");
+  preloadExpedienteDrawerTab("ordenes");
 }
 
 function scheduleIdleTab(cb: () => void): () => void {
-  if (typeof window === 'undefined') return () => { };
-  if (typeof window.requestIdleCallback === 'function') {
+  if (typeof window === "undefined") return () => {};
+  if (typeof window.requestIdleCallback === "function") {
     const id = window.requestIdleCallback(cb, { timeout: 2500 });
     return () => window.cancelIdleCallback(id);
   }
@@ -112,8 +134,11 @@ const DEFERRED_CONTENT_DELAY_MS = 700;
 
 function settleDeepLinkDialog(dialog: HTMLDialogElement) {
   gsap.killTweensOf(dialog);
-  gsap.set(dialog, { clearProps: 'transform,translate,rotate,scale,opacity,clipPath,borderRadius' });
-  dialog.querySelectorAll('.mk-morph-face').forEach((el) => el.remove());
+  gsap.set(dialog, {
+    clearProps:
+      "transform,translate,rotate,scale,opacity,clipPath,borderRadius",
+  });
+  dialog.querySelectorAll(".mk-morph-face").forEach((el) => el.remove());
 }
 
 const DrawerSectionPlaceholder = memo(function DrawerSectionPlaceholder({
@@ -143,26 +168,25 @@ const DrawerSectionPlaceholder = memo(function DrawerSectionPlaceholder({
 
 interface ResumenTabPanelProps {
   expediente: ExpedienteResumen;
-  canManage: boolean;
   contentReady: boolean;
   active: boolean;
-  onDone: () => void;
 }
 
 const ResumenTabPanel = memo(function ResumenTabPanel({
   expediente,
-  canManage,
   contentReady,
   active,
-  onDone,
 }: ResumenTabPanelProps) {
   return (
-    <div role="tabpanel" hidden={!active} className={active ? 'grid gap-6' : 'hidden'}>
+    <div
+      role="tabpanel"
+      hidden={!active}
+      className={active ? "grid gap-6" : "hidden"}
+    >
       <ExpedienteContactoSection expediente={expediente} />
       {contentReady ? (
         <>
           <FichaDetalleResumen expediente={expediente} />
-          {canManage ? <FichaGestionAcciones expediente={expediente} onDone={onDone} /> : null}
         </>
       ) : (
         <DrawerSectionPlaceholder label="Cargando detalle del expediente" />
@@ -185,9 +209,15 @@ const LazyTabPanel = memo(function LazyTabPanel({
   children,
 }: LazyTabPanelProps) {
   return (
-    <div role="tabpanel" hidden={!active} className={active ? undefined : 'hidden'}>
+    <div
+      role="tabpanel"
+      hidden={!active}
+      className={active ? undefined : "hidden"}
+    >
       {contentReady ? (
-        <Suspense fallback={<DrawerSectionPlaceholder label={label} />}>{children}</Suspense>
+        <Suspense fallback={<DrawerSectionPlaceholder label={label} />}>
+          {children}
+        </Suspense>
       ) : (
         <DrawerSectionPlaceholder label={label} />
       )}
@@ -217,17 +247,19 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
   originElement = null,
   fromUserInteraction = false,
   userRole,
-  canManage,
   onClose,
 }: Props) {
   const canAccessSensitiveTabs = puedeAccederAgresor(userRole);
+  const canAccessHistorial = puedeAccederHistorialClinico(userRole);
   const hostRef = useRef<HTMLDivElement>(null);
   const bodyInnerRef = useRef<HTMLDivElement>(null);
 
   const [expanded, setExpanded] = useState(false);
   // Conserva el último expediente durante el cierre para que el ghost de morphCloseWithGhost
   // capture el contenido real en lugar de un cascarón vacío; se limpia tras cerrar el <dialog>.
-  const [displayed, setDisplayed] = useState<ExpedienteResumen | null>(expediente);
+  const [displayed, setDisplayed] = useState<ExpedienteResumen | null>(
+    expediente,
+  );
   if (expediente && displayed !== expediente) {
     setDisplayed(expediente);
   }
@@ -247,34 +279,39 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
   const [deferredReady, setDeferredReady] = useState(false);
   const contentReady = (isOpen && !shouldDeferContent) || deferredReady;
 
-  const rawTab = searchParams.get('tab');
+  const rawTab = searchParams.get("tab");
   const requestedTab: DrawerTab =
-    rawTab === 'agresor' ||
-      rawTab === 'documentos' ||
-      rawTab === 'canalizaciones' ||
-      rawTab === 'ordenes' ||
-      rawTab === 'seguimiento' ||
-      rawTab === 'notas'
+    rawTab === "agresor" ||
+    rawTab === "documentos" ||
+    rawTab === "canalizaciones" ||
+    rawTab === "ordenes" ||
+    rawTab === "seguimiento" ||
+    rawTab === "notas" ||
+    rawTab === "historial"
       ? rawTab
-      : 'resumen';
+      : "resumen";
 
   const [localTab, setLocalTab] = useState<DrawerTab>(requestedTab);
-  const [prevRequestedTab, setPrevRequestedTab] = useState<DrawerTab>(requestedTab);
+  const [prevRequestedTab, setPrevRequestedTab] =
+    useState<DrawerTab>(requestedTab);
   if (requestedTab !== prevRequestedTab) {
     setPrevRequestedTab(requestedTab);
     setLocalTab(requestedTab);
   }
 
-  const activeTab: DrawerTab = canAccessSensitiveTabs ? localTab : 'resumen';
+  const activeTab: DrawerTab =
+    !canAccessSensitiveTabs || (localTab === "historial" && !canAccessHistorial)
+      ? "resumen"
+      : localTab;
   const activeExpedienteId = (expediente ?? displayed)?.id ?? null;
 
-    const [mountedState, setMountedState] = useState<{
-      expedienteId: string | null;
-      tabs: DrawerTab[];
-    }>({
-      expedienteId: activeExpedienteId,
-      tabs: [activeTab],
-    });
+  const [mountedState, setMountedState] = useState<{
+    expedienteId: string | null;
+    tabs: DrawerTab[];
+  }>({
+    expedienteId: activeExpedienteId,
+    tabs: [activeTab],
+  });
   if (mountedState.expedienteId !== activeExpedienteId) {
     setMountedState({ expedienteId: activeExpedienteId, tabs: [activeTab] });
   }
@@ -290,7 +327,10 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
       raf2 = window.requestAnimationFrame(() => {
         startTransition(() => {
           setMountedState((prev) => {
-            if (prev.expedienteId !== activeExpedienteId || prev.tabs.includes(activeTab)) {
+            if (
+              prev.expedienteId !== activeExpedienteId ||
+              prev.tabs.includes(activeTab)
+            ) {
               return prev;
             }
             return { ...prev, tabs: [...prev.tabs, activeTab] };
@@ -309,12 +349,12 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     if (!host) return;
     function ignoreStaleClose(event: Event) {
       const target = event.target;
-      if (target instanceof HTMLDialogElement && target.hasAttribute('open')) {
+      if (target instanceof HTMLDialogElement && target.hasAttribute("open")) {
         event.stopPropagation();
       }
     }
-    host.addEventListener('close', ignoreStaleClose, true);
-    return () => host.removeEventListener('close', ignoreStaleClose, true);
+    host.addEventListener("close", ignoreStaleClose, true);
+    return () => host.removeEventListener("close", ignoreStaleClose, true);
   }, []);
 
   useLayoutEffect(() => {
@@ -323,17 +363,22 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     const onMkOpen = (event: Event) => {
       if (fromUserInteractionRef.current) return;
       const target = event.target;
-      if (target instanceof HTMLDialogElement && target.classList.contains('vc-expediente-dialog')) {
+      if (
+        target instanceof HTMLDialogElement &&
+        target.classList.contains("vc-expediente-dialog")
+      ) {
         settleDeepLinkDialog(target);
       }
     };
-    host.addEventListener('mk:open', onMkOpen);
-    return () => host.removeEventListener('mk:open', onMkOpen);
+    host.addEventListener("mk:open", onMkOpen);
+    return () => host.removeEventListener("mk:open", onMkOpen);
   }, []);
 
   useLayoutEffect(() => {
     if (!isOpen || fromUserInteraction) return;
-    const dialog = hostRef.current?.querySelector<HTMLDialogElement>('dialog.vc-expediente-dialog');
+    const dialog = hostRef.current?.querySelector<HTMLDialogElement>(
+      "dialog.vc-expediente-dialog",
+    );
     if (dialog) settleDeepLinkDialog(dialog);
   }, [isOpen, fromUserInteraction]);
 
@@ -364,7 +409,7 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
   useEffect(() => {
     if (!isOpen || !contentReady || !canAccessSensitiveTabs) return;
     const nav =
-      typeof navigator !== 'undefined'
+      typeof navigator !== "undefined"
         ? (navigator as Navigator & { connection?: { saveData?: boolean } })
         : null;
     if (nav?.connection?.saveData) return;
@@ -374,7 +419,11 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     let cancelIdle: (() => void) | null = null;
 
     const step = () => {
-      while (index < IDLE_TAB_ORDER.length && preloadedTabs.has(IDLE_TAB_ORDER[index])) index++;
+      while (
+        index < IDLE_TAB_ORDER.length &&
+        preloadedTabs.has(IDLE_TAB_ORDER[index])
+      )
+        index++;
       if (cancelled || index >= IDLE_TAB_ORDER.length) return;
       preloadExpedienteDrawerTab(IDLE_TAB_ORDER[index++]);
       if (index < IDLE_TAB_ORDER.length) cancelIdle = scheduleIdleTab(step);
@@ -406,8 +455,8 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
         setSearchParams(
           (prev) => {
             const params = new URLSearchParams(prev);
-            if (next === 'resumen') params.delete('tab');
-            else params.set('tab', next);
+            if (next === "resumen") params.delete("tab");
+            else params.set("tab", next);
             return params;
           },
           { replace: true },
@@ -429,23 +478,18 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     setDisplayed(null);
     setExpanded(false);
     setDeferredReady(false);
-    setMountedState({ expedienteId: null, tabs: ['resumen'] });
+    setMountedState({ expedienteId: null, tabs: ["resumen"] });
   }, []);
-
-  /** Cierre pedido por la app (botón del pie, archivar): mismo camino que la X del kit. */
-  const requestClose = useCallback(() => {
-    const close = hostRef.current?.querySelector<HTMLButtonElement>('[data-mk-part="close"]');
-    if (close) close.click();
-    else onClose();
-  }, [onClose]);
 
   const handleToggleExpand = useCallback(() => {
     setExpanded((prev) => !prev);
   }, []);
 
-
   const widthStyle = useMemo(
-    () => ({ '--vc-drawer-width': expanded ? 'calc(100vw - 16px)' : '680px' }) as CSSProperties,
+    () =>
+      ({
+        "--vc-drawer-width": expanded ? "calc(100vw - 16px)" : "680px",
+      }) as CSSProperties,
     [expanded],
   );
 
@@ -460,18 +504,31 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
     function stopNestedDialogEvents(event: Event) {
       const target = event.target;
       if (!(target instanceof Element)) return;
-      const closestDialog = target.closest('dialog');
-      const outerDialog = hostRef.current?.querySelector('dialog.vc-expediente-dialog');
+      const closestDialog = target.closest("dialog");
+      const outerDialog = hostRef.current?.querySelector(
+        "dialog.vc-expediente-dialog",
+      );
       if (!closestDialog || closestDialog === outerDialog) return;
-      if (event.type === 'click' && !target.closest('[data-mk-part="close"], [data-mk-close]')) {
+      if (
+        event.type === "click" &&
+        !target.closest('[data-mk-part="close"], [data-mk-close]')
+      ) {
         return;
       }
       event.stopPropagation();
     }
-    const EVENTS = ['click', 'cancel', 'close', 'mk:close', 'mk:closed'] as const;
-    for (const type of EVENTS) body.addEventListener(type, stopNestedDialogEvents);
+    const EVENTS = [
+      "click",
+      "cancel",
+      "close",
+      "mk:close",
+      "mk:closed",
+    ] as const;
+    for (const type of EVENTS)
+      body.addEventListener(type, stopNestedDialogEvents);
     return () => {
-      for (const type of EVENTS) body.removeEventListener(type, stopNestedDialogEvents);
+      for (const type of EVENTS)
+        body.removeEventListener(type, stopNestedDialogEvents);
     };
   }, [activeExpediente]);
 
@@ -503,6 +560,7 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
                 <ExpedienteDrawerTabs
                   activeTab={activeTab}
                   canAccessSensitiveTabs={canAccessSensitiveTabs}
+                  canAccessHistorial={canAccessHistorial}
                   onChange={selectTab}
                   onTabIntent={handleTabIntent}
                 />
@@ -513,39 +571,47 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
                   </div>
                 ) : null}
 
-                {visitedTabs.includes('resumen') ? (
+                {visitedTabs.includes("resumen") ? (
                   <ResumenTabPanel
                     expediente={activeExpediente}
-                    canManage={canManage}
                     contentReady={contentReady}
-                    active={activeTab === 'resumen'}
-                    onDone={requestClose}
+                    active={activeTab === "resumen"}
                   />
                 ) : null}
 
-                {canAccessSensitiveTabs && visitedTabs.includes('agresor') ? (
+                {canAccessSensitiveTabs && visitedTabs.includes("agresor") ? (
                   <LazyTabPanel
-                    active={activeTab === 'agresor'}
+                    active={activeTab === "agresor"}
                     contentReady={contentReady}
                     label="Cargando persona agresora"
                   >
-                    <AgresorFormSection key={activeExpediente.id} fichaId={activeExpediente.id} />
+                    <AgresorFormSection
+                      key={activeExpediente.id}
+                      fichaId={activeExpediente.id}
+                      estado={activeExpediente.estado}
+                    />
                   </LazyTabPanel>
                 ) : null}
 
-                {canAccessSensitiveTabs && visitedTabs.includes('documentos') ? (
+                {canAccessSensitiveTabs &&
+                visitedTabs.includes("documentos") ? (
                   <LazyTabPanel
-                    active={activeTab === 'documentos'}
+                    active={activeTab === "documentos"}
                     contentReady={contentReady}
                     label="Cargando documentos"
                   >
-                    <DocumentosAdjuntosPanel key={activeExpediente.id} fichaId={activeExpediente.id} />
+                    <DocumentosAdjuntosPanel
+                      key={activeExpediente.id}
+                      fichaId={activeExpediente.id}
+                      estado={activeExpediente.estado}
+                    />
                   </LazyTabPanel>
                 ) : null}
 
-                {canAccessSensitiveTabs && visitedTabs.includes('canalizaciones') ? (
+                {canAccessSensitiveTabs &&
+                visitedTabs.includes("canalizaciones") ? (
                   <LazyTabPanel
-                    active={activeTab === 'canalizaciones'}
+                    active={activeTab === "canalizaciones"}
                     contentReady={contentReady}
                     label="Cargando canalizaciones"
                   >
@@ -553,37 +619,63 @@ export const ExpedienteDrawer = memo(function ExpedienteDrawer({
                       key={activeExpediente.id}
                       fichaId={activeExpediente.id}
                       folio={activeExpediente.folio}
+                      estado={activeExpediente.estado}
                     />
                   </LazyTabPanel>
                 ) : null}
 
-                {canAccessSensitiveTabs && visitedTabs.includes('seguimiento') ? (
+                {canAccessSensitiveTabs &&
+                visitedTabs.includes("seguimiento") ? (
                   <LazyTabPanel
-                    active={activeTab === 'seguimiento'}
+                    active={activeTab === "seguimiento"}
                     contentReady={contentReady}
                     label="Cargando línea de tiempo"
                   >
-                    <ExpedienteTimeline key={activeExpediente.id} fichaId={activeExpediente.id} />
+                    <ExpedienteTimeline
+                      key={activeExpediente.id}
+                      fichaId={activeExpediente.id}
+                    />
                   </LazyTabPanel>
                 ) : null}
 
-                {canAccessSensitiveTabs && visitedTabs.includes('notas') ? (
+                {canAccessSensitiveTabs && visitedTabs.includes("notas") ? (
                   <LazyTabPanel
-                    active={activeTab === 'notas'}
+                    active={activeTab === "notas"}
                     contentReady={contentReady}
                     label="Cargando notas privadas"
                   >
-                    <NotasPrivadasPanel key={activeExpediente.id} fichaId={activeExpediente.id} />
+                    <NotasPrivadasPanel
+                      key={activeExpediente.id}
+                      fichaId={activeExpediente.id}
+                    />
                   </LazyTabPanel>
                 ) : null}
 
-                {canAccessSensitiveTabs && visitedTabs.includes('ordenes') ? (
+                {canAccessSensitiveTabs && visitedTabs.includes("ordenes") ? (
                   <LazyTabPanel
-                    active={activeTab === 'ordenes'}
+                    active={activeTab === "ordenes"}
                     contentReady={contentReady}
                     label="Cargando órdenes de protección"
                   >
-                    <OrdenesProteccionPanel key={activeExpediente.id} fichaId={activeExpediente.id} />
+                    <OrdenesProteccionPanel
+                      key={activeExpediente.id}
+                      fichaId={activeExpediente.id}
+                      estado={activeExpediente.estado}
+                    />
+                  </LazyTabPanel>
+                ) : null}
+
+                {canAccessHistorial && visitedTabs.includes("historial") ? (
+                  <LazyTabPanel
+                    active={activeTab === "historial"}
+                    contentReady={contentReady}
+                    label="Cargando historial clínico"
+                  >
+                    <HistorialClinicoPanel
+                      key={activeExpediente.id}
+                      fichaId={activeExpediente.id}
+                      estado={activeExpediente.estado}
+                    />
                   </LazyTabPanel>
                 ) : null}
               </div>

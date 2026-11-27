@@ -1,5 +1,6 @@
 # RPC: `public.actualizar_persona`
 
+- **Versión:** [`20261127000400_35`](../../migrations/20261127000400_35_rpc_editar_persona_y_ficha.sql)
 - **Migración:** `supabase/migrations/20261127000400_35_rpc_editar_persona_y_ficha.sql`
 - **Cubre:** `RF-01`, `RN-08`, `RN-15.1` (Sprint 02 · A-03)
 

@@ -13,6 +13,7 @@ export const TIPOS_DROGA: readonly TipoDroga[] = [
 ];
 
 export const DROGA_LABELS: Record<TipoDroga, string> = {
+  no_consume: 'No consume',
   marihuana: 'Marihuana',
   cristal: 'Cristal',
   cocaina: 'Cocaína',
@@ -206,5 +207,106 @@ export function validarAgresor(input: AgresorInput): ValidacionAgresorResult {
   return {
     valido: Object.keys(errores).length === 0,
     errores,
+  };
+}
+
+export interface FichaAgresorInput {
+  nombres: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
+  parentescoId: number | null;
+  parentescoOtro: string;
+  ocupacionId: number | null;
+  ocupacionOtra: string;
+  asentamientoId: number | null;
+  codigoPostal: string;
+  calle: string;
+  numeroExterior: string;
+  numeroInterior: string;
+  referencias: string;
+  tieneConsumoDroga: boolean | null;
+  drogas: TipoDroga[];
+  especificacionDroga: string;
+  especificacionArma: string;
+  observaciones: string;
+}
+
+export const INITIAL_FICHA_AGRESOR: FichaAgresorInput = {
+  nombres: '',
+  apellidoPaterno: '',
+  apellidoMaterno: '',
+  parentescoId: null,
+  parentescoOtro: '',
+  ocupacionId: null,
+  ocupacionOtra: '',
+  asentamientoId: null,
+  codigoPostal: '',
+  calle: '',
+  numeroExterior: '',
+  numeroInterior: '',
+  referencias: '',
+  tieneConsumoDroga: null,
+  drogas: [],
+  especificacionDroga: '',
+  especificacionArma: '',
+  observaciones: '',
+};
+
+/** Indica si se capturó algún dato en la sección opcional de persona agresora. */
+export function hasFichaAgresorData(input: FichaAgresorInput): boolean {
+  return Boolean(
+    input.nombres.trim() ||
+      input.apellidoPaterno.trim() ||
+      input.apellidoMaterno.trim() ||
+      input.parentescoId !== null ||
+      input.parentescoOtro.trim() ||
+      input.ocupacionId !== null ||
+      input.ocupacionOtra.trim() ||
+      input.asentamientoId !== null ||
+      input.codigoPostal.trim() ||
+      input.calle.trim() ||
+      input.numeroExterior.trim() ||
+      input.numeroInterior.trim() ||
+      input.referencias.trim() ||
+      input.tieneConsumoDroga !== null ||
+      input.drogas.length > 0 ||
+      input.especificacionDroga.trim() ||
+      input.especificacionArma.trim() ||
+      input.observaciones.trim(),
+  );
+}
+
+/** Normaliza el borrador del paso de agresor para enviarlo al repositorio al crear la ficha. */
+export function toAgresorInput(
+  input: FichaAgresorInput,
+  fichaId: string,
+  parentescos: readonly CatalogoOpcion[],
+  ocupaciones: readonly CatalogoOpcion[],
+): AgresorInput {
+  const mostrarParentescoOtro =
+    parentescos.find((p) => p.id === input.parentescoId)?.clave === 'otro';
+  const mostrarOcupacionOtra =
+    ocupaciones.find((o) => o.id === input.ocupacionId)?.clave === 'otra';
+
+  return {
+    fichaId,
+    nombres: input.nombres,
+    apellidoPaterno: input.apellidoPaterno,
+    apellidoMaterno: input.apellidoMaterno,
+    parentescoId: input.parentescoId,
+    parentescoOtro: mostrarParentescoOtro ? input.parentescoOtro : null,
+    ocupacionId: input.ocupacionId,
+    ocupacionOtra: mostrarOcupacionOtra ? input.ocupacionOtra : null,
+    asentamientoId: input.asentamientoId,
+    codigoPostal: input.asentamientoId !== null ? null : input.codigoPostal,
+    calle: input.calle,
+    numeroExterior: input.numeroExterior,
+    numeroInterior: input.numeroInterior,
+    referencias: input.referencias,
+    tieneConsumoDroga: input.tieneConsumoDroga,
+    drogas: input.tieneConsumoDroga === true ? input.drogas : null,
+    especificacionDroga: input.tieneConsumoDroga === true ? input.especificacionDroga : null,
+    especificacionArma: input.especificacionArma,
+    observaciones: input.observaciones,
   };
 }

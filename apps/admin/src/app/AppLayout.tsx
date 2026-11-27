@@ -16,7 +16,7 @@ import { useLocation, useNavigate, useOutlet } from 'react-router-dom';
 import { Nav } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/nav';
 import { useAuth } from '@/shared/auth/useAuth';
-import { BrandMark } from '@/shared/ui/BrandMark';
+import { BrandMark, BrandName } from '@/shared/ui/BrandMark';
 import { Icon } from '@/shared/ui/Icon';
 import { getMobilePaths, getNavigationForRole } from './navigation';
 import { useNavStyle } from './preferences';

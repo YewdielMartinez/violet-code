@@ -21,6 +21,8 @@ Destinos (`destino`): `trabajo_social`, `psicologia`, `juridico` (internos, llev
 
 ## `crear_canalizacion`
 
+**Versión:** [`20261127000200_33`](../../migrations/20261127000200_33_rpc_crear_canalizacion.sql)
+
 > Crea una canalización interna o externa desde el área de Trabajo Social (`area_origen_id` se toma de la sesión).
 
 | Permiso              | Roles | Tipo      | Bitácora        | Migración                    |
@@ -72,6 +74,8 @@ interface CrearCanalizacionResult {
 ---
 
 ## `get_derivaciones`
+
+**Versión:** [`20261127000300_34`](../../migrations/20261127000300_34_historial_canalizaciones.sql)
 
 > Lista de derivaciones, de un expediente o de todos, filtrada por lo que el rol puede ver.
 
@@ -133,6 +137,8 @@ interface DerivacionRow {
 
 ## `cambiar_estado_derivacion`
 
+**Versión:** [`20261127000300_34`](../../migrations/20261127000300_34_historial_canalizaciones.sql)
+
 > Avanza o cancela una derivación respetando las transiciones y registra el evento en `canalizacion_evento`.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
@@ -172,6 +178,8 @@ const { data, error } = await supabase
 ---
 
 ## `get_historial_canalizaciones`
+
+**Versión:** [`20261127000300_34`](../../migrations/20261127000300_34_historial_canalizaciones.sql)
 
 > Lista todas las canalizaciones activas de un expediente con su arreglo cronológico de eventos (`canalizacion_evento`).
 

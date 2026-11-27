@@ -13,7 +13,10 @@ import {
   IntervencionesPage,
   LoginPage,
   NuevaFichaPage,
+  ActividadFormPage,
   PendingModulePage,
+  UsuarioFormPage,
+  UsuariosPage,
   preloadPage,
 } from './pages';
 
@@ -118,6 +121,7 @@ const READY: Record<string, ComponentType> = {
   '/agenda': AgendaPage,
   '/actividades': ActividadesPage,
   '/intervenciones': IntervencionesPage,
+  '/usuarios': UsuariosPage,
 };
 
 // Sin esqueleto: las páginas ya están precargadas; si alguna tarda, no se muestra un parpadeo intermedio.
@@ -171,6 +175,30 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={pageFallback}>
             <ExpedienteDetailPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/actividades/nuevo',
+        element: (
+          <Suspense fallback={pageFallback}>
+            <ActividadFormPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/usuarios/nuevo',
+        element: (
+          <Suspense fallback={pageFallback}>
+            <UsuarioFormPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/usuarios/:id',
+        element: (
+          <Suspense fallback={pageFallback}>
+            <UsuarioFormPage />
           </Suspense>
         ),
       },

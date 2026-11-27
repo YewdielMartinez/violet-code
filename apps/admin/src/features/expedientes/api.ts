@@ -4,13 +4,28 @@ import {
   useQueries,
   useQuery,
   useQueryClient,
+  type QueryClient,
   type UseQueryResult,
 } from '@tanstack/react-query';
-import type { CatalogoItem, CatalogosFicha, FichaCreateInput } from '@/domain/models/FichaRegistro';
-import type { ExpedienteResumen } from '@/domain/models/Persona';
+import { toast } from '@yewdiel21/motion-kit/react';
+import type { AgresorInput } from '@/domain/models/Agresor';
+import type { PrioridadNivel } from '@/domain/models/Cita';
+import type { DomicilioUpdateInput } from '@/domain/models/Domicilio';
+import type { EstudioSocioeconomicoRegistroInput } from '@/domain/models/EstudioSocioeconomico';
+import type {
+  CatalogoItem,
+  CatalogosFicha,
+  FichaCreateInput,
+  FichaUpdateInput,
+} from '@/domain/models/FichaRegistro';
+import type { HistorialClinicoGuardarInput } from '@/domain/models/HistorialClinico';
+import type { ExpedienteResumen, PersonaUpdateInput } from '@/domain/models/Persona';
 import type { CatalogoNombre } from '@/domain/ports/SepomexRepository';
+import type { CreatedFichaResult } from '@/domain/ports/FichaRepository';
+import { supabaseAgresorRepository } from '@/infrastructure/supabase/adapters/SupabaseAgresorRepository';
 import { supabaseExpedienteRepository } from '@/infrastructure/supabase/adapters/SupabaseExpedienteRepository';
 import { supabaseFichaRepository } from '@/infrastructure/supabase/adapters/SupabaseFichaRepository';
+import { supabaseHistorialClinicoRepository } from '@/infrastructure/supabase/adapters/SupabaseHistorialClinicoRepository';
 import { supabaseSepomexRepository } from '@/infrastructure/supabase/adapters/SupabaseSepomexRepository';
 
 export type { ExpedienteResumen, PersonaResumen, EstadoFicha } from '@/domain/models/Persona';
@@ -131,10 +146,32 @@ export function useFichaDetail(fichaId: string | null) {
   });
 }
 
+export interface CreateFichaVariables extends FichaCreateInput {
+  agresor?: Omit<AgresorInput, 'fichaId'> | null;
+}
+
+export interface CreateFichaOutcome extends CreatedFichaResult {
+  agresorError?: string;
+}
+
 export function useCreateFicha() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: FichaCreateInput) => supabaseFichaRepository.createComplete(input),
+    mutationFn: async ({ agresor, ...fichaInput }: CreateFichaVariables): Promise<CreateFichaOutcome> => {
+      const created = await supabaseFichaRepository.createComplete(fichaInput);
+      if (!agresor) return created;
+
+      try {
+        await supabaseAgresorRepository.crear({ ...agresor, fichaId: created.fichaId });
+        return created;
+      } catch (err) {
+        const message =
+          err instanceof Error && err.message
+            ? err.message
+            : 'No se pudo guardar la persona agresora.';
+        return { ...created, agresorError: message };
+      }
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['expedientes'] });
     },
@@ -144,8 +181,31 @@ export function useCreateFicha() {
 export function useArchiveFicha() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (fichaId: string) => supabaseFichaRepository.archive(fichaId),
-    onSuccess: () => {
+    mutationFn: ({ fichaId, motivo }: { fichaId: string; motivo: string }) =>
+      supabaseFichaRepository.archive(fichaId, motivo),
+    onSuccess: (_data, { fichaId }) => {
+      // Refleja «Archivado» al instante en los listados cacheados; la invalidación reconcilia con el servidor.
+      queryClient.setQueriesData<ExpedienteResumen[]>(
+        { queryKey: ['expedientes', 'list'] },
+        (list) =>
+          list?.map((item) => (item.id === fichaId ? { ...item, estado: 'archivado' } : item)),
+      );
+      void queryClient.invalidateQueries({ queryKey: ['expedientes'] });
+    },
+  });
+}
+
+export function useReopenFicha() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ fichaId, motivo }: { fichaId: string; motivo: string }) =>
+      supabaseFichaRepository.reopen(fichaId, motivo),
+    onSuccess: (estado, { fichaId }) => {
+      // Refleja el nuevo estado (abierto / en seguimiento) al instante; la invalidación reconcilia con el servidor.
+      queryClient.setQueriesData<ExpedienteResumen[]>(
+        { queryKey: ['expedientes', 'list'] },
+        (list) => list?.map((item) => (item.id === fichaId ? { ...item, estado } : item)),
+      );
       void queryClient.invalidateQueries({ queryKey: ['expedientes'] });
     },
   });
@@ -157,6 +217,142 @@ export function useDeactivateFicha() {
     mutationFn: (fichaId: string) => supabaseFichaRepository.deactivate(fichaId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['expedientes'] });
+    },
+  });
+}
+
+const OPTIMISTIC_CONFLICT_MESSAGE =
+  'Este registro fue modificado por otra persona. Recarga los datos.';
+
+export const EXPEDIENTE_ARCHIVADO_ERROR =
+  'El expediente está archivado y no se puede modificar.';
+
+/** Traduce errores `23514` / `42501` en escrituras de expediente (incluyendo bloqueo por archivo). */
+export function formatErrorEscrituraExpediente(
+  err: unknown,
+  fallback: string,
+  isArchivado = false,
+): string {
+  const code =
+    typeof err === 'object' && err !== null && 'code' in err
+      ? (err as { code?: unknown }).code
+      : undefined;
+  const message =
+    err instanceof Error && err.message.trim() ? err.message : fallback;
+
+  if (
+    (code === '23514' || code === '42501') &&
+    (isArchivado || /archivad|row-level security/i.test(message))
+  ) {
+    return EXPEDIENTE_ARCHIVADO_ERROR;
+  }
+
+  return message;
+}
+
+/** Maneja errores de mutación del expediente: ante conflicto optimista (`23505`) recarga el detalle. */
+export function handleExpedienteMutationError(
+  err: unknown,
+  queryClient: QueryClient,
+  fichaId: string,
+  fallbackMessage: string,
+): void {
+  const code =
+    typeof err === 'object' && err !== null && 'code' in err
+      ? (err as { code?: unknown }).code
+      : undefined;
+
+  if (code === '23505') {
+    toast(OPTIMISTIC_CONFLICT_MESSAGE, { tone: 'error' });
+    void queryClient.invalidateQueries({ queryKey: ['expedientes', 'detail', fichaId] });
+    void queryClient.invalidateQueries({ queryKey: ['expedientes', 'byId', fichaId] });
+    void queryClient.invalidateQueries({ queryKey: ['expedientes', 'historial-clinico', fichaId] });
+    return;
+  }
+
+  const message =
+    err instanceof Error && err.message.trim() ? err.message : fallbackMessage;
+  toast(message, { tone: 'error' });
+}
+
+export function useActualizarPersona(fichaId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: PersonaUpdateInput) => supabaseFichaRepository.actualizarPersona(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['expedientes', 'detail', fichaId] });
+      void queryClient.invalidateQueries({ queryKey: ['expedientes', 'byId', fichaId] });
+      void queryClient.invalidateQueries({ queryKey: ['expedientes', 'list'] });
+    },
+  });
+}
+
+export function useActualizarFicha(fichaId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: FichaUpdateInput) => supabaseFichaRepository.actualizar(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['expedientes', 'detail', fichaId] });
+      void queryClient.invalidateQueries({ queryKey: ['expedientes', 'byId', fichaId] });
+      void queryClient.invalidateQueries({ queryKey: ['expedientes', 'list'] });
+    },
+  });
+}
+
+export function useActualizarDomicilio(fichaId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: DomicilioUpdateInput) => supabaseFichaRepository.actualizarDomicilio(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['expedientes', 'detail', fichaId] });
+      void queryClient.invalidateQueries({ queryKey: ['expedientes', 'byId', fichaId] });
+    },
+  });
+}
+
+export function useRegistrarEstudio(fichaId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: EstudioSocioeconomicoRegistroInput) =>
+      supabaseFichaRepository.registrarEstudioSocioeconomico(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['expedientes', 'detail', fichaId] });
+      void queryClient.invalidateQueries({ queryKey: ['expedientes', 'byId', fichaId] });
+    },
+  });
+}
+
+export function useCambiarPrioridad(fichaId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (prioridad: PrioridadNivel) =>
+      supabaseFichaRepository.cambiarPrioridad(fichaId, prioridad),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['expedientes', 'detail', fichaId] });
+      void queryClient.invalidateQueries({ queryKey: ['expedientes', 'byId', fichaId] });
+      void queryClient.invalidateQueries({ queryKey: ['expedientes', 'list'] });
+    },
+  });
+}
+
+export function useHistorialClinico(fichaId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ['expedientes', 'historial-clinico', fichaId ?? ''],
+    queryFn: () =>
+      fichaId ? supabaseHistorialClinicoRepository.obtener(fichaId) : Promise.resolve(null),
+    enabled: Boolean(fichaId) && enabled,
+  });
+}
+
+export function useGuardarHistorialClinico(fichaId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: HistorialClinicoGuardarInput) =>
+      supabaseHistorialClinicoRepository.guardar(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ['expedientes', 'historial-clinico', fichaId],
+      });
     },
   });
 }

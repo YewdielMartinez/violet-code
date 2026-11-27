@@ -9,36 +9,16 @@ import type {
   TablaConsultaAgresor,
 } from '@/domain/ports/AgresorRepository';
 import { supabase } from '../client';
+import { mapSupabaseError } from './errors';
 import {
   mapAgresorRow,
   mapAsentamientoRow,
   mapCatalogoRow,
-  toAgresorInsert,
-  toAgresorUpdate,
+  toGuardarAgresorArgs,
 } from './agresor.mapper';
 
 const AGRESOR_SELECT =
-  'id, ficha_id, nombres, apellido_paterno, apellido_materno, parentesco_id, parentesco_otro, asentamiento_id, codigo_postal, calle, numero_exterior, numero_interior, referencias, ocupacion_id, ocupacion_otra, tiene_consumo_droga, drogas, especificacion_droga, especificacion_arma, observaciones, activo, actualizado_en';
-
-interface PostgrestLikeError {
-  code?: string;
-  message?: string;
-}
-
-function mapSupabaseError(error: PostgrestLikeError): Error {
-  switch (error.code) {
-    case '42501':
-      return new Error('No tienes permisos para acceder o modificar datos de la persona agresora.');
-    case '23503':
-      return new Error('Referencia inválida o catálogo no disponible. Recarga e intenta de nuevo.');
-    case '23505':
-      return new Error('Este registro ya existe.');
-    case 'P0001':
-      return new Error(error.message || 'La operación no cumple las reglas de negocio.');
-    default:
-      return new Error('No se pudo completar la operación en el servidor. Intenta de nuevo.');
-  }
-}
+  'id, ficha_id, nombres, apellido_paterno, apellido_materno, parentesco_id, parentesco_otro, asentamiento_id, codigo_postal, calle, numero_exterior, numero_interior, referencias, ocupacion_id, ocupacion_otra, drogas, especificacion_droga, especificacion_arma, observaciones, activo, actualizado_en';
 
 export const supabaseAgresorRepository: AgresorRepository = {
   async listarPorFicha(fichaId: string): Promise<Agresor[]> {
@@ -54,36 +34,33 @@ export const supabaseAgresorRepository: AgresorRepository = {
   },
 
   async crear(input: AgresorInput): Promise<Agresor> {
-    const { data, error } = await supabase
-      .from('agresor')
-      .insert(toAgresorInsert(input))
-      .select(AGRESOR_SELECT)
-      .single();
+    const { data, error } = await supabase.rpc('guardar_agresor', toGuardarAgresorArgs(input));
 
     if (error) throw mapSupabaseError(error);
-    return mapAgresorRow(data);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió el registro de la persona agresora.');
+    }
+    return mapAgresorRow(row);
   },
 
   async actualizar(id: string, input: AgresorInput): Promise<Agresor> {
-    let query = supabase
-      .from('agresor')
-      .update(toAgresorUpdate(input))
-      .eq('id', id)
-      .eq('activo', true);
-
-    if (input.actualizadoEnEsperado) {
-      query = query.eq('actualizado_en', input.actualizadoEnEsperado);
-    }
-
-    const { data, error } = await query.select(AGRESOR_SELECT).maybeSingle();
+    const { data, error } = await supabase.rpc('guardar_agresor', toGuardarAgresorArgs(input, id));
 
     if (error) throw mapSupabaseError(error);
-    if (!data) {
-      throw new Error(
-        'Este registro fue modificado por otra compañera. Recarga los datos antes de guardar.',
-      );
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió el registro actualizado de la persona agresora.');
     }
-    return mapAgresorRow(data);
+    return mapAgresorRow(row);
+  },
+
+  async desactivar(id: string, motivo?: string | null): Promise<void> {
+    const { error } = await supabase.rpc('desactivar_agresor', {
+      p_agresor_id: id,
+      p_motivo: motivo?.trim() || undefined,
+    });
+    if (error) throw mapSupabaseError(error);
   },
 
   async registrarConsulta(tabla: TablaConsultaAgresor, registroId: string): Promise<void> {
