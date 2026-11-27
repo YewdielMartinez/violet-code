@@ -128,6 +128,7 @@ La llamada vive en el **adaptador** (`infrastructure/supabase/adapters/Supabase<
 - [`storage.md`](./storage.md): bucket privado `documentos` (subir, URL firmada, limpiar huérfanos).
 - [`tablas-directas.md`](./tablas-directas.md): catálogos y tablas que el front usa con `.from()` (citas nuevas, historial clínico, notas, órdenes, agresores, derivaciones, documentos) y qué rol puede hacer qué.
 - [`errores.md`](./errores.md): códigos de error, qué significan y qué mensaje mostrar.
+- [`../estrategia-realtime-y-actualizacion.md`](../estrategia-realtime-y-actualizacion.md): guía de Realtime selectivo (`alerta`, `cita`, `derivacion`), caché de TanStack Query y plan de implementación futura.
 
 ---
 
