@@ -315,11 +315,11 @@ interface ExpedienteDetalle {
 
 ## `archivar_ficha`
 
-> Pasa un expediente a `archivado` cuando ya no tiene nada pendiente.
+> Pasa un expediente a `archivado` cuando ya no tiene nada pendiente, guardando motivo, fecha y responsable.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por trigger (`'actualizar'`) | `_18_rpc_detalle_y_archivo` |
+| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por trigger (`'actualizar'`) | `_38_archivar_y_reabrir` (`_18_`) |
 
 **Llamada**
 
@@ -333,6 +333,7 @@ const { data, error } = await supabase
 **Comportamiento**
 
 - Solo desde `abierto`, `en_seguimiento` o `cerrado`.
+- `p_motivo` es obligatorio (1..1000 caracteres); guarda `motivo_archivo`, `archivada_en` y `archivada_por`.
 - Rechaza si hay citas futuras `agendada`/`confirmada` o alertas `nueva`/`tomada`.
 
 **Errores**
@@ -340,10 +341,40 @@ const { data, error } = await supabase
 | Código | Cuándo | Mensaje UI |
 |---|---|---|
 | `42501` | Psi, Jur, Rec, UMECA | Fijo de permiso |
-| `23514` | Inexistente, ya archivado, citas futuras o alertas abiertas | `error.message` (dice cuál es la causa) |
+| `23514` | `p_motivo` vacío/largo, inexistente, ya archivado, citas futuras o alertas abiertas | `error.message` (dice cuál es la causa) |
 
-**En el front:** pendiente. Sugerido: `FichaRepository.archivar` · `useArchivarFicha` (invalida `['expedientes','detail',id]` y `['expedientes','list']`).
+**En el front:** `SupabaseFichaRepository.archive` (`features/expedientes/api.ts`) actualmente llama sin `p_motivo` y la pantalla debe solicitar motivo obligatorio (invalida `['expedientes','detail',id]` y `['expedientes','list']`).
 
+---
+
+## `reabrir_ficha`
+
+> Reabre un expediente `archivado` guardando motivo, fecha y quién lo autoriza.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+|---|---|---|---|---|
+| `expediente.reabrir` | Tit, Sub | Escritura | Sí, por trigger (`'actualizar'`) | `_38_archivar_y_reabrir` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('reabrir_ficha', { p_ficha_id: fichaId, p_motivo: 'Usuaria solicita reingreso' })
+  .single();
+// data: { ficha_id, estado: 'abierto' | 'en_seguimiento', actualizado_en }
+```
+
+**Comportamiento**
+
+- Solo funciona desde `archivado`; si el expediente tiene atenciones activas pasa a `en_seguimiento`, si no pasa a `abierto`.
+- `p_motivo` es obligatorio (1..1000 caracteres); guarda `motivo_reapertura`, `reabierta_en` y `reabierta_por` conservando `motivo_archivo`.
+
+**Errores**
+
+| Código | Cuándo | Mensaje UI |
+|---|---|---|
+| `42501` | TS, Psi, Jur, Rec, UMECA | Fijo de permiso |
+| `23514` | `p_motivo` vacío/largo, inexistente o no está archivado | `error.message` |
 ---
 
 ## `get_linea_tiempo`
@@ -478,3 +509,113 @@ const { data, error } = await supabase
 - `42501`: rol sin `expediente.escribir`.
 - `23514`: expediente archivado (`"Reabre el expediente para editarlo"`), servicio vacío o inconsistencia de drogas/`servicio_medico_otro`.
 - `23505`: `p_actualizado_en` viejo (`"Este registro fue modificado por otra persona. Recarga los datos."`).
+
+---
+
+## `guardar_agresor`
+
+> Crea (`p_agresor_id = null`) o edita una persona agresora con bloqueo optimista y validaciones de parentesco/consumo/domicilio.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+| --- | --- | --- | --- | --- |
+| `agresor.acceder` | Tit, Sub, TS, Psi, Jur | Escritura | Sí, por trigger | `_36_rpc_guardar_agresor` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('guardar_agresor', {
+    p_agresor_id: agresorId ?? null, // null = crear
+    p_ficha_id: fichaId,
+    p_actualizado_en: agresorActualizadoEn ?? null,
+    p_nombres: 'Roberto',
+    p_parentesco_id: parentescoId,
+  })
+  .single();
+```
+
+**Errores:** `42501` (Recepción, UMECA, app) · `23514` (expediente archivado o validaciones de negocio) · `23505` (`p_actualizado_en` obsoleto).
+
+---
+
+## `desactivar_agresor`
+
+> Realiza baja lógica (`activo = false`) de una persona agresora si no tiene orden de protección vigente ligada.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+| --- | --- | --- | --- | --- |
+| `agresor.acceder` | Tit, Sub, TS, Psi, Jur | Escritura | Sí (`desactivar`) | `_36_rpc_guardar_agresor` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('desactivar_agresor', {
+    p_agresor_id: agresorId,
+    p_motivo: 'Registro duplicado',
+  })
+  .single();
+// data: { agresor_id, activo: false, actualizado_en }
+```
+
+**Errores:** `42501` (sin permiso) · `23514` (expediente archivado o tiene orden de protección vigente asociada).
+
+---
+
+## `guardar_historial_clinico` y `get_historial_clinico`
+
+> Crea o actualiza el historial clínico psicológico del expediente (con bloqueo optimista y RN-01) y lo consulta dejando registro `'ver'` en bitácora.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+| --- | --- | --- | --- | --- |
+| `historial_clinico.acceder` | Tit, Sub, Psi | Lectura / Escritura | Sí (`ver`, `crear`, `actualizar`) | `_37_rpc_historial_clinico_y_estudio` |
+
+**Llamada**
+
+```ts
+// Lectura (registra 'ver' automáticamente en bitácora)
+const { data: historial } = await supabase
+  .rpc('get_historial_clinico', { p_ficha_id: fichaId })
+  .maybeSingle();
+
+// Alta (p_actualizado_en = null) o edición (p_actualizado_en requerido)
+const { data, error } = await supabase
+  .rpc('guardar_historial_clinico', {
+    p_ficha_id: fichaId,
+    p_actualizado_en: historial?.actualizado_en ?? null,
+    p_motivo_consulta: 'Ansiedad derivada de violencia familiar',
+    p_tiene_atencion_psicologica_previa: false,
+  })
+  .single();
+```
+
+**Errores:** `42501` (TS, Jur, Rec, UMECA) · `23514` (expediente archivado o persona menor de 18 años RN-01) · `23505` (`p_actualizado_en` obsoleto).
+
+---
+
+## `registrar_estudio_socioeconomico`
+
+> Registra una nueva versión del estudio socioeconómico con sus aportantes (marcando el anterior como `es_actual = false`), o corrige el estudio de hoy si fue creado por la misma persona.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+| --- | --- | --- | --- | --- |
+| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por trigger | `_37_rpc_historial_clinico_y_estudio` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('registrar_estudio_socioeconomico', {
+    p_ficha_id: fichaId,
+    p_ingreso_mensual_propio: 7500,
+    p_numero_dependientes: 2,
+    p_tiene_apoyo: false,
+    p_tipo_vivienda: 'rentada',
+    p_material: 'block',
+    p_aportantes: [{ nombre: 'Rosa Ruiz', monto: 2000, frecuencia: 'quincenal' }],
+  })
+  .single();
+// data: { estudio_id, ficha_id, fecha_estudio, es_actual, fue_correccion, actualizado_en }
+```
+
+**Errores:** `42501` (Psi, Jur, Rec, UMECA) · `23514` (expediente archivado, apoyo/material inconsistentes o datos de aportantes inválidos).
