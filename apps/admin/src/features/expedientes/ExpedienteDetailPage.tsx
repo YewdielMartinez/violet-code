@@ -40,7 +40,6 @@ import {
 } from './drawer/formatters';
 import { preloadExpedienteDrawerTab } from './ExpedienteDrawer';
 import { FichaDetalleResumen } from './ficha/FichaDetalleResumen';
-import { FichaGestionAcciones } from './ficha/FichaGestionAcciones';
 
 const AgresorFormSection = lazy(() =>
   import('./AgresorFormSection').then((m) => ({ default: m.AgresorFormSection })),
@@ -569,9 +568,6 @@ export default function ExpedienteDetailPage() {
                     >
                       <ExpedienteContactoSection expediente={expediente} />
                       <FichaDetalleResumen expediente={expediente} />
-                      {canCreate ? (
-                        <FichaGestionAcciones expediente={expediente} onDone={handleBackToList} />
-                      ) : null}
                     </div>
                   ) : null}
 
