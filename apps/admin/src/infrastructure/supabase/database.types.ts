@@ -1059,6 +1059,11 @@ isOneToOne: false
               "alerta_id": string,"asentamiento_nombre": string,"atendida_por_nombre": string,"celular": string,"creado_en": string,"estado": Database["public"]['Enums']["estado_alerta"],"ficha_id": string,"folio": string,"nombre_completo": string,"origen": Database["public"]['Enums']["origen_alerta"],"persona_id": string,"prioridad": Database["public"]['Enums']["prioridad_nivel"],"tiene_orden_vigente": boolean,"tomada_en": string
             }[]
                            },
+"get_contexto_seguimiento":
+{ Args: { "p_cita_id": string }; Returns: {
+              "edad": number,"es_primera_vez_area": boolean,"ficha_id": string,"folio_expediente": string,"nombre_persona": string,"tiene_historial_clinico": boolean,"tiene_orden_vigente": boolean,"ultima_proxima_accion": string,"ultimo_folio_seguimiento": string
+            }[]
+                           },
 "get_derivaciones":
 { Args: { "p_estado"?: Database["public"]['Enums']["estado_derivacion"],"p_ficha_id"?: string,"p_limite"?: number }; Returns: {
               "area_destino_id": number,"area_destino_nombre": string,"area_origen_id": number,"area_origen_nombre": string,"creado_en": string,"destino": Database["public"]['Enums']["destino_derivacion"],"estado": Database["public"]['Enums']["estado_derivacion"],"fecha_derivacion": string,"ficha_id": string,"folio": string,"id": string,"institucion_id": number,"institucion_nombre": string,"institucion_otra": string,"motivo": string,"usuaria_nombre": string

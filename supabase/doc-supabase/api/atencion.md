@@ -4,6 +4,40 @@
 
 ---
 
+## `get_contexto_seguimiento`
+
+> Precarga los datos mínimos para abrir el formulario de seguimiento a partir de la cita del día. Registra acceso `'ver'` en `bitacora_acceso` y nunca expone CURP, estudio socioeconómico, agresor ni notas de otras áreas.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+|---|---|---|---|---|
+| `seguimiento.registrar` + tener área | TS, Psi, Jur (solo citas de su área y de hoy) | Lectura | Sí (`'ver'` en `ficha_registro`) | `_42_rpc_contexto_seguimiento` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('get_contexto_seguimiento', { p_cita_id: citaId })
+  .single();
+```
+
+**Respuesta** (1 fila)
+
+```ts
+interface ContextoSeguimientoRow {
+  ficha_id: string;
+  folio_expediente: string;
+  nombre_persona: string;
+  edad: number | null;
+  es_primera_vez_area: boolean;
+  ultimo_folio_seguimiento: string | null;
+  ultima_proxima_accion: string | null;
+  tiene_orden_vigente: boolean;
+  tiene_historial_clinico: boolean | null; // solo Psicología; null en TS y Jurídico
+}
+```
+
+---
+
 ## `registrar_seguimiento`
 
 > Cierra una sesión de atención en una sola llamada: marca la asistencia a la cita, crea la hoja de seguimiento (`atencion`), pasa el expediente a `en_seguimiento` y, si se pide, agenda la próxima cita.
