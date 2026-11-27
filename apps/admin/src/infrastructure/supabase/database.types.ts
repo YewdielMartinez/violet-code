@@ -835,6 +835,44 @@ isOneToOne: true
       referencedColumns: ["ficha_id"]
     }
                   ]
+                },"historial_clinico_version": {
+                  Row: {
+                    "antecedentes_familiares": string | null,"antecedentes_personales": string | null,"campos_modificados": (string)[],"creado_en": string,"creado_por": string | null,"ficha_id": string,"historial_clinico_id": string,"id": string,"motivo_consulta": string | null,"observaciones_iniciales": string | null,"tiene_atencion_psicologica_previa": boolean | null,"version": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "antecedentes_familiares"?: string | null,"antecedentes_personales"?: string | null,"campos_modificados"?: (string)[],"creado_en"?: string,"creado_por"?: string | null,"ficha_id": string,"historial_clinico_id": string,"id"?: string,"motivo_consulta"?: string | null,"observaciones_iniciales"?: string | null,"tiene_atencion_psicologica_previa"?: boolean | null,"version": number
+                  }
+                  Update: {
+                    "antecedentes_familiares"?: string | null,"antecedentes_personales"?: string | null,"campos_modificados"?: (string)[],"creado_en"?: string,"creado_por"?: string | null,"ficha_id"?: string,"historial_clinico_id"?: string,"id"?: string,"motivo_consulta"?: string | null,"observaciones_iniciales"?: string | null,"tiene_atencion_psicologica_previa"?: boolean | null,"version"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "historial_clinico_version_creado_por_fkey"
+      columns: ["creado_por"]
+isOneToOne: false
+      referencedRelation: "empleado"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "historial_clinico_version_ficha_id_fkey"
+      columns: ["ficha_id"]
+isOneToOne: false
+      referencedRelation: "ficha_registro"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "historial_clinico_version_ficha_id_fkey"
+      columns: ["ficha_id"]
+isOneToOne: false
+      referencedRelation: "vista_lista_urgencias"
+      referencedColumns: ["ficha_id"]
+    },{
+      foreignKeyName: "historial_clinico_version_historial_clinico_id_fkey"
+      columns: ["historial_clinico_id"]
+isOneToOne: false
+      referencedRelation: "historial_clinico"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"nota_area": {
                   Row: {
                     "activo": boolean,"actualizado_en": string,"area_id": number,"contenido": string,"creado_en": string,"creado_por": string | null,"ficha_id": string,"id": string
@@ -875,14 +913,14 @@ isOneToOne: false
                   ]
                 },"orden_proteccion": {
                   Row: {
-                    "activo": boolean,"actualizado_en": string,"agresor_id": string | null,"autoridad_emisora": string | null,"creado_en": string,"creado_por": string | null,"estado": Database["public"]['Enums']["estado_orden_proteccion"],"fecha_emision": string,"fecha_vigencia": string | null,"ficha_id": string,"id": string,"numero_oficio": string | null
+                    "activo": boolean,"actualizado_en": string,"agresor_id": string | null,"autoridad_emisora": string | null,"creado_en": string,"creado_por": string | null,"estado": Database["public"]['Enums']["estado_orden_proteccion"],"fecha_emision": string,"fecha_vigencia": string | null,"ficha_id": string,"id": string,"nota_cambio_estado": string | null,"numero_oficio": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "activo"?: boolean,"actualizado_en"?: string,"agresor_id"?: string | null,"autoridad_emisora"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"estado"?: Database["public"]['Enums']["estado_orden_proteccion"],"fecha_emision": string,"fecha_vigencia"?: string | null,"ficha_id": string,"id"?: string,"numero_oficio"?: string | null
+                    "activo"?: boolean,"actualizado_en"?: string,"agresor_id"?: string | null,"autoridad_emisora"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"estado"?: Database["public"]['Enums']["estado_orden_proteccion"],"fecha_emision": string,"fecha_vigencia"?: string | null,"ficha_id": string,"id"?: string,"nota_cambio_estado"?: string | null,"numero_oficio"?: string | null
                   }
                   Update: {
-                    "activo"?: boolean,"actualizado_en"?: string,"agresor_id"?: string | null,"autoridad_emisora"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"estado"?: Database["public"]['Enums']["estado_orden_proteccion"],"fecha_emision"?: string,"fecha_vigencia"?: string | null,"ficha_id"?: string,"id"?: string,"numero_oficio"?: string | null
+                    "activo"?: boolean,"actualizado_en"?: string,"agresor_id"?: string | null,"autoridad_emisora"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"estado"?: Database["public"]['Enums']["estado_orden_proteccion"],"fecha_emision"?: string,"fecha_vigencia"?: string | null,"ficha_id"?: string,"id"?: string,"nota_cambio_estado"?: string | null,"numero_oficio"?: string | null
                   }
                   Relationships: [
                     {
@@ -909,6 +947,32 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "vista_lista_urgencias"
       referencedColumns: ["ficha_id"]
+    }
+                  ]
+                },"orden_proteccion_evento": {
+                  Row: {
+                    "creado_en": string,"creado_por": string | null,"estado_anterior": Database["public"]['Enums']["estado_orden_proteccion"] | null,"estado_nuevo": Database["public"]['Enums']["estado_orden_proteccion"],"id": string,"nota": string | null,"orden_proteccion_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "creado_en"?: string,"creado_por"?: string | null,"estado_anterior"?: Database["public"]['Enums']["estado_orden_proteccion"] | null,"estado_nuevo": Database["public"]['Enums']["estado_orden_proteccion"],"id"?: string,"nota"?: string | null,"orden_proteccion_id": string
+                  }
+                  Update: {
+                    "creado_en"?: string,"creado_por"?: string | null,"estado_anterior"?: Database["public"]['Enums']["estado_orden_proteccion"] | null,"estado_nuevo"?: Database["public"]['Enums']["estado_orden_proteccion"],"id"?: string,"nota"?: string | null,"orden_proteccion_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "orden_proteccion_evento_creado_por_fkey"
+      columns: ["creado_por"]
+isOneToOne: false
+      referencedRelation: "empleado"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "orden_proteccion_evento_orden_proteccion_id_fkey"
+      columns: ["orden_proteccion_id"]
+isOneToOne: false
+      referencedRelation: "orden_proteccion"
+      referencedColumns: ["id"]
     }
                   ]
                 },"persona": {
@@ -1007,7 +1071,12 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "actualizar_domicilio":
+            "actualizar_actividad_preventiva":
+{ Args: { "p_actividad_id": string,"p_actualizado_en"?: string,"p_payload": Json }; Returns: {
+              "actividad_id": string,"actualizado_en": string,"total_participantes": number
+            }[]
+                           },
+"actualizar_domicilio":
 { Args: { "p_actualizado_en"?: string,"p_asentamiento_id"?: number,"p_calle"?: string,"p_codigo_postal"?: string,"p_numero_exterior"?: string,"p_numero_interior"?: string,"p_persona_id": string,"p_referencias"?: string,"p_zona"?: Database["public"]['Enums']["zona_geografica"] }; Returns: {
               "actualizado_en": string,"domicilio_id": string,"es_actual": boolean,"persona_id": string
             }[]
@@ -1102,6 +1171,9 @@ isOneToOne: false
               "area_id": number,"cita_id": string,"estado": Database["public"]['Enums']["estado_cita"],"origen": Database["public"]['Enums']["origen_cita"],"persona_id": string,"programada_en": string
             }[]
                            },
+"crear_cuenta_acceso":
+{ Args: { "p_contrasena": string,"p_correo": string,"p_nombre": string,"p_rol": string }; Returns: string
+                           },
 "crear_ficha_completa":
 { Args: { "p_payload": Json }; Returns: {
               "ficha_id": string,"folio": string,"persona_id": string
@@ -1141,12 +1213,15 @@ isOneToOne: false
 "f_nombre_busqueda":
 { Args: { "p_apellido_materno": string,"p_apellido_paterno": string,"p_nombres": string }; Returns: string
                            },
+"ficha_editable":
+{ Args: { "p_ficha_id": string }; Returns: boolean
+                           },
 "generar_folio_ficha":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "get_actividades_preventivas":
 { Args: { "p_desde"?: string,"p_estado"?: Database["public"]['Enums']["estado_actividad"],"p_hasta"?: string,"p_limite"?: number }; Returns: {
-              "asentamiento_id": number,"asentamiento_nombre": string,"cancelada_motivo": string,"codigo_postal": string,"creado_en": string,"creado_por": string,"creado_por_nombre": string,"direccion": string,"estado": Database["public"]['Enums']["estado_actividad"],"id": string,"municipio": string,"nivel_educativo": Database["public"]['Enums']["nivel_educativo"],"numero_asistentes": number,"observaciones_cierre": string,"participantes": Json,"programada_en": string,"realizada_en": string,"referencias": string,"sede": string,"tipo_actividad_clave": string,"tipo_actividad_id": number,"tipo_actividad_nombre": string,"tipo_institucion": Database["public"]['Enums']["tipo_institucion_actividad"],"titulo": string
+              "actualizado_en": string,"asentamiento_id": number,"asentamiento_nombre": string,"cancelada_motivo": string,"codigo_postal": string,"creado_en": string,"creado_por": string,"creado_por_nombre": string,"direccion": string,"estado": Database["public"]['Enums']["estado_actividad"],"id": string,"municipio": string,"nivel_educativo": Database["public"]['Enums']["nivel_educativo"],"numero_asistentes": number,"observaciones_cierre": string,"participantes": Json,"programada_en": string,"realizada_en": string,"referencias": string,"sede": string,"tipo_actividad_clave": string,"tipo_actividad_id": number,"tipo_actividad_nombre": string,"tipo_institucion": Database["public"]['Enums']["tipo_institucion_actividad"],"titulo": string
             }[]
                            },
 "get_agenda":
@@ -1187,6 +1262,11 @@ isOneToOne: false
               "actualizado_en": string,"antecedentes_familiares": string,"antecedentes_personales": string,"creado_en": string,"ficha_id": string,"id": string,"motivo_consulta": string,"observaciones_iniciales": string,"tiene_atencion_psicologica_previa": boolean
             }[]
                            },
+"get_historial_clinico_versiones":
+{ Args: { "p_ficha_id": string }; Returns: {
+              "antecedentes_familiares": string,"antecedentes_personales": string,"campos_modificados": (string)[],"creado_en": string,"creado_por": string,"creado_por_nombre": string,"ficha_id": string,"historial_clinico_id": string,"id": string,"motivo_consulta": string,"observaciones_iniciales": string,"tiene_atencion_psicologica_previa": boolean,"version": number
+            }[]
+                           },
 "get_informe":
 { Args: { "p_anio": number,"p_area_id"?: number,"p_mes"?: number }; Returns: {
               "anio": number,"area": string,"area_id": number,"hombres": number,"mes": number,"mujeres": number,"primera_vez_o_seguimiento": string,"tipo_atencion": string,"total_atenciones": number,"total_personas": number
@@ -1210,6 +1290,11 @@ isOneToOne: false
 "get_mi_estado_app":
 { Args: Record<PropertyKey, never>; Returns: {
               "alertas_ultima_hora": number,"puede_enviar_alerta": boolean,"tiene_perfil": boolean
+            }[]
+                           },
+"get_mi_perfil":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "activo": boolean,"area_clave": string,"area_id": number,"area_nombre": string,"dependencia": string,"email": string,"id": string,"nombre": string,"permisos": (string)[],"rol": string,"tipo": string
             }[]
                            },
 "get_mi_pre_registro":

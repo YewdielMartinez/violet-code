@@ -107,7 +107,9 @@ function login(role: StaffRole, areaId: number | null) {
       areaId,
       areaClave: AREAS.find((a) => a.id === areaId)?.clave ?? null,
       areaNombre: null,
+      dependencia: null,
       activo: true,
+      permisos: [],
     },
   });
 }

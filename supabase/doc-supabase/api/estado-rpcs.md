@@ -104,7 +104,13 @@ Corte: 27-nov-2026, rama `develop` con la migración `60_integrar_develop_y_supa
 |---|---|---|---|---|
 | [`get_informe`](../rpcs/get_informe.md) | `20261126001800_28` | ✅ | ✅ `SupabaseInformeRepository` | |
 | [`get_bitacora`](../rpcs/get_bitacora.md) | `20261126001800_28` | ✅ | ✅ Informe y Dashboard | |
-| [`get_mapa_calor_asentamiento`](../rpcs/get_mapa_calor_asentamiento.md) | `20261126000500_15` | ✅ | ✅ `SupabaseDashboardRepository.mapaCalor`  |
+| [`get_mapa_calor_asentamiento`](../rpcs/get_mapa_calor_asentamiento.md) | `20261126000500_15` | ✅ | ✅ `SupabaseDashboardRepository.mapaCalor` |
+
+### Autenticación y perfil
+
+| RPC | Versión | Base de datos | Admin (adapters) | Nota |
+|---|---|---|---|---|
+| [`get_mi_perfil`](../rpcs/get_mi_perfil.md) | `20261128002800_69` | ✅ | ✅ `SupabaseAuthRepository` | Reemplaza lectura directa de `empleado` y `usuario_externo` en login. |
 
 ---
 

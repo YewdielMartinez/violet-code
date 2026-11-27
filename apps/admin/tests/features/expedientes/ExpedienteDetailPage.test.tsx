@@ -210,7 +210,9 @@ function makeUser(role: StaffRole): StaffUser {
     areaId: 1,
     areaClave: 'ts',
     areaNombre: 'Trabajo Social',
+    dependencia: null,
     activo: true,
+    permisos: [],
   };
 }
 

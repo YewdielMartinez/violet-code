@@ -78,7 +78,9 @@ describe('RequireAuth guard', () => {
         areaId: null,
         areaClave: null,
         areaNombre: null,
+        dependencia: null,
         activo: true,
+        permisos: [],
       },
     });
 
@@ -99,7 +101,9 @@ describe('RequireAuth guard', () => {
         areaId: null,
         areaClave: null,
         areaNombre: null,
+        dependencia: null,
         activo: true,
+        permisos: [],
       },
     });
 

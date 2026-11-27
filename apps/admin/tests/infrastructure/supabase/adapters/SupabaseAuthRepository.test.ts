@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { mapAuthErrorMessage, mapUmecaCitaRow } from '@/infrastructure/supabase/adapters/SupabaseAuthRepository';
+import {
+  mapAuthErrorMessage,
+  mapMiPerfilToStaffUser,
+  mapUmecaCitaRow,
+} from '@/infrastructure/supabase/adapters/SupabaseAuthRepository';
 
 const BASE = {
   cita_id: 'c1',
@@ -42,5 +46,65 @@ describe('mapAuthErrorMessage', () => {
     expect(mapAuthErrorMessage(400, 'Invalid login credentials')).toBe('Correo o contraseña incorrectos.');
     expect(mapAuthErrorMessage(429, '')).toMatch(/demasiados intentos/i);
     expect(mapAuthErrorMessage(400, 'User is banned')).toMatch(/desactivada/i);
+  });
+});
+
+describe('mapMiPerfilToStaffUser (get_mi_perfil)', () => {
+  it('mapea un empleado activo con permisos y dependencia nula', () => {
+    expect(
+      mapMiPerfilToStaffUser(
+        {
+          id: 'u-1',
+          email: 'ts@semujeres.local',
+          nombre: 'Trabajo Social',
+          tipo: 'empleado',
+          rol: 'trabajo_social',
+          area_id: 1,
+          area_clave: 'trabajo_social',
+          area_nombre: 'Trabajo Social',
+          dependencia: null,
+          activo: true,
+          permisos: ['expediente.ver', 'expediente.escribir'],
+        },
+        'fallback@semujeres.local',
+      ),
+    ).toEqual({
+      id: 'u-1',
+      email: 'ts@semujeres.local',
+      displayName: 'Trabajo Social',
+      role: 'trabajo_social',
+      areaId: 1,
+      areaClave: 'trabajo_social',
+      areaNombre: 'Trabajo Social',
+      dependencia: null,
+      activo: true,
+      permisos: ['expediente.ver', 'expediente.escribir'],
+    });
+  });
+
+  it('usa fallbackEmail si email viene vacío y normaliza permisos nulos', () => {
+    expect(
+      mapMiPerfilToStaffUser(
+        {
+          id: 'u-2',
+          email: '',
+          nombre: 'Operador UMECA',
+          tipo: 'externo',
+          rol: 'umeca',
+          area_id: null,
+          area_clave: 'umeca',
+          area_nombre: 'UMECA',
+          dependencia: 'umeca',
+          activo: true,
+          permisos: null as unknown as string[],
+        },
+        'umeca@semujeres.local',
+      ),
+    ).toMatchObject({
+      email: 'umeca@semujeres.local',
+      role: 'umeca',
+      dependencia: 'umeca',
+      permisos: [],
+    });
   });
 });
