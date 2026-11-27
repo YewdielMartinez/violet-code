@@ -50,7 +50,7 @@ export const supabaseSeguimientoRepository: SeguimientoRepository = {
   async registrar(input: SeguimientoCreateInput): Promise<SeguimientoResult> {
     const { data, error } = await supabase.rpc('registrar_seguimiento', {
       p_ficha_id: input.fichaId,
-      p_cita_id: input.citaId ?? undefined,
+      p_cita_id: input.citaId,
       p_tipo_atencion_id: input.tipoAtencionId,
       p_acciones_realizadas: input.accionesRealizadas?.trim() || undefined,
       p_proxima_accion: input.proximaAccion?.trim() || undefined,
@@ -68,6 +68,7 @@ export const supabaseSeguimientoRepository: SeguimientoRepository = {
 
     const result: SeguimientoResult = {
       atencionId: row.atencion_id,
+      folioSeguimiento: row.folio_seguimiento,
       citaProximaId: row.cita_proxima_id ?? null,
       esPrimeraVezArea: row.es_primera_vez_area,
       tieneHistorialClinico: row.tiene_historial_clinico,

@@ -1,14 +1,14 @@
 # `registrar_seguimiento`
 
-- **Migración:** [`20261126000900_19_rpc_registrar_seguimiento.sql`](../../migrations/20261126000900_19_rpc_registrar_seguimiento.sql)
+- **Migración:** [`20261128001400_54_quitar_folio_seguimiento.sql`](../../migrations/20261128001400_54_quitar_folio_seguimiento.sql) *(actualiza [`20261128000400_43_corregir_seguimiento.sql`](../../migrations/20261128000400_43_corregir_seguimiento.sql), [`20261128000200_41_folio_seguimiento.sql`](../../migrations/20261128000200_41_folio_seguimiento.sql), [`20261128000100_40_seguimiento_con_asistencia.sql`](../../migrations/20261128000100_40_seguimiento_con_asistencia.sql) y [`20261126000900_19_rpc_registrar_seguimiento.sql`](../../migrations/20261126000900_19_rpc_registrar_seguimiento.sql))*
 - **Permiso RBAC:** `tiene_permiso('seguimiento.registrar')` + `auth_area_id() is not null`
-- **Actores autorizados:** `trabajo_social`, `psicologia`, `juridico` (cada área sobre sus propias citas y tipos de atención).
+- **Actores autorizados:** `trabajo_social`, `psicologia`, `juridico` (cada área sobre sus propias citas del día y tipos de atención).
 
 ## 1. Entrada (`parámetros`)
 | Parámetro | Tipo | Obligatorio | Descripción / Regla |
 |---|---|---|---|
 | `p_ficha_id` | `uuid` | Sí | Expediente activo al que pertenece el seguimiento. |
-| `p_cita_id` | `uuid` | No | Cita asociada (`null` si es atención sin cita previa). Debe estar `'agendada'` o `'confirmada'` y pertenecer a la persona y área del actor. |
+| `p_cita_id` | `uuid` | **Sí** | Cita **del día de hoy** (`America/Mazatlan`), en estado `'agendada'` o `'confirmada'`, de la persona del expediente y del área del actor. Si llega sin cita, crear primero la cita del día (`'agendada'`). |
 | `p_tipo_atencion_id` | `smallint` | Sí | ID de `cat_tipo_atencion` perteneciente al área del actor. |
 | `p_acciones_realizadas` | `text` | No | Descripción de lo realizado (`<= 5000`). |
 | `p_proxima_accion` | `text` | No | Acción siguiente sugerida (`<= 2000`). |
@@ -26,7 +26,7 @@
 
 ## 3. Reglas ABAC y efectos secundarios
 - El área se resuelve siempre del actor (`auth_area_id()`).
-- Si hay `p_cita_id`, la cita pasa a `'asistio'`.
+- Exige asistencia a una cita válida del día (`(c.programada_en at time zone 'America/Mazatlan')::date = (now() at time zone 'America/Mazatlan')::date`) y la marca automáticamente como `'asistio'`.
 - Si la ficha está en `'abierto'`, pasa automáticamente a `'en_seguimiento'`.
 - El trigger `atencion_validar_mayoria_edad` bloquea Psicología/Jurídico para menores de 18 años (`23514`, RN-01).
 
@@ -34,5 +34,5 @@
 | Código (`SQLSTATE`) | Cuándo ocurre |
 |---|---|
 | `42501` | Sin permiso `seguimiento.registrar` (`titular`, `subdireccion`, `recepcion`, `umeca`, sin sesión), o `p_proxima_cita_en` enviado por un rol sin `agenda.crear` en su área (Trabajo Social): `Sin permiso para agendar la próxima cita; solicítela a Recepción`. |
-| `23514` | Ficha/cita inexistente, tipo de atención de otra área, cita de otra persona/área o estado no válido, fecha de próxima cita no futura o menor de edad en Psicología/Jurídico. |
+| `23514` | Ficha/cita nula o inexistente, tipo de atención de otra área, cita de otra persona/área, cita de otro día (ayer o mañana), estado distinto de `agendada`/`confirmada`, fecha de próxima cita no futura o menor de edad en Psicología/Jurídico. |
 | `23505` | La cita ya tiene una hoja de seguimiento registrada (`atencion.cita_id` único). |

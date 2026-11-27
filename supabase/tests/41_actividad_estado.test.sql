@@ -52,6 +52,12 @@ begin
     (v_uid_umec, 'UMECA Estado Test', 'umeca', true)
   on conflict (id) do nothing;
 
+  -- Tipo de cuenta en app_metadata (desde la migración 44_tipos_de_cuenta).
+  update auth.users u
+  set raw_app_meta_data = jsonb_set(coalesce(u.raw_app_meta_data, '{}'::jsonb), '{tipo}',
+        to_jsonb(case when u.id = v_uid_umec then 'externo' else 'empleado' end), true)
+  where u.id in (v_uid_ts, v_uid_rec, v_uid_umec);
+
   -- A: pasada, B: futura, C: futura, D: inactiva
   insert into public.actividad_preventiva
     (id, titulo, tipo_actividad_id, tipo_institucion, sede, programada_en, activo)

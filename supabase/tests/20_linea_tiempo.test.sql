@@ -66,6 +66,7 @@ begin
     (v_uid_rec,   'Recepcion LT Test',  'recepcion',      null,        true),
     (v_uid_inact, 'Inactivo LT Test',   'trabajo_social', v_area_ts,   false)
   on conflict (id) do nothing;
+  update auth.users u set raw_app_meta_data = jsonb_set(coalesce(u.raw_app_meta_data, '{}'::jsonb), '{tipo}', to_jsonb('empleado'::text), true) where exists (select 1 from public.empleado e where e.id = u.id) and coalesce(u.raw_app_meta_data ->> 'tipo', '') <> 'empleado';
 
   insert into public.usuario_externo (id, nombre, dependencia, activo) values
     (v_uid_umeca, 'UMECA LT Test', 'umeca', true)
@@ -78,8 +79,8 @@ begin
     (v_fic_1, 'SEM-TEST20-01', v_per_1, now(), v_uid_ts);
 
   -- 6 tipos de evento para la ficha
-  insert into public.cita (persona_id, area_id, programada_en, estado, motivo_cancelacion, prioridad, origen, creado_por) values
-    (v_per_1, v_area_ts, now() - interval '3 days', 'cancelada', 'SECRETO_CITA_TS', 'media', 'regular', v_uid_rec);
+  insert into public.cita (persona_id, area_id, programada_en, estado, motivo_cancelacion, origen, creado_por) values
+    (v_per_1, v_area_ts, now() - interval '3 days', 'cancelada', 'SECRETO_CITA_TS', 'regular', v_uid_rec);
 
   insert into public.atencion (ficha_id, area_id, tipo_atencion_id, atendida_por, atendida_en, acciones_realizadas, creado_por) values
     (v_fic_1, v_area_ts,   v_tipo_ts,   v_uid_ts,   now() - interval '2 days', 'SECRETO_ATENCION_TS',   v_uid_ts),

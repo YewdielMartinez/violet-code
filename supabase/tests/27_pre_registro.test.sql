@@ -51,6 +51,7 @@ begin
     (v_uid_ts,   'TS PreRegistro Test',   'trabajo_social', v_area_ts,   true),
     (v_uid_psic, 'Psic PreRegistro Test', 'psicologia',     v_area_psic, true)
   on conflict (id) do nothing;
+  update auth.users u set raw_app_meta_data = jsonb_set(coalesce(u.raw_app_meta_data, '{}'::jsonb), '{tipo}', to_jsonb('empleado'::text), true) where exists (select 1 from public.empleado e where e.id = u.id) and coalesce(u.raw_app_meta_data ->> 'tipo', '') <> 'empleado';
 
   -- Persona existente para comprobar liga silenciosa en pre_registro
   insert into public.persona (id, curp, nombres, apellido_paterno, creado_por) values
@@ -78,18 +79,15 @@ select throws_ok(
   'anon no puede ejecutar actualizar_mi_pre_registro'
 );
 
--- 4-6. Usuaria 1 crea su pre_registro con la CURP existente; no puede leer ni editar la tabla directo
+-- 4-6. Usuaria 1 crea su pre_registro vía registrar_mi_perfil; no puede leer ni editar la tabla directo
 select pg_temp.as_user('97000000-0000-4000-a000-000000000011');
-insert into public.pre_registro (
-  auth_user_id, curp, nombres, apellido_paterno, apellido_materno, celular, aviso_privacidad_aceptado_en
-) values (
-  '97000000-0000-4000-a000-000000000011',
+select * from public.registrar_mi_perfil(
   'TETE920315MSLRRR01',
   'Elena',
   'Rojas',
   'Mendez',
   '6681112233',
-  now()
+  true
 );
 
 select is(
@@ -162,10 +160,9 @@ select pg_temp.as_user('97000000-0000-4000-a000-000000000011');
 select set_config('test.pre_1_id', public.mi_pre_registro_id()::text, true);
 select lives_ok(
   $$
-    insert into public.alerta (pre_registro_id, origen)
-    values (public.mi_pre_registro_id(), 'app_movil')
+    select * from public.enviar_alerta(null)
   $$,
-  'la usuaria app puede crear alerta app_movil usando mi_pre_registro_id()'
+  'la usuaria app puede crear alerta app_movil mediante enviar_alerta()'
 );
 
 select is(
@@ -176,18 +173,16 @@ select is(
 
 -- 13-15. Aislamiento entre usuarias en alerta
 select pg_temp.as_user('97000000-0000-4000-a000-000000000012');
-insert into public.pre_registro (
-  auth_user_id, curp, nombres, apellido_paterno, aviso_privacidad_aceptado_en
-) values (
-  '97000000-0000-4000-a000-000000000012',
+select * from public.registrar_mi_perfil(
   'TATN940820MSLRRR02',
   'Nadia',
   'Cruz',
-  now()
+  null,
+  null,
+  true
 );
 
-insert into public.alerta (pre_registro_id, origen)
-values (public.mi_pre_registro_id(), 'app_movil');
+select * from public.enviar_alerta(null);
 
 select is(
   (select count(*)::integer from public.alerta),

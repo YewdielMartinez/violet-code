@@ -62,6 +62,7 @@ begin
     (v_uid_jur,  'Juridico Reag',   'juridico',       v_area_jur,  true),
     (v_uid_rec,  'Recepcion Reag',  'recepcion',      null,        true)
   on conflict (id) do nothing;
+  update auth.users u set raw_app_meta_data = jsonb_set(coalesce(u.raw_app_meta_data, '{}'::jsonb), '{tipo}', to_jsonb('empleado'::text), true) where exists (select 1 from public.empleado e where e.id = u.id) and coalesce(u.raw_app_meta_data ->> 'tipo', '') <> 'empleado';
 
   -- Desactivar urgencias previas en atencion/ficha de pruebas anteriores? Solo marcamos nuevas fichas:
   insert into public.persona (id, curp, nombres, apellido_paterno, celular, creado_por) values
@@ -69,16 +70,16 @@ begin
     (v_per_2, 'REAG910101MSLRRR02', 'Lucia',  'ConCita',    '6682222222', v_uid_ts),
     (v_per_3, 'REAG920101MSLRRR03', 'Marta',  'PriorMedia', '6683333333', v_uid_ts);
 
-  insert into public.ficha_registro (id, folio, persona_id, estado, aviso_privacidad_aceptado_en, creado_por) values
-    (v_fic_1, 'SEM-URG-0001', v_per_1, 'en_seguimiento', now(), v_uid_ts),
-    (v_fic_2, 'SEM-URG-0002', v_per_2, 'en_seguimiento', now(), v_uid_ts),
-    (v_fic_3, 'SEM-URG-0003', v_per_3, 'en_seguimiento', now(), v_uid_ts);
+  insert into public.ficha_registro (id, folio, persona_id, estado, prioridad, prioridad_actualizada_en, aviso_privacidad_aceptado_en, creado_por) values
+    (v_fic_1, 'SEM-URG-0001', v_per_1, 'en_seguimiento', 'alta',  now() - interval '3 days', now(), v_uid_ts),
+    (v_fic_2, 'SEM-URG-0002', v_per_2, 'en_seguimiento', 'alta',  now() - interval '2 days', now(), v_uid_ts),
+    (v_fic_3, 'SEM-URG-0003', v_per_3, 'en_seguimiento', 'media', now() - interval '1 day',  now(), v_uid_ts);
 
   -- Citas de prueba
-  insert into public.cita (id, persona_id, area_id, programada_en, estado, prioridad, recomendada_por, creado_por) values
-    ('92000000-0000-4000-a000-000000000301', v_per_2, v_area_psic, '2099-07-01T10:00:00-07:00', 'agendada',  'alta', 'TS', v_uid_rec),
-    ('92000000-0000-4000-a000-000000000302', v_per_2, v_area_jur,  '2099-07-02T11:00:00-07:00', 'agendada',  'baja', null, v_uid_jur),
-    ('92000000-0000-4000-a000-000000000303', v_per_3, v_area_ts,   '2099-07-03T12:00:00-07:00', 'cancelada', null, null, v_uid_rec);
+  insert into public.cita (id, persona_id, area_id, programada_en, estado, recomendada_por, creado_por) values
+    ('92000000-0000-4000-a000-000000000301', v_per_2, v_area_psic, '2099-07-01T10:00:00-07:00', 'agendada',  'TS', v_uid_rec),
+    ('92000000-0000-4000-a000-000000000302', v_per_2, v_area_jur,  '2099-07-02T11:00:00-07:00', 'agendada',  null, v_uid_jur),
+    ('92000000-0000-4000-a000-000000000303', v_per_3, v_area_ts,   '2099-07-03T12:00:00-07:00', 'cancelada', null, v_uid_rec);
 
   -- Atenciones para probar get_lista_urgencias
   insert into public.atencion (ficha_id, area_id, tipo_atencion_id, atendida_en, prioridad, creado_por) values
@@ -149,7 +150,6 @@ select ok(
       and old_c.motivo_cancelacion = 'Cambio de horario'
       and new_c.estado = 'agendada'
       and new_c.reagendada_de = '92000000-0000-4000-a000-000000000301'
-      and new_c.prioridad = 'alta'
       and new_c.recomendada_por = 'TS'
    from public.cita old_c
    join public.cita new_c on new_c.reagendada_de = old_c.id
@@ -171,10 +171,9 @@ select is(
   1,
   'get_lista_urgencias incluye solo a quien tiene ultima prioridad alta sin cita futura'
 );
-select is(
-  (select area_ultima_prioridad from public.get_lista_urgencias() where folio = 'SEM-URG-0001'),
-  'trabajo_social',
-  'get_lista_urgencias devuelve folio y area_ultima_prioridad sin CURP'
+select ok(
+  (select prioridad_actualizada_en is not null from public.get_lista_urgencias() where folio = 'SEM-URG-0001'),
+  'get_lista_urgencias devuelve folio y prioridad_actualizada_en sin CURP'
 );
 select is(
   (select count(*)::int from public.get_lista_urgencias((select id from public.cat_area where clave = 'psicologia')) where folio like 'SEM-URG-%'),

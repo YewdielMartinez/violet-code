@@ -56,7 +56,7 @@ Se usa para derivaciones externas (`institucion_id`) y en la app (directorio de 
 | `persona` | `expediente.ver` (Tit, Sub, TS, Psi, Jur) | Solo RPC (`42501` directo) | Alta por `crear_ficha_completa`; edición por `actualizar_persona` ([expedientes.md](./expedientes.md)). |
 | `ficha_registro` | `expediente.ver` | Solo RPC (`42501` directo) | Alta por `crear_ficha_completa`; edición/archivo/reapertura por `actualizar_ficha`, `archivar_ficha` y `reabrir_ficha`. |
 | `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar` | `expediente.ver` | Solo RPC (`42501` directo) | Alta en `crear_ficha_completa`; edición por `actualizar_ficha` y `registrar_estudio_socioeconomico` ([expedientes.md](./expedientes.md)). |
-| `domicilio` | `expediente.ver` | `expediente.ver` | |
+| `domicilio` | `expediente.ver` | Cerrado (`actualizar_domicilio`) | Usar el RPC [`actualizar_domicilio`](../rpcs/actualizar_domicilio.md); `insert`/`update` directos bloqueados (`42501`). |
 | `agresor` | `agresor.acceder` (Tit, Sub, TS, Psi, Jur) | Solo RPC (`42501` directo) | Alta/edición/baja únicamente por `guardar_agresor` y `desactivar_agresor` ([expedientes.md](./expedientes.md)); al abrirlo llama `registrar_consulta('agresor', id)`. |
 | `documento` | `expediente.ver` | `expediente.ver` | Ver [storage.md](./storage.md). |
 
@@ -110,30 +110,27 @@ Para registrar una atención usa `registrar_seguimiento`, que además marca la c
 
 ## <a id="cita"></a>`cita` (alta de cita)
 
-No hay RPC para crear una cita: es un `insert` directo. Leer, cambiar estado y reagendar sí van por RPC (ver [agenda.md](./agenda.md)).
+> **Cerrada la inserción directa (`42501`):** usa la RPC `crear_cita` (ver [crear_cita.md](../rpcs/crear_cita.md) y [agenda.md](./agenda.md)).
 
 | Crear | Regla |
 |---|---|
-| `agenda.crear` + alcance (`puede_crear_cita_en_area`) | Recepción (TS, Psicología y Jurídico), Jurídico y Psicología (solo su área), Tit y Sub (todas las áreas). TS **no puede crear** (`42501`). Para elegir la persona: `buscar_personas_agenda`. Cambiar estado/reagendar: ver [agenda.md](./agenda.md). |
+| `crear_cita`: `agenda.crear` + alcance (`puede_crear_cita_en_area`) | Recepción (TS, Psicología y Jurídico), Jurídico y Psicología (solo su área), Tit y Sub (todas las áreas). TS **no puede crear** (`42501`). Para elegir la persona: `buscar_personas_agenda`. Cambiar estado/reagendar: ver [agenda.md](./agenda.md). |
 
 ```ts
 const { data, error } = await supabase
-  .from('cita')
-  .insert({
-    persona_id,
-    area_id,
-    programada_en: '2026-12-01T10:00:00-07:00',
-    prioridad: 'media',            // opcional
-    recomendada_por: 'Trabajo Social',
-    origen: 'regular',             // 'umeca' para canalizaciones de UMECA
+  .rpc('crear_cita', {
+    p_persona_id: personaId,
+    p_area_id: areaId,
+    p_programada_en: '2026-12-01T10:00:00-07:00',
+    p_recomendada_por: 'Trabajo Social',
+    p_origen: 'regular', // 'umeca' para canalizaciones de UMECA
   })
-  .select('id, programada_en, estado')
   .single();
 ```
 
-- Nace `agendada`. No mandes `estado`, `confirmada_en` ni `reagendada_de`.
+- Nace `agendada`.
 - Psicología y Jurídico no pueden tener citas de menores de 18 años (RN-01): `23514`.
-- Recepción ya no lee `persona`: obtiene `persona_id` de `verificar_curp`.
+- Rechaza fecha pasada, expediente archivado o cita duplicada en misma área y hora: `23514`.
 - Después invalida `['agenda']` y `['agenda','urgencias']`.
 
 ## <a id="derivacion"></a>`derivacion` (alta)

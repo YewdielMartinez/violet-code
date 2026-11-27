@@ -55,14 +55,15 @@ begin
     (v_uid_rec,   'Recepcion Agenda',  'recepcion',      null,        true),
     (v_uid_inact, 'Inactivo Agenda',   'recepcion',      null,        false)
   on conflict (id) do nothing;
+  update auth.users u set raw_app_meta_data = jsonb_set(coalesce(u.raw_app_meta_data, '{}'::jsonb), '{tipo}', to_jsonb('empleado'::text), true) where exists (select 1 from public.empleado e where e.id = u.id) and coalesce(u.raw_app_meta_data ->> 'tipo', '') <> 'empleado';
 
   insert into public.persona (id, curp, nombres, apellido_paterno, celular, creado_por) values
     (v_per_adult, 'ROEL950512MSLRRR01', 'Elena', 'Rojas', '6681234567', v_uid_ts);
 
-  insert into public.cita (id, persona_id, area_id, programada_en, estado, prioridad, creado_por) values
-    ('91000000-0000-4000-a000-000000000301', v_per_adult, v_area_ts,   '2099-06-15T09:00:00-07:00', 'agendada', 'media', v_uid_ts),
-    ('91000000-0000-4000-a000-000000000302', v_per_adult, v_area_psic, '2099-06-15T10:00:00-07:00', 'agendada', 'alta',  v_uid_rec),
-    ('91000000-0000-4000-a000-000000000303', v_per_adult, v_area_jur,  '2099-06-15T11:00:00-07:00', 'agendada', 'baja',  v_uid_jur);
+  insert into public.cita (id, persona_id, area_id, programada_en, estado, creado_por) values
+    ('91000000-0000-4000-a000-000000000301', v_per_adult, v_area_ts,   '2099-06-15T09:00:00-07:00', 'agendada', v_uid_ts),
+    ('91000000-0000-4000-a000-000000000302', v_per_adult, v_area_psic, '2099-06-15T10:00:00-07:00', 'agendada', v_uid_rec),
+    ('91000000-0000-4000-a000-000000000303', v_per_adult, v_area_jur,  '2099-06-15T11:00:00-07:00', 'agendada', v_uid_jur);
 end $$;
 
 -- 1-2. Seguridad: anon rechazado en ambos RPCs
