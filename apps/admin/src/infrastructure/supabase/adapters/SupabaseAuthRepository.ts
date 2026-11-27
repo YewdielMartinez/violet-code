@@ -4,9 +4,14 @@ import type { AuthSession, StaffRole, StaffUser, UmecaCita } from '@/domain/mode
 import { normalizarTelefono, type MiPerfil, type MiPerfilGuardado } from '@/domain/models/Perfil';
 import { AuthError, type AuthRepository } from '@/domain/ports/AuthRepository';
 
+function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
 type MiPerfilBaseRow = Database['public']['Functions']['get_mi_perfil']['Returns'][number];
 
-type MiPerfilRow = Omit<
+type StaffMiPerfilRow = Omit<
   MiPerfilBaseRow,
   'area_id' | 'area_clave' | 'area_nombre' | 'dependencia' | 'permisos'
 > & {
@@ -17,7 +22,7 @@ type MiPerfilRow = Omit<
   permisos: string[] | null;
 };
 
-export function mapMiPerfilToStaffUser(row: MiPerfilRow, fallbackEmail: string): StaffUser {
+export function mapMiPerfilToStaffUser(row: StaffMiPerfilRow, fallbackEmail: string): StaffUser {
   return {
     id: row.id,
     email: row.email || fallbackEmail,
@@ -242,17 +247,6 @@ export const supabaseAuthRepository: AuthRepository = {
       }, 0);
     });
     return () => data.subscription.unsubscribe();
-  },
-
-  async miPerfil() {
-    const { data, error } = await supabase.rpc('get_mi_perfil').maybeSingle();
-    if (error) {
-      throw new AuthError(500, 'No se pudo consultar el perfil del usuario.');
-    }
-    if (!data) {
-      throw new AuthError(403, 'Esta cuenta no tiene acceso al panel administrativo.');
-    }
-    return mapMiPerfilToStaffUser(data, '');
   },
 
   async getUmecaCitas(): Promise<UmecaCita[]> {

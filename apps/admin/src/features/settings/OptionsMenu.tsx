@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Menu } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/menu';
 import { useCerrarSesion } from '@/shared/auth/useCerrarSesion';
@@ -23,6 +24,7 @@ const AFTER_CLOSE_MS = 220;
  * Desde ahí: Configuración (diálogo) y Apariencia (panel del mismo menú).
  */
 export function OptionsMenu() {
+  const navigate = useNavigate();
   const cerrarSesion = useCerrarSesion();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
