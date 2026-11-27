@@ -417,3 +417,64 @@ const { error } = await supabase.rpc('registrar_consulta', {
 **Errores:** `42501` (sin sesión, inactivo) · `23514` (tabla no permitida o id vacío).
 
 **En el front:** `SupabaseAgresorRepository.registrarConsulta` y `SupabaseExpedienteRepository.registerConsult`. Esta última quedará de sobra cuando el detalle use `get_expediente_detalle`.
+
+---
+
+## `actualizar_persona`
+
+> Edita datos generales de una persona con bloqueo optimista y sin alterar CURP ni columnas calculadas.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+| --- | --- | --- | --- | --- |
+| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por trigger (`actualizar`) | `_35_rpc_editar_persona_y_ficha` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('actualizar_persona', {
+    p_persona_id: personaId,
+    p_actualizado_en: personaActualizadoEn,
+    p_celular: '6681234567',
+    p_religion: '', // '' limpia el campo opcional; null lo conserva
+  })
+  .single();
+```
+
+**Reglas y errores**
+
+- `null` conserva el campo; `''` borra opcionales (`apellido_materno`, `celular`, `discapacidad`, `grupo_etnico`, `religion`).
+- `42501`: rol sin `expediente.escribir`.
+- `23514`: expediente archivado (`"Reabre el expediente para editarlo"`), celular inválido o nombre/apellido vacío.
+- `23505`: `p_actualizado_en` viejo (`"Este registro fue modificado por otra persona. Recarga los datos."`).
+
+---
+
+## `actualizar_ficha`
+
+> Edita los datos de la Ficha Única y sus servicios solicitados con bloqueo optimista.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+| --- | --- | --- | --- | --- |
+| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí (`ficha_registro` + `ficha_servicio_solicitado`) | `_35_rpc_editar_persona_y_ficha` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('actualizar_ficha', {
+    p_ficha_id: fichaId,
+    p_actualizado_en: fichaActualizadoEn,
+    p_estado_civil: 'divorciado',
+    p_servicios_solicitados_area_ids: [areaTsId, areaJurId],
+  })
+  .single();
+```
+
+**Reglas y errores**
+
+- No modifica `folio`, `persona_id`, `estado`, `aviso_privacidad_aceptado_en`, `registrada_en` ni `activo`.
+- Si se pasa `p_servicios_solicitados_area_ids`, exige al menos un área válida y registra altas/bajas en `bitacora_acceso` (`ficha_servicio_solicitado`).
+- `42501`: rol sin `expediente.escribir`.
+- `23514`: expediente archivado (`"Reabre el expediente para editarlo"`), servicio vacío o inconsistencia de drogas/`servicio_medico_otro`.
+- `23505`: `p_actualizado_en` viejo (`"Este registro fue modificado por otra persona. Recarga los datos."`).
