@@ -1,6 +1,6 @@
 # Roles, Permisos y Seguridad en Base de Datos (RBAC + ABAC)
 
-Referencia técnica del modelo de autorización implementado en [20261125000700_07_rls.sql](../migrations/20261125000700_07_rls.sql), actualizado en [20261126000500_15_permisos_rbac_abac.sql](../migrations/20261126000500_15_permisos_rbac_abac.sql) sobre PostgreSQL Row Level Security (RLS), complementado con los privilegios SQL base a `authenticated` (sin abrir `anon`) en [20261125000900_09_grants_authenticated.sql](../migrations/20261125000900_09_grants_authenticated.sql).
+Referencia técnica del modelo de autorización implementado en [20261125000700_07_rls.sql](../migrations/20261125000700_07_rls.sql), actualizado en [20261126000500_15_permisos_rbac_abac.sql](../migrations/20261126000500_15_permisos_rbac_abac.sql) y [20261127000100_32_permisos_sprint02.sql](../migrations/20261127000100_32_permisos_sprint02.sql) sobre PostgreSQL Row Level Security (RLS), complementado con los privilegios SQL base a `authenticated` (sin abrir `anon`) en [20261125000900_09_grants_authenticated.sql](../migrations/20261125000900_09_grants_authenticated.sql).
 
 ---
 
@@ -20,9 +20,12 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
 |---|---|
 | `catalogos.gestionar`, `directorio.gestionar`, `cuentas.gestionar`, `bitacora.ver` | `titular`, `subdireccion` |
 | `expediente.escribir` | `titular`, `subdireccion`, `trabajo_social` |
+| `expediente.reabrir` | `titular`, `subdireccion` |
 | `expediente.ver`, `agresor.acceder`, `derivacion.gestionar`, `actividad.registrar`, `informe.ver` | `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico` |
+| `canalizacion.crear` | `trabajo_social` |
 | `expediente.verificar_curp`, `agenda.ver`, `agenda.gestionar`, `actividad.ver` | Todos los empleados activos (incluye `recepcion`) |
 | `seguimiento.registrar` | `trabajo_social`, `psicologia`, `juridico` |
+| `seguimiento.corregir` | `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico` *(ABAC en B-04: lo propio y el mismo día para áreas; cualquiera para Dirección)* |
 | `urgencias.ver` | `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `recepcion` |
 | `historial_clinico.acceder` | `titular`, `subdireccion`, `psicologia` |
 | `orden_proteccion.escribir` | `titular`, `subdireccion`, `juridico`, `trabajo_social` |

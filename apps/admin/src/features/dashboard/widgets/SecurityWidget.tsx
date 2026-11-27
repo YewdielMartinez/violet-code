@@ -28,7 +28,7 @@ export function SecurityWidget() {
   const { data, isLoading, isError } = useRecentActivity(true);
 
   return (
-    <WidgetCard title="Actividad de seguridad" action={{ label: 'Auditoría', to: '/auditoria' }}>
+    <WidgetCard title="Actividad de seguridad">
       {isLoading ? (
         <WidgetLoading />
       ) : isError || !data?.length ? (

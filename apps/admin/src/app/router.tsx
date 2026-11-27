@@ -4,7 +4,6 @@ import { ALL_PAGES } from './navigation';
 import { queryClient } from './queryClient';
 import {
   AlertasPage,
-  CanalizacionesPage,
   DashboardPage,
   DirectoryPage,
   ExpedienteDetailPage,
@@ -114,7 +113,6 @@ const READY: Record<string, ComponentType> = {
   '/': DashboardPage,
   '/directorio': DirectoryPage,
   '/expedientes': ExpedientesPage,
-  '/canalizaciones': CanalizacionesPage,
   '/solicitudes': AlertasPage,
   '/intervenciones': IntervencionesPage,
 };

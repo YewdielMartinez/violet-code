@@ -44,6 +44,16 @@ La llamada vive en el **adaptador** (`infrastructure/supabase/adapters/Supabase<
 | Bitácora | Las RPC de lectura sensible registran el `'ver'` solas. No hace falta llamar `registrar_consulta` después de ellas. |
 | Tipos | Después de cada migración: `npx supabase gen types typescript --local > apps/admin/src/infrastructure/supabase/database.types.ts`. Si una RPC no aparece en los tipos, falta regenerar. |
 
+### Glosario de nombres de negocio
+
+En la base de datos **no se renombran** las tablas ni las columnas ya creadas; usa esta equivalencia al leer tablas o endpoints:
+
+| Nombre en negocio | Tabla en Supabase | Notas |
+|---|---|---|
+| **Canalización** | `derivacion` | Envío interno entre áreas o externo; las RPC nuevas de creación e historial conservan este nombre de negocio. |
+| **Folio de seguimiento** | `atencion` | Registro/documento individual generado al atender una cita. |
+| **Expediente / Ficha Única** | `ficha_registro` | Expediente principal ligado a `persona`, `domicilio`, `ficha_servicio_solicitado`, `estudio_socioeconomico` y `aportante_hogar`. |
+
 ---
 
 ## 2. Índice por módulo

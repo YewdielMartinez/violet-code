@@ -39,6 +39,20 @@ Referencia técnica del modelo relacional, reglas de integridad, auditoría y co
 | [20261126001800_28_rpc_informes_y_bitacora.sql](../migrations/20261126001800_28_rpc_informes_y_bitacora.sql) | RPCs `get_informe()` (agregado por área sin CURP) y `get_bitacora()` (exclusivo de Dirección). |
 | [20261126001900_29_recepcion_sin_curp.sql](../migrations/20261126001900_29_recepcion_sin_curp.sql) | Restringe `persona_select` a `tiene_permiso('expediente.ver')` para no exponer CURP directa a Recepción. |
 | [20261126002000_30_revoke_anon_tables.sql](../migrations/20261126002000_30_revoke_anon_tables.sql) | Revoca privilegios SQL por defecto de `anon` sobre tablas, vistas y secuencias de `public` (y `DEFAULT PRIVILEGES`). |
+| [20261126002100_31_hardening_rls_e_indices.sql](../migrations/20261126002100_31_hardening_rls_e_indices.sql) | Inmutabilidad en Storage (elimina `update`), `(select ...)` en políticas faltantes, índices de búsqueda y privilegios por defecto de funciones. |
+| [20261127000100_32_permisos_sprint02.sql](../migrations/20261127000100_32_permisos_sprint02.sql) | Agrega claves RBAC del Sprint 02 (`canalizacion.crear`, `expediente.reabrir`, `seguimiento.corregir`) en `tiene_permiso()`. |
+
+---
+
+## Glosario de nombres de negocio
+
+En la base de datos **no se renombra ninguna tabla** existente; los términos operativos del dominio equivalen a las siguientes tablas:
+
+| Término de negocio | Tabla en PostgreSQL | Alcance |
+|---|---|---|
+| **Canalización** | `derivacion` *(y `canalizacion_evento` en Sprint 02)* | Envío interno entre áreas o externo hacia otra institución. |
+| **Folio de seguimiento** | `atencion` | Documento único generado por cada asistencia atendida en un área. |
+| **Expediente / Ficha Única** | `ficha_registro` *(con `persona`, `domicilio`, `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar`)* | Expediente integral de la persona atendida. |
 
 ---
 

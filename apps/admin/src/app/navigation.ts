@@ -39,7 +39,7 @@ const DIRECTION_ONLY: readonly StaffRole[] = ['titular', 'subdireccion'];
 export const NAVIGATION: NavPage[] = [
   {
     path: '/',
-    label: 'Dashboard',
+    label: 'Tablero',
     icon: 'space_dashboard',
     ready: true,
     mobile: true,
@@ -63,13 +63,6 @@ export const NAVIGATION: NavPage[] = [
     allowedRoles: ATTENTION_AND_DIRECTION,
   },
   //QUITE EL MENU DE INTERVENCIONES 
-  {
-    path: '/canalizaciones',
-    label: 'Canalizaciones',
-    icon: 'alt_route',
-    ready: true,
-    allowedRoles: ATTENTION_AND_DIRECTION,
-  },
   {
     path: '/agenda',
     label: 'Agenda',
@@ -98,13 +91,6 @@ export const NAVIGATION: NavPage[] = [
     path: '/usuarios',
     label: 'Usuarios',
     icon: 'manage_accounts',
-    ready: false,
-    allowedRoles: DIRECTION_ONLY,
-  },
-  {
-    path: '/auditoria',
-    label: 'Auditoría',
-    icon: 'policy',
     ready: false,
     allowedRoles: DIRECTION_ONLY,
   },

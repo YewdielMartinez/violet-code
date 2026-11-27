@@ -103,7 +103,7 @@ describe('RequireAuth guard', () => {
       },
     });
 
-    renderGuard('/auditoria');
+    renderGuard('/usuarios');
 
     expect(screen.getByText('Contenido protegido')).toBeTruthy();
   });

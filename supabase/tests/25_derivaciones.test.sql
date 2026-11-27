@@ -105,15 +105,16 @@ select throws_ok(
   'empleado inactivo no puede consultar get_derivaciones'
 );
 
--- 5. Trigger RN-01: menor de edad derivada a Psicología -> 23514
+-- 5. Trigger RN-01 vía crear_canalizacion(): menor de edad derivada a Psicología -> 23514
 select pg_temp.as_user('90000000-0000-4000-a000-000000000001');
 select throws_ok(
   $$
-    insert into public.derivacion (ficha_id, destino, area_destino_id, motivo)
-    values (
+    select * from public.crear_canalizacion(
       '90000000-0000-4000-a000-000000000202',
       'psicologia',
       (select id from public.cat_area where clave = 'psicologia'),
+      null,
+      null,
       'Intento menor en psicologia'
     )
   $$,
@@ -122,14 +123,15 @@ select throws_ok(
   'RN-01 rechaza derivar menor de 18 años a Psicología con 23514'
 );
 
--- 6. Trigger RN-01: menor de edad derivada a Jurídico -> 23514
+-- 6. Trigger RN-01 vía crear_canalizacion(): menor de edad derivada a Jurídico -> 23514
 select throws_ok(
   $$
-    insert into public.derivacion (ficha_id, destino, area_destino_id, motivo)
-    values (
+    select * from public.crear_canalizacion(
       '90000000-0000-4000-a000-000000000202',
       'juridico',
       (select id from public.cat_area where clave = 'juridico'),
+      null,
+      null,
       'Intento menor en juridico'
     )
   $$,
@@ -139,6 +141,9 @@ select throws_ok(
 );
 
 -- 7. Camino feliz + area_origen_id autocompletado en INSERT cuando viene NULL
+--    (derivacion_insert se cerró en Sprint 02 A-01; se siembran los fixtures
+--     conservando el claim JWT de TS para verificar validar_derivacion_area).
+reset role;
 insert into public.derivacion (id, ficha_id, destino, area_destino_id, motivo)
 values (
   '90000000-0000-4000-a000-000000000301',
@@ -163,6 +168,7 @@ values (
   (select id from public.cat_area where clave = 'psicologia'),
   'Derivacion TS a Psicologia'
 );
+set local role authenticated;
 
 -- 8. get_derivaciones: Trabajo Social ve ambas derivaciones de la ficha
 select is(
@@ -218,9 +224,9 @@ select is(
   'psicologia avanza su derivacion de pendiente a en_proceso'
 );
 
--- 15. Camino feliz: en_proceso -> concluida
+-- 15. Camino feliz: en_proceso -> concluida (nota obligatoria desde A-02 S2)
 select is(
-  (select estado from public.cambiar_estado_derivacion('90000000-0000-4000-a000-000000000302', 'concluida')),
+  (select estado from public.cambiar_estado_derivacion('90000000-0000-4000-a000-000000000302', 'concluida', 'Valoración psicológica concluida')),
   'concluida'::public.estado_derivacion,
   'psicologia concluye su derivacion de en_proceso a concluida'
 );
