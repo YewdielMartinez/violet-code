@@ -30,7 +30,7 @@ Estados de una cita: `agendada → confirmada → asistio | no_asistio`, o `canc
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| Empleado activo (valida rol en el SQL) | Todos los empleados | Lectura | No | `_22_rpc_agenda` |
+| `tiene_permiso('agenda.ver')` + filtro por área | Todos los empleados | Lectura | No | `_47_tiene_permiso_agenda_alertas` *(actualiza `_22_rpc_agenda`)* |
 
 **Llamada**
 

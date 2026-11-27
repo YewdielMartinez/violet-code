@@ -23,7 +23,7 @@ Estados: `nueva → tomada → atendida`. Orígenes: `app_movil`, `telefono`, `p
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| Rol (valida en el SQL) | Tit, Sub, Jur, TS, Psi | Lectura | Sí: un `'ver'` sobre `alerta` (registro `'cola'`) en **cada** llamada | `_24_rpc_cola_alertas` |
+| `tiene_permiso('alerta.ver_cola')` | Tit, Sub, Jur, TS, Psi | Lectura | Sí: un `'ver'` sobre `alerta` (registro `'cola'`) en **cada** llamada | `_47_tiene_permiso_agenda_alertas` *(actualiza `_24_rpc_cola_alertas`)* |
 
 **Llamada**
 
