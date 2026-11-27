@@ -449,12 +449,24 @@ export default function ExpedienteDetailPage() {
           {
             id: 'agresor',
             label: 'Cargando persona agresora',
-            node: <AgresorFormSection key={expediente.id} fichaId={expediente.id} />,
+            node: (
+              <AgresorFormSection
+                key={expediente.id}
+                fichaId={expediente.id}
+                estado={expediente.estado}
+              />
+            ),
           },
           {
             id: 'documentos',
             label: 'Cargando documentos',
-            node: <DocumentosAdjuntosPanel key={expediente.id} fichaId={expediente.id} />,
+            node: (
+              <DocumentosAdjuntosPanel
+                key={expediente.id}
+                fichaId={expediente.id}
+                estado={expediente.estado}
+              />
+            ),
           },
           {
             id: 'canalizaciones',
@@ -464,13 +476,20 @@ export default function ExpedienteDetailPage() {
                 key={expediente.id}
                 fichaId={expediente.id}
                 folio={expediente.folio}
+                estado={expediente.estado}
               />
             ),
           },
           {
             id: 'ordenes',
             label: 'Cargando órdenes de protección',
-            node: <OrdenesProteccionPanel key={expediente.id} fichaId={expediente.id} />,
+            node: (
+              <OrdenesProteccionPanel
+                key={expediente.id}
+                fichaId={expediente.id}
+                estado={expediente.estado}
+              />
+            ),
           },
           {
             id: 'seguimiento',

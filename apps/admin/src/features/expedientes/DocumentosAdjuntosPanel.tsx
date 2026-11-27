@@ -2,7 +2,9 @@ import { useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { EmptyState, toast, type PreviewImage } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
+import type { EstadoFicha } from '@/domain/models/Persona';
 import { useAuth } from '@/shared/auth/useAuth';
+import { formatErrorEscrituraExpediente } from './api';
 import { DocumentoList } from './DocumentoList';
 import { DocumentoSummaryHeader } from './documentos/DocumentoSummaryHeader';
 import {
@@ -27,6 +29,7 @@ import {
 
 export interface DocumentosAdjuntosPanelProps {
   fichaId: string;
+  estado?: EstadoFicha;
 }
 
 function abrirEnNuevaPestana(url: string) {
@@ -53,10 +56,11 @@ function descargarDesdeUrl(url: string, nombreArchivo: string) {
  * Panel inline de documentos adjuntos privados de un expediente (`RF-35`, `RF-35.1`).
  * Organizado por ranuras de checklist con carga directa por tipo y acciones inline sin diálogos.
  */
-export function DocumentosAdjuntosPanel({ fichaId }: DocumentosAdjuntosPanelProps) {
+export function DocumentosAdjuntosPanel({ fichaId, estado }: DocumentosAdjuntosPanelProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const autorizado = puedeVerDocumentos(user?.role);
+  const isArchivado = estado === 'archivado';
 
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
   const [archivingDocId, setArchivingDocId] = useState<string | null>(null);
@@ -199,8 +203,9 @@ export function DocumentosAdjuntosPanel({ fichaId }: DocumentosAdjuntosPanelProp
       handleThumbnailError(doc);
       toast('Documento archivado del expediente.', { tone: 'success' });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'No se pudo archivar el documento.';
-      toast(message, { tone: 'error' });
+      toast(formatErrorEscrituraExpediente(err, 'No se pudo archivar el documento.', isArchivado), {
+        tone: 'error',
+      });
       throw err;
     } finally {
       setArchivingDocId(null);
@@ -211,6 +216,12 @@ export function DocumentosAdjuntosPanel({ fichaId }: DocumentosAdjuntosPanelProp
 
   return (
     <section aria-label="Documentos adjuntos privados" className="grid gap-4">
+      {isArchivado ? (
+        <p className="rounded-xl border border-outline-variant bg-surface-container-low px-3.5 py-2 text-xs font-medium text-on-surface-variant">
+          Expediente archivado: solo consulta
+        </p>
+      ) : null}
+
       <DocumentoSummaryHeader
         documentos={documentosQuery.data ?? []}
         isLoading={documentosQuery.isLoading}
@@ -218,6 +229,7 @@ export function DocumentosAdjuntosPanel({ fichaId }: DocumentosAdjuntosPanelProp
       />
 
       <DocumentoList
+        readOnly={isArchivado}
         documentos={documentosQuery.data ?? []}
         tipos={tiposQuery.data ?? []}
         tiposLoading={tiposQuery.isLoading}
@@ -234,16 +246,26 @@ export function DocumentosAdjuntosPanel({ fichaId }: DocumentosAdjuntosPanelProp
         thumbnailsById={thumbnailsById}
         loadingThumbIds={loadingThumbIds}
         onUpload={async ({ tipoDocumentoId, ordenProteccionId, descripcion, file, onProgress }) => {
-          await subirMutation.mutateAsync({
-            input: {
-              fichaId,
-              tipoDocumentoId,
-              ordenProteccionId,
-              descripcion,
-              file,
-            },
-            onProgress,
-          });
+          try {
+            await subirMutation.mutateAsync({
+              input: {
+                fichaId,
+                tipoDocumentoId,
+                ordenProteccionId,
+                descripcion,
+                file,
+              },
+              onProgress,
+            });
+          } catch (err) {
+            const msg = formatErrorEscrituraExpediente(
+              err,
+              'No se pudo subir el documento.',
+              isArchivado,
+            );
+            toast(msg, { tone: 'error' });
+            throw new Error(msg);
+          }
         }}
         onLoadThumbnail={handleRefreshThumbnail}
         onThumbnailError={(docId) => {

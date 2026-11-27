@@ -58,13 +58,13 @@ Se usa para derivaciones externas (`institucion_id`) y en la app (directorio de 
 | `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar` | `expediente.ver`                           | Solo RPC (`42501` directo)       | Alta en `crear_ficha_completa`; edición por `actualizar_ficha` y `registrar_estudio_socioeconomico` ([expedientes.md](./expedientes.md)).                             |
 | `domicilio`                                                              | `expediente.ver`                           | Cerrado (`actualizar_domicilio`) | Usar el RPC [`actualizar_domicilio`](../rpcs/actualizar_domicilio.md); `insert`/`update` directos bloqueados (`42501`).                                               |
 | `agresor`                                                                | `agresor.acceder` (Tit, Sub, TS, Psi, Jur) | Solo RPC (`42501` directo)       | Alta/edición/baja únicamente por `guardar_agresor` y `desactivar_agresor` ([expedientes.md](./expedientes.md)); al abrirlo llama `registrar_consulta('agresor', id)`. |
-| `documento`                                                              | `expediente.ver`                           | `expediente.ver`                 | Ver [storage.md](./storage.md).                                                                                                                                       |
+| `documento`                                                              | `expediente.ver`                           | `expediente.ver` + ficha no archivada | Ver [storage.md](./storage.md) (migración `63`: `42501` si está archivada). |
 
 ### `orden_proteccion`
 
-| Leer             | Crear / editar                                  |
-| ---------------- | ----------------------------------------------- |
-| `expediente.ver` | `orden_proteccion.escribir` (Tit, Sub, TS, Jur) |
+| Leer             | Crear / editar                                                           |
+| ---------------- | ------------------------------------------------------------------------ |
+| `expediente.ver` | `orden_proteccion.escribir` + ficha no archivada (Tit, Sub, TS, Jur)     |
 
 ```ts
 await supabase.from("orden_proteccion").insert({

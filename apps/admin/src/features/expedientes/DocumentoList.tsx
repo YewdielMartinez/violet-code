@@ -31,6 +31,7 @@ interface UploadRequest {
 }
 
 interface DocumentoListProps {
+  readOnly?: boolean;
   documentos: DocumentoAdjunto[];
   tipos: TipoDocumento[];
   tiposLoading: boolean;
@@ -66,6 +67,7 @@ const IMAGE_PREVIEW_LABELS: NonNullable<ImagePreviewProps['labels']> = {
 };
 
 export function DocumentoList({
+  readOnly = false,
   documentos,
   tipos,
   tiposLoading,
@@ -120,6 +122,7 @@ export function DocumentoList({
             {DOCUMENTO_CHECKLIST_SLOTS.map((slot) => (
               <DocumentoSlotCard
                 key={slot.key}
+                readOnly={readOnly}
                 slot={slot}
                 docs={docsPorSlot[slot.key]}
                 tipos={tipos}

@@ -12,6 +12,7 @@ import { DocumentoThumbnail } from './DocumentoThumbnail';
 
 interface DocumentoCardProps {
   doc: DocumentoAdjunto;
+  readOnly?: boolean;
   showSubtipoBadge?: boolean;
   ordenLabel: string | null;
   thumbnailUrl: string | null;
@@ -36,6 +37,7 @@ const ARCHIVE_FUSE_LABELS: NonNullable<FuseButtonProps['labels']> = {
 
 export function DocumentoCard({
   doc,
+  readOnly = false,
   showSubtipoBadge = false,
   ordenLabel,
   thumbnailUrl,
@@ -123,18 +125,20 @@ export function DocumentoCard({
           </Tooltip>
         </div>
 
-        <FuseButton
-          key={doc.id}
-          mode="split"
-          tone="danger"
-          align="end"
-          height={34}
-          disabled={busy}
-          labels={ARCHIVE_FUSE_LABELS}
-          onConfirm={async () => {
-            await onArchivar();
-          }}
-        />
+        {!readOnly ? (
+          <FuseButton
+            key={doc.id}
+            mode="split"
+            tone="danger"
+            align="end"
+            height={34}
+            disabled={busy}
+            labels={ARCHIVE_FUSE_LABELS}
+            onConfirm={async () => {
+              await onArchivar();
+            }}
+          />
+        ) : null}
       </div>
     </li>
   );

@@ -223,6 +223,32 @@ export function useDeactivateFicha() {
 const OPTIMISTIC_CONFLICT_MESSAGE =
   'Este registro fue modificado por otra persona. Recarga los datos.';
 
+export const EXPEDIENTE_ARCHIVADO_ERROR =
+  'El expediente está archivado y no se puede modificar.';
+
+/** Traduce errores `23514` / `42501` en escrituras de expediente (incluyendo bloqueo por archivo). */
+export function formatErrorEscrituraExpediente(
+  err: unknown,
+  fallback: string,
+  isArchivado = false,
+): string {
+  const code =
+    typeof err === 'object' && err !== null && 'code' in err
+      ? (err as { code?: unknown }).code
+      : undefined;
+  const message =
+    err instanceof Error && err.message.trim() ? err.message : fallback;
+
+  if (
+    (code === '23514' || code === '42501') &&
+    (isArchivado || /archivad|row-level security/i.test(message))
+  ) {
+    return EXPEDIENTE_ARCHIVADO_ERROR;
+  }
+
+  return message;
+}
+
 /** Maneja errores de mutación del expediente: ante conflicto optimista (`23505`) recarga el detalle. */
 export function handleExpedienteMutationError(
   err: unknown,

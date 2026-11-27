@@ -65,6 +65,8 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
 | `ficha_registro`, `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar` | S / I / U | S / I / U *(D en puente)* | S | S | — | — | — |
 | `agresor` | S / I / U | S / I / U | S / I / U | S / I / U | — | — | — |
 | `orden_proteccion` | S / I / U | S / I / U | S | S / I / U | — | — | — |
+
+*(Regla transversal de archivado — migración `63`: `orden_proteccion`, `documento` y la subida en `storage.objects` requieren `ficha_editable(ficha_id)`, rechazando con `42501` cuando `ficha_registro.estado = 'archivado'`.)*
 | `cita` | S / I / U (todas) | S (`ts`+`psic`) / U (`ts`; sin I) | S / I / U (`psic`) | S / I / U (`jur`) | S / I / U (`ts`+`psic`+`jur`) | RPC `get_umeca_citas()` | — |
 | `atencion` | S / I / U (todas) | S / I / U (`ts`) | S / I / U (`psic`) | S / I / U (`jur`) | — | — | — |
 | `nota_area` | S (todas) | S / I / U (`ts`) | S / I / U (`psic`) | S / I / U (`jur`) | — | — | — |

@@ -16,6 +16,7 @@ import { useSlotUpload, type SlotUploadRequest } from './useSlotUpload';
 import './documentos.css';
 
 interface DocumentoSlotCardProps {
+  readOnly?: boolean;
   slot: ChecklistSlotMeta;
   docs: DocumentoAdjunto[];
   tipos: TipoDocumento[];
@@ -38,6 +39,7 @@ interface DocumentoSlotCardProps {
 const ACCEPT_ARCHIVOS = 'image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf';
 
 export function DocumentoSlotCard({
+  readOnly = false,
   slot,
   docs,
   tipos,
@@ -119,54 +121,56 @@ export function DocumentoSlotCard({
         </span>
       </div>
 
-      <div className="grid gap-1.5">
-        <Attachment
-          className="vc-doc-slot-attachment"
-          accept={ACCEPT_ARCHIVOS}
-          multiple={false}
-          maxFiles={1}
-          maxSize={TAMANO_MAXIMO_BYTES}
-          hint=""
-          labels={attachmentLabels}
-          uploads={upload.uploads}
-          instanceRef={upload.attachmentRef}
-          onFiles={upload.handleFiles}
-          onRemove={() => {
-            if (!upload.isUploading) upload.resetStaged();
-          }}
-          onReject={upload.handleReject}
-        />
+      {!readOnly ? (
+        <div className="grid gap-1.5">
+          <Attachment
+            className="vc-doc-slot-attachment"
+            accept={ACCEPT_ARCHIVOS}
+            multiple={false}
+            maxFiles={1}
+            maxSize={TAMANO_MAXIMO_BYTES}
+            hint=""
+            labels={attachmentLabels}
+            uploads={upload.uploads}
+            instanceRef={upload.attachmentRef}
+            onFiles={upload.handleFiles}
+            onRemove={() => {
+              if (!upload.isUploading) upload.resetStaged();
+            }}
+            onReject={upload.handleReject}
+          />
 
-        {upload.slotError && !requiresInlineDetails ? (
-          <p role="alert" className="text-xs font-medium text-status-danger">
-            {upload.slotError}
-          </p>
-        ) : null}
+          {upload.slotError && !requiresInlineDetails ? (
+            <p role="alert" className="text-xs font-medium text-status-danger">
+              {upload.slotError}
+            </p>
+          ) : null}
 
-        {requiresInlineDetails ? (
-          <AnimatedReveal show={Boolean(upload.staged)}>
-            <DocumentoSlotDetails
-              slotKey={slot.key}
-              subtiposOtro={upload.subtiposOtro}
-              selectedTipoId={upload.effectiveSubtipoId}
-              onSelectTipoId={upload.setSelectedSubtipoId}
-              ordenes={ordenes}
-              ordenesLoading={ordenesLoading}
-              ordenProteccionId={upload.ordenProteccionId}
-              onSelectOrdenId={upload.setOrdenProteccionId}
-              descripcion={upload.descripcion}
-              onChangeDescripcion={upload.setDescripcion}
-              esDescripcionObligatoria={upload.esDescripcionObligatoria}
-              uploading={upload.isUploading}
-              submitState={upload.submitState}
-              onSubmitStateChange={upload.setSubmitState}
-              error={upload.slotError}
-              onCancel={upload.resetStaged}
-              onSubmit={upload.handleDetailsSubmit}
-            />
-          </AnimatedReveal>
-        ) : null}
-      </div>
+          {requiresInlineDetails ? (
+            <AnimatedReveal show={Boolean(upload.staged)}>
+              <DocumentoSlotDetails
+                slotKey={slot.key}
+                subtiposOtro={upload.subtiposOtro}
+                selectedTipoId={upload.effectiveSubtipoId}
+                onSelectTipoId={upload.setSelectedSubtipoId}
+                ordenes={ordenes}
+                ordenesLoading={ordenesLoading}
+                ordenProteccionId={upload.ordenProteccionId}
+                onSelectOrdenId={upload.setOrdenProteccionId}
+                descripcion={upload.descripcion}
+                onChangeDescripcion={upload.setDescripcion}
+                esDescripcionObligatoria={upload.esDescripcionObligatoria}
+                uploading={upload.isUploading}
+                submitState={upload.submitState}
+                onSubmitStateChange={upload.setSubmitState}
+                error={upload.slotError}
+                onCancel={upload.resetStaged}
+                onSubmit={upload.handleDetailsSubmit}
+              />
+            </AnimatedReveal>
+          ) : null}
+        </div>
+      ) : null}
 
       {hasDocs ? (
         <FlipGroup root={filesListRef} signature={flipSignature}>
@@ -175,6 +179,7 @@ export function DocumentoSlotCard({
               <DocumentoCard
                 key={doc.id}
                 doc={doc}
+                readOnly={readOnly}
                 showSubtipoBadge={slot.key === 'otro' && doc.tipoDocumentoClave !== 'otro'}
                 ordenLabel={doc.ordenProteccionId ? (ordenesLabelById.get(doc.ordenProteccionId) ?? null) : null}
                 thumbnailUrl={thumbnailsById[doc.id] ?? null}
