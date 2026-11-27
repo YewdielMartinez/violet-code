@@ -1,5 +1,6 @@
 # `cambiar_prioridad_expediente`
 
+- **Versión:** [`20261128001100_50`](../../migrations/20261128001100_50_prioridad_en_expediente.sql)
 - **Migración:** [`20261128001100_50_prioridad_en_expediente.sql`](../../migrations/20261128001100_50_prioridad_en_expediente.sql)
 - **Permiso RBAC:** `tiene_permiso('expediente.ver')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico` (todos los roles operativos excepto `recepcion`, `umeca`, `app` y `anon`).

@@ -1,5 +1,6 @@
 # RPC: `public.cambiar_estado_derivacion`
 
+- **Versión:** [`20261127000300_34`](../../migrations/20261127000300_34_historial_canalizaciones.sql)
 - **Migración:** `supabase/migrations/20261126001500_25_rpc_derivaciones.sql`, actualizada en `supabase/migrations/20261127000300_34_historial_canalizaciones.sql`
 - **Cubre:** `RF-08`, `RF-25` (SF-04 / Sprint 02 · A-02)
 

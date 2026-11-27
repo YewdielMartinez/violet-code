@@ -1,5 +1,6 @@
 # RPC: `public.registrar_estudio_socioeconomico`
 
+- **Versión:** [`20261128001500_57`](../../migrations/20261128001500_57_ficha_campos_opcionales.sql)
 - **Migración:** `supabase/migrations/20261128001500_57_ficha_campos_opcionales.sql` *(actualiza `_37_`)*
 - **Cubre:** `RF-01`, `RN-15.1` (Sprint 02 · A-05)
 

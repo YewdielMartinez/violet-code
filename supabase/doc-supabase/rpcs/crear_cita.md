@@ -1,5 +1,6 @@
 # `crear_cita`
 
+- **Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
 - **Migración:** [`20261128001200_51_rpc_crear_cita.sql`](../../migrations/20261128001200_51_rpc_crear_cita.sql); regla de alcance vigente desde [`20261128001800_60_integrar_develop_y_supabase.sql`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
 - **Permiso RBAC:** `tiene_permiso('agenda.crear')` + `puede_crear_cita_en_area(p_area_id)` (la misma regla que `reagendar_cita` y la próxima cita de `registrar_seguimiento`)
 - **Actores autorizados:**

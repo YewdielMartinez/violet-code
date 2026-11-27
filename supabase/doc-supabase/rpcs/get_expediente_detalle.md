@@ -1,5 +1,6 @@
 # `get_expediente_detalle`
 
+- **Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
 - **Migración:** [`20261128001100_50_prioridad_en_expediente.sql`](../../migrations/20261128001100_50_prioridad_en_expediente.sql) *(actualiza [`20261128000900_48_edad_en_expediente.sql`](../../migrations/20261128000900_48_edad_en_expediente.sql) y [`20261126000800_18_rpc_detalle_y_archivo.sql`](../../migrations/20261126000800_18_rpc_detalle_y_archivo.sql))*
 - **Permiso RBAC:** `tiene_permiso('expediente.ver')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico` (`recepcion` y `umeca` denegados).

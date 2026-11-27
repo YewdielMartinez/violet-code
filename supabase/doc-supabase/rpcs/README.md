@@ -7,7 +7,8 @@ Cada RPC nuevo o modificado se documenta aquí en su propio archivo `<nombre_rpc
 ```markdown
 # `<nombre_rpc>`
 
-- **Migración:** `<YYYYMMDDHHMMSS>_<NN>_<nombre>.sql`
+- **Versión:** `<YYYYMMDDHHMMSS>_<NN>`: la última migración que redefine la RPC. Si otra migración la vuelve a definir, se actualiza esta línea.
+- **Migración:** `<YYYYMMDDHHMMSS>_<NN>_<nombre>.sql` (donde se creó)
 - **Permiso RBAC:** `tiene_permiso('<clave>')` *(o `es_umeca()` / propiedad por `auth.uid()`)*
 - **Actores autorizados:** ej. `titular`, `subdireccion`, `trabajo_social`
 

@@ -1,5 +1,6 @@
 # RPC: `public.guardar_agresor`
 
+- **Versión:** [`20261128001600_58`](../../migrations/20261128001600_58_consumo_como_lista.sql)
 - **Migración:** `supabase/migrations/20261128001600_58_consumo_como_lista.sql` *(actualiza `_36_`, `_57_`)*
 - **Cubre:** `RF-05`, `RN-15.1` (Sprint 02 · A-04)
 

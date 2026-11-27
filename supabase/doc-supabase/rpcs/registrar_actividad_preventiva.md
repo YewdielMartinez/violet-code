@@ -1,5 +1,6 @@
 # RPC: `public.registrar_actividad_preventiva`
 
+- **Versión:** [`20261126001600_26`](../../migrations/20261126001600_26_rpc_actividades_preventivas.sql)
 - **Migración:** `supabase/migrations/20261126001600_26_rpc_actividades_preventivas.sql`
 - **Permiso RBAC:** `public.tiene_permiso('actividad.registrar')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico`

@@ -1,5 +1,6 @@
 # RPC: `public.actualizar_ficha`
 
+- **Versión:** [`20261128001700_59`](../../migrations/20261128001700_59_casillas_sin_dato.sql)
 - **Migración:** `supabase/migrations/20261128001700_59_casillas_sin_dato.sql` *(actualiza `_35_`, `_57_`, `_58_`)*
 - **Cubre:** `RF-01`, `RN-08`, `RN-15.1` (Sprint 02 · A-03)
 

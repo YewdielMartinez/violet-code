@@ -1,5 +1,6 @@
 # `enviar_alerta`
 
+- **Versión:** [`20261128000700_46`](../../migrations/20261128000700_46_rpc_enviar_alerta_y_auth.sql)
 - **Migración:** [`20261128000700_46_rpc_enviar_alerta_y_auth.sql`](../../migrations/20261128000700_46_rpc_enviar_alerta_y_auth.sql)
 - **Permiso:** `es_usuaria_app()` + `mi_pre_registro_id()` activo.
 

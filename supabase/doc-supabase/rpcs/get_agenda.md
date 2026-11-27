@@ -1,5 +1,6 @@
 # RPC: `public.get_agenda`
 
+- **Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
 - **Migración:** `supabase/migrations/20261128001800_60_integrar_develop_y_supabase.sql` *(versión vigente: base de `50_prioridad_en_expediente.sql` y `47_tiene_permiso_agenda_alertas.sql` + alcance de Recepción con Jurídico de `40_agenda_permisos_creacion.sql`; origen en `22_rpc_agenda.sql`)*
 - **Cubre:** `RF-06`, `RN-04`, `RN-06` (SF-05, SF-06)
 

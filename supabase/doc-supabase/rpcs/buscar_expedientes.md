@@ -1,5 +1,6 @@
 # `buscar_expedientes`
 
+- **Versión:** [`20261128000900_48`](../../migrations/20261128000900_48_edad_en_expediente.sql)
 - **Migración:** [`20261128000900_48_edad_en_expediente.sql`](../../migrations/20261128000900_48_edad_en_expediente.sql) *(actualiza [`20261126000700_17_rpc_busqueda_expedientes.sql`](../../migrations/20261126000700_17_rpc_busqueda_expedientes.sql))*
 - **Permiso RBAC:** `tiene_permiso('expediente.ver')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico` (`recepcion` y `umeca` denegados).

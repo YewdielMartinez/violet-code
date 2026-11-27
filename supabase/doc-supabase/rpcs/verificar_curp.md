@@ -1,5 +1,6 @@
 # `verificar_curp`
 
+- **Versión:** [`20261126000700_17`](../../migrations/20261126000700_17_rpc_busqueda_expedientes.sql)
 - **Migración:** [`20261126000700_17_rpc_busqueda_expedientes.sql`](../../migrations/20261126000700_17_rpc_busqueda_expedientes.sql)
 - **Permiso RBAC:** `tiene_permiso('expediente.verificar_curp')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico`, `recepcion`.

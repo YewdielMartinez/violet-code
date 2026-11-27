@@ -1,5 +1,6 @@
 # RPC: `public.cambiar_estado_cita`
 
+- **Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
 - **Migración:** `supabase/migrations/20261128001800_60_integrar_develop_y_supabase.sql` *(versión vigente: base de `47_tiene_permiso_agenda_alertas.sql` + Recepción con Jurídico de `40_agenda_permisos_creacion.sql`; origen en `22_rpc_agenda.sql`)*
 - **Cubre:** `RF-06`, `RN-04`, `RN-06` (SF-06, SF-07, SF-09)
 

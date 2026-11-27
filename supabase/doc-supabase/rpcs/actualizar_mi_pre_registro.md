@@ -1,5 +1,6 @@
 # RPC: `public.actualizar_mi_pre_registro`
 
+- **Versión:** [`20261126001700_27`](../../migrations/20261126001700_27_pre_registro_seguro.sql)
 - **Migración:** `supabase/migrations/20261126001700_27_pre_registro_seguro.sql`
 - **Permiso RBAC:** propiedad por `auth.uid()` (no usa `tiene_permiso()`)
 - **Actores autorizados:** usuaria autenticada de la app móvil dueña de su `pre_registro` activo

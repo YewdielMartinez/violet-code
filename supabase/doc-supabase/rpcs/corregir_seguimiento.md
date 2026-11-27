@@ -1,5 +1,6 @@
 # `corregir_seguimiento`
 
+- **Versión:** [`20261128001400_54`](../../migrations/20261128001400_54_quitar_folio_seguimiento.sql)
 - **Migración:** [`20261128001400_54_quitar_folio_seguimiento.sql`](../../migrations/20261128001400_54_quitar_folio_seguimiento.sql) *(actualiza [`20261128000400_43_corregir_seguimiento.sql`](../../migrations/20261128000400_43_corregir_seguimiento.sql))*
 - **Permiso RBAC:** `seguimiento.corregir` (`titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico`).
 - **Regla ABAC:**

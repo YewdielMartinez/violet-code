@@ -1,5 +1,6 @@
 # `actualizar_domicilio`
 
+- **Versión:** [`20261128001000_49`](../../migrations/20261128001000_49_rpc_actualizar_domicilio.sql)
 - **Migración:** [`20261128001000_49_rpc_actualizar_domicilio.sql`](../../migrations/20261128001000_49_rpc_actualizar_domicilio.sql)
 - **Permiso RBAC:** `tiene_permiso('expediente.escribir')` (`titular`, `subdireccion`, `trabajo_social`).
 

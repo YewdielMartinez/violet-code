@@ -1,5 +1,6 @@
 # RPC: `public.reagendar_cita`
 
+- **Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
 - **Migración:** `supabase/migrations/20261128001800_60_integrar_develop_y_supabase.sql` *(versión vigente: base de `50_prioridad_en_expediente.sql`, sin `p_prioridad`, + regla de creación de `42_agenda_busqueda_umeca.sql`; origen en `23_rpc_reagendar_y_urgencias.sql`)*
 - **Cubre:** `RF-06`, `RN-04`, `RN-06` (SF-07)
 

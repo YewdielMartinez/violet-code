@@ -1,5 +1,6 @@
 # `buscar_personas_agenda`
 
+- **Versión:** [`20261127001100_42`](../../migrations/20261127001100_42_agenda_busqueda_umeca.sql)
 - **Migración:** [`20261127001100_42_agenda_busqueda_umeca.sql`](../../migrations/20261127001100_42_agenda_busqueda_umeca.sql)
 - **Permiso RBAC:** `tiene_permiso('agenda.crear')`
 - **Actores autorizados:** `recepcion`, `juridico`, `psicologia`, `titular`, `subdireccion` (`trabajo_social` y `umeca` denegados).

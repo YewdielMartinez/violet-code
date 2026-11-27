@@ -1,5 +1,6 @@
 # `reabrir_ficha`
 
+- **Versión:** [`20261127000700_38`](../../migrations/20261127000700_38_archivar_y_reabrir.sql)
 - **Migración:** [`20261127000700_38_archivar_y_reabrir.sql`](../../migrations/20261127000700_38_archivar_y_reabrir.sql)
 - **Permiso RBAC:** `tiene_permiso('expediente.reabrir')`
 - **Actores autorizados:** `titular`, `subdireccion`.

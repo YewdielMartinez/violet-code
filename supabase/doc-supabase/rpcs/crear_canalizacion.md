@@ -1,5 +1,6 @@
 # RPC: `public.crear_canalizacion`
 
+- **Versión:** [`20261127000200_33`](../../migrations/20261127000200_33_rpc_crear_canalizacion.sql)
 - **Migración:** `supabase/migrations/20261127000200_33_rpc_crear_canalizacion.sql`
 - **Cubre:** `RF-08`, `RN-01`, `RN-03`, `RN-11` (Sprint 02 · A-01)
 

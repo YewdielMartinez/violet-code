@@ -4,6 +4,8 @@
 
 Corte: 27-nov-2026, rama `develop` con la migración `60_integrar_develop_y_supabase`. El consumo del admin se revisó en `apps/admin/src/infrastructure/supabase/adapters/`.
 
+**Versión** de una RPC = `<timestamp>_<número>` de la última migración que hace `create or replace function` sobre ella. Es la misma que aparece bajo cada sección de `api/*.md`. Cuando una migración nueva redefine la RPC, se actualizan las dos.
+
 **Leyenda**
 
 | Columna | Valores |
@@ -23,7 +25,7 @@ Corte: 27-nov-2026, rama `develop` con la migración `60_integrar_develop_y_supa
 | [`get_expediente_detalle`](../rpcs/get_expediente_detalle.md) | `20261128001800_60` | ✅ | ✅ `SupabaseFichaRepository.getDetail` | |
 | [`buscar_expedientes`](../rpcs/buscar_expedientes.md) | `20261128000900_48` | ✅ | ✅ `SupabaseExpedienteRepository` | |
 | [`verificar_curp`](../rpcs/verificar_curp.md) | `20261126000700_17` | ✅ | ✅ `SupabaseExpedienteRepository` | |
-| `buscar_pre_registro_por_curp` | `20261126000700_17` | ✅ | ✅ `SupabaseExpedienteRepository` | Sin contrato en `rpcs/`. |
+| [`buscar_pre_registro_por_curp`](../rpcs/buscar_pre_registro_por_curp.md) | `20261126000700_17` | ✅ | ✅ `SupabaseExpedienteRepository` | |
 | [`registrar_consulta`](../rpcs/registrar_consulta.md) | `20261126000600_16` | ✅ | ✅ Expediente y Agresor | |
 | [`archivar_ficha`](../rpcs/archivar_ficha.md) | `20261127000700_38` | ✅ | ✅ `SupabaseFichaRepository.archive` | El adapter acepta `motivo` opcional; la RPC lo exige. |
 | [`reabrir_ficha`](../rpcs/reabrir_ficha.md) | `20261127000700_38` | ✅ | ✅ `SupabaseFichaRepository.reopen` | |
@@ -101,7 +103,7 @@ Corte: 27-nov-2026, rama `develop` con la migración `60_integrar_develop_y_supa
 |---|---|---|---|---|
 | [`get_informe`](../rpcs/get_informe.md) | `20261126001800_28` | ✅ | ✅ `SupabaseInformeRepository` | |
 | [`get_bitacora`](../rpcs/get_bitacora.md) | `20261126001800_28` | ✅ | ✅ Informe y Dashboard | |
-| `get_mapa_calor_asentamiento` | `20261126000500_15` | ✅ | ✅ `SupabaseDashboardRepository.mapaCalor` | Sin contrato en `rpcs/`. Firma: `(p_umbral_minimo int default 3)` → `asentamiento_id, codigo_postal, nombre, tipo_asentamiento, municipio, estado, latitud, longitud, total_expedientes, total_alertas, total_actividades`. |
+| [`get_mapa_calor_asentamiento`](../rpcs/get_mapa_calor_asentamiento.md) | `20261126000500_15` | ✅ | ✅ `SupabaseDashboardRepository.mapaCalor`  |
 
 ---
 
@@ -161,4 +163,5 @@ Cualquier `insert`/`update` directo devuelve `42501`; se usa la RPC indicada.
 
 | | Base de datos | Admin ya la consume | Falta en admin | Admin escribe directo o manda parámetros viejos |
 |---|---|---|---|---|
-| RPC del admin (41 implementad
+| RPC del admin (41 implementadas + 1 pendiente) | 41 ✅ · 1 🕓 | 25 | 11 (+1 pendiente) | 5 (`guardar_agresor`, `crear_cita`, `reagendar_cita`, `get_agenda`, `actualizar_domicilio`) + la copia de la hoja después de `registrar_seguimiento` + `deactivate` de ficha sin RPC |
+| RPC de la app (6 implementadas + 1 pendiente) | 6 ✅ · 1 🕓 | — | — | — |

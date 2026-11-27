@@ -1,5 +1,6 @@
 # `desactivar_mi_cuenta`
 
+- **Versión:** [`20261128000600_45`](../../migrations/20261128000600_45_rpc_perfil_usuaria_app.sql)
 - **Migración:** [`20261128000600_45_rpc_perfil_usuaria_app.sql`](../../migrations/20261128000600_45_rpc_perfil_usuaria_app.sql)
 - **Permiso:** `es_usuaria_app()` + propiedad por `auth.uid()`.
 

@@ -1,5 +1,6 @@
 # `crear_ficha_completa`
 
+- **Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
 - **Migración:** [`20261128001700_59_casillas_sin_dato.sql`](../../migrations/20261128001700_59_casillas_sin_dato.sql) *(actualiza `_10_`, `_11_`, `_12_`, `_13_`, `_18_`, `_57_`, `_58_`)*
 - **Permiso RBAC:** `tiene_permiso('expediente.escribir')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`.

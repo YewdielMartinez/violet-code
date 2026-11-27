@@ -93,6 +93,61 @@ interface AgendaRow {
 
 ---
 
+## `crear_cita`
+
+**Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)
+
+> Agenda una cita nueva para una persona en un área. Sustituye al `insert` directo sobre `cita`, que está cerrado (`42501`). Contrato: [`rpcs/crear_cita.md`](../rpcs/crear_cita.md).
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+|---|---|---|---|---|
+| `agenda.crear` + `puede_crear_cita_en_area` | Recepción (TS, Psi, Jur), Jurídico y Psicología (su área), Dirección (todas). TS: `42501` | Escritura | Sí, por trigger | `_51_rpc_crear_cita` y `_60_integrar_develop_y_supabase` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('crear_cita', {
+    p_persona_id: personaId,
+    p_area_id: areaId,
+    p_programada_en: '2026-12-01T10:00:00-07:00',
+    p_recomendada_por: 'Trabajo Social', // opcional, máx. 200
+    p_origen: 'regular',                 // opcional: 'regular' | 'umeca'
+  })
+  .single();
+```
+
+**Respuesta**
+
+```ts
+interface CrearCitaRow {
+  cita_id: string;
+  persona_id: string;
+  area_id: number;
+  programada_en: string;
+  estado: 'agendada';
+  origen: 'regular' | 'umeca';
+}
+```
+
+**Comportamiento**
+
+- La cita nace `agendada`. Para elegir a la persona usa `buscar_personas_agenda`.
+- No acepta prioridad: la prioridad vive en el expediente (`cambiar_prioridad_expediente`).
+- Rechaza una cita activa duplicada (`agendada`/`confirmada`) para la misma persona, área y hora.
+- RN-01: Psicología y Jurídico no pueden tener citas de menores de 18 años.
+
+**Errores**
+
+| Código | Cuándo | Mensaje UI |
+|---|---|---|
+| `42501` | Sin permiso (TS, UMECA, app) o área fuera del alcance del rol | Fijo de permiso |
+| `23514` | Parámetro nulo, persona o área inexistente o inactiva, fecha pasada, expediente archivado, menor de edad en Psi/Jur, cita duplicada | `error.message` |
+
+**En el front:** `SupabaseCitaRepository.crear` · invalida `['agenda']` y `['agenda','urgencias']`.
+
+---
+
 ## `cambiar_estado_cita`
 
 **Versión:** [`20261128001800_60`](../../migrations/20261128001800_60_integrar_develop_y_supabase.sql)

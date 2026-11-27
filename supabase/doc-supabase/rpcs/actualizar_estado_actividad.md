@@ -1,5 +1,6 @@
 # RPC: `public.actualizar_estado_actividad`
 
+- **Versión:** [`20261127001000_41`](../../migrations/20261127001000_41_actividad_estado.sql)
 - **Migración:** `supabase/migrations/20261127001000_41_actividad_estado.sql`
 - **Permiso RBAC:** `public.tiene_permiso('actividad.registrar')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico`

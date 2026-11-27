@@ -1,5 +1,6 @@
 # RPC: `public.tomar_alerta`
 
+- **Versión:** [`20261128000800_47`](../../migrations/20261128000800_47_tiene_permiso_agenda_alertas.sql)
 - **Migración:** `supabase/migrations/20261126001400_24_rpc_cola_alertas.sql`
 - **Cubre:** `RF-20`, `RN-16` (SF-12)
 

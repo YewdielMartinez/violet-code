@@ -1,5 +1,6 @@
 # `registrar_consulta`
 
+- **Versión:** [`20261126000600_16`](../../migrations/20261126000600_16_storage_y_bitacora.sql)
 - **Migración:** [`20261126000600_16_storage_y_bitacora.sql`](../../migrations/20261126000600_16_storage_y_bitacora.sql)
 - **Permiso RBAC:** `es_empleado_activo() or es_umeca()`
 - **Actores autorizados:** cualquier `empleado` activo (`titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico`, `recepcion`) y `usuario_externo` UMECA activo.

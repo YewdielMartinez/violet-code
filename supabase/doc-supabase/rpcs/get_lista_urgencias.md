@@ -1,5 +1,6 @@
 # RPC: `public.get_lista_urgencias`
 
+- **Versión:** [`20261128001300_52`](../../migrations/20261128001300_52_urgencias_por_expediente.sql)
 - **Migración:** [`20261128001300_52_urgencias_por_expediente.sql`](../../migrations/20261128001300_52_urgencias_por_expediente.sql) *(actualiza `47_tiene_permiso_agenda_alertas.sql` y `23_rpc_reagendar_y_urgencias.sql`)*
 - **Cubre:** `RF-07`, `RN-06` (SF-07)
 
