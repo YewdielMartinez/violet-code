@@ -452,9 +452,9 @@ select is(
   (select count(*)::int from public.derivacion where id in ('a1a1a1a1-2100-4000-8000-000000000001','a1a1a1a1-2100-4000-8000-000000000002','a1a1a1a1-2100-4000-8000-000000000003')),
   1, 'juridico solo ve derivaciones donde es origen o destino'
 );
-select lives_ok(
+select throws_ok(
   $$insert into public.derivacion (ficha_id, area_origen_id, destino, institucion_otra, motivo) values ('55555555-5555-4555-8555-555555555501', (select id from public.cat_area where clave = 'juridico'), 'otra_institucion', 'Fiscalia A06', 'Prueba Jur')$$,
-  'juridico inserta derivacion'
+  '42501', null, 'juridico no inserta derivacion directo (cerrado en A-01 S2)'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111106'::uuid); -- recepcion
@@ -494,6 +494,7 @@ select is(
         'estudio_socioeconomico','aportante_hogar','agresor','orden_proteccion',
         'cita','atencion','nota_area','historial_clinico','derivacion','documento'
       )
+      and policyname <> 'derivacion_insert'
       and coalesce(qual, '') || ' ' || coalesce(with_check, '') not like '%tiene_permiso(%'
   ),
   0,
