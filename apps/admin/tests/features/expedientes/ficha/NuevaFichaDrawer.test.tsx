@@ -266,7 +266,7 @@ describe('NuevaFichaDrawer (verificación inline de CURP, validación, navegaci�
     expect(screen.getByRole('alert').textContent).toMatch(/asentamiento|código postal/i);
 
     await waitFor(() => expect(listAsentamientosMock).toHaveBeenCalled());
-    fireEvent.change(screen.getByLabelText(/Código postal/i), { target: { value: '80000' } });
+    fireEvent.change(screen.getAllByLabelText(/Código postal/i)[0], { target: { value: '80000' } });
     await screen.findByText(/sin\s+asentamientos en catálogo local/i);
     fireEvent.change(screen.getByLabelText(/Calle \*/i), { target: { value: 'Av. Hidalgo 120' } });
     fillNumeroExterior();
@@ -382,7 +382,7 @@ describe('NuevaFichaDrawer (verificación inline de CURP, validación, navegaci�
     fireEvent.change(screen.getByLabelText(/Servicios solicitados \*/i), { target: { value: '1' } });
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     await waitFor(() => expect(listAsentamientosMock).toHaveBeenCalled());
-    fireEvent.change(screen.getByLabelText(/Código postal/i), { target: { value: '80000' } });
+    fireEvent.change(screen.getAllByLabelText(/Código postal/i)[0], { target: { value: '80000' } });
     await screen.findByText(/sin\s+asentamientos en catálogo local/i);
     fireEvent.change(screen.getByLabelText(/Calle \*/i), { target: { value: 'Calle 5' } });
     fillNumeroExterior();
@@ -472,7 +472,7 @@ describe('NuevaFichaDrawer (verificación inline de CURP, validación, navegaci�
     fillStep0();
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     await waitFor(() => expect(listAsentamientosMock).toHaveBeenCalled());
-    fireEvent.change(screen.getByLabelText(/Código postal/i), { target: { value: '80000' } });
+    fireEvent.change(screen.getAllByLabelText(/Código postal/i)[0], { target: { value: '80000' } });
     await screen.findByText(/sin\s+asentamientos en catálogo local/i);
     fireEvent.change(screen.getByLabelText(/Calle \*/i), { target: { value: 'Calle 10' } });
     fillNumeroExterior();

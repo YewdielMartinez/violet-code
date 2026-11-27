@@ -4,7 +4,10 @@ import { formatTableDate } from '@/features/expedientes/drawer/expedientesTableC
 
 export { formatTableDate };
 
-export type UsuariosQuickFilter = 'todos' | 'activos' | 'inactivos' | 'externos';
+export type UsuariosQuickFilter = 'todos' | 'activos' | 'inactivos';
+
+/** Filtro por rol, independiente del estado: «umeca» muestra solo las cuentas con rol UMECA. */
+export type UsuariosRolFilter = 'todos' | 'umeca';
 
 export interface UsuarioRow extends Record<string, unknown> {
   id: string;
@@ -37,7 +40,11 @@ export const QUICK_FILTERS: { id: UsuariosQuickFilter; label: string }[] = [
   { id: 'todos', label: 'Todas' },
   { id: 'activos', label: 'Activas' },
   { id: 'inactivos', label: 'Inactivas' },
-  { id: 'externos', label: 'Externas (UMECA)' },
+];
+
+export const ROL_FILTERS: { id: UsuariosRolFilter; label: string }[] = [
+  { id: 'todos', label: 'Todos los roles' },
+  { id: 'umeca', label: 'UMECA' },
 ];
 
 type PillTone = 'success' | 'warning' | 'info' | 'danger' | 'neutral';

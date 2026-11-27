@@ -1,7 +1,12 @@
 import { registerTheme } from '@yewdiel21/motion-kit/theme';
 
-/** Clave de localStorage donde motion-kit guarda tema y modo. La usa también el script de <head> (vite.config.ts). */
-export const THEME_STORAGE_KEY = 'vc-theme';
+/**
+ * Clave de localStorage donde motion-kit guarda tema y modo. La usa también el script de <head> (vite.config.ts:
+ * mantener ambos literales iguales).
+ * `-v2`: al pasar el tema predeterminado a "salmverse" se cambió la clave para descartar las preferencias
+ * antiguas (p. ej. "purple"/"blue"), que de otro modo pisaban el tema institucional en equipos ya usados.
+ */
+export const THEME_STORAGE_KEY = 'vc-theme-v2';
 
 export interface CustomThemeDescriptor {
   readonly id: string;
@@ -24,7 +29,7 @@ let registered = false;
 
 /**
  * Registra los temas propios de la aplicación en motion-kit para que `setTheme(id)`
- * los acepte sin advertencia y los persista en `vc-theme`.
+ * los acepte sin advertencia y los persista en `vc-theme-v2`.
  */
 export function registerCustomThemes() {
   if (registered) return;

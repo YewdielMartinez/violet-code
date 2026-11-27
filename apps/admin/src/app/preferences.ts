@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 
 /**
  * Preferencias de interfaz guardadas en el navegador (no son datos sensibles).
- * El tema y el modo los guarda motion-kit (clave 'vc-theme'); aquí, el estilo de navegación.
+ * El tema y el modo los guarda motion-kit (clave 'vc-theme-v2', ver src/app/theme.ts); aquí, el estilo de navegación.
  */
 export type NavStyleId = 'rail' | 'sidebar' | 'pills' | 'card' | 'dock' | 'wash';
 

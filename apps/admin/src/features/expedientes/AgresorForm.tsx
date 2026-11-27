@@ -11,7 +11,6 @@ import {
   type Agresor,
   type AgresorInput,
   type AgresorValidationField,
-  type AsentamientoOpcion,
   type CatalogoOpcion,
 } from './agresorApi';
 import { AgresorConsumoArmaFields, type ConsumoArmaValues } from './AgresorConsumoArmaFields';
@@ -64,7 +63,6 @@ interface Props {
   initial?: Agresor | null;
   parentescos: CatalogoOpcion[];
   ocupaciones: CatalogoOpcion[];
-  asentamientos: AsentamientoOpcion[];
   onCancel: () => void;
   onSaved: () => void;
 }
@@ -74,7 +72,6 @@ export function AgresorForm({
   initial,
   parentescos,
   ocupaciones,
-  asentamientos,
   onCancel,
   onSaved,
 }: Props) {
@@ -278,7 +275,6 @@ export function AgresorForm({
           </fieldset>
 
           <AgresorDomicilioFields
-            asentamientos={asentamientos}
             values={form}
             errores={errores}
             onPatch={patchForm}

@@ -241,7 +241,6 @@ export function AgresorFormSection({ fichaId, estado }: Props) {
             initial={editingAgresor}
             parentescos={parentescos}
             ocupaciones={ocupaciones}
-            asentamientos={asentamientos}
             onCancel={() => handleDialogOpenChange(false)}
             onSaved={() => handleDialogOpenChange(false)}
           />

@@ -22,7 +22,7 @@ export interface PersonaSearchFieldProps {
 }
 
 /**
- * Selector de persona existente con búsqueda diferida en el servidor (`buscar_personas_agenda`; no se carga el padrón).
+ * Busca por nombre, CURP o folio del expediente. Selector de persona existente con búsqueda diferida en el servidor (`buscar_personas_agenda`; no se carga el padrón).
  * Combobox accesible: flechas, Enter y Escape.
  */
 export function PersonaSearchField({ value, onChange, error, disabled }: PersonaSearchFieldProps) {
@@ -39,7 +39,7 @@ export function PersonaSearchField({ value, onChange, error, disabled }: Persona
   const pendiente = terminoBuscable(term) && (term !== debounced || query.isFetching);
   const activeIndex = resultados.length ? Math.min(active, resultados.length - 1) : -1;
 
-  const ayuda = `Escribe al menos ${MIN_TERMINO_BUSQUEDA} letras del nombre, apellidos o el inicio de la CURP.`;
+  const ayuda = `Escribe al menos ${MIN_TERMINO_BUSQUEDA} caracteres del nombre, apellidos, CURP o folio.`;
 
   function seleccionar(index: number) {
     const item = resultados[index];
@@ -109,7 +109,7 @@ export function PersonaSearchField({ value, onChange, error, disabled }: Persona
           aria-describedby={ids.help}
           aria-invalid={error ? true : undefined}
           aria-activedescendant={mostrarLista && activeIndex >= 0 ? `${ids.list}-${activeIndex}` : undefined}
-          placeholder="Buscar por nombre o CURP…"
+          placeholder="Buscar por nombre, CURP o folio…"
           autoComplete="off"
           disabled={disabled}
           value={term}

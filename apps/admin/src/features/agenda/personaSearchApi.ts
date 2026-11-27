@@ -22,7 +22,7 @@ export function terminoBuscable(term: string): boolean {
 
 /**
  * Búsqueda única para todos los roles que agendan: el RPC `buscar_personas_agenda` (permiso `agenda.crear`)
- * localiza por nombre/apellidos (sin acentos) o prefijo de CURP, excluye fichas archivadas y solo devuelve la
+ * localiza por nombre/apellidos (sin acentos), prefijo de CURP o folio del expediente, excluye fichas archivadas y solo devuelve la
  * CURP enmascarada.
  */
 async function buscar(term: string): Promise<PersonaOpcion[]> {

@@ -78,7 +78,7 @@ export const NAVIGATION: NavPage[] = [
     path: '/actividades',
     label: 'Actividades',
     title: 'Actividades preventivas',
-    icon: 'diversity_3',
+    icon: 'campaign',
     ready: true,
     mobilePriority: 5,
     allowedRoles: ALL_EMPLOYEES,
