@@ -101,6 +101,7 @@ interface BuscarExpedientesRow {
   nombre_completo: string;
   sexo: 'H' | 'M';
   fecha_nacimiento: string;          // 'YYYY-MM-DD'
+  edad: number | null;               // calculada en servidor (America/Mazatlan)
   en_lista_urgencias: boolean;
   coincidencia: 'curp' | 'folio' | 'nombre';
   similitud: number;                 // 1.0 en CURP/folio; 0..1 en nombre

@@ -998,13 +998,16 @@ isOneToOne: false
                            },
 "buscar_expedientes":
 { Args: { "p_incluir_archivados"?: boolean,"p_limite"?: number,"p_termino": string }; Returns: {
-              "coincidencia": string,"curp": string,"en_lista_urgencias": boolean,"estado": Database["public"]['Enums']["estado_ficha"],"fecha_nacimiento": string,"ficha_id": string,"folio": string,"nombre_completo": string,"persona_id": string,"sexo": string,"similitud": number
+              "coincidencia": string,"curp": string,"edad": number,"en_lista_urgencias": boolean,"estado": Database["public"]['Enums']["estado_ficha"],"fecha_nacimiento": string,"ficha_id": string,"folio": string,"nombre_completo": string,"persona_id": string,"sexo": string,"similitud": number
             }[]
                            },
 "buscar_pre_registro_por_curp":
 { Args: { "p_curp": string }; Returns: {
               "apellido_materno": string,"apellido_paterno": string,"celular": string,"curp": string,"entidad_nacimiento": string,"fecha_nacimiento": string,"nombres": string,"persona_id": string,"pre_registro_id": string,"sexo": string
             }[]
+                           },
+"calcular_edad":
+{ Args: { "p_fecha": string }; Returns: number
                            },
 "cambiar_estado_cita":
 { Args: { "p_cita_id": string,"p_estado": Database["public"]['Enums']["estado_cita"],"p_motivo"?: string }; Returns: {
