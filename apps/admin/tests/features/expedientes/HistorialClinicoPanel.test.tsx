@@ -140,21 +140,35 @@ describe('HistorialClinicoPanel', () => {
 
   afterEach(() => cleanup());
 
-  it('muestra el botón Editar solo a Psicología', () => {
+  it('muestra el panel y botón Editar solo a Psicología; Titular y Subdirección ven Sin acceso', () => {
     const { unmount } = renderPanel('psicologia');
     expect(screen.getByRole('button', { name: 'Editar' })).toBeTruthy();
+    expect(screen.getAllByText('Ansiedad por situación familiar').length).toBeGreaterThan(0);
     unmount();
 
     for (const role of ['titular', 'subdireccion']) {
       const view = renderPanel(role);
       expect(screen.queryByRole('button', { name: 'Editar' })).toBeNull();
       expect(screen.queryByRole('button', { name: /Registrar historial clínico/ })).toBeNull();
-      expect(
-        screen.getByText('Solo Psicología puede registrar o editar el historial clínico.'),
-      ).toBeTruthy();
-      expect(screen.getAllByText('Ansiedad por situación familiar').length).toBeGreaterThan(0);
+      expect(screen.getByText('Sin acceso al historial clínico')).toBeTruthy();
+      expect(screen.queryByText('Ansiedad por situación familiar')).toBeNull();
       view.unmount();
     }
+  });
+
+  it('muestra «Registrado por otra psicóloga» ante 42501 sin contenido ni botón de crear', () => {
+    useHistorialMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { code: '42501', message: 'No tienes permiso para realizar esta acción.' },
+      refetch: vi.fn(),
+    });
+    renderPanel('psicologia');
+    expect(screen.getByText('Registrado por otra psicóloga')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Registrar historial clínico/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Editar' })).toBeNull();
+    expect(screen.queryByText('Historial de cambios')).toBeNull();
   });
 
   it('Psicología no ve acciones de escritura en un expediente archivado', () => {
@@ -200,7 +214,7 @@ describe('HistorialClinicoPanel', () => {
   });
 
   it('lista las versiones con autor y expande el diff de la versión', () => {
-    renderPanel('titular');
+    renderPanel('psicologia');
     expect(screen.getByText('Historial de cambios')).toBeTruthy();
     expect(screen.getByText('Versión 2')).toBeTruthy();
     expect(screen.getByText('Registro inicial')).toBeTruthy();

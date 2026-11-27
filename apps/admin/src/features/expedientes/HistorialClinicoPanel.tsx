@@ -70,6 +70,13 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+function esDeOtraPsicologa(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const { code, message } = error as { code?: unknown; message?: unknown };
+  if (code === '42501') return true;
+  return typeof message === 'string' && /otra psic[oó]loga/i.test(message);
+}
+
 interface ReadFieldProps {
   label: string;
   value: string | null | undefined;
@@ -196,7 +203,7 @@ export const HistorialClinicoPanel = memo(function HistorialClinicoPanel({
       <EmptyState
         illustration="error"
         title="Sin acceso al historial clínico"
-        description="El historial clínico psicológico solo está disponible para Psicología, Titular y Subdirección."
+        description="El historial clínico psicológico solo está disponible para Psicología."
       />
     );
   }
@@ -308,12 +315,20 @@ export const HistorialClinicoPanel = memo(function HistorialClinicoPanel({
       </header>
 
       {historialQuery.isError ? (
-        <EmptyState
-          illustration="error"
-          title="No se pudo cargar el historial clínico"
-          actions={RETRY_ACTION}
-          onAction={() => void historialQuery.refetch()}
-        />
+        esDeOtraPsicologa(historialQuery.error) ? (
+          <EmptyState
+            illustration="error"
+            title="Registrado por otra psicóloga"
+            description="Este historial clínico fue creado por otra psicóloga y solo ella puede consultarlo o editarlo."
+          />
+        ) : (
+          <EmptyState
+            illustration="error"
+            title="No se pudo cargar el historial clínico"
+            actions={RETRY_ACTION}
+            onAction={() => void historialQuery.refetch()}
+          />
+        )
       ) : (
         <Skeleton loading={historialQuery.isLoading} shape="card" lines={4} label="Cargando historial clínico">
           <div ref={stageRef} key={editing ? 'edit' : 'view'} className="vc-hc-stage" data-direction={direction}>

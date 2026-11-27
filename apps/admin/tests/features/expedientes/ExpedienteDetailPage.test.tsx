@@ -297,6 +297,7 @@ describe('ExpedienteDetailPage', () => {
       useAuthMock.mockReturnValue({ status: 'authenticated', user: makeUser(role) });
       renderDetailPage();
       expect(await screen.findByRole('tab', { name: /Notas privadas/i })).toBeTruthy();
+      expect(screen.queryByRole('tab', { name: /Historial clínico/i })).toBeNull();
     }
 
     cleanup();

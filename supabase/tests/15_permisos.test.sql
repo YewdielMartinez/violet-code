@@ -133,7 +133,7 @@ select is(public.tiene_permiso('bitacora.ver'),               true,  'titular: b
 select is(public.tiene_permiso('expediente.escribir'),        true,  'titular: expediente.escribir = true');
 select is(public.tiene_permiso('expediente.ver'),             true,  'titular: expediente.ver = true');
 select is(public.tiene_permiso('agresor.acceder'),            true,  'titular: agresor.acceder = true');
-select is(public.tiene_permiso('historial_clinico.acceder'),  true,  'titular: historial_clinico.acceder = true');
+select is(public.tiene_permiso('historial_clinico.acceder'),  false, 'titular: historial_clinico.acceder = false');
 select is(public.tiene_permiso('orden_proteccion.escribir'),  true,  'titular: orden_proteccion.escribir = true');
 select is(public.tiene_permiso('alerta.atender'),             true,  'titular: alerta.atender = true');
 select is(public.tiene_permiso('alerta.ver_cola'),            true,  'titular: alerta.ver_cola = true');
@@ -156,7 +156,7 @@ select is(public.tiene_permiso('bitacora.ver'),               true,  'subdirecci
 select is(public.tiene_permiso('expediente.escribir'),        true,  'subdireccion: expediente.escribir = true');
 select is(public.tiene_permiso('expediente.ver'),             true,  'subdireccion: expediente.ver = true');
 select is(public.tiene_permiso('agresor.acceder'),            true,  'subdireccion: agresor.acceder = true');
-select is(public.tiene_permiso('historial_clinico.acceder'),  true,  'subdireccion: historial_clinico.acceder = true');
+select is(public.tiene_permiso('historial_clinico.acceder'),  false, 'subdireccion: historial_clinico.acceder = false');
 select is(public.tiene_permiso('orden_proteccion.escribir'),  true,  'subdireccion: orden_proteccion.escribir = true');
 select is(public.tiene_permiso('alerta.atender'),             true,  'subdireccion: alerta.atender = true');
 select is(public.tiene_permiso('alerta.ver_cola'),            true,  'subdireccion: alerta.ver_cola = true');

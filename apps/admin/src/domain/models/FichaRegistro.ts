@@ -56,7 +56,7 @@ const PRIORIDAD_ROLES: readonly StaffRole[] = [
   'psicologia',
   'juridico',
 ];
-const HISTORIAL_CLINICO_ROLES: readonly StaffRole[] = ['titular', 'subdireccion', 'psicologia'];
+const HISTORIAL_CLINICO_ROLES: readonly StaffRole[] = ['psicologia'];
 
 /** Solo Titular, Subdirección y Trabajo Social editan datos generales, ficha, domicilio y estudio (`expediente.escribir`). */
 export function puedeEditarExpediente(role: StaffRole | undefined): boolean {
@@ -68,7 +68,7 @@ export function puedeCambiarPrioridad(role: StaffRole | undefined): boolean {
   return role !== undefined && PRIORIDAD_ROLES.includes(role);
 }
 
-/** Solo Titular, Subdirección y Psicología acceden al historial clínico (`historial_clinico.acceder`). */
+/** Solo Psicología accede al historial clínico (`historial_clinico.acceder`). */
 export function puedeAccederHistorialClinico(role: StaffRole | undefined): boolean {
   return role !== undefined && HISTORIAL_CLINICO_ROLES.includes(role);
 }
