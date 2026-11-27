@@ -94,7 +94,7 @@ select throws_ok(
   'registrar_seguimiento rechaza cita de otra persona'
 );
 
--- 4) Menor de edad en Psicología -> 23514 (trigger RN-01)
+-- 4) Menor de edad en Psicología -> 23514 (trigger RN-01 desde la cita)
 insert into public.persona (
   id, curp, nombres, apellido_paterno, apellido_materno, creado_por
 ) values (
@@ -114,14 +114,21 @@ insert into public.ficha_registro (
 );
 
 select throws_ok(
-  $$select * from public.registrar_seguimiento(
-      '55555555-5555-4555-8555-555555555599'::uuid,
-      null,
-      (select id from public.cat_tipo_atencion where clave = 'valoracion_inicial')
-    )$$,
+  $$insert into public.cita (id, persona_id, area_id, programada_en, estado, origen, creado_por)
+    select
+      '99999999-9999-4999-8999-999999999993'::uuid,
+      '33333333-3333-4333-8333-333333333399'::uuid,
+      ca.id,
+      now(),
+      'agendada',
+      'regular',
+      '11111111-1111-4111-8111-111111111104'::uuid
+    from public.cat_area ca
+    where ca.clave = 'psicologia'
+    limit 1$$,
   '23514',
   'Psicología y Jurídico solo atienden a personas mayores de 18 años (RN-01)',
-  'registrar_seguimiento bloquea menor de edad en Psicologia'
+  'RN-01 bloquea agendar cita para menor de edad en Psicologia antes del seguimiento'
 );
 
 -- 5) Flujo completo exitoso en Trabajo Social con cita + próxima cita
@@ -196,15 +203,28 @@ select throws_ok(
   'registrar_seguimiento con la misma cita dos veces lanza 23505'
 );
 
--- 7) Segunda atención sin cita en la misma área -> es_primera_vez_area = false
+-- 7) Segunda atención con cita del día en la misma área -> es_primera_vez_area = false
+insert into public.cita (id, persona_id, area_id, programada_en, estado, origen, creado_por)
+select
+  '99999999-9999-4999-8999-999999999994'::uuid,
+  '33333333-3333-4333-8333-333333333311'::uuid,
+  ca.id,
+  now(),
+  'agendada',
+  'regular',
+  '11111111-1111-4111-8111-111111111103'::uuid
+from public.cat_area ca
+where ca.clave = 'trabajo_social'
+limit 1;
+
 select is(
   (
     select es_primera_vez_area
     from public.registrar_seguimiento(
       '55555555-5555-4555-8555-555555555511'::uuid,
-      null,
+      '99999999-9999-4999-8999-999999999994'::uuid,
       (select id from public.cat_tipo_atencion where clave = 'orientacion'),
-      'Segunda visita sin cita.'
+      'Segunda visita con cita del día.'
     )
   ),
   false,

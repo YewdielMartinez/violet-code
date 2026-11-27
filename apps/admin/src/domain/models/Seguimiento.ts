@@ -12,7 +12,7 @@ export type TipoEventoLineaTiempo =
 
 export interface SeguimientoCreateInput {
   fichaId: string;
-  citaId?: string | null;
+  citaId: string;
   tipoAtencionId: number;
   accionesRealizadas?: string | null;
   proximaAccion?: string | null;
@@ -41,6 +41,9 @@ export interface LineaTiempoEvento {
 export function validateSeguimientoInput(input: SeguimientoCreateInput): string | null {
   if (!input.fichaId) {
     return 'El identificador del expediente es obligatorio.';
+  }
+  if (!input.citaId) {
+    return 'La cita del día es obligatoria para registrar el seguimiento.';
   }
   if (!Number.isInteger(input.tipoAtencionId) || input.tipoAtencionId <= 0) {
     return 'Selecciona el tipo de atención.';
