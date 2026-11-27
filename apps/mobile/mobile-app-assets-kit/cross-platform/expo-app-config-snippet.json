@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Mi Aplicación",
+    "slug": "mi-aplicacion",
+    "icon": "./assets/cross-platform/icon.png",
+    "splash": {
+      "image": "./assets/splash/splash-light-1284x2778.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FAF2E7"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "icon": {
+        "light": "./assets/ios/AppIcon-iOS18-Universal.appiconset/icon-1024-light.png",
+        "dark": "./assets/ios/AppIcon-iOS18-Universal.appiconset/icon-1024-dark.png",
+        "tinted": "./assets/ios/AppIcon-iOS18-Universal.appiconset/icon-1024-tinted.png"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/cross-platform/adaptive-icon-foreground.png",
+        "monochromeImage": "./assets/cross-platform/adaptive-icon-monochrome.png",
+        "backgroundColor": "#FAF2E7"
+      }
+    },
+    "notification": {
+      "icon": "./assets/cross-platform/notification-icon.png",
+      "color": "#7A0C31"
+    }
+  }
+}

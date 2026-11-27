@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- HTTPS obligatorio. Solo se permite HTTP contra el emulador/PC local durante el desarrollo. -->
+<!-- Release: HTTPS obligatorio, sin excepciones. El HTTP al emulador/PC local solo existe en el
+     source set debug (app/src/debug/res/xml/network_security_config.xml). -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="false" />
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">10.0.2.2</domain>
-        <domain includeSubdomains="false">localhost</domain>
-    </domain-config>
 </network-security-config>

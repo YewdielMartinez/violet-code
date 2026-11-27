@@ -106,7 +106,8 @@ describe('Configuración > Cuenta', () => {
     expect(repo.miPerfil).not.toHaveBeenCalled();
 
     setOpen(true);
-    expect(await screen.findByRole('heading', { name: 'Claudia Trabajo Social' })).toBeTruthy();
+    const hero = await screen.findByRole('region', { name: 'Resumen de tu cuenta' });
+    expect(within(hero).getByText('Claudia Trabajo Social')).toBeTruthy();
     expect(repo.miPerfil).toHaveBeenCalledTimes(1);
   });
 

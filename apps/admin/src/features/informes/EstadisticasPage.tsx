@@ -1,49 +1,34 @@
+import { EmptyState } from '@yewdiel21/motion-kit/react';
+import '@yewdiel21/motion-kit/css/components/empty-state';
+import { useAuth } from '@/shared/auth/useAuth';
 import { PageHeader } from '@/shared/ui/PageHeader';
-import { useAuth, type StaffRole } from '@/shared/auth/useAuth';
-import { availableWidgets, type LayoutItem, type WidgetId } from '@/features/dashboard/layout';
-import { WidgetGrid } from '@/features/dashboard/WidgetGrid';
-import { renderWidget } from '@/features/dashboard/DashboardPage';
-import '@/features/dashboard/dashboard.css';
 import { InformesPanel } from './InformesPanel';
+import { puedeVerInformes } from './informesPermisos';
 
-const EXCLUDED_WIDGETS = new Set<WidgetId>(['alerts', 'cases', 'directory']);
-const noop = () => {};
-
-/** Devuelve los widgets de estadísticas visibles para un rol dado, con su tamaño por defecto. */
-export function estadisticasWidgetsForRole(role: StaffRole): LayoutItem[] {
-  if (role === 'umeca') return [];
-  return availableWidgets(role)
-    .filter((w) => !EXCLUDED_WIDGETS.has(w.id) && (w.id !== 'agenda' || role === 'recepcion'))
-    .map((w) => ({ id: w.id, visible: true, size: w.defaultSize }));
-}
-
+/** Estadísticas: informe mensual/anual con descarga. Recepción y UMECA no tienen `informe.ver`, así que no lo montan. */
 export default function EstadisticasPage() {
   const { user } = useAuth();
-  if (!user || user.role === 'umeca') return null;
-
-  const items = estadisticasWidgetsForRole(user.role);
+  const permitido = puedeVerInformes(user?.role);
 
   return (
-    <section className="vc-dash" aria-label="Estadísticas">
+    <>
       <PageHeader
         title="Estadísticas"
-        subtitle="Indicadores y resumen operativo según tu rol"
+        description="Atenciones por área, tipo de atención y primera vez o seguimiento. Dirección ve todas las áreas; cada área de atención ve solo la suya."
       />
-      <WidgetGrid
-        items={items}
-        editing={false}
-        render={(id) => renderWidget(id, user)}
-        onMove={noop}
-        onResize={noop}
-        onHide={noop}
-        onReorder={noop}
-        onAnnounce={noop}
-      />
-      {user.role !== 'recepcion' ? (
-        <div className="vc-estadisticas__informes-slot">
+      {permitido ? (
+        <div className="grid gap-4">
           <InformesPanel />
         </div>
-      ) : null}
-    </section>
+      ) : (
+        <div className="rounded-3xl bg-surface-container-low p-10">
+          <EmptyState
+            illustration="folder"
+            title="Sin acceso a los informes"
+            description="Tu rol no incluye la consulta de informes estadísticos."
+          />
+        </div>
+      )}
+    </>
   );
 }

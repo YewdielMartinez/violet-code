@@ -1,0 +1,23 @@
+# Pegar en pubspec.yaml (requiere flutter_launcher_icons y flutter_native_splash)
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/cross-platform/icon.png"
+  adaptive_icon_background: "#FAF2E7"
+  adaptive_icon_foreground: "assets/cross-platform/adaptive-icon-foreground.png"
+  adaptive_icon_monochrome: "assets/cross-platform/adaptive-icon-monochrome.png"
+
+flutter_native_splash:
+  color: "#FAF2E7"
+  color_dark: "#181215"
+  image: "assets/splash/splash-icon-transparent-1024.png"
+  image_dark: "assets/splash/splash-icon-darkmode-1024.png"
+  branding: "assets/splash/splash-footer-ahome-color.png"
+  branding_dark: "assets/splash/splash-footer-ahome-white.png"
+  android_12:
+    color: "#FAF2E7"
+    color_dark: "#181215"
+    image: "assets/android/res/drawable-xxxhdpi/ic_splash_logo.png"
+    branding: "assets/splash/splash-footer-ahome-color.png"
+    branding_dark: "assets/splash/splash-footer-ahome-white.png"

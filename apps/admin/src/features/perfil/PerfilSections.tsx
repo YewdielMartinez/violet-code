@@ -1,5 +1,6 @@
 import { useId, useRef, useState, type FormEvent } from 'react';
-import { toast } from '@yewdiel21/motion-kit/react';
+import { ChatBackground, toast } from '@yewdiel21/motion-kit/react';
+import '@yewdiel21/motion-kit/css/components/chat-background';
 import { ROLE_LABELS } from '@/domain/models/Auth';
 import { StatusChip } from '@/shared/ui/StatusChip';
 import { TonalCard } from '@/shared/ui/TonalCard';
@@ -24,17 +25,11 @@ import './perfil.css';
 
 const TONE_ACTIVO = 'bg-status-success-bg text-status-success';
 const TONE_INACTIVO = 'bg-status-danger-bg text-status-danger';
-const TONE_ROL = 'bg-secondary-container text-on-secondary-container';
 
 /**
- * Bloques de la sección «Cuenta» de Configuración (resumen, contacto, datos de la cuenta, contraseña, permisos).
+ * Bloques de la sección «Cuenta» de Configuración (titular, contacto, datos de la cuenta, contraseña, permisos).
  * Se componen en `PerfilCuentaSection`. Una sola columna: viven en el cuerpo de un diálogo.
  */
-
-export function iniciales(nombre: string): string {
-  const partes = nombre.trim().split(/\s+/).filter(Boolean);
-  return ((partes[0]?.[0] ?? '') + (partes[1]?.[0] ?? '')).toUpperCase() || '?';
-}
 
 export function formatTelefono(telefono: string | null): string | null {
   if (!telefono) return null;
@@ -53,24 +48,25 @@ function areaLabel(perfil: MiPerfil): { label: string; value: string } {
   return { label: 'Área', value: perfil.areaNombre ?? 'Sin área asignada' };
 }
 
-export function PerfilHero({ perfil }: { perfil: MiPerfil }) {
+/**
+ * Titular de la cuenta: fondo vivo de motion-kit (`ChatBackground`, dos manchas del tema que orbitan lentamente)
+ * con el correo y el nombre de la persona. Recibe los datos de la sesión para pintarse sin esperar `get_mi_perfil`.
+ */
+export function PerfilHero({ nombre, correo }: { nombre: string; correo: string }) {
   return (
-    <section className="vc-perfil__hero" aria-label="Resumen de tu cuenta">
-      <span className="vc-perfil__avatar" aria-hidden>
-        {iniciales(perfil.nombre)}
-      </span>
-      <div className="min-w-0 flex-1">
-        <h3 className="vc-perfil__name">{perfil.nombre}</h3>
-        <p className="vc-perfil__email">{perfil.correo}</p>
-        <div className="vc-chips mt-3">
-          <StatusChip value={perfil.rol} tone={TONE_ROL}>
-            {ROLE_LABELS[perfil.rol] ?? perfil.rol}
-          </StatusChip>
-          <StatusChip value={perfil.activo ? 'activo' : 'inactivo'} tone={perfil.activo ? TONE_ACTIVO : TONE_INACTIVO}>
-            {perfil.activo ? 'Cuenta activa' : 'Cuenta inactiva'}
-          </StatusChip>
-        </div>
-      </div>
+    <section
+      aria-label="Resumen de tu cuenta"
+      className="relative isolate flex min-h-80 flex-col justify-end overflow-hidden rounded-[2rem] bg-surface-container-low p-8"
+    >
+      <ChatBackground energy={0.2} className="-z-10" />
+      <p className="text-sm text-on-surface-variant">Correo</p>
+      <p className="truncate text-xl text-on-surface" title={correo}>
+        {correo}
+      </p>
+      <p className="mt-5 text-sm text-on-surface-variant">Nombre</p>
+      <p className="truncate text-4xl font-medium tracking-tight text-on-surface uppercase md:text-5xl" title={nombre}>
+        {nombre}
+      </p>
     </section>
   );
 }

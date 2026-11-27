@@ -1,0 +1,40 @@
+import type { InformeRow } from '@/domain/models/Informe';
+
+export const ROWS: InformeRow[] = [
+  {
+    anio: 2026,
+    mes: 3,
+    areaId: 1,
+    area: 'Psicología',
+    tipoAtencion: 'Terapia individual',
+    primeraVezOSeguimiento: 'primera_vez',
+    mujeres: 4,
+    hombres: 0,
+    totalPersonas: 4,
+    totalAtenciones: 5,
+  },
+  {
+    anio: 2026,
+    mes: 3,
+    areaId: 1,
+    area: 'Psicología',
+    tipoAtencion: 'Terapia individual',
+    primeraVezOSeguimiento: 'seguimiento',
+    mujeres: 3,
+    hombres: 1,
+    totalPersonas: 4,
+    totalAtenciones: 9,
+  },
+  {
+    anio: 2026,
+    mes: 3,
+    areaId: 2,
+    area: 'Jurídico',
+    tipoAtencion: 'Asesoría',
+    primeraVezOSeguimiento: 'primera_vez',
+    mujeres: 2,
+    hombres: 0,
+    totalPersonas: 2,
+    totalAtenciones: 2,
+  },
+];

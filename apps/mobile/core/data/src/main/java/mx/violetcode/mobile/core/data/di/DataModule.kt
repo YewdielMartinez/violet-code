@@ -1,11 +1,18 @@
 package mx.violetcode.mobile.core.data.di
 
 import androidx.room.Room
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
 import mx.violetcode.mobile.core.data.local.VioletDatabase
 import mx.violetcode.mobile.core.data.remote.DirectoryApi
+import mx.violetcode.mobile.core.data.repository.AccountRepositoryImpl
+import mx.violetcode.mobile.core.data.repository.AlertRepositoryImpl
 import mx.violetcode.mobile.core.data.repository.DirectoryRepositoryImpl
+import mx.violetcode.mobile.core.data.supabase.createVioletSupabaseClient
+import mx.violetcode.mobile.core.domain.account.AccountRepository
+import mx.violetcode.mobile.core.domain.account.AlertRepository
 import mx.violetcode.mobile.core.domain.repository.DirectoryRepository
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -54,4 +61,11 @@ fun dataModule(supabaseUrl: String, supabaseAnonKey: String): Module = module {
     single { get<VioletDatabase>().directoryDao() }
 
     single<DirectoryRepository> { DirectoryRepositoryImpl(api = get(), dao = get(), io = Dispatchers.IO) }
+
+    // Supabase (auth + postgrest): sesión cifrada con Android Keystore. Solo URL pública + clave publishable.
+    single { createVioletSupabaseClient(androidContext(), supabaseUrl, supabaseAnonKey) }
+    single<AccountRepository> {
+        AccountRepositoryImpl(client = get(), scope = CoroutineScope(SupervisorJob() + Dispatchers.Default))
+    }
+    single<AlertRepository> { AlertRepositoryImpl(client = get()) }
 }
