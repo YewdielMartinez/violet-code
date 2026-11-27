@@ -203,7 +203,7 @@ export function FichaDomicilioStep({ value, onChange, invalidField }: Props) {
     <div className="vc-ficha-form grid gap-6">
       <section className="grid gap-4 rounded-2xl border border-outline-variant bg-surface-container-lowest p-5">
         <header>
-          <h4 className="text-base font-semibold text-on-surface">Ubicación geográfica (SEPOMEX)</h4>
+          <h4 className="text-base font-semibold text-on-surface">Ubicación geográfica</h4>
           <p className="text-sm text-on-surface-variant">
             Captura el código postal o selecciona estado, municipio y colonia del catálogo.
           </p>
@@ -275,11 +275,11 @@ export function FichaDomicilioStep({ value, onChange, invalidField }: Props) {
               data-ficha-invalid={locationInvalid || undefined}
             >
               <span className={`vc-ficha-label ${locationInvalid ? 'text-status-danger' : ''}`}>
-                Colonia / Asentamiento (SEPOMEX) *
+                Colonia / Asentamiento *
               </span>
               <Select
                 size="lg"
-                label="Colonia / Asentamiento (SEPOMEX) *"
+                label="Colonia / Asentamiento *"
                 placeholder={
                   isLoading
                     ? 'Cargando asentamientos…'
