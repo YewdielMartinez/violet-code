@@ -1,7 +1,8 @@
 import { FuseButton, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/fuse-button';
 import { Icon } from '@/shared/ui/Icon';
-import { useArchiveFicha, useDeactivateFicha, type ExpedienteResumen } from '../api';
+import { useDeactivateFicha, type ExpedienteResumen } from '../api';
+import { useArchiveExpediente } from './useArchiveExpediente';
 
 interface Props {
   expediente: ExpedienteResumen;
@@ -27,17 +28,11 @@ const DEACTIVATE_LABELS = {
  * Solo se renderiza para roles con capacidad de gestión (`canManage`).
  */
 export function FichaGestionAcciones({ expediente, onDone }: Props) {
-  const archiveMutation = useArchiveFicha();
+  const { archive } = useArchiveExpediente();
   const deactivateMutation = useDeactivateFicha();
 
   async function handleArchive() {
-    try {
-      await archiveMutation.mutateAsync(expediente.id);
-      toast(`Expediente ${expediente.folio} archivado.`, { tone: 'success' });
-      onDone();
-    } catch {
-      toast('No se pudo archivar el expediente.', { tone: 'error' });
-    }
+    if (await archive(expediente)) onDone();
   }
 
   async function handleDeactivate() {

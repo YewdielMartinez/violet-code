@@ -170,7 +170,13 @@ export function useArchiveFicha() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (fichaId: string) => supabaseFichaRepository.archive(fichaId),
-    onSuccess: () => {
+    onSuccess: (_data, fichaId) => {
+      // Refleja «Archivado» al instante en los listados cacheados; la invalidación reconcilia con el servidor.
+      queryClient.setQueriesData<ExpedienteResumen[]>(
+        { queryKey: ['expedientes', 'list'] },
+        (list) =>
+          list?.map((item) => (item.id === fichaId ? { ...item, estado: 'archivado' } : item)),
+      );
       void queryClient.invalidateQueries({ queryKey: ['expedientes'] });
     },
   });

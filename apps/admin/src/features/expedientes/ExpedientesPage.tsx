@@ -2,12 +2,18 @@ import {
   memo,
   useCallback,
   useMemo,
+  useState,
   type KeyboardEvent,
   type MouseEvent,
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { DataTable, EmptyState, Skeleton } from '@yewdiel21/motion-kit/react';
+import {
+  DataTable,
+  EmptyState,
+  Skeleton,
+  type DataAction,
+} from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/data-table';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import '@yewdiel21/motion-kit/css/components/filter-builder';
@@ -16,6 +22,8 @@ import '@yewdiel21/motion-kit/css/components/pagination';
 import '@yewdiel21/motion-kit/css/components/select';
 import '@yewdiel21/motion-kit/css/components/skeleton';
 import { preloadPage } from '@/app/pages';
+import { ArchivarExpedienteDialog } from './ArchivarExpedienteDialog';
+import { useArchiveExpediente } from './ficha/useArchiveExpediente';
 import { useAuth } from '@/shared/auth/useAuth';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { ToolbarPrimaryButton } from '@/shared/ui/Toolbar';
@@ -33,6 +41,7 @@ import {
   QUICK_FILTERS,
   RETRY_ACTION,
   ROW_ACTIONS,
+  ROW_ACTIONS_WITH_ARCHIVE,
   decorateExpedienteRows,
   formatTableDate,
   type ExpedienteRow,
@@ -42,6 +51,9 @@ import {
 interface TableSectionProps {
   isLoading: boolean;
   rows: ExpedienteRow[];
+  actions: DataAction[];
+  /** Ids ya archivados: su menú no ofrece «Archivar expediente». */
+  archivedIds: ReadonlySet<string>;
   emptyDescription: string;
   onRowAction: (action: string, row: ExpedienteRow) => void;
   onTableClick: (event: MouseEvent<HTMLDivElement>) => void;
@@ -52,20 +64,41 @@ interface TableSectionProps {
 const ExpedientesTableSection = memo(function ExpedientesTableSection({
   isLoading,
   rows,
+  actions,
+  archivedIds,
   emptyDescription,
   onRowAction,
   onTableClick,
   onTableKeyDown,
 }: TableSectionProps) {
+  // El menú de filas es un único panel compartido: al abrirlo se oculta «Archivar» si la fila ya está archivada.
+  function syncArchiveItem(event: MouseEvent<HTMLDivElement>) {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const trigger = target.closest('[data-mk-dt-row-menu]');
+    if (!trigger) return;
+    const rowId = trigger.closest<HTMLTableRowElement>('tr')?.dataset.id;
+    const item = event.currentTarget.querySelector<HTMLElement>(
+      '[data-mk-dt-panel="menu"] [data-mk-value="archive"]',
+    );
+    if (!item) return;
+    const hide = rowId ? archivedIds.has(rowId) : false;
+    item.hidden = hide;
+    item.style.display = hide ? 'none' : '';
+  }
+
   return (
-    <div onPointerOver={() => preloadPage('/expedientes/preview')}>
+    <div
+      onPointerOver={() => preloadPage('/expedientes/preview')}
+      onClickCapture={syncArchiveItem}
+    >
       <Skeleton loading={isLoading} shape="card" lines={6} label="Cargando expedientes">
         <DataTable<ExpedienteRow>
           className="vc-expediente-table"
           caption="Listado de expedientes activos"
           rows={rows}
           columns={COLUMNS}
-          actions={ROW_ACTIONS}
+          actions={actions}
           onAction={onRowAction}
           onClick={onTableClick}
           onKeyDown={onTableKeyDown}
@@ -100,6 +133,10 @@ export default function ExpedientesPage() {
   const selectedId = searchParams.get('expediente');
 
   const canCreateExpediente = user ? canLookupPreRegistro(user.role) : false;
+  // Mismo criterio que la zona de gestión del detalle (`FichaGestionAcciones`).
+  const rowActions = canCreateExpediente ? ROW_ACTIONS_WITH_ARCHIVE : ROW_ACTIONS;
+  const { archive, isArchiving } = useArchiveExpediente();
+  const [archiveTarget, setArchiveTarget] = useState<ExpedienteResumen | null>(null);
 
   const setQuickFilter = useCallback(
     (next: QuickFilter) => {
@@ -181,12 +218,24 @@ export default function ExpedientesPage() {
 
   const handleRowAction = useCallback(
     (action: string, row: ExpedienteRow) => {
-      if (action !== 'open') return;
       const match = byId.get(row.id);
-      if (match) openExpediente(match);
+      if (!match) return;
+      if (action === 'open') openExpediente(match);
+      else if (action === 'archive' && match.estado !== 'archivado') setArchiveTarget(match);
     },
     [byId, openExpediente],
   );
+
+  const archivedIds = useMemo(
+    () => new Set((data ?? []).filter((e) => e.estado === 'archivado').map((e) => e.id)),
+    [data],
+  );
+
+  async function handleConfirmArchive() {
+    if (!archiveTarget) return;
+    const ok = await archive(archiveTarget);
+    if (ok) setArchiveTarget(null);
+  }
 
   const handleTableClick = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
@@ -281,12 +330,22 @@ export default function ExpedientesPage() {
         <ExpedientesTableSection
           isLoading={isLoading}
           rows={rows}
+          actions={rowActions}
+          archivedIds={archivedIds}
           emptyDescription={emptyDescription}
           onRowAction={handleRowAction}
           onTableClick={handleTableClick}
           onTableKeyDown={handleTableKeyDown}
         />
       )}
+
+      <ArchivarExpedienteDialog
+        folio={archiveTarget?.folio ?? null}
+        busy={isArchiving}
+        onCancel={() => setArchiveTarget(null)}
+        onConfirm={() => void handleConfirmArchive()}
+      />
+
     </>
   );
 }

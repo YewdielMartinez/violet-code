@@ -46,6 +46,11 @@ export const COLUMNS: DataTableProps<ExpedienteRow>['columns'] = [
 ];
 
 export const ROW_ACTIONS: DataAction[] = [{ id: 'open', label: 'Abrir expediente' }];
+/** Igual que `ROW_ACTIONS` más «Archivar expediente» (solo roles con capacidad de gestión). */
+export const ROW_ACTIONS_WITH_ARCHIVE: DataAction[] = [
+  ...ROW_ACTIONS,
+  { id: 'archive', label: 'Archivar expediente' },
+];
 export const RETRY_ACTION = [{ id: 'retry', label: 'Reintentar' }];
 
 export const QUICK_FILTERS: { id: QuickFilter; label: string }[] = [
