@@ -111,12 +111,34 @@ export function DocumentosAdjuntosPanel({ fichaId }: DocumentosAdjuntosPanelProp
   function handleFocusSlot(slotKey: ChecklistSlotKey) {
     const slotEl = document.getElementById(`doc-slot-${slotKey}`);
     if (!slotEl) return;
-    slotEl.scrollIntoView({
-      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-      block: 'nearest',
-    });
-    const inputEl = slotEl.querySelector<HTMLElement>('input[type="file"], button');
-    inputEl?.focus({ preventScroll: true });
+
+    // motion-kit dialogs usan un viewport propio; buscamos el ancestro scrollable
+    const scrollParent = slotEl.closest<HTMLElement>('[data-mk-scroll-viewport]');
+    if (scrollParent) {
+      // Calcula el offset del slot relativo al viewport scrollable
+      let top = 0;
+      let el: HTMLElement | null = slotEl;
+      while (el && el !== scrollParent) {
+        top += el.offsetTop;
+        el = el.offsetParent as HTMLElement | null;
+      }
+      scrollParent.scrollTo({
+        top: top - 16,
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+      });
+    } else {
+      slotEl.scrollIntoView({
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+        block: 'nearest',
+      });
+    }
+
+    // Espera a que el scroll termine antes de enfocar el input
+    const delay = prefersReducedMotion() ? 0 : 300;
+    window.setTimeout(() => {
+      const inputEl = slotEl.querySelector<HTMLElement>('input[type="file"], button');
+      inputEl?.focus({ preventScroll: true });
+    }, delay);
   }
 
   async function handleVer(doc: DocumentoAdjunto) {
