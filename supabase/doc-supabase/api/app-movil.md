@@ -24,7 +24,50 @@ Content-Type: application/json
 
 ---
 
-## `pre_registro` (insert)
+## `registrar_mi_perfil` (RPC — reemplaza el `insert` directo a `pre_registro`)
+
+> El `insert` directo a `pre_registro` está bloqueado (`with check (false)`). La usuaria registra su perfil con este RPC, aceptando el aviso de privacidad.
+
+| Permiso | Quién | Tipo | Bitácora |
+|---|---|---|---|
+| `es_usuaria_app()` + `auth.uid()` | Usuaria de la app móvil | Escritura | Sí, por trigger |
+
+```http
+POST /rest/v1/rpc/registrar_mi_perfil
+Content-Type: application/json
+
+{
+  "p_curp": "TOVE960820MSLVRN03",
+  "p_nombres": "Elena",
+  "p_apellido_paterno": "Torres",
+  "p_apellido_materno": "Vázquez",
+  "p_celular": "6681000013",
+  "p_aviso_privacidad_aceptado": true
+}
+```
+
+- Nunca devuelve `persona_id` ni `estado`. Si la CURP ya existe en SEMUJERES, se liga silenciosamente en BD.
+- `42501` si no es cuenta `usuaria_app`; `23505` si ya tiene perfil; `23514` si falta aviso de privacidad o formato inválido.
+
+---
+
+## `get_mi_estado_app` y `desactivar_mi_cuenta`
+
+```http
+POST /rest/v1/rpc/get_mi_estado_app
+{}
+```
+Devuelve `{ "tiene_perfil": boolean, "puede_enviar_alerta": boolean, "alertas_ultima_hora": number }`.
+
+```http
+POST /rest/v1/rpc/desactivar_mi_cuenta
+{}
+```
+Desactiva el `pre_registro` y bloquea la cuenta para impedir futuras alertas.
+
+---
+
+## `pre_registro` (insert — DEPRECADO)
 
 > La usuaria se registra en la app con sus datos básicos. Es un `insert` directo sobre la tabla.
 

@@ -77,18 +77,15 @@ select throws_ok(
   'anon no puede ejecutar actualizar_mi_pre_registro'
 );
 
--- 4-6. Usuaria 1 crea su pre_registro con la CURP existente; no puede leer ni editar la tabla directo
+-- 4-6. Usuaria 1 crea su pre_registro vía registrar_mi_perfil; no puede leer ni editar la tabla directo
 select pg_temp.as_user('97000000-0000-4000-a000-000000000011');
-insert into public.pre_registro (
-  auth_user_id, curp, nombres, apellido_paterno, apellido_materno, celular, aviso_privacidad_aceptado_en
-) values (
-  '97000000-0000-4000-a000-000000000011',
+select * from public.registrar_mi_perfil(
   'TETE920315MSLRRR01',
   'Elena',
   'Rojas',
   'Mendez',
   '6681112233',
-  now()
+  true
 );
 
 select is(
@@ -175,14 +172,13 @@ select is(
 
 -- 13-15. Aislamiento entre usuarias en alerta
 select pg_temp.as_user('97000000-0000-4000-a000-000000000012');
-insert into public.pre_registro (
-  auth_user_id, curp, nombres, apellido_paterno, aviso_privacidad_aceptado_en
-) values (
-  '97000000-0000-4000-a000-000000000012',
+select * from public.registrar_mi_perfil(
   'TATN940820MSLRRR02',
   'Nadia',
   'Cruz',
-  now()
+  null,
+  null,
+  true
 );
 
 insert into public.alerta (pre_registro_id, origen)

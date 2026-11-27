@@ -993,6 +993,9 @@ isOneToOne: false
 "auth_rol":
 { Args: Record<PropertyKey, never>; Returns: Database["public"]['Enums']["rol_empleado"]
                            },
+"auth_tipo_cuenta":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
 "buscar_expedientes":
 { Args: { "p_incluir_archivados"?: boolean,"p_limite"?: number,"p_termino": string }; Returns: {
               "coincidencia": string,"curp": string,"en_lista_urgencias": boolean,"estado": Database["public"]['Enums']["estado_ficha"],"fecha_nacimiento": string,"ficha_id": string,"folio": string,"nombre_completo": string,"persona_id": string,"sexo": string,"similitud": number
@@ -1023,6 +1026,9 @@ isOneToOne: false
               "ficha_id": string,"folio": string,"persona_id": string
             }[]
                            },
+"desactivar_mi_cuenta":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "es_area_atencion":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
@@ -1036,6 +1042,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "es_umeca":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"es_usuaria_app":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "generar_folio_ficha":
@@ -1097,6 +1106,11 @@ isOneToOne: false
               "asentamiento_id": number,"codigo_postal": string,"estado": string,"latitud": number,"longitud": number,"municipio": string,"nombre": string,"tipo_asentamiento": string,"total_actividades": number,"total_alertas": number,"total_expedientes": number
             }[]
                            },
+"get_mi_estado_app":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "alertas_ultima_hora": number,"puede_enviar_alerta": boolean,"tiene_perfil": boolean
+            }[]
+                           },
 "get_mi_pre_registro":
 { Args: Record<PropertyKey, never>; Returns: {
               "apellido_materno": string,"apellido_paterno": string,"aviso_privacidad_aceptado_en": string,"celular": string,"creado_en": string,"curp": string,"id": string,"nombres": string
@@ -1122,6 +1136,11 @@ isOneToOne: false
                            },
 "registrar_consulta":
 { Args: { "p_registro_id": string,"p_tabla": string }; Returns: undefined
+                           },
+"registrar_mi_perfil":
+{ Args: { "p_apellido_materno"?: string,"p_apellido_paterno": string,"p_aviso_privacidad_aceptado"?: boolean,"p_celular"?: string,"p_curp": string,"p_nombres": string }; Returns: {
+              "apellido_materno": string,"apellido_paterno": string,"aviso_privacidad_aceptado_en": string,"celular": string,"creado_en": string,"curp": string,"id": string,"nombres": string
+            }[]
                            },
 "registrar_seguimiento":
 { Args: { "p_acciones_realizadas"?: string,"p_cita_id"?: string,"p_ficha_id": string,"p_observaciones"?: string,"p_prioridad"?: Database["public"]['Enums']["prioridad_nivel"],"p_proxima_accion"?: string,"p_proxima_cita_en"?: string,"p_tipo_atencion_id"?: number }; Returns: {
