@@ -13,6 +13,7 @@ import {
   IntervencionesPage,
   LoginPage,
   NuevaFichaPage,
+  ActividadFormPage,
   PendingModulePage,
   UsuarioFormPage,
   UsuariosPage,
@@ -174,6 +175,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={pageFallback}>
             <ExpedienteDetailPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/actividades/nuevo',
+        element: (
+          <Suspense fallback={pageFallback}>
+            <ActividadFormPage />
           </Suspense>
         ),
       },
