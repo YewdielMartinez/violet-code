@@ -17,7 +17,7 @@
 
 do $$
 declare
-  v_pass text := extensions.crypt('Demo1234!', extensions.gen_salt('bf'));
+  v_pass text := extensions.crypt(' ', extensions.gen_salt('bf'));
 
   -- Cuentas fijas (7 roles Web/UMECA + 2 usuarias App Móvil)
   v_uid_titular   uuid := '11111111-1111-4111-8111-111111111101';

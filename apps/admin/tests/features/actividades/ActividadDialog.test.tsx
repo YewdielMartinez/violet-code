@@ -248,6 +248,25 @@ describe('ActividadDialog · detalle', () => {
     await waitFor(() => expect(toastMock).toHaveBeenCalledWith('Actividad reabierta como pendiente.', { tone: 'success' }));
   });
 
+  it('al abrir el panel «Marcar como realizada» monta un botón distinto y no envía antes de confirmar', async () => {
+    await abrir(COMPLETA);
+
+    const openBtn = screen.getByRole('button', { name: 'Marcar como realizada', ...HIDDEN });
+    expect(openBtn.getAttribute('type')).toBe('button');
+
+    fireEvent.click(openBtn);
+
+    expect(await screen.findByLabelText('Asistentes (opcional)')).toBeTruthy();
+    expect(actualizarEstadoMock).not.toHaveBeenCalled();
+
+    const submitBtn = screen.getByRole('button', { name: 'Marcar como realizada', ...HIDDEN });
+    expect(submitBtn.getAttribute('type')).toBe('submit');
+    expect(submitBtn).not.toBe(openBtn);
+
+    fireEvent.click(submitBtn);
+    await waitFor(() => expect(actualizarEstadoMock).toHaveBeenCalledTimes(1));
+  });
+
   it('si el servidor rechaza el cambio, revierte el estado, conserva el formulario y avisa', async () => {
     actualizarEstadoMock.mockRejectedValue({ code: '42501', message: 'Sin permiso' });
     await abrir(COMPLETA);

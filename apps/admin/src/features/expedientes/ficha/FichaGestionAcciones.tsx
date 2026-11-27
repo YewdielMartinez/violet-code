@@ -1,20 +1,15 @@
+import { useState } from 'react';
 import { FuseButton, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/fuse-button';
 import { Icon } from '@/shared/ui/Icon';
 import { useDeactivateFicha, type ExpedienteResumen } from '../api';
+import { ArchivarExpedienteDialog } from '../ArchivarExpedienteDialog';
 import { useArchiveExpediente } from './useArchiveExpediente';
 
 interface Props {
   expediente: ExpedienteResumen;
   onDone: () => void;
 }
-
-const ARCHIVE_LABELS = {
-  primary: 'Archivar',
-  confirm: 'Sí, archivar',
-  cancel: 'Cancelar',
-  done: 'Archivado',
-};
 
 const DEACTIVATE_LABELS = {
   primary: 'Baja lógica',
@@ -28,11 +23,16 @@ const DEACTIVATE_LABELS = {
  * Solo se renderiza para roles con capacidad de gestión (`canManage`).
  */
 export function FichaGestionAcciones({ expediente, onDone }: Props) {
-  const { archive } = useArchiveExpediente();
+  const { archive, isArchiving } = useArchiveExpediente();
   const deactivateMutation = useDeactivateFicha();
+  const [archiveOpen, setArchiveOpen] = useState(false);
 
-  async function handleArchive() {
-    if (await archive(expediente)) onDone();
+  async function handleConfirmArchive(motivo: string) {
+    const ok = await archive(expediente, motivo);
+    if (ok) {
+      setArchiveOpen(false);
+      onDone();
+    }
   }
 
   async function handleDeactivate() {
@@ -69,12 +69,15 @@ export function FichaGestionAcciones({ expediente, onDone }: Props) {
                 Cambia el estado a archivado para resguardo y consulta histórica.
               </p>
             </div>
-            <FuseButton
-              mode="split"
-              tone="neutral"
-              labels={ARCHIVE_LABELS}
-              onConfirm={handleArchive}
-            />
+            <button
+              type="button"
+              className="mk-button mk-button--tonal"
+              disabled={isArchiving}
+              onClick={() => setArchiveOpen(true)}
+            >
+              <Icon name="inventory_2" />
+              <span>Archivar</span>
+            </button>
           </div>
         ) : null}
 
@@ -93,6 +96,13 @@ export function FichaGestionAcciones({ expediente, onDone }: Props) {
           />
         </div>
       </div>
+
+      <ArchivarExpedienteDialog
+        folio={archiveOpen ? expediente.folio : null}
+        busy={isArchiving}
+        onCancel={() => setArchiveOpen(false)}
+        onConfirm={(motivo) => void handleConfirmArchive(motivo)}
+      />
     </section>
   );
 }

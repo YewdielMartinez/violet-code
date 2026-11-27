@@ -254,23 +254,23 @@ export function ActividadDetalle({ actividad, ahora, dir, puedeRegistrar, onPatc
       </Dialog.Body>
 
       {modo !== null ? (
-        <Dialog.Footer>
-          <button type="button" className="mk-button mk-button--text vc-press" disabled={pending} onClick={() => abrirModo(null)}>
+        <Dialog.Footer key="form">
+          <button key="volver" type="button" className="mk-button mk-button--text vc-press" disabled={pending} onClick={() => abrirModo(null)}>
             Volver
           </button>
-          <button type="submit" form={formId} className="mk-button mk-button--filled vc-press" disabled={pending}>
+          <button key="enviar" type="submit" form={formId} className="mk-button mk-button--filled vc-press" disabled={pending}>
             {modo === 'realizar' ? (pending ? 'Guardando…' : 'Marcar como realizada') : pending ? 'Cancelando…' : 'Confirmar cancelación'}
           </button>
         </Dialog.Footer>
       ) : acciones.realizar || acciones.reabrir ? (
-        <Dialog.Footer>
+        <Dialog.Footer key="acciones">
           {acciones.reabrir ? (
-            <button type="button" className="mk-button mk-button--tonal vc-press" disabled={pending} onClick={reabrir}>
+            <button key="reabrir" type="button" className="mk-button mk-button--tonal vc-press" disabled={pending} onClick={reabrir}>
               Reabrir
             </button>
           ) : null}
           {acciones.realizar ? (
-            <button type="button" className="mk-button mk-button--filled vc-press" disabled={pending} onClick={() => abrirModo('realizar')}>
+            <button key="abrir-realizar" type="button" className="mk-button mk-button--filled vc-press" disabled={pending} onClick={() => abrirModo('realizar')}>
               Marcar como realizada
             </button>
           ) : null}

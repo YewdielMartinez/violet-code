@@ -1,5 +1,6 @@
 import { toast } from '@yewdiel21/motion-kit/react';
 import { ESTADO_FICHA_LABELS, useReopenFicha, type ExpedienteResumen } from '../api';
+import { traducirErrorCicloExpediente } from './traducirErrorCiclo';
 
 /**
  * Lógica de desarchivado (reapertura) de un expediente: RPC `reabrir_ficha` + toasts.
@@ -20,15 +21,7 @@ export function useReopenExpediente() {
       );
       return true;
     } catch (err) {
-      const msg =
-        typeof err === 'object' &&
-        err !== null &&
-        'message' in err &&
-        typeof (err as { message: unknown }).message === 'string' &&
-        (err as { message: string }).message
-          ? (err as { message: string }).message
-          : 'No se pudo desarchivar el expediente.';
-      toast(msg, { tone: 'error' });
+      toast(traducirErrorCicloExpediente(err, 'desarchivar'), { tone: 'error' });
       return false;
     }
   }

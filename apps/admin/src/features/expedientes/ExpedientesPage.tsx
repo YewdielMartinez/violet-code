@@ -248,9 +248,9 @@ export default function ExpedientesPage() {
     [data],
   );
 
-  async function handleConfirmArchive() {
+  async function handleConfirmArchive(motivo: string) {
     if (!archiveTarget) return;
-    const ok = await archive(archiveTarget);
+    const ok = await archive(archiveTarget, motivo);
     if (ok) setArchiveTarget(null);
   }
 
@@ -366,7 +366,7 @@ export default function ExpedientesPage() {
         folio={archiveTarget?.folio ?? null}
         busy={isArchiving}
         onCancel={() => setArchiveTarget(null)}
-        onConfirm={() => void handleConfirmArchive()}
+        onConfirm={(motivo) => void handleConfirmArchive(motivo)}
       />
       <DesarchivarExpedienteDialog
         folio={reopenTarget?.folio ?? null}
