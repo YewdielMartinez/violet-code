@@ -6,6 +6,7 @@ import {
   type SubirDocumentoInput,
 } from '@/domain/models/DocumentoAdjunto';
 import type { OrdenProteccionInput } from '@/domain/models/OrdenProteccion';
+import { lineaTiempoQueryKey } from '@/features/seguimiento/api';
 import { supabaseAgresorRepository } from '@/infrastructure/supabase/adapters/SupabaseAgresorRepository';
 import { supabaseDocumentoStorageRepository } from '@/infrastructure/supabase/adapters/SupabaseDocumentoStorageRepository';
 import { supabaseOrdenProteccionRepository } from '@/infrastructure/supabase/adapters/SupabaseOrdenProteccionRepository';
@@ -81,6 +82,8 @@ export function useTiposDocumentoOrden(enabled = true) {
 function invalidateOrdenRelatedQueries(qc: ReturnType<typeof useQueryClient>, fichaId: string) {
   void qc.invalidateQueries({ queryKey: ORDENES_QUERY_KEYS.porFicha(fichaId) });
   void qc.invalidateQueries({ queryKey: ORDENES_QUERY_KEYS.documentosOrdenesPorFicha(fichaId) });
+  // El cambio de estado aparece en la línea de tiempo (pestaña Seguimiento) del expediente.
+  void qc.invalidateQueries({ queryKey: lineaTiempoQueryKey(fichaId) });
   void qc.invalidateQueries({ queryKey: ['alertas', 'cola'] });
   void qc.invalidateQueries({ queryKey: ['alerts'] });
 }
