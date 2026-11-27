@@ -10,7 +10,6 @@ const loadNuevaFicha = () => import('@/features/expedientes/ficha/NuevaFichaPage
 const loadAgenda = () => import('@/features/agenda/AgendaPage');
 const loadActividades = () => import('@/features/actividades/ActividadesPage');
 const loadAlertas = () => import('@/features/solicitudes/AlertasPage');
-const loadIntervenciones = () => import('@/features/intervenciones/IntervencionesPage');
 const loadPending = () => import('@/shared/ui/PendingModulePage');
 
 export const LoginPage = lazy(loadLogin);
@@ -22,7 +21,6 @@ export const NuevaFichaPage = lazy(loadNuevaFicha);
 export const AgendaPage = lazy(loadAgenda);
 export const ActividadesPage = lazy(loadActividades);
 export const AlertasPage = lazy(loadAlertas);
-export const IntervencionesPage = lazy(loadIntervenciones);
 export const PendingModulePage = lazy(loadPending);
 
 const started = new WeakSet<() => Promise<unknown>>();
@@ -56,7 +54,7 @@ export function preloadPage(path: string): void {
 const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadDirectory, loadNuevaFicha, loadAlertas, loadAgenda, loadActividades, loadIntervenciones, loadPending];
 
 function scheduleIdle(cb: () => void): () => void {
-  if (typeof window === 'undefined') return () => {};
+  if (typeof window === 'undefined') return () => { };
   if (typeof window.requestIdleCallback === 'function') {
     const id = window.requestIdleCallback(cb, { timeout: 4000 });
     return () => window.cancelIdleCallback(id);
@@ -70,9 +68,9 @@ function scheduleIdle(cb: () => void): () => void {
  * sin competir con la ruta actual (y respetando ahorro de datos).
  */
 export function preloadPages(): () => void {
-  if (typeof window === 'undefined' || typeof document === 'undefined') return () => {};
+  if (typeof window === 'undefined' || typeof document === 'undefined') return () => { };
   const nav = typeof navigator !== 'undefined' ? (navigator as Navigator & { connection?: { saveData?: boolean } }) : null;
-  if (nav?.connection?.saveData) return () => {};
+  if (nav?.connection?.saveData) return () => { };
 
   let index = 0;
   let cancel: (() => void) | null = null;

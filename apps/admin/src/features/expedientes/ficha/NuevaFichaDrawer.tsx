@@ -208,7 +208,7 @@ export function NuevaFichaDrawer({
 
   const subtitle = seed?.preRegistro
     ? `Datos precargados desde app móvil para ${seed.preRegistro.nombreCompleto}.`
-    : 'Captura escalonada de identidad, domicilio SEPOMEX y estudio socioeconómico.';
+    : 'Captura escalonada de identidad, domicilio y estudio socioeconómico.';
 
   return (
     <>

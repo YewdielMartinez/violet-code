@@ -81,12 +81,12 @@ export function AgresorDomicilioFields({ asentamientos, values, errores, onPatch
         Domicilio
       </legend>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 sm:col-span-2">
+      <div className="sm:col-span-2">
         <AgresorGlassSwitch
           checked={modoCpManual}
           label="Domicilio fuera de Ahome"
           onChange={handleToggleCpManual}
-          className="text-sm font-medium text-on-surface"
+          className="min-h-11 w-full justify-between text-on-surface"
         >
           Domicilio fuera de Ahome (capturar CP manual)
         </AgresorGlassSwitch>

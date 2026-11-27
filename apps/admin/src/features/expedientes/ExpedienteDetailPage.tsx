@@ -81,7 +81,7 @@ const ALL_TABS: readonly TabDefinition[] = [
   { id: 'agresor', label: 'Persona agresora', icon: 'shield_person', sensitive: true },
   { id: 'documentos', label: 'Documentos', icon: 'folder_open', sensitive: true },
   { id: 'canalizaciones', label: 'Canalizaciones', icon: 'alt_route', sensitive: true },
-  { id: 'ordenes', label: 'Órdenes', icon: 'gavel', sensitive: true },
+  { id: 'ordenes', label: 'Órdenes de Protección', icon: 'gavel', sensitive: true },
   { id: 'seguimiento', label: 'Seguimiento', icon: 'timeline', sensitive: true },
   { id: 'notas', label: 'Notas privadas', icon: 'lock', sensitive: true },
 ];
@@ -110,11 +110,6 @@ function parseRequestedTab(rawTab: string | null): DrawerTab {
     return rawTab;
   }
   return 'resumen';
-}
-
-function formatTelHref(celular: string | null): string | null {
-  const clean = celular?.trim().replace(/[^\d+]/g, '') ?? '';
-  return clean ? `tel:${clean}` : null;
 }
 
 function scheduleIdleStep(cb: () => void): () => void {
@@ -423,7 +418,6 @@ export default function ExpedienteDetailPage() {
 
   const pageTitle =
     expediente?.persona.nombreCompleto ?? (isLoading ? 'Cargando expediente…' : 'Expediente');
-  const telHref = expediente ? formatTelHref(expediente.persona.celular) : null;
 
   const sensitiveTabs = useMemo(
     () =>
@@ -503,15 +497,6 @@ export default function ExpedienteDetailPage() {
                   <Icon name="badge" />
                   <span>Copiar CURP</span>
                 </button>
-                {telHref ? (
-                  <a
-                    href={telHref}
-                    className="mk-button mk-button--primary min-h-11 px-4 text-base"
-                  >
-                    <Icon name="call" />
-                    <span>Llamar</span>
-                  </a>
-                ) : null}
               </>
             ) : null}
           </>

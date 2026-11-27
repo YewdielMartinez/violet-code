@@ -645,7 +645,7 @@ export function FichaIdentidadStep({
           />
         </div>
 
-        <div className="grid gap-3 rounded-2xl bg-surface-container-low p-4 sm:grid-cols-2">
+        <div className="grid gap-3 rounded-2xl bg-surface-container-low p-4 sm:grid-cols-2 sm:gap-x-6">
           {IDENTITY_FLAGS.map((flag) => (
             <GlassSwitch
               key={flag.key}

@@ -169,6 +169,10 @@
 }
 
 .vc-ficha-form .mk-glass-switch {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 1rem;
   min-height: 44px;
   font-size: 0.9375rem;
 }

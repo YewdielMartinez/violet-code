@@ -62,7 +62,6 @@ export const NAVIGATION: NavPage[] = [
     mobile: true,
     allowedRoles: ATTENTION_AND_DIRECTION,
   },
-  //QUITE EL MENU DE INTERVENCIONES 
   {
     path: '/agenda',
     label: 'Agenda',
@@ -86,15 +85,6 @@ export const NAVIGATION: NavPage[] = [
     icon: 'monitoring',
     ready: false,
     allowedRoles: DIRECTION_ONLY,
-  },
-  {
-    path: '/directorio',
-    label: 'Directorio',
-    title: 'Directorio y Puntos Violeta',
-    icon: 'location_on',
-    ready: true,
-    mobile: true,
-    allowedRoles: ALL_EMPLOYEES,
   },
   {
     path: '/usuarios',

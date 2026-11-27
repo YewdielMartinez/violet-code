@@ -120,7 +120,7 @@ export default function NuevaFichaPage() {
         subtitle={
           seed?.preRegistro
             ? `Datos precargados desde app móvil para ${seed.preRegistro.nombreCompleto}.`
-            : 'Captura inicial del expediente, domicilio SEPOMEX y estudio socioeconómico.'
+            : 'Captura inicial del expediente, domicilio y estudio socioeconómico.'
         }
       />
 

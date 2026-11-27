@@ -53,11 +53,11 @@ Se usa para derivaciones externas (`institucion_id`) y en la app (directorio de 
 
 | Tabla | Leer | Crear / editar | Nota |
 |---|---|---|---|
-| `persona` | `expediente.ver` (Tit, Sub, TS, Psi, Jur) | `expediente.escribir` (Tit, Sub, TS) | Recepción ya no la lee (B-08); para buscar usa `verificar_curp`. |
-| `ficha_registro` | `expediente.ver` | `expediente.escribir` | El alta va por `crear_ficha_completa`; archivar, por `archivar_ficha`. |
-| `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar` | `expediente.ver` | `expediente.escribir` | Alta en `crear_ficha_completa`; edición por `actualizar_ficha` y `registrar_estudio_socioeconomico` ([expedientes.md](./expedientes.md)). |
+| `persona` | `expediente.ver` (Tit, Sub, TS, Psi, Jur) | Solo RPC (`42501` directo) | Alta por `crear_ficha_completa`; edición por `actualizar_persona` ([expedientes.md](./expedientes.md)). |
+| `ficha_registro` | `expediente.ver` | Solo RPC (`42501` directo) | Alta por `crear_ficha_completa`; edición/archivo/reapertura por `actualizar_ficha`, `archivar_ficha` y `reabrir_ficha`. |
+| `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar` | `expediente.ver` | Solo RPC (`42501` directo) | Alta en `crear_ficha_completa`; edición por `actualizar_ficha` y `registrar_estudio_socioeconomico` ([expedientes.md](./expedientes.md)). |
 | `domicilio` | `expediente.ver` | `expediente.ver` | |
-| `agresor` | `agresor.acceder` (Tit, Sub, TS, Psi, Jur) | `agresor.acceder` | Al abrirlo, llama `registrar_consulta('agresor', id)`. Edición con bloqueo optimista por `actualizado_en`. |
+| `agresor` | `agresor.acceder` (Tit, Sub, TS, Psi, Jur) | Solo RPC (`42501` directo) | Alta/edición/baja únicamente por `guardar_agresor` y `desactivar_agresor` ([expedientes.md](./expedientes.md)); al abrirlo llama `registrar_consulta('agresor', id)`. |
 | `documento` | `expediente.ver` | `expediente.ver` | Ver [storage.md](./storage.md). |
 
 ### `orden_proteccion`
@@ -82,7 +82,7 @@ Al crear o cambiar una orden vigente, un trigger sube a `alta` las alertas `nuev
 
 | Leer | Crear / editar |
 |---|---|
-| `historial_clinico.acceder` (Tit, Sub, Psi) | Igual |
+| `historial_clinico.acceder` (Tit, Sub, Psi) | Solo RPC (`42501` directo) |
 
 Una sola fila por ficha (`ficha_id` único). Para leer y guardar usa las RPC [`get_historial_clinico` y `guardar_historial_clinico`](./expedientes.md#guardar_historial_clinico-y-get_historial_clinico) (registran `'ver'` en bitácora, validan RN-01 y aplican bloqueo optimista).
 

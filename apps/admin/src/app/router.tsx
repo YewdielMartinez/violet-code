@@ -10,7 +10,6 @@ import {
   DirectoryPage,
   ExpedienteDetailPage,
   ExpedientesPage,
-  IntervencionesPage,
   LoginPage,
   NuevaFichaPage,
   PendingModulePage,
@@ -113,7 +112,6 @@ warmStart();
 // Páginas implementadas. Al terminar un módulo: agregarlo aquí y marcar `ready: true` en navigation.ts.
 const READY: Record<string, ComponentType> = {
   '/': DashboardPage,
-  '/directorio': DirectoryPage,
   '/expedientes': ExpedientesPage,
   '/solicitudes': AlertasPage,
   '/agenda': AgendaPage,
@@ -151,6 +149,14 @@ export const router = createBrowserRouter([
           element: <Suspense fallback={pageFallback}>{Page ? <Page /> : <PendingModulePage title={title ?? label} />}</Suspense>,
         };
       }),
+      {
+        path: '/directorio',
+        element: (
+          <Suspense fallback={pageFallback}>
+            <DirectoryPage />
+          </Suspense>
+        ),
+      },
       {
         path: '/expedientes/nuevo',
         element: (
