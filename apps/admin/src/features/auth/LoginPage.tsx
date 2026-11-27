@@ -1,3 +1,4 @@
+import { APP_NAME } from '@/app/brand';
 import { useEffect, useId, useState, type FormEvent } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Dialog, LoadingButton, PillButton, toast } from '@yewdiel21/motion-kit/react';
@@ -165,7 +166,7 @@ export default function LoginPage() {
       <header className="relative flex items-center justify-between gap-4 px-6 py-6 sm:px-10">
         <div className="flex items-center gap-3">
           <BrandMark size={36} />
-          <span className="font-semibold text-on-surface">Violet Code</span>
+          <span className="font-semibold text-on-surface">{APP_NAME}</span>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggleButton variant="header" />

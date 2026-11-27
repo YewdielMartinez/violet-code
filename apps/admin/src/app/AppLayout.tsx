@@ -1,3 +1,4 @@
+import { APP_NAME } from '@/app/brand';
 import {
   lazy,
   startTransition,
@@ -143,11 +144,11 @@ export function AppLayout() {
             onPointerEnter={() => preloadPage('/')}
             onFocus={() => preloadPage('/')}
             onClick={() => navigate('/')}
-            aria-label="Violet Code, ir al inicio"
+            aria-label={`${APP_NAME}, ir al inicio`}
           >
             {/* Marca propia en lugar de .mk-nav__icon: el logo SVG no es un glifo de Material Symbols. */}
             <BrandMark size={36} className="shrink-0" />
-            <span className="mk-nav__name">Violet Code</span>
+            <span className="mk-nav__name">{APP_NAME}</span>
           </button>
         }
         actions={<DeferredOptionsMenu />}

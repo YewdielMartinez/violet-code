@@ -70,8 +70,8 @@ hideIconsUntilFontReady();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {/* Tema "purple" de motion-kit; modo claro/oscuro sigue al sistema hasta que la persona elija. */}
-    <ThemeProvider defaultTheme="purple" mode="system" storageKey={THEME_STORAGE_KEY}>
+    {/* Tema predeterminado "salmverse" (rosa/tinto institucional); modo claro/oscuro sigue al sistema hasta que la persona elija. */}
+    <ThemeProvider defaultTheme="salmverse" mode="system" storageKey={THEME_STORAGE_KEY}>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
         <Suspense fallback={null}>

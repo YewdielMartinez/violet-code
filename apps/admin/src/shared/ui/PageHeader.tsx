@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { APP_NAME } from '@/app/brand';
 
 interface PageHeaderProps {
   title: string;
@@ -14,9 +15,8 @@ interface PageHeaderProps {
   documentTitle?: string;
 }
 
-const APP_NAME = 'Violet Code';
 
-/** Fija `document.title` como «<pantalla> · Violet Code». */
+/** Fija `document.title` como «<pantalla> · SIA-SEMUJERES». */
 export function useDocumentTitle(title: string) {
   useEffect(() => {
     document.title = `${title} · ${APP_NAME}`;
