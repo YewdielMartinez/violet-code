@@ -91,10 +91,10 @@ export default function PerfilPage() {
           <TonalCardGrid>
             <TonalCard title="Datos de la cuenta" wide>
               <CardDatos>
-                <CardDato label="Nombre">{perfilQuery.data.displayName}</CardDato>
-                <CardDato label="Correo">{perfilQuery.data.email || '—'}</CardDato>
-                <CardDato label="Rol">{ROLE_LABELS[perfilQuery.data.role] ?? perfilQuery.data.role}</CardDato>
-                <CardDato label={perfilQuery.data.role === 'umeca' ? 'Dependencia' : 'Área'}>
+                <CardDato label="Nombre">{perfilQuery.data.nombre}</CardDato>
+                <CardDato label="Correo">{perfilQuery.data.correo || '—'}</CardDato>
+                <CardDato label="Rol">{ROLE_LABELS[perfilQuery.data.rol] ?? perfilQuery.data.rol}</CardDato>
+                <CardDato label={perfilQuery.data.rol === 'umeca' ? 'Dependencia' : 'Área'}>
                   {perfilQuery.data.areaNombre ??
                     (perfilQuery.data.dependencia === 'umeca' ? 'UMECA' : 'Sin área asignada')}
                 </CardDato>

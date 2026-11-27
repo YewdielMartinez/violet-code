@@ -1,7 +1,7 @@
 # RPC: `public.actualizar_actividad_preventiva`
 
-- **Versión:** [`20261128002400_65`](../../migrations/20261128002400_65_editar_actividad_preventiva.sql)
-- **Migración:** `supabase/migrations/20261128002400_65_editar_actividad_preventiva.sql`
+- **Versión:** [`20261128002800_69`](../../migrations/20261128002800_69_editar_actividad_preventiva.sql)
+- **Migración:** `supabase/migrations/20261128002800_69_editar_actividad_preventiva.sql`
 - **Permiso RBAC:** `public.tiene_permiso('actividad.registrar')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico`
 - **Cubre:** `RF-16` (edición de una actividad preventiva **pendiente** desde el mismo diálogo del detalle)

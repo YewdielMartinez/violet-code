@@ -3,6 +3,7 @@ import { Icon } from '@/shared/ui/Icon';
 import { MOTION } from './flip';
 import { SIZE_SPECS, widgetDef, type WidgetId, type WidgetSize } from './layout';
 import { usePresence } from './usePresence';
+import { WidgetSizeSelect } from './WidgetSizeSelect';
 import { WidgetSizeProvider } from './widgets/box';
 
 /** Estado de arrastre de la celda: drag (puntero), grab (levantado con teclado), settle (asentándose al soltar). */
@@ -119,18 +120,13 @@ export function WidgetShell({
             >
               <Icon name="arrow_forward" />
             </button>
-            <select
-              aria-label={`Tamaño de ${def.title}`}
+            <WidgetSizeSelect
+              title={def.title}
               value={size}
-              onChange={(e) => onResize(id, e.target.value as WidgetSize)}
-              className="mx-1 h-9 min-w-0 flex-1 rounded-full border border-outline-variant bg-surface px-3 text-sm text-on-surface focus-visible:outline-2 focus-visible:outline-primary"
-            >
-              {def.sizes.map((s) => (
-                <option key={s} value={s}>
-                  {SIZE_SPECS[s].label} ({SIZE_SPECS[s].hint})
-                </option>
-              ))}
-            </select>
+              sizes={def.sizes}
+              index={index}
+              onChange={(next) => onResize(id, next)}
+            />
             <button
               type="button"
               aria-label={`Ocultar ${def.title}`}

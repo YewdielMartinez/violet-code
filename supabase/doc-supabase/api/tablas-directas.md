@@ -92,9 +92,9 @@ Una sola fila por ficha (`ficha_id` único). Para leer y guardar usa las RPC [`g
 
 | Leer                                                                           | Crear / editar                                      |
 | ------------------------------------------------------------------------------ | --------------------------------------------------- |
-| Dirección (`titular`, `subdireccion`) todas; `seguimiento.registrar` su área | `seguimiento.registrar` y **solo su área** (`42501` en Dirección) |
+| Dirección (`titular`, `subdireccion`) las de TS y Jur; `seguimiento.registrar` su área; **Psicología: solo `nota_psicologia.acceder`** | `seguimiento.registrar` y **solo su área** (`42501` en Dirección); las de Psicología además exigen `nota_psicologia.acceder` |
 
-Notas privadas entre áreas (TS, Psi, Jur no ven las de otra área). Titular y Subdirección leen todas en solo lectura (`42501` si intentan insertar o actualizar). Para áreas de atención, `area_id` debe ser el del actor; si mandas otro, `42501`.
+Notas privadas entre áreas (TS, Psi, Jur no ven las de otra área). Titular y Subdirección leen las de Trabajo Social y Jurídico en solo lectura (`42501` si intentan insertar o actualizar) y **no ven nunca las notas de Psicología** (migración 71: solo el rol `psicologia`; el front las muestra dentro del Historial clínico). Para áreas de atención, `area_id` debe ser el del actor; si mandas otro, `42501`.
 
 ```ts
 await supabase

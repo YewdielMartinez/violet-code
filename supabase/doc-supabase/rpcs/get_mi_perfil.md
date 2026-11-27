@@ -1,32 +1,41 @@
-# `get_mi_perfil`
+# RPC: `public.get_mi_perfil`
 
-- **Migración:** [`20261128002800_69_rpc_mi_perfil.sql`](../../migrations/20261128002800_69_rpc_mi_perfil.sql)
-- **Permiso RBAC:** Cualquier usuario `authenticated` (filtra por `auth.uid()`; devuelve 0 filas si no tiene perfil de `empleado` ni de `usuario_externo` UMECA).
-- **Actores autorizados:** Empleados internos (`titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico`, `recepcion`) y externos `umeca`.
+- **Versión:** [`20261128003100_72`](../../migrations/20261128003100_72_mi_perfil.sql)
+- **Migración:** `supabase/migrations/20261128003100_72_mi_perfil.sql`
+- **Permiso RBAC:** ninguno por clave; propiedad por `auth.uid()` + tipo de cuenta (`auth_tipo_cuenta()` = `empleado` o `externo`)
+- **Actores autorizados:** cualquier persona del panel: `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico`, `recepcion` y `umeca`. La usuaria móvil y la sesión anónima reciben `42501`.
+- **Cubre:** pantalla «Mi perfil» (`/perfil`) del panel web.
 
-## 1. Entrada (`parámetros`)
-Sin parámetros (`auth.uid()`).
+## 1. Entrada (parámetros)
 
-## 2. Salida (0 o 1 fila)
+Sin parámetros: siempre devuelve el perfil de `auth.uid()`.
+
+## 2. Salida (`table`, una fila)
+
 | Columna | Tipo | Descripción |
 |---|---|---|
-| `id` | `uuid` | ID del usuario autenticado. |
-| `email` | `text` | Correo electrónico de `auth.users`. |
-| `nombre` | `text` | Nombre completo del perfil. |
-| `tipo` | `text` | `'empleado'` o `'externo'`. |
-| `rol` | `text` | Rol del empleado o `'umeca'` para externos UMECA. |
-| `area_id` | `smallint` | ID del área (`null` en Dirección, Recepción y UMECA). |
-| `area_clave` | `text` | Clave del área o `'umeca'` para externos UMECA (`null` si no aplica). |
-| `area_nombre` | `text` | Nombre del área o `'UMECA'` para externos UMECA (`null` si no aplica). |
-| `dependencia` | `text` | `'umeca'` en externos; `null` en empleados. |
-| `activo` | `boolean` | Si la cuenta está activa. |
-| `permisos` | `text[]` | Claves de `tiene_permiso()` que evalúan a `true` para el actor activo (`{}` si inactivo o externo). |
+| `id` | `uuid` | `empleado.id` / `usuario_externo.id` (= `auth.users.id`) |
+| `tipo` | `text` | `empleado` o `externo` |
+| `nombre` | `text` | Nombre completo |
+| `correo` | `text` | Correo de acceso (`auth.users.email`); solo lectura |
+| `telefono` | `text` | 10 dígitos o `null` |
+| `rol` | `text` | Rol del empleado, o `umeca` para el usuario externo |
+| `area_id` | `smallint` | Área del empleado (`null` si no tiene o es UMECA) |
+| `area_clave` | `text` | `trabajo_social`, `psicologia`, `juridico` o `null` |
+| `area_nombre` | `text` | Nombre del área o `null` |
+| `dependencia` | `text` | `umeca` para externos; `null` para empleados |
+| `activo` | `boolean` | Estado de la cuenta |
+| `permisos` | `text[]` | Claves de `tiene_permiso()` que son `true` para quien llama, ordenadas (`[]` para UMECA) |
+| `creado_en` | `timestamptz` | Alta de la cuenta |
 
-## 3. Reglas
-- Si el usuario no existe en `empleado` ni en `usuario_externo` (`dependencia = 'umeca'`), devuelve **0 filas** sin lanzar excepción; el frontend decide el rechazo (`403` + `signOut`).
-- `permisos` evalúa las 25 claves vigentes de [`tiene_permiso`](../../migrations/20261128002600_67_historial_clinico_psicologia.sql).
+## 3. Reglas ABAC y efectos secundarios
+
+- Solo lectura; no escribe en `bitacora_acceso`.
+- `permisos` = `permisos_catalogo()` filtrado con `tiene_permiso(<clave>)`. **Mantenimiento:** `public.permisos_catalogo()` es la lista de claves del `case` de `tiene_permiso()` (hoy la migración 71). Cuando una migración agregue o quite una clave en `tiene_permiso()` debe redefinir `permisos_catalogo()` en la misma migración; `supabase/tests/72_mi_perfil.test.sql` compara ambas listas y falla si se desincronizan.
+- `anon` no tiene `EXECUTE`.
 
 ## 4. Errores esperados
+
 | Código (`SQLSTATE`) | Cuándo ocurre |
 |---|---|
-| `42501` | Rol `anon` (sin sesión). |
+| `42501` | Sin sesión, o cuenta sin perfil de panel (p. ej. usuaria de la app móvil) |

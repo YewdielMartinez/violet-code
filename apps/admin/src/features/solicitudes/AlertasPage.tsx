@@ -414,7 +414,6 @@ export default function AlertasPage() {
                             </span>
                             {item.tieneOrdenVigente ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-status-danger-bg px-3 py-1 text-sm font-medium text-status-danger">
-                                <Icon name="gavel" className="text-base" />
                                 <span>Orden vigente</span>
                               </span>
                             ) : null}

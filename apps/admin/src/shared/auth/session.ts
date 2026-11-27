@@ -109,6 +109,12 @@ export function refreshSession(): Promise<AuthSession | null> {
   return sessionPromise;
 }
 
+/** Actualiza en memoria datos del usuario de la sesión (p. ej. el nombre tras editar «Cuenta» de Configuración). */
+export function updateSessionUser(patch: Partial<Pick<StaffUser, 'displayName'>>): void {
+  if (!state.session) return;
+  setState({ status: state.status, session: { ...state.session, user: { ...state.session.user, ...patch } } });
+}
+
 export async function logout(): Promise<void> {
   clearIdleTimer();
   try {

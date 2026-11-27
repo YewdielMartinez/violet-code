@@ -21,7 +21,9 @@ import {
   useGuardarHistorialClinico,
   useHistorialClinico,
 } from './api';
+import { useEditScroll } from './datos/useEditScroll';
 import { HistorialClinicoVersiones } from './HistorialClinicoVersiones';
+import { HistorialNotasPrivadas } from './HistorialNotasPrivadas';
 import './historial-clinico.css';
 
 export interface HistorialClinicoPanelProps {
@@ -140,6 +142,7 @@ function TextAreaField({
 /**
  * Historial clínico psicológico del expediente (`RF-11`, `RF-12`).
  * Lectura: Titular, Subdirección y Psicología. Alta y edición: solo Psicología (`historial_clinico.escribir`).
+ * Incluye las notas privadas de Psicología, visibles únicamente para ese rol (`nota_psicologia.acceder`).
  */
 export const HistorialClinicoPanel = memo(function HistorialClinicoPanel({
   fichaId,
@@ -164,6 +167,10 @@ export const HistorialClinicoPanel = memo(function HistorialClinicoPanel({
   const editButtonRef = useRef<HTMLButtonElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const wasEditingRef = useRef(false);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // El formulario reemplaza la vista de una vez (sin animar la altura): el scroll puede ir de inmediato.
+  useEditScroll({ anchorRef: sectionRef, editing, ready: editing, settleMs: 320 });
 
   // La marca de «recién cambiado» se disipa sola.
   useEffect(() => {
@@ -261,7 +268,7 @@ export const HistorialClinicoPanel = memo(function HistorialClinicoPanel({
   const isChanged = (campo: HistorialClinicoCampo) => changed.includes(campo);
 
   return (
-    <section aria-label="Historial clínico" className="vc-hc">
+    <section ref={sectionRef} aria-label="Historial clínico" className="vc-hc">
       <header className="vc-hc__head">
         <div className="vc-hc__head-text">
           <div className="vc-hc__title-wrap">
@@ -311,7 +318,17 @@ export const HistorialClinicoPanel = memo(function HistorialClinicoPanel({
         <Skeleton loading={historialQuery.isLoading} shape="card" lines={4} label="Cargando historial clínico">
           <div ref={stageRef} key={editing ? 'edit' : 'view'} className="vc-hc-stage" data-direction={direction}>
             {editing ? (
-              <form onSubmit={(e) => void handleSubmit(e)} className="vc-hc-form" aria-label="Editar historial clínico">
+              <form
+                onSubmit={(e) => void handleSubmit(e)}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Escape' || e.defaultPrevented || busy) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  stopEditing();
+                }}
+                className="vc-hc-form"
+                aria-label="Editar historial clínico"
+              >
                 <TextAreaField
                   label="Motivo de consulta"
                   placeholder="Describe el motivo principal de atención"
@@ -430,6 +447,9 @@ export const HistorialClinicoPanel = memo(function HistorialClinicoPanel({
           </div>
         </Skeleton>
       )}
+
+      {/* Solo Psicología: el componente no renderiza nada para los demás roles. */}
+      <HistorialNotasPrivadas fichaId={fichaId} />
 
       {historial && !historialQuery.isError ? <HistorialClinicoVersiones fichaId={fichaId} /> : null}
     </section>

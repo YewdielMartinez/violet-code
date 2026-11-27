@@ -1,12 +1,9 @@
 import { useId, useMemo, useState, type FormEvent } from 'react';
-import { DateTimePicker, Dialog, toast } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/date-time-picker';
-import '@yewdiel21/motion-kit/css/components/range-calendar';
-import '@yewdiel21/motion-kit/css/components/time-field';
-import '@yewdiel21/motion-kit/css/components/popover';
+import { Dialog, toast } from '@yewdiel21/motion-kit/react';
 import { PRIORIDAD_CITA_LABELS, validateCitaCreate, type OrigenCita, type PrioridadNivel } from '@/domain/models/Cita';
 import { formatHora } from '@/features/intervenciones/formatters';
 import { useAuth } from '@/shared/auth/useAuth';
+import { DialogSafeDateTimePicker } from '@/shared/ui/DialogSafeDateTimePicker';
 import { Icon } from '@/shared/ui/Icon';
 import { PersonaSearchField } from './PersonaSearchField';
 import { useCrearCita } from './api';
@@ -160,7 +157,7 @@ export function CitaCrearForm({ fecha, areaId, persona: personaInicial, dir, onC
           <div className="grid gap-1.5">
             <span className="text-sm font-medium text-on-surface">Fecha y hora *</span>
             {pickerListo ? (
-              <DateTimePicker
+              <DialogSafeDateTimePicker
                 label="Fecha y hora de la cita"
                 value={cuando}
                 minuteStep={15}

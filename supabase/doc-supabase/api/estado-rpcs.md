@@ -114,6 +114,13 @@ Corte: 27-nov-2026, rama `develop` con la migración `60_integrar_develop_y_supa
 
 ---
 
+### Mi perfil
+
+| RPC | Versión | Base de datos | Admin (adapters) | Nota |
+|---|---|---|---|---|
+| [`get_mi_perfil`](../rpcs/get_mi_perfil.md) | `20261128003100_72` | ✅ | ✅ `SupabaseAuthRepository.miPerfil` | Perfil propio y permisos efectivos (`permisos_catalogo()` + `tiene_permiso()`). Cast temporal hasta regenerar tipos. |
+| [`actualizar_mi_perfil`](../rpcs/actualizar_mi_perfil.md) | `20261128003100_72` | ✅ | ✅ `SupabaseAuthRepository.actualizarMiPerfil` | Solo nombre y teléfono. La contraseña usa `auth.updateUser` (`cambiarContrasena`). |
+
 ## 2. RPC de la app móvil (usuarias)
 
 No las consume el admin; se listan para tener el inventario completo.
@@ -142,7 +149,7 @@ Estas no tienen RPC a propósito: son catálogos u operaciones de una sola tabla
 | `directorio_institucion` | Lectura y gestión | `directorio.gestionar` | ✅ `SupabaseDirectorioRepository` |
 | `orden_proteccion` | Alta, edición y baja lógica | `orden_proteccion.escribir` | ✅ `SupabaseOrdenProteccionRepository` |
 | `documento` + Storage | Subida, URL firmada y baja lógica | `expediente.ver` | ✅ `SupabaseDocumentoStorageRepository` |
-| `nota_area` | Alta, edición y baja lógica (solo su área) | `seguimiento.registrar` | ✅ `SupabaseSeguimientoRepository` |
+| `nota_area` | Alta, edición y baja lógica (solo su área; las de Psicología además exigen `nota_psicologia.acceder`) | `seguimiento.registrar` | ✅ `SupabaseSeguimientoRepository` |
 | `empleado`, `usuario_externo` | Alta y edición de cuentas | Tit/Sub | ✅ `SupabaseUsuarioRepository`, `SupabaseAuthRepository` |
 | `persona`, `ficha_registro`, `alerta`, `vista_lista_urgencias` | Solo lectura | `expediente.ver` / `alertas.ver` | ✅ Expediente, Dashboard, Alerta |
 

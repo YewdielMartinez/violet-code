@@ -13,6 +13,7 @@ const loadActividades = () => import('@/features/actividades/ActividadesPage');
 const loadActividadForm = () => import('@/features/actividades/ActividadFormPage');
 const loadIntervenciones = () => import('@/features/intervenciones/IntervencionesPage');
 const loadAlertas = () => import('@/features/solicitudes/AlertasPage');
+const loadEstadisticas = () => import('@/features/informes/EstadisticasPage');
 const loadUsuarios = () => import('@/features/usuarios/UsuariosPage');
 const loadUsuarioForm = () => import('@/features/usuarios/UsuarioFormPage');
 const loadPerfil = () => import('@/features/perfil/PerfilPage');
@@ -30,6 +31,7 @@ export const ActividadesPage = lazy(loadActividades);
 export const ActividadFormPage = lazy(loadActividadForm);
 export const IntervencionesPage = lazy(loadIntervenciones);
 export const AlertasPage = lazy(loadAlertas);
+export const EstadisticasPage = lazy(loadEstadisticas);
 export const UsuariosPage = lazy(loadUsuarios);
 export const UsuarioFormPage = lazy(loadUsuarioForm);
 export const PerfilPage = lazy(loadPerfil);
@@ -44,6 +46,8 @@ function loadOnce(loader: () => Promise<unknown>) {
 }
 
 const ROUTE_LOADERS: Record<string, () => Promise<unknown>> = {
+  '/login': loadLogin,
+  '/aviso-de-privacidad': loadPrivacyNotice,
   '/': loadDashboard,
   '/directorio': loadDirectory,
   '/expedientes': loadExpedientes,
@@ -53,6 +57,7 @@ const ROUTE_LOADERS: Record<string, () => Promise<unknown>> = {
   '/actividades': loadActividades,
   '/actividades/nuevo': loadActividadForm,
   '/intervenciones': loadIntervenciones,
+  '/estadisticas': loadEstadisticas,
   '/usuarios': loadUsuarios,
   '/usuarios/nuevo': loadUsuarioForm,
   '/perfil': loadPerfil,
@@ -71,7 +76,7 @@ export function preloadPage(path: string): void {
   loadOnce(ROUTE_LOADERS[path] ?? loadPending);
 }
 
-const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadDirectory, loadNuevaFicha, loadAlertas, loadAgenda, loadActividades, loadActividadForm, loadIntervenciones, loadUsuarios, loadUsuarioForm, loadPending];
+const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadDirectory, loadNuevaFicha, loadAlertas, loadAgenda, loadActividades, loadActividadForm, loadIntervenciones, loadEstadisticas, loadUsuarios, loadUsuarioForm, loadPending];
 
 function scheduleIdle(cb: () => void): () => void {
   if (typeof window === 'undefined') return () => { };

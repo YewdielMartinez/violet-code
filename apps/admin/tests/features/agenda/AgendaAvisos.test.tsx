@@ -220,9 +220,10 @@ describe('AgendaAvisos · hoja', () => {
     expect(within(sheet).getByRole('link', { name: /Abrir expediente SM-1/ }).getAttribute('href')).toBe(
       '/expedientes/f-1',
     );
-    expect(within(sheet).getByRole('link', { name: /Llamar a Urgente 1/ }).getAttribute('href')).toBe(
-      'tel:6679876543',
-    );
+    expect(within(sheet).getByText(/Urgente 1/)).toBeTruthy();
+    // Las urgencias ya no ofrecen llamar: solo se abre el expediente.
+    expect(within(sheet).queryByRole('link', { name: /Llamar/ })).toBeNull();
+    expect(within(sheet).queryByText('Llamar')).toBeNull();
   });
 
   it('usa el panel lateral en escritorio y la hoja inferior en móvil', () => {

@@ -206,3 +206,175 @@ describe('Mensajes de error en línea', () => {
     expect((screen.getByRole('button', { name: 'Cancelar' }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
+
+describe('DataSection: scroll accesible al editar', () => {
+  const VIEWPORT = 800;
+  const SECTION_HEIGHT = 400;
+  let scroller: HTMLElement;
+  let scrollTo: ReturnType<typeof vi.fn>;
+  let scrollTop: number;
+  /** Posicion de la seccion en el contenido desplazable (cambia si crece algo por encima). */
+  let sectionOffset: number;
+
+  function mountScrollable(initialTop: number, offset: number) {
+    scrollTop = initialTop;
+    sectionOffset = offset;
+    const view = render(
+      <div data-testid="scroller" style={{ overflowY: 'auto' }}>
+        <Harness />
+      </div>,
+    );
+    scroller = view.getByTestId('scroller');
+    scrollTo = vi.fn((opts: ScrollToOptions) => {
+      scrollTop = opts.top ?? 0;
+    });
+    Object.defineProperty(scroller, 'scrollTop', {
+      configurable: true,
+      get: () => scrollTop,
+      set: (v: number) => {
+        scrollTop = v;
+      },
+    });
+    Object.defineProperty(scroller, 'clientHeight', { configurable: true, get: () => VIEWPORT });
+    scroller.scrollTo = scrollTo as unknown as typeof scroller.scrollTo;
+    scroller.getBoundingClientRect = () => ({ top: 0, bottom: VIEWPORT }) as DOMRect;
+    const section = view.container.querySelector('section.vc-sec') as HTMLElement;
+    section.getBoundingClientRect = () =>
+      ({
+        top: sectionOffset - scrollTop,
+        bottom: sectionOffset - scrollTop + SECTION_HEIGHT,
+        height: SECTION_HEIGHT,
+      }) as DOMRect;
+    return view;
+  }
+
+  it('al abrir espera a que termine la expansion y lleva el encabezado arriba con 16 px de margen', async () => {
+    setReducedMotion(false);
+    mountScrollable(100, 1000);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar domicilio' }));
+    expect(scrollTo).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledTimes(1), { timeout: 1500 });
+    expect(scrollTo).toHaveBeenCalledWith({ top: 100 + (1000 - 100) - 16, behavior: 'smooth' });
+  });
+
+  it('enfoca el primer campo con preventScroll y anuncia el modo de edicion en una region polite', async () => {
+    setReducedMotion(false);
+    const focusSpy = vi.spyOn(HTMLElement.prototype, 'focus');
+    const { container } = mountScrollable(0, 1000);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar domicilio' }));
+    const input = await screen.findByLabelText('Calle');
+    await waitFor(() => expect(document.activeElement).toBe(input));
+
+    const index = focusSpy.mock.contexts.indexOf(input);
+    expect(index).toBeGreaterThanOrEqual(0);
+    expect(focusSpy.mock.calls[index][0]).toEqual({ preventScroll: true });
+
+    const live = container.querySelector('.sr-only[aria-live="polite"]');
+    expect(live?.textContent).toBe('Editando Domicilio');
+  });
+
+  it('no desplaza si la seccion ya cabe completa en la vista', async () => {
+    setReducedMotion(false);
+    const { container } = mountScrollable(0, 100);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar domicilio' }));
+    await screen.findByLabelText('Calle');
+    await waitFor(
+      () =>
+        expect(container.querySelector('.vc-sec__pane--edit')?.getAttribute('data-settled')).toBe('true'),
+      { timeout: 1500 },
+    );
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  it('al cancelar regresa al scroll exacto previo en paralelo con el colapso y devuelve el foco a Editar', async () => {
+    setReducedMotion(false);
+    const { container } = mountScrollable(100, 1000);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar domicilio' }));
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledTimes(1), { timeout: 1500 });
+    expect(scrollTop).toBe(984);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    // Inmediato: el formulario sigue montado (colapsando) y el scroll ya viaja de vuelta.
+    expect(container.querySelector('.vc-sec__pane--edit')?.getAttribute('data-open')).toBe('false');
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 100, behavior: 'smooth' });
+
+    await waitFor(() => expect(screen.queryByLabelText('Calle')).toBeNull(), { timeout: 1500 });
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Editar domicilio' })),
+    );
+  });
+
+  it('Escape cancela la edicion y restaura el scroll', async () => {
+    setReducedMotion(false);
+    mountScrollable(100, 1000);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar domicilio' }));
+    const input = await screen.findByLabelText('Calle');
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledTimes(1), { timeout: 1500 });
+
+    fireEvent.keyDown(input, { key: 'Escape' });
+
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 100, behavior: 'smooth' });
+    await waitFor(() => expect(screen.queryByLabelText('Calle')).toBeNull(), { timeout: 1500 });
+  });
+
+  it('Escape no cancela si un menu abierto lo consume primero', async () => {
+    setReducedMotion(true);
+    mountScrollable(0, 100);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar domicilio' }));
+    const input = await screen.findByLabelText('Calle');
+    input.setAttribute('aria-expanded', 'true');
+
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(screen.queryByLabelText('Calle')).not.toBeNull();
+  });
+
+  it('al guardar tambien regresa al scroll previo', async () => {
+    setReducedMotion(false);
+    mountScrollable(100, 1000);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar domicilio' }));
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledTimes(1), { timeout: 1500 });
+
+    fireEvent.submit(screen.getByLabelText('Calle').closest('form') as HTMLFormElement);
+
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 100, behavior: 'smooth' });
+    await waitFor(() => expect(screen.queryByLabelText('Calle')).toBeNull(), { timeout: 1500 });
+  });
+
+  it('si cambio la altura por encima, no restaura el valor viejo: trae el encabezado a la vista', async () => {
+    setReducedMotion(false);
+    mountScrollable(100, 1000);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar domicilio' }));
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledTimes(1), { timeout: 1500 });
+
+    // Algo por encima crecio 1000 px mientras se editaba: el encabezado quedaria fuera de la vista.
+    sectionOffset = 2000;
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledTimes(2), { timeout: 1500 });
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 984 + (2000 - 984) - 16, behavior: 'smooth' });
+  });
+
+  it('con prefers-reduced-motion el scroll es instantaneo (behavior auto), de ida y de vuelta', async () => {
+    setReducedMotion(true);
+    mountScrollable(100, 1000);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar domicilio' }));
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledTimes(1));
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 984, behavior: 'auto' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 100, behavior: 'auto' });
+    expect(screen.queryByLabelText('Calle')).toBeNull();
+  });
+});

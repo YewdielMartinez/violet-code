@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from 'react';
-import { ChatBackground, Dialog } from '@yewdiel21/motion-kit/react';
+import { Dialog } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/dialog';
-import '@yewdiel21/motion-kit/css/components/chat-background';
-import { ROLE_LABELS, useAuth } from '@/shared/auth/useAuth';
+import { PerfilCuentaSection } from '@/features/perfil/PerfilCuentaSection';
+import { DeferredDialogContent } from '@/shared/ui/DeferredDialogContent';
 import { Icon } from '@/shared/ui/Icon';
 
 type Tab = 'account' | 'security';
@@ -23,38 +23,6 @@ function Card({ icon, title, children }: { icon: string; title: string; children
   );
 }
 
-function AccountPanel() {
-  const { user } = useAuth();
-  if (!user) return null;
-  const area = user.areaNombre ?? 'Todas las áreas';
-
-  return (
-    <div className="grid gap-4">
-      {/* Fondo vivo de motion-kit (ChatBackground): dos manchas del tema que orbitan lentamente. */}
-      <section className="relative isolate flex min-h-80 flex-col justify-end overflow-hidden rounded-[2rem] bg-surface-container-low p-8">
-        <ChatBackground energy={0.2} className="-z-10" />
-        <p className="text-sm text-on-surface-variant">Correo</p>
-        <p className="truncate text-xl text-on-surface" title={user.email}>
-          {user.email}
-        </p>
-        <p className="mt-5 text-sm text-on-surface-variant">Nombre</p>
-        <p className="truncate text-4xl font-medium tracking-tight text-on-surface uppercase md:text-5xl" title={user.displayName}>
-          {user.displayName}
-        </p>
-      </section>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card icon="badge" title={ROLE_LABELS[user.role]}>
-          Rol en el sistema. Define qué módulos y expedientes puedes ver.
-        </Card>
-        <Card icon="groups" title={area}>
-          Área de atención a la que perteneces.
-        </Card>
-      </div>
-    </div>
-  );
-}
-
 function SecurityPanel() {
   return (
     <div className="grid gap-4">
@@ -65,26 +33,44 @@ function SecurityPanel() {
         Cada acceso y cada consulta de expedientes queda registrada en la bitácora de auditoría.
       </Card>
       <Card icon="lock_reset" title="Contraseña">
-        Para cambiarla o restablecerla, contacta a la administración del sistema.
+        Puedes cambiarla en la sección Cuenta; para restablecerla si la olvidaste, contacta a la administración del sistema.
       </Card>
     </div>
   );
 }
 
-/** Configuración de la cuenta: sub-navegación lateral (Cuenta, Seguridad) y panel de detalle. */
+/** Marcador liviano mientras el diálogo se anima: sin componentes del kit ni efectos (ver `DeferredDialogContent`). */
+function PanelFallback() {
+  return (
+    <div role="status" aria-busy="true" aria-label="Cargando configuración" className="grid gap-4">
+      {[7, 6, 6, 6].map((height, index) => (
+        <div key={index} style={{ height: `${height}rem` }} className="rounded-3xl bg-surface-container-low" />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Configuración de la cuenta: sub-navegación lateral (Cuenta, Seguridad) y panel de detalle.
+ * «Cuenta» concentra el perfil de quien inició sesión (datos de contacto, contraseña, permisos, cerrar sesión).
+ * El panel (y la carga de `get_mi_perfil`) espera a que termine el morph de apertura del diálogo.
+ */
 export function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const [tab, setTab] = useState<Tab>('account');
+  // Verdadero desde que se abre hasta que termina de cerrarse (el contenido sigue montado durante la animación de salida).
+  const [active, setActive] = useState(false);
+  if (open && !active) setActive(true);
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Content size="xl">
+    <Dialog.Root open={open} onOpenChange={onOpenChange} onAfterClose={() => setActive(false)}>
+      <Dialog.Content size="xl" className="vc-perf-dialog">
         <Dialog.Header>
           <Dialog.Title>Configuración</Dialog.Title>
           <Dialog.Close label="Cerrar" />
         </Dialog.Header>
 
         <Dialog.Body>
-          <div className="grid gap-6 md:grid-cols-[13rem_1fr]">
+          <div className="grid gap-6 md:grid-cols-[13rem_minmax(0,1fr)]">
             <nav aria-label="Secciones de configuración" className="flex gap-2 md:flex-col">
               {TABS.map((t) => (
                 <button
@@ -104,7 +90,11 @@ export function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenCh
               ))}
             </nav>
 
-            {tab === 'account' ? <AccountPanel /> : <SecurityPanel />}
+            <div className="min-w-0">
+              <DeferredDialogContent active={active} fallback={<PanelFallback />}>
+                {tab === 'account' ? <PerfilCuentaSection enabled={open} /> : <SecurityPanel />}
+              </DeferredDialogContent>
+            </div>
           </div>
         </Dialog.Body>
       </Dialog.Content>

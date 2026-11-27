@@ -250,7 +250,7 @@ export const ExpedienteContactoSection = memo(function ExpedienteContactoSection
   );
 
   return (
-    <div className="grid gap-6">
+    <div className="vc-sec-group grid gap-6">
       <ExpedienteEstadoCard expediente={expediente} />
 
       <DataSection

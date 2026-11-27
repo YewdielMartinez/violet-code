@@ -66,15 +66,18 @@ describe('PerfilPage', () => {
   it('muestra nombre, correo, rol, área, estado activo y permisos agrupados', async () => {
     miPerfilMock.mockResolvedValue({
       id: 'u-1',
-      email: 'ts@semujeres.gob.mx',
-      displayName: 'María López',
-      role: 'trabajo_social',
+      tipo: 'empleado',
+      correo: 'ts@semujeres.gob.mx',
+      nombre: 'María López',
+      telefono: null,
+      rol: 'trabajo_social',
       areaId: 1,
       areaClave: 'trabajo_social',
       areaNombre: 'Trabajo Social',
       dependencia: null,
       activo: true,
       permisos: ['expediente.ver', 'expediente.escribir', 'agenda.ver'],
+      creadoEn: '2026-11-25T00:00:00Z',
     });
 
     renderPerfilPage();
@@ -93,15 +96,18 @@ describe('PerfilPage', () => {
   it('muestra dependencia UMECA y mensaje cuando no tiene permisos internos', async () => {
     miPerfilMock.mockResolvedValue({
       id: 'u-umeca',
-      email: 'umeca@semujeres.gob.mx',
-      displayName: 'Operador UMECA',
-      role: 'umeca',
+      tipo: 'externo',
+      correo: 'umeca@semujeres.gob.mx',
+      nombre: 'Operador UMECA',
+      telefono: null,
+      rol: 'umeca',
       areaId: null,
       areaClave: 'umeca',
       areaNombre: 'UMECA',
       dependencia: 'umeca',
       activo: true,
       permisos: [],
+      creadoEn: '2026-11-25T00:00:00Z',
     });
 
     renderPerfilPage();
@@ -114,15 +120,18 @@ describe('PerfilPage', () => {
   it('cierra sesión al pulsar el botón «Cerrar sesión»', async () => {
     miPerfilMock.mockResolvedValue({
       id: 'u-1',
-      email: 'titular@semujeres.gob.mx',
-      displayName: 'Titular',
-      role: 'titular',
+      tipo: 'empleado',
+      correo: 'titular@semujeres.gob.mx',
+      nombre: 'Titular',
+      telefono: null,
+      rol: 'titular',
       areaId: null,
       areaClave: null,
       areaNombre: null,
       dependencia: null,
       activo: true,
       permisos: ['cuentas.gestionar'],
+      creadoEn: '2026-11-25T00:00:00Z',
     });
 
     renderPerfilPage();

@@ -12,7 +12,6 @@ import { useAuth } from '@/shared/auth/useAuth';
 import type { EstadoFicha } from '@/domain/models/Persona';
 import { formatErrorEscrituraExpediente } from '@/features/expedientes/api';
 import { DeferredDialogContent, DialogFormSkeleton } from '@/shared/ui/DeferredDialogContent';
-import { Icon } from '@/shared/ui/Icon';
 import { ArchivarOrdenDialog } from './ArchivarOrdenDialog';
 import { OrdenProteccionForm } from './OrdenProteccionForm';
 import {
@@ -199,7 +198,6 @@ export function OrdenesProteccionPanel({ fichaId, estado }: OrdenesProteccionPan
 
       {hayOrdenVigente ? (
         <div className="flex items-center gap-2.5 rounded-2xl border border-outline-variant bg-status-danger-bg px-4 py-2.5 text-sm font-medium text-status-danger">
-          <Icon name="verified_user" />
           <span>Expediente con orden de protección vigente hoy</span>
         </div>
       ) : null}

@@ -1,11 +1,12 @@
-import { isAttentionRole, isSupervisor, type StaffRole } from './Auth';
+import { isSupervisor, type StaffRole } from './Auth';
 
 /** Longitud máxima de `nota_area.contenido` (`CHECK char_length between 1 and 5000`). */
 export const NOTA_PRIVADA_MAX_LENGTH = 5000;
 
 /**
  * Nota privada de un área sobre un expediente (`RF-10`, `RN-09`, `RN-18.1`).
- * Cada área de atención lee y edita solo las suyas; Titular y Subdirección leen las de todas las áreas en solo lectura.
+ * Trabajo Social y Jurídico leen y editan las suyas; Titular y Subdirección leen las de TS y Jurídico en solo lectura.
+ * Las notas de Psicología son exclusivas del rol Psicología y se muestran dentro del Historial clínico (migración 71).
  */
 export interface NotaPrivada {
   id: string;
@@ -29,14 +30,22 @@ export interface NotaPrivadaUpdateInput {
   contenido: string;
 }
 
-/** Trabajo Social, Psicología y Jurídico ven las suyas; Titular y Subdirección ven todas en solo lectura. */
+/**
+ * Pestaña «Notas privadas» del expediente: Trabajo Social y Jurídico ven las suyas; Titular y Subdirección ven las de TS y
+ * Jurídico en solo lectura. Psicología no la usa: sus notas viven en el Historial clínico.
+ */
 export function puedeVerNotasPrivadas(role: StaffRole | undefined): boolean {
-  return isAttentionRole(role) || isSupervisor(role);
+  return role === 'trabajo_social' || role === 'juridico' || isSupervisor(role);
 }
 
-/** Solo Trabajo Social, Psicología y Jurídico gestionan notas de área (permiso `seguimiento.registrar`). */
+/** Solo Trabajo Social y Jurídico gestionan notas en la pestaña «Notas privadas» (permiso `seguimiento.registrar`). */
 export function puedeGestionarNotasPrivadas(role: StaffRole | undefined): boolean {
-  return isAttentionRole(role);
+  return role === 'trabajo_social' || role === 'juridico';
+}
+
+/** Las notas privadas de Psicología solo las ve y escribe el rol Psicología (`nota_psicologia.acceder`, RLS de `nota_area`). */
+export function puedeVerNotasPsicologia(role: StaffRole | undefined): boolean {
+  return role === 'psicologia';
 }
 
 /** Valida el contenido de una nota antes de enviarla (`nota_area.contenido`). */

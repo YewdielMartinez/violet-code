@@ -32,7 +32,7 @@ export function findScrollContainer(el: HTMLElement | null): HTMLElement | null 
   return null;
 }
 
-function scrollContainerTo(container: HTMLElement | null, top: number, behavior: ScrollBehavior) {
+export function scrollContainerTo(container: HTMLElement | null, top: number, behavior: ScrollBehavior) {
   if (container) {
     if (typeof container.scrollTo === 'function') container.scrollTo({ top, behavior });
     else container.scrollTop = top;

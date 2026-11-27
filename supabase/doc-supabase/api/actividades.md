@@ -68,7 +68,7 @@ const { data, error } = await supabase
 
 ## `get_actividades_preventivas`
 
-**Versión:** [`20261128002400_65`](../../migrations/20261128002400_65_editar_actividad_preventiva.sql)
+**Versión:** [`20261128002800_69`](../../migrations/20261128002800_69_editar_actividad_preventiva.sql)
 
 > Lista de actividades con sus participantes.
 
@@ -188,13 +188,13 @@ const { data, error } = await supabase
 
 ## `actualizar_actividad_preventiva`
 
-**Versión:** [`20261128002400_65`](../../migrations/20261128002400_65_editar_actividad_preventiva.sql)
+**Versión:** [`20261128002800_69`](../../migrations/20261128002800_69_editar_actividad_preventiva.sql)
 
 > Edita los datos de una actividad **pendiente** y reemplaza su personal participante. Lo usa el botón «Editar» del diálogo de detalle.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| `actividad.registrar` | Tit, Sub, TS, Psi, Jur | Escritura | Sí (`actualizar`) | `_65_editar_actividad_preventiva` |
+| `actividad.registrar` | Tit, Sub, TS, Psi, Jur | Escritura | Sí (`actualizar`) | `_69_editar_actividad_preventiva` |
 
 **Llamada**
 

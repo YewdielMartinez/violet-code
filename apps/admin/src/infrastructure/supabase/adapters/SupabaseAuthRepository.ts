@@ -1,6 +1,7 @@
 import { supabase } from '../client';
 import type { Database } from '../database.types';
 import type { AuthSession, StaffRole, StaffUser, UmecaCita } from '@/domain/models/Auth';
+import { normalizarTelefono, type MiPerfil, type MiPerfilGuardado } from '@/domain/models/Perfil';
 import { AuthError, type AuthRepository } from '@/domain/ports/AuthRepository';
 
 type MiPerfilBaseRow = Database['public']['Functions']['get_mi_perfil']['Returns'][number];
@@ -88,6 +89,11 @@ function resolveStaffUserShared(userId: string, email: string): Promise<StaffUse
   return pending;
 }
 
+/** Tras editar el perfil, la próxima lectura del personal debe ir a la base y no a la consulta en caché. */
+export function invalidateStaffCache() {
+  staffInFlight.clear();
+}
+
 function toAuthSession(accessToken: string, expiresAtSeconds: number | undefined, user: StaffUser): AuthSession {
   const expiresAt = expiresAtSeconds
     ? new Date(expiresAtSeconds * 1000).toISOString()
@@ -114,6 +120,87 @@ export function mapUmecaCitaRow(row: UmecaCitaRow): UmecaCita {
     areaNombre: row.area_nombre?.trim() || null,
   };
 }
+
+interface RpcError {
+  code?: string;
+  message?: string;
+  status?: number;
+}
+
+export interface MiPerfilRow {
+  id: string;
+  tipo: string;
+  nombre: string;
+  correo: string | null;
+  telefono: string | null;
+  rol: string;
+  area_id: number | null;
+  area_clave: string | null;
+  area_nombre: string | null;
+  dependencia: string | null;
+  activo: boolean;
+  permisos: string[] | null;
+  creado_en: string;
+}
+
+export function mapMiPerfilRow(row: MiPerfilRow): MiPerfil {
+  return {
+    id: row.id,
+    tipo: row.tipo === 'externo' ? 'externo' : 'empleado',
+    nombre: row.nombre,
+    correo: row.correo ?? '',
+    telefono: row.telefono?.trim() || null,
+    rol: row.rol as StaffRole,
+    areaId: row.area_id,
+    areaClave: row.area_clave,
+    areaNombre: row.area_nombre?.trim() || null,
+    dependencia: row.dependencia,
+    activo: row.activo,
+    permisos: [...(row.permisos ?? [])].sort(),
+    creadoEn: row.creado_en,
+  };
+}
+
+/** Traduce los errores de `get_mi_perfil` / `actualizar_mi_perfil` a `AuthError` con mensaje en español. */
+export function mapPerfilRpcError(error: RpcError | null, fallback: string): AuthError {
+  const message = error?.message?.trim() ?? '';
+  if (error?.code === '42501' || error?.code === 'PGRST301') {
+    return new AuthError(403, 'No tienes permiso para editar este perfil.');
+  }
+  if (error?.code === '23514' && message) return new AuthError(400, message);
+  return new AuthError(500, message || fallback);
+}
+
+export function mapContrasenaActualError(status: number | undefined, raw: string): string {
+  const lower = raw.toLowerCase();
+  if (lower.includes('invalid login credentials')) return 'La contraseña actual no es correcta.';
+  return mapAuthErrorMessage(status, raw);
+}
+
+export function mapContrasenaNuevaError(raw: string): string {
+  const lower = raw.toLowerCase();
+  if (lower.includes('different from the old password') || lower.includes('same_password')) {
+    return 'La nueva contraseña debe ser distinta a la actual.';
+  }
+  if (lower.includes('weak') || lower.includes('should be at least') || lower.includes('password is too')) {
+    return 'La nueva contraseña es demasiado débil. Usa al menos 8 caracteres con letras y números.';
+  }
+  if (lower.includes('rate limit') || lower.includes('too many')) {
+    return 'Demasiados intentos. Espera un minuto.';
+  }
+  return raw || 'No se pudo cambiar la contraseña.';
+}
+
+// TODO: quitar el cast cuando se regeneren los tipos (`database.types.ts`) tras la migración 72.
+interface PerfilRpcClient {
+  rpc(fn: 'get_mi_perfil'): PromiseLike<{ data: MiPerfilRow[] | MiPerfilRow | null; error: RpcError | null }>;
+  rpc(
+    fn: 'actualizar_mi_perfil',
+    args: { p_nombre: string; p_telefono: string | null },
+  ): PromiseLike<{ data: MiPerfilGuardado[] | MiPerfilGuardado | null; error: RpcError | null }>;
+}
+
+const perfilRpc = () => supabase as unknown as PerfilRpcClient;
 
 export const supabaseAuthRepository: AuthRepository = {
   async login(email, password) {
@@ -172,5 +259,39 @@ export const supabaseAuthRepository: AuthRepository = {
     const { data, error } = await supabase.rpc('get_umeca_citas');
     if (error) throw error;
     return ((data ?? []) as UmecaCitaRow[]).map(mapUmecaCitaRow);
+  },
+
+  async miPerfil() {
+    const { data, error } = await perfilRpc().rpc('get_mi_perfil');
+    if (error) throw mapPerfilRpcError(error, 'No se pudo cargar tu perfil.');
+    const row = unwrapOne(data);
+    if (!row) throw new AuthError(404, 'No se encontró tu perfil.');
+    return mapMiPerfilRow(row);
+  },
+
+  async actualizarMiPerfil(input) {
+    const telefono = normalizarTelefono(input.telefono);
+    const { data, error } = await perfilRpc().rpc('actualizar_mi_perfil', {
+      p_nombre: input.nombre.trim(),
+      p_telefono: telefono || null,
+    });
+    if (error) throw mapPerfilRpcError(error, 'No se pudo guardar tu perfil.');
+    invalidateStaffCache();
+    const row = unwrapOne(data);
+    return { nombre: row?.nombre ?? input.nombre.trim(), telefono: row?.telefono ?? (telefono || null) };
+  },
+
+  async cambiarContrasena(actual, nueva) {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    const email = userData.user?.email;
+    if (userError || !email) throw new AuthError(401, 'Tu sesión expiró. Vuelve a iniciar sesión.');
+
+    const { error: verifyError } = await supabase.auth.signInWithPassword({ email, password: actual });
+    if (verifyError) {
+      throw new AuthError(verifyError.status ?? 400, mapContrasenaActualError(verifyError.status, verifyError.message));
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: nueva });
+    if (error) throw new AuthError(error.status ?? 400, mapContrasenaNuevaError(error.message));
   },
 };

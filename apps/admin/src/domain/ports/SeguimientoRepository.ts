@@ -26,7 +26,7 @@ export interface SeguimientoRepository {
   getLineaTiempo(fichaId: string): Promise<LineaTiempoEvento[]>;
   /** Tipos de atención del catálogo para un área (`cat_tipo_atencion`). */
   listarTiposAtencion(areaId: number): Promise<TipoAtencion[]>;
-  /** Notas privadas activas (`nota_area`, RLS: cada área ve las suyas; Titular y Subdirección ven todas en solo lectura — `RF-10`, `RN-18.1`). */
+  /** Notas privadas activas (`nota_area`, RLS: cada área ve las suyas; Titular y Subdirección ven las de TS y Jurídico en solo lectura, nunca las de Psicología — `RF-10`, `RN-18.1`, migración 71). */
   listarNotas(fichaId: string): Promise<NotaPrivada[]>;
   crearNota(input: NotaPrivadaCreateInput): Promise<NotaPrivada>;
   actualizarNota(input: NotaPrivadaUpdateInput): Promise<NotaPrivada>;

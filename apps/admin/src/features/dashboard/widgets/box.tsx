@@ -1,4 +1,4 @@
-import { createContext, useContext, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type RefObject } from 'react';
 import { SIZE_SPECS, type WidgetSize } from '../layout';
 
 /** Medidas (px) del área útil de un widget. `measured` es false mientras se usa la estimación por tamaño. */
@@ -38,25 +38,94 @@ export function useWidgetBox(): WidgetBox {
   return box ?? estimateBox(size);
 }
 
-/** Mide un elemento con ResizeObserver (null hasta la primera medición o si no hay soporte). */
-export function useElementBox<T extends HTMLElement>(): [RefObject<T | null>, { w: number; h: number } | null] {
-  const ref = useRef<T>(null);
-  const [box, setBox] = useState<{ w: number; h: number } | null>(null);
+export interface ElementSize {
+  w: number;
+  h: number;
+}
 
-  useLayoutEffect(() => {
+type SizeListener = (size: ElementSize) => void;
+
+/**
+ * Un único ResizeObserver para todos los widgets (uno por widget disparaba 9 callbacks con lecturas de
+ * layout). Las medidas salen de la entrada del observador (sin `clientWidth`/`clientHeight`, que fuerzan
+ * layout) y los avisos se agrupan en un solo cuadro de animación.
+ */
+const listeners = new Map<Element, SizeListener>();
+const pending = new Map<Element, ElementSize>();
+let sharedObserver: ResizeObserver | null = null;
+let frame = 0;
+
+const requestFrame = (cb: () => void): number =>
+  typeof requestAnimationFrame === 'function' ? requestAnimationFrame(cb) : (setTimeout(cb, 16) as unknown as number);
+const cancelFrame = (id: number) => (typeof cancelAnimationFrame === 'function' ? cancelAnimationFrame(id) : clearTimeout(id));
+
+function flushSizes() {
+  frame = 0;
+  const batch = [...pending];
+  pending.clear();
+  for (const [el, size] of batch) listeners.get(el)?.(size);
+}
+
+/** Tamaño del área útil (content box) de una entrada del observador, en px enteros. */
+export function sizeOfEntry(entry: Pick<ResizeObserverEntry, 'contentBoxSize' | 'contentRect'>): ElementSize {
+  const list = entry.contentBoxSize as ReadonlyArray<ResizeObserverSize> | ResizeObserverSize | undefined;
+  const box = Array.isArray(list) ? list[0] : (list as ResizeObserverSize | undefined);
+  const raw = box ? { w: box.inlineSize, h: box.blockSize } : { w: entry.contentRect.width, h: entry.contentRect.height };
+  return { w: Math.round(raw.w), h: Math.round(raw.h) };
+}
+
+function onResizeEntries(entries: ResizeObserverEntry[]) {
+  for (const entry of entries) {
+    if (listeners.has(entry.target)) pending.set(entry.target, sizeOfEntry(entry));
+  }
+  if (!frame && pending.size > 0) frame = requestFrame(flushSizes);
+}
+
+/** Observa `el` con el observador compartido. Devuelve la función que deja de observarlo. */
+export function observeSize(el: Element, listener: SizeListener): () => void {
+  if (typeof ResizeObserver === 'undefined') return () => {};
+  sharedObserver ??= new ResizeObserver(onResizeEntries);
+  listeners.set(el, listener);
+  sharedObserver.observe(el);
+  return () => {
+    listeners.delete(el);
+    pending.delete(el);
+    sharedObserver?.unobserve(el);
+    if (listeners.size === 0) {
+      sharedObserver?.disconnect();
+      sharedObserver = null;
+      if (frame) cancelFrame(frame);
+      frame = 0;
+    }
+  };
+}
+
+/** Cantidad de elementos observados (para pruebas). */
+export const observedCount = () => listeners.size;
+
+/** Un cambio menor a 1 px no vale otro render. */
+export const sameSize = (a: ElementSize, b: ElementSize) => Math.abs(a.w - b.w) < 1 && Math.abs(a.h - b.h) < 1;
+
+/**
+ * Mide un elemento. Devuelve `null` hasta la primera medición real (o si no hay ResizeObserver ni layout,
+ * como en jsdom): quien lo usa cae a la estimación por tamaño (`estimateBox`) y la primera notificación del
+ * observador la corrige. No lee layout de forma síncrona al montar.
+ */
+export function useElementBox<T extends HTMLElement>(): [RefObject<T | null>, ElementSize | null] {
+  const ref = useRef<T>(null);
+  const [box, setBox] = useState<ElementSize | null>(null);
+  const last = useRef<ElementSize | null>(null);
+
+  useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const read = () => {
-      // Sin layout (jsdom, elemento oculto): se conserva la estimación por tamaño.
-      if (el.clientWidth === 0 && el.clientHeight === 0) return;
-      const next = { w: el.clientWidth, h: el.clientHeight };
-      setBox((prev) => (prev && prev.w === next.w && prev.h === next.h ? prev : next));
-    };
-    read();
-    if (typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(read);
-    observer.observe(el);
-    return () => observer.disconnect();
+    return observeSize(el, (next) => {
+      // Sin layout (elemento oculto): se conserva la estimación por tamaño.
+      if (next.w === 0 && next.h === 0) return;
+      if (last.current && sameSize(last.current, next)) return;
+      last.current = next;
+      setBox(next);
+    });
   }, []);
 
   return [ref, box];

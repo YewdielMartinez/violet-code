@@ -4,6 +4,7 @@ import {
   ordenarNotasRecientes,
   puedeGestionarNotasPrivadas,
   puedeVerNotasPrivadas,
+  puedeVerNotasPsicologia,
   validateNotaPrivada,
   type NotaPrivada,
 } from '@/domain/models/NotaPrivada';
@@ -16,9 +17,9 @@ describe('NotaPrivada (RF-10, RN-09, RN-18.1)', () => {
     expect(validateNotaPrivada('Seguimiento del plan de seguridad')).toBeNull();
   });
 
-  it('solo las áreas de atención gestionan notas; Dirección, recepción y UMECA no', () => {
+  it('solo Trabajo Social y Jurídico gestionan notas en la pestaña; Psicología usa el Historial clínico', () => {
     expect(puedeGestionarNotasPrivadas('trabajo_social')).toBe(true);
-    expect(puedeGestionarNotasPrivadas('psicologia')).toBe(true);
+    expect(puedeGestionarNotasPrivadas('psicologia')).toBe(false);
     expect(puedeGestionarNotasPrivadas('juridico')).toBe(true);
     expect(puedeGestionarNotasPrivadas('titular')).toBe(false);
     expect(puedeGestionarNotasPrivadas('subdireccion')).toBe(false);
@@ -27,15 +28,23 @@ describe('NotaPrivada (RF-10, RN-09, RN-18.1)', () => {
     expect(puedeGestionarNotasPrivadas(undefined)).toBe(false);
   });
 
-  it('áreas de atención y Dirección ven notas privadas; recepción y UMECA no', () => {
+  it('TS, Jurídico y Dirección ven la pestaña de notas; Psicología, recepción y UMECA no', () => {
     expect(puedeVerNotasPrivadas('trabajo_social')).toBe(true);
-    expect(puedeVerNotasPrivadas('psicologia')).toBe(true);
+    expect(puedeVerNotasPrivadas('psicologia')).toBe(false);
     expect(puedeVerNotasPrivadas('juridico')).toBe(true);
     expect(puedeVerNotasPrivadas('titular')).toBe(true);
     expect(puedeVerNotasPrivadas('subdireccion')).toBe(true);
     expect(puedeVerNotasPrivadas('recepcion')).toBe(false);
     expect(puedeVerNotasPrivadas('umeca')).toBe(false);
     expect(puedeVerNotasPrivadas(undefined)).toBe(false);
+  });
+
+  it('las notas de Psicología son exclusivas del rol Psicología (ni Dirección ni otras áreas)', () => {
+    expect(puedeVerNotasPsicologia('psicologia')).toBe(true);
+    for (const role of ['titular', 'subdireccion', 'trabajo_social', 'juridico', 'recepcion', 'umeca'] as const) {
+      expect(puedeVerNotasPsicologia(role)).toBe(false);
+    }
+    expect(puedeVerNotasPsicologia(undefined)).toBe(false);
   });
 
   it('ordena por la última edición, de la más reciente a la más antigua', () => {

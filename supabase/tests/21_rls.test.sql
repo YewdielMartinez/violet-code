@@ -366,7 +366,7 @@ select is((select count(*)::int from public.atencion), 0, 'recepcion no lee aten
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111101'::uuid); -- titular
 select is(
   (select count(*)::int from public.nota_area where id in ('ffffffff-2100-4000-8000-000000000001','ffffffff-2100-4000-8000-000000000002','ffffffff-2100-4000-8000-000000000003')),
-  3, 'titular lee las 3 nota_area'
+  2, 'titular lee las notas de TS y Jur (no las de psicologia, migracion 71)'
 );
 select throws_ok(
   $$insert into public.nota_area (ficha_id, area_id, contenido) values ('55555555-5555-4555-8555-555555555501', (select id from public.cat_area where clave = 'trabajo_social'), 'Nota titular')$$,
@@ -376,7 +376,7 @@ select throws_ok(
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111102'::uuid); -- subdireccion
 select is(
   (select count(*)::int from public.nota_area where id in ('ffffffff-2100-4000-8000-000000000001','ffffffff-2100-4000-8000-000000000002','ffffffff-2100-4000-8000-000000000003')),
-  3, 'subdireccion lee las 3 nota_area'
+  2, 'subdireccion lee las notas de TS y Jur (no las de psicologia, migracion 71)'
 );
 
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111103'::uuid); -- trabajo_social

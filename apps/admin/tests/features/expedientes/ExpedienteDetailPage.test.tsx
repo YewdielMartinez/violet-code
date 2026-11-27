@@ -291,6 +291,21 @@ describe('ExpedienteDetailPage', () => {
     }
   });
 
+  it('la pestaña «Notas privadas» es de TS, Jurídico y Dirección; Psicología las ve en el Historial clínico', async () => {
+    for (const role of ['trabajo_social', 'juridico', 'titular', 'subdireccion'] as const) {
+      cleanup();
+      useAuthMock.mockReturnValue({ status: 'authenticated', user: makeUser(role) });
+      renderDetailPage();
+      expect(await screen.findByRole('tab', { name: /Notas privadas/i })).toBeTruthy();
+    }
+
+    cleanup();
+    useAuthMock.mockReturnValue({ status: 'authenticated', user: makeUser('psicologia') });
+    renderDetailPage();
+    expect(await screen.findByRole('tab', { name: /Historial clínico/i })).toBeTruthy();
+    expect(screen.queryByRole('tab', { name: /Notas privadas/i })).toBeNull();
+  });
+
   it('monta Persona agresora al hacer clic, la mantiene oculta al volver a Datos y no duplica bitácora', async () => {
     renderDetailPage();
 

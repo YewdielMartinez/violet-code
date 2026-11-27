@@ -38,6 +38,7 @@ export function PersonaSearchField({ value, onChange, error, disabled }: Persona
   const resultados = useMemo(() => (buscable ? (query.data ?? []).slice(0, MAX_RESULTADOS) : []), [buscable, query.data]);
   const pendiente = terminoBuscable(term) && (term !== debounced || query.isFetching);
   const activeIndex = resultados.length ? Math.min(active, resultados.length - 1) : -1;
+  const mostrarLista = open && buscable;
 
   const ayuda = `Escribe al menos ${MIN_TERMINO_BUSQUEDA} caracteres del nombre, apellidos, CURP o folio.`;
 
@@ -69,7 +70,8 @@ export function PersonaSearchField({ value, onChange, error, disabled }: Persona
     } else if (event.key === 'Enter' && open && activeIndex >= 0) {
       event.preventDefault();
       seleccionar(activeIndex);
-    } else if (event.key === 'Escape' && open) {
+    } else if (event.key === 'Escape' && mostrarLista) {
+      // Solo cierra la lista; sin lista abierta el Escape sigue su curso y cierra el Dialog.
       event.preventDefault();
       event.stopPropagation();
       setOpen(false);
@@ -91,8 +93,6 @@ export function PersonaSearchField({ value, onChange, error, disabled }: Persona
       </div>
     );
   }
-
-  const mostrarLista = open && buscable;
 
   return (
     <div className="grid gap-1.5">

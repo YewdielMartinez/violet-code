@@ -1,8 +1,10 @@
 create extension if not exists pgtap with schema extensions;
 
 -- =====================================================================
--- 66_orden_proteccion_seguimiento.test.sql
--- Verifica la migración 20261128002500_66_orden_proteccion_seguimiento.sql:
+-- 70_orden_proteccion_nota_seguimiento.test.sql
+-- Verifica la migración 20261128002900_70_orden_proteccion_nota_seguimiento.sql
+-- (delta sobre 65_historial_ordenes_proteccion.sql):
+--   - Un solo trigger de alta y uno de cambio de estado (sin eventos duplicados).
 --   - El alta de una orden registra el evento inicial (estado_anterior = null).
 --   - Cambiar el estado (update directo, como hace la web) registra un evento
 --     con estado anterior/nuevo, nota y usuario; la nota transitoria no se
@@ -18,7 +20,7 @@ create extension if not exists pgtap with schema extensions;
 
 begin;
 
-select plan(19);
+select plan(25);
 
 do $$
 declare
@@ -62,13 +64,40 @@ grant execute on function pg_temp.set_actor(uuid) to public;
 
 set local role authenticated;
 
+-- 0) Un solo trigger de alta y uno de cambio de estado (sin duplicados)
+select is(
+  (
+    select count(*)::int
+    from pg_trigger t
+    where t.tgrelid = 'public.orden_proteccion'::regclass
+      and not t.tgisinternal
+      and t.tgfoid = 'public.registrar_evento_orden_proteccion()'::regprocedure
+  ),
+  2,
+  'orden_proteccion tiene exactamente 2 triggers de eventos (alta y cambio de estado)'
+);
+
+select is(
+  (
+    select count(*)::int
+    from pg_trigger t
+    where t.tgrelid = 'public.orden_proteccion'::regclass
+      and not t.tgisinternal
+      and t.tgname in ('orden_proteccion_evento_trg', 'orden_proteccion_evento_alta_trg')
+      and t.tgtype & 2 = 2   -- BEFORE
+      and t.tgtype & 16 = 16 -- UPDATE
+  ),
+  1,
+  'el trigger de cambio de estado es BEFORE UPDATE (limpia la nota transitoria)'
+);
+
 -- 1) Alta: evento inicial
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111103'::uuid); -- trabajo_social
 select is(
   (
     select count(*)::int
     from public.orden_proteccion_evento oe
-    where oe.orden_proteccion_id = '66000000-0000-4000-a000-000000000301'
+    where oe.orden_id = '66000000-0000-4000-a000-000000000301'
       and oe.estado_anterior is null
       and oe.estado_nuevo = 'en_tramite'
   ),
@@ -88,7 +117,7 @@ select is(
   (
     select count(*)::int
     from public.orden_proteccion_evento oe
-    where oe.orden_proteccion_id = '66000000-0000-4000-a000-000000000301'
+    where oe.orden_id = '66000000-0000-4000-a000-000000000301'
       and oe.estado_anterior = 'en_tramite'
       and oe.estado_nuevo = 'vigente'
       and oe.nota = 'Oficio ratificado por el juzgado'
@@ -116,7 +145,7 @@ select is(
   (
     select count(*)::int
     from public.orden_proteccion_evento oe
-    where oe.orden_proteccion_id = '66000000-0000-4000-a000-000000000301'
+    where oe.orden_id = '66000000-0000-4000-a000-000000000301'
   ),
   2,
   'sin cambio de estado no se agregan eventos (solo alta + un cambio)'
@@ -134,7 +163,7 @@ select is(
   (
     select count(*)::int
     from public.orden_proteccion_evento oe
-    where oe.orden_proteccion_id = '66000000-0000-4000-a000-000000000301'
+    where oe.orden_id = '66000000-0000-4000-a000-000000000301'
       and oe.estado_anterior = 'vigente'
       and oe.estado_nuevo = 'vencida'
       and oe.nota is null
@@ -181,11 +210,57 @@ select is(
     select lt.titulo
     from public.get_linea_tiempo('66000000-0000-4000-a000-000000000201') lt
     where lt.tipo = 'orden_proteccion'
-      and lt.titulo like 'Orden de protección · %'
+      and lt.titulo like 'Orden de protección registrada · %'
   ),
-  'Orden de protección · en_tramite',
+  'Orden de protección registrada · en_tramite',
   'el título del alta conserva el estado inicial aunque la orden ya cambió'
 );
+
+-- 6b) Sin duplicados: un evento por transición (alta + 2 cambios = 3)
+select is(
+  (
+    select count(*)::int
+    from public.orden_proteccion_evento oe
+    where oe.orden_id = '66000000-0000-4000-a000-000000000301'
+  ),
+  3,
+  'cada alta/cambio de estado genera un solo evento (sin duplicados)'
+);
+
+select ok(
+  exists (
+    select 1
+    from public.get_linea_tiempo('66000000-0000-4000-a000-000000000201') lt
+    where lt.titulo = 'Orden de protección registrada · en_tramite'
+      and lt.detalle like 'OF-66-01%'
+  ),
+  'trabajo_social ve oficio y autoridad en el detalle del alta'
+);
+
+select ok(
+  exists (
+    select 1
+    from public.get_linea_tiempo('66000000-0000-4000-a000-000000000201') lt
+    where lt.titulo = 'Orden de protección: vigente → vencida'
+      and lt.detalle like 'Por %'
+      and lt.detalle not like '%—%'
+  ),
+  'un cambio sin nota muestra solo «Por <empleado>» en el detalle'
+);
+
+-- 6c) Dirección también ve el detalle
+select pg_temp.set_actor('11111111-1111-4111-8111-111111111101'::uuid); -- direccion
+select ok(
+  exists (
+    select 1
+    from public.get_linea_tiempo('66000000-0000-4000-a000-000000000201') lt
+    where lt.titulo = 'Orden de protección: en_tramite → vigente'
+      and lt.detalle like 'Por %'
+      and lt.detalle like '%Oficio ratificado por el juzgado'
+  ),
+  'direccion ve usuario y nota del cambio en el detalle'
+);
+select pg_temp.set_actor('11111111-1111-4111-8111-111111111103'::uuid); -- trabajo_social
 
 -- 7) Psicología ve el evento pero no el detalle
 select pg_temp.set_actor('11111111-1111-4111-8111-111111111104'::uuid); -- psicologia
@@ -206,7 +281,7 @@ select ok(
 );
 
 select throws_ok(
-  $$insert into public.orden_proteccion_evento (orden_proteccion_id, estado_anterior, estado_nuevo)
+  $$insert into public.orden_proteccion_evento (orden_id, estado_anterior, estado_nuevo)
     values ('66000000-0000-4000-a000-000000000301', 'vigente', 'cancelada')$$,
   '42501', null,
   'orden_proteccion_evento no admite INSERT directo'

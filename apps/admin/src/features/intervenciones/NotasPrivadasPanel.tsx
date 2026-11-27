@@ -26,7 +26,9 @@ const RETRY_ACTION = [{ id: 'retry', label: 'Reintentar' }];
 
 /**
  * Notas privadas del área sobre el expediente (`RF-10`, `RN-09`, `RN-18.1`).
- * Cada área de atención lee y edita solo las suyas; Titular y Subdirección ven las de todas las áreas en solo lectura; Recepción y UMECA no tienen acceso.
+ * Trabajo Social y Jurídico leen y editan solo las suyas; Titular y Subdirección ven las de TS y Jurídico en solo lectura.
+ * Las notas de Psicología no pasan por aquí: son exclusivas de ese rol y viven en el Historial clínico (migración 71).
+ * Recepción y UMECA no tienen acceso.
  */
 export const NotasPrivadasPanel = memo(function NotasPrivadasPanel({ fichaId }: NotasPrivadasPanelProps) {
   const { user } = useAuth();
@@ -46,7 +48,7 @@ export const NotasPrivadasPanel = memo(function NotasPrivadasPanel({ fichaId }: 
       <EmptyState
         illustration="error"
         title="Sin acceso a notas privadas"
-        description="Las notas de cada área solo están disponibles para Trabajo Social, Psicología, Jurídico y Dirección."
+        description="Esta sección está disponible para Trabajo Social, Jurídico y Dirección. Las notas de Psicología se consultan en el Historial clínico."
       />
     );
   }
@@ -79,7 +81,7 @@ export const NotasPrivadasPanel = memo(function NotasPrivadasPanel({ fichaId }: 
           <>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-tertiary-container px-3 py-1 text-xs font-medium text-on-tertiary-container">
               <Icon name="visibility" className="text-sm" />
-              Todas las áreas · solo lectura
+              Trabajo Social y Jurídico · solo lectura
             </span>
             <span className="text-xs text-on-surface-variant">Dirección</span>
           </>

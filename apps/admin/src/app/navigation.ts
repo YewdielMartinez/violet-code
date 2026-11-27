@@ -87,8 +87,8 @@ export const NAVIGATION: NavPage[] = [
     path: '/estadisticas',
     label: 'Estadísticas',
     icon: 'monitoring',
-    ready: false,
-    allowedRoles: DIRECTION_ONLY,
+    ready: true,
+    allowedRoles: ALL_EMPLOYEES,
   },
   {
     path: '/usuarios',
