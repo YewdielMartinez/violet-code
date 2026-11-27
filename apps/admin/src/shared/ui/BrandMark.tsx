@@ -1,21 +1,41 @@
+/** Proporción del recorte del logotipo (`public/logo-ahome.png`: 1260 × 408 px, fondo transparente). */
+const LOGO_ASPECT = 1260 / 408;
+
 /**
- * Marca de Violet Code: una "V" abierta con un punto encima.
- * Se lee como una persona con los brazos en alto (pedir ayuda) y como un punto en el mapa (Punto Violeta).
- * Mismo dibujo que public/favicon.svg. Los colores van en `style` (los atributos SVG no aceptan var()).
+ * Logotipo institucional «Ahome» (sin lema).
+ * `size` es el alto en px; el ancho se deriva de la proporción para no deformarlo.
  */
 export function BrandMark({ size = 36, className = '' }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" role="img" aria-label="Violet Code" className={className}>
-      <rect width="40" height="40" rx="11" style={{ fill: 'var(--md-sys-color-primary)' }} />
-      <path
-        d="M12 16.5 L20 29.5 L28 16.5"
-        fill="none"
-        strokeWidth="4.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ stroke: 'var(--md-sys-color-on-primary)' }}
-      />
-      <circle cx="20" cy="10.5" r="3.1" style={{ fill: 'var(--md-sys-color-on-primary)' }} />
-    </svg>
+    <img
+      src="/logo-ahome.png"
+      alt="Ahome"
+      width={Math.round(size * LOGO_ASPECT)}
+      height={size}
+      decoding="async"
+      draggable={false}
+      className={`block h-auto max-w-full object-contain ${className}`.trim()}
+      style={{ height: size, width: 'auto' }}
+    />
+  );
+}
+
+/** Nombre del sistema con tipografía institucional (Montserrat: geométrica, afín al logotipo). */
+export function BrandName({ size = 13, className = '' }: { size?: number; className?: string }) {
+  return (
+    <span
+      className={className}
+      style={{
+        fontFamily: "'Montserrat', 'DM Sans', system-ui, sans-serif",
+        fontSize: size,
+        fontWeight: 600,
+        letterSpacing: '0.16em',
+        lineHeight: 1.2,
+        textTransform: 'uppercase',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      SIA-SEMUJERES
+    </span>
   );
 }

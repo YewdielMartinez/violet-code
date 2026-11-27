@@ -15,7 +15,7 @@ import { useLocation, useNavigate, useOutlet } from 'react-router-dom';
 import { Nav } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/nav';
 import { useAuth } from '@/shared/auth/useAuth';
-import { BrandMark } from '@/shared/ui/BrandMark';
+import { BrandMark, BrandName } from '@/shared/ui/BrandMark';
 import { Icon } from '@/shared/ui/Icon';
 import { getMobilePaths, getNavigationForRole } from './navigation';
 import { useNavStyle } from './preferences';
@@ -143,11 +143,15 @@ export function AppLayout() {
             onPointerEnter={() => preloadPage('/')}
             onFocus={() => preloadPage('/')}
             onClick={() => navigate('/')}
-            aria-label="Violet Code, ir al inicio"
+            aria-label="SIA-SEMUJERES, ir al inicio"
+            // Logotipo apaisado: se apila sobre el nombre para que quepa sin deformarse en la barra lateral.
+            style={{ height: 'auto', flexDirection: 'column', alignItems: 'flex-start', gap: 6, paddingBlock: 10 }}
           >
-            {/* Marca propia en lugar de .mk-nav__icon: el logo SVG no es un glifo de Material Symbols. */}
-            <BrandMark size={36} className="shrink-0" />
-            <span className="mk-nav__name">Violet Code</span>
+            {/* Logotipo institucional en lugar de .mk-nav__icon (no es un glifo de Material Symbols). */}
+            <BrandMark size={34} className="shrink-0" />
+            <span className="mk-nav__name">
+              <BrandName size={12} />
+            </span>
           </button>
         }
         actions={<DeferredOptionsMenu />}

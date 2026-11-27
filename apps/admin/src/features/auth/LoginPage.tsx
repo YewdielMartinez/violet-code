@@ -7,7 +7,7 @@ import '@yewdiel21/motion-kit/css/components/pill-button';
 import { AuthError, login, refreshSession } from '@/shared/auth/session';
 import { useAuth } from '@/shared/auth/useAuth';
 import { PasswordField } from './PasswordField';
-import { BrandMark } from '@/shared/ui/BrandMark';
+import { BrandMark, BrandName } from '@/shared/ui/BrandMark';
 import { useDocumentTitle } from '@/shared/ui/PageHeader';
 import { ThemeToggleButton } from '@/shared/ui/ThemeToggleButton';
 import { LoginHero } from './LoginHero';
@@ -164,8 +164,9 @@ export default function LoginPage() {
 
       <header className="relative flex items-center justify-between gap-4 px-6 py-6 sm:px-10">
         <div className="flex items-center gap-3">
-          <BrandMark size={36} />
-          <span className="font-semibold text-on-surface">Violet Code</span>
+          <BrandMark size={44} />
+          <span className="hidden h-8 w-px bg-outline-variant sm:block" aria-hidden />
+          <BrandName size={15} className="text-on-surface" />
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggleButton variant="header" />

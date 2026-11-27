@@ -14,9 +14,9 @@ interface PageHeaderProps {
   documentTitle?: string;
 }
 
-const APP_NAME = 'Violet Code';
+const APP_NAME = 'SIA-SEMUJERES';
 
-/** Fija `document.title` como «<pantalla> · Violet Code». */
+/** Fija `document.title` como «<pantalla> · SIA-SEMUJERES». */
 export function useDocumentTitle(title: string) {
   useEffect(() => {
     document.title = `${title} · ${APP_NAME}`;
