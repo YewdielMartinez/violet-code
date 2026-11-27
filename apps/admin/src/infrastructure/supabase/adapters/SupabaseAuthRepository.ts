@@ -157,6 +157,17 @@ export const supabaseAuthRepository: AuthRepository = {
     return () => data.subscription.unsubscribe();
   },
 
+  async miPerfil() {
+    const { data, error } = await supabase.rpc('get_mi_perfil').maybeSingle();
+    if (error) {
+      throw new AuthError(500, 'No se pudo consultar el perfil del usuario.');
+    }
+    if (!data) {
+      throw new AuthError(403, 'Esta cuenta no tiene acceso al panel administrativo.');
+    }
+    return mapMiPerfilToStaffUser(data, '');
+  },
+
   async getUmecaCitas(): Promise<UmecaCita[]> {
     const { data, error } = await supabase.rpc('get_umeca_citas');
     if (error) throw error;

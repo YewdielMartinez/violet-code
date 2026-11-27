@@ -1,4 +1,4 @@
-import type { AuthSession, UmecaCita } from '../models/Auth';
+import type { AuthSession, StaffUser, UmecaCita } from '../models/Auth';
 
 export class AuthError extends Error {
   readonly status: number;
@@ -14,5 +14,6 @@ export interface AuthRepository {
   logout(): Promise<void>;
   getSession(): Promise<AuthSession | null>;
   onAuthStateChange(listener: (session: AuthSession | null) => void): () => void;
+  miPerfil(): Promise<StaffUser>;
   getUmecaCitas(): Promise<UmecaCita[]>;
 }

@@ -15,6 +15,7 @@ const loadIntervenciones = () => import('@/features/intervenciones/Intervencione
 const loadAlertas = () => import('@/features/solicitudes/AlertasPage');
 const loadUsuarios = () => import('@/features/usuarios/UsuariosPage');
 const loadUsuarioForm = () => import('@/features/usuarios/UsuarioFormPage');
+const loadPerfil = () => import('@/features/perfil/PerfilPage');
 const loadPending = () => import('@/shared/ui/PendingModulePage');
 
 export const LoginPage = lazy(loadLogin);
@@ -31,6 +32,7 @@ export const IntervencionesPage = lazy(loadIntervenciones);
 export const AlertasPage = lazy(loadAlertas);
 export const UsuariosPage = lazy(loadUsuarios);
 export const UsuarioFormPage = lazy(loadUsuarioForm);
+export const PerfilPage = lazy(loadPerfil);
 export const PendingModulePage = lazy(loadPending);
 
 const started = new WeakSet<() => Promise<unknown>>();
@@ -53,6 +55,7 @@ const ROUTE_LOADERS: Record<string, () => Promise<unknown>> = {
   '/intervenciones': loadIntervenciones,
   '/usuarios': loadUsuarios,
   '/usuarios/nuevo': loadUsuarioForm,
+  '/perfil': loadPerfil,
 };
 
 /** Precarga el chunk de una ruta al pasar el cursor o enfocar un enlace de navegación. */

@@ -8,6 +8,7 @@ import { AppearanceMenu } from './AppearanceMenu';
 import { SettingsDialog } from './SettingsDialog';
 
 const OPTIONS = [
+  { value: 'profile', label: 'Mi perfil', icon: 'person' },
   { value: 'settings', label: 'Configuración', icon: 'settings' },
   { value: 'appearance', label: 'Apariencia', icon: 'palette' },
   { value: 'reload', label: 'Recargar', icon: 'refresh' },
@@ -29,6 +30,9 @@ export function OptionsMenu() {
 
   async function onSelect(value: string) {
     switch (value) {
+      case 'profile':
+        navigate('/perfil');
+        break;
       case 'settings':
         setTimeout(() => setSettingsOpen(true), AFTER_CLOSE_MS);
         break;
