@@ -3,14 +3,16 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import type { StaffRole } from '@/domain/models/Auth';
 import { ROWS } from './fixtures';
 
-const { useInformeMock, useAuthMock, downloadMock, toastMock } = vi.hoisted(() => ({
+const { useInformeMock, useDerivacionesMock, useAuthMock, downloadMock, toastMock } = vi.hoisted(() => ({
   useInformeMock: vi.fn(),
+  useDerivacionesMock: vi.fn(),
   useAuthMock: vi.fn(),
   downloadMock: vi.fn(),
   toastMock: vi.fn(),
 }));
 
 vi.mock('@/features/informes/api', () => ({ useInforme: useInformeMock }));
+vi.mock('@/features/canalizaciones/api', () => ({ useDerivaciones: useDerivacionesMock }));
 vi.mock('@/shared/auth/useAuth', () => ({ useAuth: useAuthMock }));
 vi.mock('@/shared/export/download', () => ({ downloadBlob: downloadMock }));
 
@@ -82,6 +84,7 @@ function result(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   useInformeMock.mockReturnValue(result());
+  useDerivacionesMock.mockReturnValue({ data: [], isLoading: false, isError: false, refetch: vi.fn() });
   asRole('titular');
 });
 
@@ -114,13 +117,15 @@ describe('InformesPanel por rol', () => {
     expect(container.textContent).toBe('');
   });
 
-  it('la página muestra el panel a Dirección y un aviso a Recepción', () => {
+  it('la página muestra el panel y canalizaciones a Dirección y un aviso a Recepción', () => {
     render(<EstadisticasPage />);
     expect(screen.getByRole('region', { name: 'Informes' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Canalizaciones' })).toBeTruthy();
     cleanup();
     asRole('recepcion');
     render(<EstadisticasPage />);
     expect(screen.queryByRole('region', { name: 'Informes' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Canalizaciones' })).toBeNull();
     expect(screen.getByText('Sin acceso a los informes')).toBeTruthy();
   });
 });
@@ -165,7 +170,6 @@ describe('InformesPanel contenido', () => {
     useInformeMock.mockReturnValue(result({ data: [] }));
     render(<InformesPanel now={NOW} />);
     expect(screen.getByText('Sin atenciones en este periodo')).toBeTruthy();
-    expect((screen.getByRole('button', { name: 'Descargar CSV' }) as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getByRole('button', { name: 'Descargar Excel' }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
@@ -194,16 +198,15 @@ describe('InformesPanel periodo', () => {
 });
 
 describe('InformesPanel descargas', () => {
-  it('CSV: nombre mensual, Blob text/csv y toast de éxito', async () => {
+  it('Excel mensual: no muestra CSV, genera nombre mensual, tipo xlsx y toast de éxito', () => {
     render(<InformesPanel now={NOW} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Descargar CSV' }));
+    expect(screen.queryByRole('button', { name: 'Descargar CSV' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Descargar Excel' }));
     expect(downloadMock).toHaveBeenCalledOnce();
     const [blob, name] = downloadMock.mock.calls[0] as [Blob, string];
-    expect(name).toBe('informe-2026-03.csv');
-    expect(blob.type).toBe('text/csv;charset=utf-8');
-    const text = await blob.text();
-    expect(text).toContain('Área,Tipo de atención');
-    expect(toastMock).toHaveBeenCalledWith('Se descargó informe-2026-03.csv.', { tone: 'success' });
+    expect(name).toBe('informe-2026-03.xlsx');
+    expect(blob.type).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    expect(toastMock).toHaveBeenCalledWith('Se descargó informe-2026-03.xlsx.', { tone: 'success' });
   });
 
   it('Excel anual: nombre sin mes y tipo xlsx', () => {

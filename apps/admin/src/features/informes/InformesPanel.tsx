@@ -9,7 +9,7 @@ import '@yewdiel21/motion-kit/css/components/pagination';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import type { InformeRow } from '@/domain/models/Informe';
 import { useAuth } from '@/shared/auth/useAuth';
-import { downloadBlob, toCsvBlob, toXlsx } from '@/shared/export';
+import { downloadBlob, toXlsx } from '@/shared/export';
 import { Icon } from '@/shared/ui/Icon';
 import { SegmentedTabs, type SegmentedOption } from '@/shared/ui/SegmentedTabs';
 import { SkeletonRows } from '@/shared/ui/SkeletonRows';
@@ -134,23 +134,17 @@ export function InformesPanel({ now }: InformesPanelProps) {
 
   const subtitle = mesFiltro === null ? `Año ${anio}` : `${MESES[mesFiltro - 1]} ${anio}`;
 
-  const exportar = useCallback(
-    (formato: 'csv' | 'xlsx') => {
-      const fileName = informeFileName(anio, mesFiltro, formato);
-      try {
-        assertNoPiiColumns(INFORME_EXPORT_COLUMNS);
-        const blob =
-          formato === 'csv'
-            ? toCsvBlob(rows, INFORME_EXPORT_COLUMNS)
-            : toXlsx(rows, INFORME_EXPORT_COLUMNS, `Informe ${subtitle}`);
-        downloadBlob(blob, fileName);
-        toast(`Se descargó ${fileName}.`, { tone: 'success' });
-      } catch {
-        toast('No se pudo generar el archivo del informe.', { tone: 'error' });
-      }
-    },
-    [anio, mesFiltro, rows, subtitle],
-  );
+  const exportar = useCallback(() => {
+    const fileName = informeFileName(anio, mesFiltro, 'xlsx');
+    try {
+      assertNoPiiColumns(INFORME_EXPORT_COLUMNS);
+      const blob = toXlsx(rows, INFORME_EXPORT_COLUMNS, `Informe ${subtitle}`);
+      downloadBlob(blob, fileName);
+      toast(`Se descargó ${fileName}.`, { tone: 'success' });
+    } catch {
+      toast('No se pudo generar el archivo del informe.', { tone: 'error' });
+    }
+  }, [anio, mesFiltro, rows, subtitle]);
 
   if (!permitido) return null;
 
@@ -172,24 +166,14 @@ export function InformesPanel({ now }: InformesPanelProps) {
             <p className="truncate text-xs text-on-surface-variant">{subtitle}</p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            className="mk-button mk-button--tonal vc-press"
-            disabled={sinDatos}
-            onClick={() => exportar('csv')}
-          >
-            Descargar CSV
-          </button>
-          <button
-            type="button"
-            className="mk-button mk-button--tonal vc-press"
-            disabled={sinDatos}
-            onClick={() => exportar('xlsx')}
-          >
-            Descargar Excel
-          </button>
-        </div>
+        <button
+          type="button"
+          className="mk-button mk-button--tonal vc-press"
+          disabled={sinDatos}
+          onClick={exportar}
+        >
+          Descargar Excel
+        </button>
       </header>
 
       <div className="flex flex-wrap items-center gap-3">

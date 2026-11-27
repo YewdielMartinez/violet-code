@@ -2,6 +2,7 @@ import { EmptyState } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import { useAuth } from '@/shared/auth/useAuth';
 import { PageHeader } from '@/shared/ui/PageHeader';
+import { CanalizacionesStats } from './CanalizacionesStats';
 import { InformesPanel } from './InformesPanel';
 import { puedeVerInformes } from './informesPermisos';
 
@@ -19,6 +20,7 @@ export default function EstadisticasPage() {
       {permitido ? (
         <div className="grid gap-4">
           <InformesPanel />
+          <CanalizacionesStats />
         </div>
       ) : (
         <div className="rounded-3xl bg-surface-container-low p-10">
