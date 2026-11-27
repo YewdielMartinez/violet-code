@@ -27,7 +27,6 @@ import { ExpedienteTopBar } from './drawer/ExpedienteTopBar';
 import { prefersReducedMotion } from './drawer/formatters';
 import './drawer/expediente-drawer.css';
 import { FichaDetalleResumen } from './ficha/FichaDetalleResumen';
-import { FichaGestionAcciones } from './ficha/FichaGestionAcciones';
 
 // Pestañas sensibles en chunks propios: solo las descarga quien tiene acceso y las abre.
 const loadAgresorFormSection = () => import('./AgresorFormSection');
@@ -162,7 +161,6 @@ const ResumenTabPanel = memo(function ResumenTabPanel({
       {contentReady ? (
         <>
           <FichaDetalleResumen expediente={expediente} />
-          {canManage ? <FichaGestionAcciones expediente={expediente} onDone={onDone} /> : null}
         </>
       ) : (
         <DrawerSectionPlaceholder label="Cargando detalle del expediente" />
