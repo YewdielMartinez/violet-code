@@ -126,7 +126,7 @@ values (
 );
 
 select throws_ok(
-  $$select * from public.archivar_ficha('55555555-5555-4555-8555-555555555511'::uuid)$$,
+  $$select * from public.archivar_ficha('55555555-5555-4555-8555-555555555511'::uuid, 'cierre')$$,
   '23514',
   'No se puede archivar un expediente con alertas abiertas',
   'archivar_ficha con alerta abierta lanza 23514'

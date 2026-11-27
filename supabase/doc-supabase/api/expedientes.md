@@ -315,11 +315,11 @@ interface ExpedienteDetalle {
 
 ## `archivar_ficha`
 
-> Pasa un expediente a `archivado` cuando ya no tiene nada pendiente.
+> Pasa un expediente a `archivado` cuando ya no tiene nada pendiente, guardando motivo, fecha y responsable.
 
 | Permiso | Roles | Tipo | Bitácora | Migración |
 |---|---|---|---|---|
-| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por trigger (`'actualizar'`) | `_18_rpc_detalle_y_archivo` |
+| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por trigger (`'actualizar'`) | `_38_archivar_y_reabrir` (`_18_`) |
 
 **Llamada**
 
@@ -333,6 +333,7 @@ const { data, error } = await supabase
 **Comportamiento**
 
 - Solo desde `abierto`, `en_seguimiento` o `cerrado`.
+- `p_motivo` es obligatorio (1..1000 caracteres); guarda `motivo_archivo`, `archivada_en` y `archivada_por`.
 - Rechaza si hay citas futuras `agendada`/`confirmada` o alertas `nueva`/`tomada`.
 
 **Errores**
@@ -340,10 +341,40 @@ const { data, error } = await supabase
 | Código | Cuándo | Mensaje UI |
 |---|---|---|
 | `42501` | Psi, Jur, Rec, UMECA | Fijo de permiso |
-| `23514` | Inexistente, ya archivado, citas futuras o alertas abiertas | `error.message` (dice cuál es la causa) |
+| `23514` | `p_motivo` vacío/largo, inexistente, ya archivado, citas futuras o alertas abiertas | `error.message` (dice cuál es la causa) |
 
-**En el front:** pendiente. Sugerido: `FichaRepository.archivar` · `useArchivarFicha` (invalida `['expedientes','detail',id]` y `['expedientes','list']`).
+**En el front:** `SupabaseFichaRepository.archive` (`features/expedientes/api.ts`) actualmente llama sin `p_motivo` y la pantalla debe solicitar motivo obligatorio (invalida `['expedientes','detail',id]` y `['expedientes','list']`).
 
+---
+
+## `reabrir_ficha`
+
+> Reabre un expediente `archivado` guardando motivo, fecha y quién lo autoriza.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+|---|---|---|---|---|
+| `expediente.reabrir` | Tit, Sub | Escritura | Sí, por trigger (`'actualizar'`) | `_38_archivar_y_reabrir` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('reabrir_ficha', { p_ficha_id: fichaId, p_motivo: 'Usuaria solicita reingreso' })
+  .single();
+// data: { ficha_id, estado: 'abierto' | 'en_seguimiento', actualizado_en }
+```
+
+**Comportamiento**
+
+- Solo funciona desde `archivado`; si el expediente tiene atenciones activas pasa a `en_seguimiento`, si no pasa a `abierto`.
+- `p_motivo` es obligatorio (1..1000 caracteres); guarda `motivo_reapertura`, `reabierta_en` y `reabierta_por` conservando `motivo_archivo`.
+
+**Errores**
+
+| Código | Cuándo | Mensaje UI |
+|---|---|---|
+| `42501` | TS, Psi, Jur, Rec, UMECA | Fijo de permiso |
+| `23514` | `p_motivo` vacío/largo, inexistente o no está archivado | `error.message` |
 ---
 
 ## `get_linea_tiempo`
