@@ -43,6 +43,33 @@ function capitalize(word: string): string {
 const today = () =>
   new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
+/** Renderiza un widget del tablero según el usuario autenticado. */
+export function renderWidget(id: WidgetId, user: StaffUser): ReactNode {
+  const mine = isAttentionRole(user.role);
+  switch (id) {
+    case 'kpi_alerts':
+      return <KpiAlertsWidget />;
+    case 'kpi_citas':
+      return <KpiCitasWidget />;
+    case 'kpi_expedientes':
+      return <KpiExpedientesWidget userId={user.id} mine={mine} />;
+    case 'kpi_prioritarios':
+      return <KpiUrgentesWidget userId={user.id} />;
+    case 'alerts':
+      return <AlertsWidget />;
+    case 'cases':
+      return <CasesWidget userId={user.id} defaultMine={mine} />;
+    case 'agenda':
+      return <AgendaWidget />;
+    case 'trend':
+      return <TrendWidget />;
+    case 'security':
+      return <SecurityWidget />;
+    case 'directory':
+      return <DirectoryWidget />;
+  }
+}
+
 function StaffDashboard({ user }: { user: StaffUser }) {
   const items = useDashboardLayout(user.id, user.role);
   const [editing, setEditing] = useState(false);
@@ -52,35 +79,9 @@ function StaffDashboard({ user }: { user: StaffUser }) {
 
   const visible = visibleItems(items);
   const hidden = items.filter((i) => !i.visible);
-  const mine = isAttentionRole(user.role);
   const firstName = capitalize(user.displayName.split(/\s+/)[0] ?? '');
 
   const change = (fn: (current: LayoutItem[]) => LayoutItem[]) => updateLayout(user.id, user.role, fn);
-
-  const render = (id: WidgetId): ReactNode => {
-    switch (id) {
-      case 'kpi_alerts':
-        return <KpiAlertsWidget />;
-      case 'kpi_citas':
-        return <KpiCitasWidget />;
-      case 'kpi_expedientes':
-        return <KpiExpedientesWidget userId={user.id} mine={mine} />;
-      case 'kpi_prioritarios':
-        return <KpiUrgentesWidget userId={user.id} />;
-      case 'alerts':
-        return <AlertsWidget />;
-      case 'cases':
-        return <CasesWidget userId={user.id} defaultMine={mine} />;
-      case 'agenda':
-        return <AgendaWidget />;
-      case 'trend':
-        return <TrendWidget />;
-      case 'security':
-        return <SecurityWidget />;
-      case 'directory':
-        return <DirectoryWidget />;
-    }
-  };
 
   const announcePosition = (id: WidgetId, next: LayoutItem[]) => {
     const list = visibleItems(next);
@@ -206,7 +207,7 @@ function StaffDashboard({ user }: { user: StaffUser }) {
         <WidgetGrid
           items={visible}
           editing={editing}
-          render={render}
+          render={(id) => renderWidget(id, user)}
           onMove={onMove}
           onResize={onResize}
           onHide={onHide}
