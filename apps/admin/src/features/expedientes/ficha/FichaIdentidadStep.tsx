@@ -10,6 +10,8 @@ import {
   ESCOLARIDAD_LABELS,
   ESTADO_CIVIL_LABELS,
   SERVICIO_MEDICO_LABELS,
+  SERVICIO_SOLICITADO_OTRO,
+  SERVICIO_SOLICITADO_OTRO_LABEL,
   type CatalogosFicha,
   type EscolaridadNivel,
   type EstadoCivil,
@@ -151,8 +153,14 @@ export function FichaIdentidadStep({
   });
 
   const areaOptions = useMemo(
-    () => (catalogos?.areas ?? []).map((a) => ({ value: String(a.id), label: a.nombre })),
+    () => [
+      ...(catalogos?.areas ?? []).map((a) => ({ value: String(a.id), label: a.nombre })),
+      { value: SERVICIO_SOLICITADO_OTRO, label: SERVICIO_SOLICITADO_OTRO_LABEL },
+    ],
     [catalogos?.areas],
+  );
+  const [otroServicioActivo, setOtroServicioActivo] = useState(
+    () => value.serviciosSolicitadosOtro.trim() !== '',
   );
   const ocupacionOptions = useMemo(
     () => (catalogos?.ocupaciones ?? []).map((o) => ({ value: String(o.id), label: o.nombre })),
@@ -664,10 +672,40 @@ export function FichaIdentidadStep({
             label="Servicios solicitados *"
             placeholder="Selecciona una o más áreas…"
             options={areaOptions}
-            value={value.serviciosSolicitadosAreaIds.map(String)}
-            onChange={(vals) => update('serviciosSolicitadosAreaIds', vals.map(Number))}
+            value={[
+              ...value.serviciosSolicitadosAreaIds.map(String),
+              ...(otroServicioActivo ? [SERVICIO_SOLICITADO_OTRO] : []),
+            ]}
+            onChange={(vals) => {
+              const otro = vals.includes(SERVICIO_SOLICITADO_OTRO);
+              setOtroServicioActivo(otro);
+              onChange({
+                ...value,
+                serviciosSolicitadosAreaIds: vals
+                  .filter((v) => v !== SERVICIO_SOLICITADO_OTRO)
+                  .map(Number),
+                serviciosSolicitadosOtro: otro ? value.serviciosSolicitadosOtro : '',
+              });
+            }}
           />
         </div>
+
+        {otroServicioActivo ? (
+          <label className="mk-field">
+            <span className="mk-field__label">Especificar otro servicio solicitado *</span>
+            <input
+              type="text"
+              maxLength={250}
+              placeholder="Ej. Apoyo médico, albergue, bolsa de trabajo…"
+              data-ficha-field="serviciosSolicitadosOtro"
+              value={value.serviciosSolicitadosOtro}
+              onChange={(e) => update('serviciosSolicitadosOtro', e.target.value)}
+            />
+            <span className="text-xs text-on-surface-variant">
+              Se guarda en el expediente; no genera canalización a un área.
+            </span>
+          </label>
+        ) : null}
 
         <div className="grid gap-3 rounded-2xl bg-surface-container-low p-4 sm:grid-cols-2 sm:gap-x-6">
           {IDENTITY_FLAGS.map((flag) => (

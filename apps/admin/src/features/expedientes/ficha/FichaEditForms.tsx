@@ -18,6 +18,8 @@ import {
   CONSUMO_ALCOHOL_LABELS,
   ESTADO_CIVIL_LABELS,
   SERVICIO_MEDICO_LABELS,
+  SERVICIO_SOLICITADO_OTRO,
+  SERVICIO_SOLICITADO_OTRO_LABEL,
   type ConsumoAlcohol,
   type EstadoCivil,
   type FichaCompletaDetalle,
@@ -71,6 +73,8 @@ interface FichaDatosDraft {
   especificacionDroga: string;
   consumoAlcohol: ConsumoAlcohol | '';
   serviciosSolicitadosAreaIds: number[];
+  otroServicioActivo: boolean;
+  serviciosSolicitadosOtro: string;
 }
 
 function buildFichaDraft(detail: FichaCompletaDetalle): FichaDatosDraft {
@@ -90,6 +94,8 @@ function buildFichaDraft(detail: FichaCompletaDetalle): FichaDatosDraft {
     especificacionDroga: detail.especificacionDroga ?? '',
     consumoAlcohol: detail.consumoAlcohol ?? '',
     serviciosSolicitadosAreaIds: detail.serviciosSolicitadosAreaIds,
+    otroServicioActivo: Boolean(detail.serviciosSolicitadosOtro?.trim()),
+    serviciosSolicitadosOtro: detail.serviciosSolicitadosOtro ?? '',
   };
 }
 
@@ -103,7 +109,10 @@ export function FichaDatosEditForm({ detail, onCancel, onSaved }: FormProps) {
   const [formError, setFormError] = useState<string | null>(null);
 
   const areaOptions = useMemo(
-    () => (catalogos?.areas ?? []).map((a) => ({ value: String(a.id), label: a.nombre })),
+    () => [
+      ...(catalogos?.areas ?? []).map((a) => ({ value: String(a.id), label: a.nombre })),
+      { value: SERVICIO_SOLICITADO_OTRO, label: SERVICIO_SOLICITADO_OTRO_LABEL },
+    ],
     [catalogos?.areas],
   );
   const ocupacionOptions = useMemo(
@@ -137,7 +146,11 @@ export function FichaDatosEditForm({ detail, onCancel, onSaved }: FormProps) {
       });
       return;
     }
-    if (draft.serviciosSolicitadosAreaIds.length === 0) {
+    const otroServicio = draft.otroServicioActivo ? draft.serviciosSolicitadosOtro.trim() : '';
+    if (draft.otroServicioActivo && !otroServicio) {
+      return failValidation('Especifica el otro servicio solicitado.');
+    }
+    if (draft.serviciosSolicitadosAreaIds.length === 0 && !otroServicio) {
       return failValidation('Selecciona al menos un servicio solicitado.');
     }
 
@@ -162,6 +175,8 @@ export function FichaDatosEditForm({ detail, onCancel, onSaved }: FormProps) {
         especificacionDroga: draft.drogas.includes('otra') ? draft.especificacionDroga.trim() : '',
         consumoAlcohol: draft.consumoAlcohol || null,
         serviciosSolicitadosAreaIds: draft.serviciosSolicitadosAreaIds,
+        // `''` borra el texto guardado.
+        serviciosSolicitadosOtro: otroServicio,
       });
       setSaved(true);
       toast('Ficha actualizada.', { tone: 'success' });
@@ -305,10 +320,32 @@ export function FichaDatosEditForm({ detail, onCancel, onSaved }: FormProps) {
           label="Servicios solicitados *"
           placeholder="Selecciona una o más áreas…"
           options={areaOptions}
-          value={draft.serviciosSolicitadosAreaIds.map(String)}
-          onChange={(vals) => setDraft({ ...draft, serviciosSolicitadosAreaIds: vals.map(Number) })}
+          value={[
+            ...draft.serviciosSolicitadosAreaIds.map(String),
+            ...(draft.otroServicioActivo ? [SERVICIO_SOLICITADO_OTRO] : []),
+          ]}
+          onChange={(vals) =>
+            setDraft({
+              ...draft,
+              serviciosSolicitadosAreaIds: vals
+                .filter((v) => v !== SERVICIO_SOLICITADO_OTRO)
+                .map(Number),
+              otroServicioActivo: vals.includes(SERVICIO_SOLICITADO_OTRO),
+            })
+          }
         />
       </div>
+      {draft.otroServicioActivo ? (
+        <label className="mk-field">
+          <span className="mk-field__label">Especificar otro servicio solicitado *</span>
+          <input
+            type="text"
+            maxLength={250}
+            value={draft.serviciosSolicitadosOtro}
+            onChange={(e) => setDraft({ ...draft, serviciosSolicitadosOtro: e.target.value })}
+          />
+        </label>
+      ) : null}
 
       <div className="grid gap-3 rounded-2xl bg-surface-container-low p-4 sm:grid-cols-2 sm:gap-x-6">
         <GlassSwitch
