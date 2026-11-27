@@ -56,9 +56,9 @@ export function useRegistrarActividadPreventiva() {
     mutationFn: (input: ActividadPreventivaCreateInput) =>
       supabaseActividadPreventivaRepository.registrar(input),
     retry: false,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: BASE_KEY });
-    },
+    // La lista puede no estar montada (el alta es una página aparte): se marca como vencida incluso si está
+    // inactiva y se espera a que termine, para que al volver ya aparezca la actividad nueva.
+    onSuccess: () => qc.invalidateQueries({ queryKey: BASE_KEY, refetchType: 'all' }),
   });
 }
 
