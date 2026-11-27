@@ -9,19 +9,20 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Sos
-import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Sos
-import androidx.compose.material.icons.outlined.TaskAlt
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -40,18 +41,28 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import mx.violetcode.mobile.core.designsystem.component.ThemeModeSwitch
 import mx.violetcode.mobile.core.designsystem.motion.VioletEasing
 import mx.violetcode.mobile.core.designsystem.motion.VioletMotion
 import mx.violetcode.mobile.core.designsystem.motion.pressScale
 import mx.violetcode.mobile.core.designsystem.motion.rememberReducedMotion
-import mx.violetcode.mobile.core.designsystem.theme.ThemeMode
-import mx.violetcode.mobile.core.designsystem.theme.isDark
 import mx.violetcode.mobile.feature.auxilio.AuxilioScreen
+import mx.violetcode.mobile.feature.cuenta.LoginScreen
+import mx.violetcode.mobile.feature.cuenta.RegistroScreen
 import mx.violetcode.mobile.feature.directorio.DirectorioScreen
 import mx.violetcode.mobile.feature.inicio.InicioScreen
 import mx.violetcode.mobile.feature.orientacion.OrientacionScreen
-import mx.violetcode.mobile.feature.seguimiento.SeguimientoScreen
+import mx.violetcode.mobile.feature.ajustes.AjustesScreen
+import mx.violetcode.mobile.feature.perfil.PerfilScreen
+
+/** Rutas de cuenta (no son pestañas de la barra inferior). */
+private const val ROUTE_LOGIN = "login"
+private const val ROUTE_REGISTRO = "registro"
+
+/** Ajustes de seguridad (modo discreto). Fuera de la barra inferior: se abre desde la barra superior. */
+private const val ROUTE_AJUSTES = "ajustes"
+
+/** «Mi perfil» (con sesión). Se abre desde la tarjeta de cuenta de Ajustes; no es pestaña. */
+private const val ROUTE_PERFIL = "perfil"
 
 private enum class Destination(
     val route: String,
@@ -63,19 +74,15 @@ private enum class Destination(
     Auxilio("auxilio", "Auxilio", Icons.Outlined.Sos, Icons.Filled.Sos),
     Orientacion("orientacion", "Orientación", Icons.AutoMirrored.Outlined.MenuBook, Icons.AutoMirrored.Filled.MenuBook),
     Directorio("directorio", "Directorio", Icons.Outlined.Place, Icons.Filled.Place),
-    Seguimiento("seguimiento", "Mi caso", Icons.Outlined.TaskAlt, Icons.Filled.TaskAlt),
+    // «Mi caso» (Seguimiento) queda fuera del MVP (RF-31): sin pestaña, sin ruta y sin acceso desde Inicio.
+    // SeguimientoScreen se conserva sin enlazar para habilitarla cuando exista el módulo de expedientes.
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VioletApp(
-    themeMode: ThemeMode,
-    onThemeModeChange: (ThemeMode) -> Unit,
-    onQuickExit: () -> Unit,
-) {
+fun VioletApp(onQuickExit: () -> Unit) {
     val nav = rememberNavController()
     val current by nav.currentBackStackEntryAsState()
-    val darkTheme = themeMode.isDark()
 
     fun navigateTab(route: String) {
         nav.navigate(route) {
@@ -83,6 +90,14 @@ fun VioletApp(
             launchSingleTop = true
             restoreState = true
         }
+    }
+
+    // Fuera de las pestañas hay que poder volver: flecha de la barra superior (el botón/gesto «atrás» del sistema
+    // ya lo hace el NavHost). Si por alguna razón no hay a dónde regresar, se va a Inicio.
+    val currentRoute = current?.destination?.route
+    val showBack = currentRoute != null && Destination.entries.none { it.route == currentRoute }
+    fun goBack() {
+        if (!nav.popBackStack()) navigateTab(Destination.Inicio.route)
     }
 
     // Cambio de pestaña = navegación lateral: solo desvanecer, corto (sin deslizar).
@@ -95,12 +110,19 @@ fun VioletApp(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Violet Code", fontWeight = FontWeight.SemiBold) },
+                title = { Text("SIA-SEMUJERES", fontWeight = FontWeight.SemiBold) },
+                // Rutas fuera de la barra inferior (Ajustes, Mi perfil, Login, Registro): flecha para volver.
+                navigationIcon = {
+                    if (showBack) {
+                        IconButton(onClick = ::goBack) {
+                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Volver")
+                        }
+                    }
+                },
                 actions = {
-                    ThemeModeSwitch(
-                        darkTheme = darkTheme,
-                        onDarkThemeChange = { dark -> onThemeModeChange(if (dark) ThemeMode.Dark else ThemeMode.Light) },
-                    )
+                    IconButton(onClick = { nav.navigate(ROUTE_AJUSTES) { launchSingleTop = true } }) {
+                        Icon(Icons.Outlined.Settings, contentDescription = "Ajustes")
+                    }
                     // Salida rápida siempre visible (requisito de seguridad de la usuaria).
                     val exitSource = remember { MutableInteractionSource() }
                     TextButton(
@@ -140,13 +162,38 @@ fun VioletApp(
                     onEmergency = { navigateTab(Destination.Auxilio.route) },
                     onOrientacion = { navigateTab(Destination.Orientacion.route) },
                     onDirectorio = { navigateTab(Destination.Directorio.route) },
-                    onSeguimiento = { navigateTab(Destination.Seguimiento.route) },
                 )
             }
-            composable(Destination.Auxilio.route) { AuxilioScreen() }
-            composable(Destination.Orientacion.route) { OrientacionScreen() }
+            composable(Destination.Auxilio.route) {
+                AuxilioScreen(
+                    onLogin = { nav.navigate(ROUTE_LOGIN) { launchSingleTop = true } },
+                    onRegister = { nav.navigate(ROUTE_REGISTRO) { launchSingleTop = true } },
+                )
+            }
+            composable(Destination.Orientacion.route) { OrientacionScreen(onHelp = { navigateTab(Destination.Auxilio.route) }) }
             composable(Destination.Directorio.route) { DirectorioScreen() }
-            composable(Destination.Seguimiento.route) { SeguimientoScreen() }
+            composable(ROUTE_AJUSTES) {
+                AjustesScreen(
+                    onOpenProfile = { nav.navigate(ROUTE_PERFIL) { launchSingleTop = true } },
+                    onLogin = { nav.navigate(ROUTE_LOGIN) { launchSingleTop = true } },
+                    onRegister = { nav.navigate(ROUTE_REGISTRO) { launchSingleTop = true } },
+                )
+            }
+            // Tras cerrar sesión (o si la sesión caduca) se regresa a Inicio.
+            composable(ROUTE_PERFIL) { PerfilScreen(onSignedOut = { navigateTab(Destination.Inicio.route) }) }
+            // Cuenta (RF-33): fuera de la barra inferior. Al terminar se regresa a la pantalla previa (Auxilio).
+            composable(ROUTE_LOGIN) {
+                LoginScreen(
+                    onSignedIn = { nav.popBackStack() },
+                    onRegister = { nav.navigate(ROUTE_REGISTRO) { popUpTo(ROUTE_LOGIN) { inclusive = true } } },
+                )
+            }
+            composable(ROUTE_REGISTRO) {
+                RegistroScreen(
+                    onSignedIn = { nav.popBackStack() },
+                    onGoLogin = { nav.navigate(ROUTE_LOGIN) { popUpTo(ROUTE_REGISTRO) { inclusive = true } } },
+                )
+            }
         }
     }
 }

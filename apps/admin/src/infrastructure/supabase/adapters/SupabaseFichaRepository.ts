@@ -65,6 +65,7 @@ interface RpcDetallePayload {
     ocupacion_otra?: string | null;
     servicio_medico: ServicioMedico | null;
     servicio_medico_otro: string | null;
+    servicios_solicitados_otro?: string | null;
     tiene_trabajo: boolean | null;
     numero_hijas: number | null;
     numero_hijos_hombres: number | null;
@@ -214,6 +215,7 @@ function mapDetallePayload(raw: RpcDetallePayload): FichaCompletaDetalle {
       .map((s) => s.nombre)
       .filter((name): name is string => Boolean(name)),
     serviciosSolicitadosAreaIds: serviciosRows.map((s) => s.area_id),
+    serviciosSolicitadosOtro: ficha.servicios_solicitados_otro ?? null,
     persona: {
       id: persona.id,
       curp: normalizeCurp(persona.curp),

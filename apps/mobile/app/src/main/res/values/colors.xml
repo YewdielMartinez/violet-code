@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fondo de la ventana y de la pantalla de arranque: igual al tema por defecto del panel (salmverse). -->
+    <color name="brand_primary">#850E35</color>
+    <color name="window_background">#FFFFFF</color>
+
+    <!-- Hojas de la marca en la pantalla de arranque (claro): burdeos y rosa del logo del panel. -->
+    <color name="splash_leaf_left">#7A0C31</color>
+    <color name="splash_leaf_right">#EF6F86</color>
+
+    <!-- Arranque del modo discreto: mismo fondo que la calculadora (CalculatorScreen), sin colores de la marca. -->
+    <color name="splash_neutral_background">#1B1D1F</color>
+</resources>

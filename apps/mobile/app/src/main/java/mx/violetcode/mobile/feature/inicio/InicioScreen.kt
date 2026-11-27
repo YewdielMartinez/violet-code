@@ -20,7 +20,6 @@ import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Sos
-import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -28,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import mx.violetcode.mobile.core.designsystem.motion.fadeInOnAppear
 import mx.violetcode.mobile.core.designsystem.motion.pressScale
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.androidx.compose.koinViewModel
 import java.time.LocalTime
 
 /**
@@ -48,9 +50,12 @@ fun InicioScreen(
     onEmergency: () -> Unit,
     onOrientacion: () -> Unit,
     onDirectorio: () -> Unit,
-    onSeguimiento: () -> Unit,
+    viewModel: InicioViewModel = koinViewModel(),
 ) {
-    val greeting = remember { greetingForNow() }
+    val firstName by viewModel.firstName.collectAsStateWithLifecycle()
+    val timeGreeting = remember { greetingForNow() }
+    // Con sesión: «Hola, <nombre>» (solo el primer nombre, discreto). Sin sesión: saludo por hora.
+    val greeting = firstName?.let { "Hola, $it" } ?: timeGreeting
 
     Column(
         modifier = Modifier
@@ -86,15 +91,9 @@ fun InicioScreen(
                 modifier = Modifier.weight(1f).fadeInOnAppear(index = 3),
             )
         }
-        QuickActionCard(
-            title = "Mi caso",
-            subtitle = "Revisa el estado de tu atención",
-            icon = Icons.Outlined.TaskAlt,
-            onClick = onSeguimiento,
-            modifier = Modifier.fillMaxWidth().fadeInOnAppear(index = 4),
-        )
+        // «Mi caso» queda fuera del MVP (RF-31): sin acceso desde Inicio.
 
-        QuickExitNote(Modifier.fadeInOnAppear(index = 5))
+        QuickExitNote(Modifier.fadeInOnAppear(index = 4))
     }
 }
 
@@ -190,7 +189,7 @@ private fun QuickExitNote(modifier: Modifier = Modifier) {
             Icon(Icons.Outlined.Info, contentDescription = null)
             Spacer(Modifier.width(12.dp))
             Text(
-                "¿Necesitas salir de inmediato? Toca «Salir rápido», arriba a la derecha: cierra la app y la quita de recientes.",
+                "¿Necesitas salir de inmediato? Toca «Salir rápido», arriba a la derecha: cierra la app y la quita de recientes (con el modo discreto activo, vuelve a la calculadora).",
                 style = MaterialTheme.typography.bodyMedium,
             )
         }

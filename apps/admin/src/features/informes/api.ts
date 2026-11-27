@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { BitacoraFilters, InformeFilters } from '@/domain/models/Informe';
+import type { ReporteFilters } from '@/domain/models/Reporte';
+import { supabaseReporteRepository } from '@/infrastructure/supabase/adapters/SupabaseReporteRepository';
 import { supabaseInformeRepository } from '@/infrastructure/supabase/adapters/SupabaseInformeRepository';
 
 export function informeQueryKey(filters: InformeFilters) {
@@ -31,5 +33,37 @@ export function useBitacora(filters?: BitacoraFilters, enabled = true) {
     queryKey: bitacoraQueryKey(filters),
     queryFn: () => supabaseInformeRepository.getBitacora(filters),
     enabled,
+  });
+}
+
+export function reporteQueryKey(filters: ReporteFilters) {
+  return [
+    'informes',
+    'reporte',
+    filters.tipo,
+    filters.desde,
+    filters.hasta,
+    filters.areaId ?? null,
+    filters.agrupar ?? 'mes',
+  ] as const;
+}
+
+/** Conteos agregados de `get_reporte` (nunca datos personales). */
+export function useReporte(filters: ReporteFilters, enabled = true) {
+  return useQuery({
+    queryKey: reporteQueryKey(filters),
+    queryFn: () => supabaseReporteRepository.getReporte(filters),
+    enabled,
+    staleTime: 60_000,
+  });
+}
+
+/** Áreas de atención (catálogo) para el selector de Dirección. */
+export function useAreas(enabled = true) {
+  return useQuery({
+    queryKey: ['informes', 'areas'] as const,
+    queryFn: () => supabaseReporteRepository.listAreas(),
+    enabled,
+    staleTime: 5 * 60_000,
   });
 }

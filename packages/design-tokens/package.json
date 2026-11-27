@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Colores del tema purple de motion-kit para Android (Compose) y JSON. El panel importa el tema directo de motion-kit.",
+  "description": "Colores del tema por defecto del panel (salmverse, claro y negro puro oscuro) para Android (Compose) y JSON.",
   "exports": {
     "./tokens.json": "./dist/tokens.json"
   },

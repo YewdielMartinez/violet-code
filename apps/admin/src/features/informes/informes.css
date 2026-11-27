@@ -1,56 +1,405 @@
-/* Panel de informes: solo se animan `transform` y `opacity`; los colores salen de los tokens del tema. */
+/* Estadísticas: solo se animan `transform` y `opacity`; todos los colores salen de los tokens del tema
+   (--md-sys-color-*), así que respetan el tema activo y el modo claro / negro puro. Un solo acento (primary). */
 
-.inf-body {
-  animation: inf-in 260ms var(--mk-ease-flow, cubic-bezier(0.22, 1, 0.36, 1)) both;
+.est-page {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
 }
 
-.inf-kpi {
+.est-page > header {
+  margin-bottom: 0;
+}
+
+/* ── Barra de filtros ───────────────────────────────────────────────────────────────────────────────────────────── */
+
+.est-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.est-toolbar__field {
+  min-width: 0;
+}
+
+.est-toolbar__hint {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--md-sys-color-error);
+}
+
+.est-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.est-area-fija {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+/* ── Cuerpo (entra con un leve desplazamiento) ──────────────────────────────────────────────────────────────────── */
+
+.est-body {
   display: grid;
-  gap: 4px;
+  gap: 20px;
+  min-width: 0;
+  animation: est-in 260ms var(--mk-ease-flow, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+/* ── Franja de KPI: cifras separadas por filetes, no tarjetas ───────────────────────────────────────────────────── */
+
+.est-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  border-block: 1px solid var(--md-sys-color-outline-variant);
+}
+
+@container (min-width: 44rem) {
+  .est-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.est-kpis--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.est-kpi {
+  display: grid;
+  align-content: start;
+  gap: 2px;
   min-width: 0;
   padding: 14px 16px;
-  border-radius: 16px;
-  background: var(--md-sys-color-surface-container-low);
-  animation: inf-in 260ms var(--mk-ease-flow, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  border-inline-start: 1px solid var(--md-sys-color-outline-variant);
 }
 
-.inf-kpi:nth-child(2) {
-  animation-delay: 50ms;
+.est-kpi:first-child {
+  border-inline-start: 0;
 }
 
-.inf-kpi:nth-child(3) {
-  animation-delay: 100ms;
+@container (max-width: 43.99rem) {
+  .est-kpis:not(.est-kpis--three) .est-kpi:nth-child(odd) {
+    border-inline-start: 0;
+  }
+
+  .est-kpis:not(.est-kpis--three) .est-kpi:nth-child(n + 3) {
+    border-block-start: 1px solid var(--md-sys-color-outline-variant);
+  }
 }
 
-.inf-kpi__value {
-  font-size: 2.25rem;
+.est-kpi__label {
+  order: 1;
+  font-size: 0.8125rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.est-kpi__value {
+  order: 0;
+  margin: 0;
+  font-size: 1.75rem;
   font-weight: 500;
-  line-height: 1;
+  line-height: 1.1;
   letter-spacing: -0.02em;
   color: var(--md-sys-color-on-surface);
   font-variant-numeric: tabular-nums;
 }
 
-.inf-kpi__label {
+.est-kpi__delta {
+  order: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ── Paneles de gráfica ─────────────────────────────────────────────────────────────────────────────────────────── */
+
+.est-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+@container (min-width: 52rem) {
+  .est-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .est-span-2 {
+    grid-column: span 2;
+  }
+}
+
+.est-panel {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 20px;
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.est-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.est-panel__title {
+  margin: 0;
+  min-width: 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+}
+
+.est-panel__viz {
+  min-width: 0;
+}
+
+/* Paleta de una sola familia (burdeos / rosas del tema) sobre las variables del Chart del kit. La segunda serie es
+   el mismo acento mezclado con la superficie: contrasta con el fondo claro y con el negro puro. */
+.est-chart.mk-chart {
+  --mk-chart-mono: var(--md-sys-color-primary);
+  --mk-chart-1: var(--md-sys-color-primary);
+  --mk-chart-2: color-mix(in srgb, var(--md-sys-color-primary) 48%, var(--md-sys-color-surface));
+  --mk-chart-other: var(--md-sys-color-outline);
+  --mk-chart-grid: color-mix(in srgb, var(--md-sys-color-on-surface) 14%, transparent);
+  --mk-chart-surface: var(--md-sys-color-surface-container-lowest);
+}
+
+/* ── Barras horizontales con etiqueta directa ───────────────────────────────────────────────────────────────────── */
+
+.est-hbars {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.est-hbars__row {
+  display: grid;
+  grid-template-columns: minmax(6rem, 38%) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8125rem;
+}
+
+.est-hbars__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.est-hbars__track {
+  height: 12px;
+  border-radius: 999px;
+  background: var(--md-sys-color-surface-container-high);
+  overflow: hidden;
+}
+
+.est-hbars__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--md-sys-color-primary);
+  transform-origin: left center;
+  animation: est-grow 420ms var(--mk-ease-flow, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+.est-hbars__value {
+  min-width: 2.5rem;
+  text-align: end;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--md-sys-color-on-surface);
+}
+
+.est-hbars__empty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ── Tabla «Ver datos» ──────────────────────────────────────────────────────────────────────────────────────────── */
+
+.est-datatable-wrap {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+.est-datatable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.est-datatable th,
+.est-datatable td {
+  padding: 8px 10px;
+  border-block-end: 1px solid var(--md-sys-color-outline-variant);
+  text-align: start;
+  color: var(--md-sys-color-on-surface);
+}
+
+.est-datatable thead th {
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.est-datatable tbody th {
+  font-weight: 500;
+}
+
+.est-datatable .est-num {
+  text-align: end;
+}
+
+/* ── Reportes ───────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.est-reportes {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.est-reportes__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.est-reportes__pick {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.est-reportes__desc {
+  max-width: 44rem;
+  margin: 0;
   font-size: 0.8125rem;
   color: var(--md-sys-color-on-surface-variant);
 }
 
-@keyframes inf-in {
+.est-report-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  min-width: 0;
+}
+
+@container (min-width: 64rem) {
+  .est-report-grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: start;
+  }
+}
+
+.est-table [data-mk-dt-table] td:first-child {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+/* ── Esqueleto de carga ─────────────────────────────────────────────────────────────────────────────────────────── */
+
+.est-skeleton {
+  display: grid;
+  gap: 16px;
+}
+
+.est-skeleton__kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@container (min-width: 44rem) {
+  .est-skeleton__kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.est-skeleton__panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+@container (min-width: 52rem) {
+  .est-skeleton__panels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.est-skeleton__bone {
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container);
+  animation: est-pulse 1.4s ease-in-out infinite;
+}
+
+.est-skeleton__kpi {
+  height: 64px;
+}
+
+.est-skeleton__panel {
+  height: 240px;
+}
+
+@keyframes est-in {
   from {
     opacity: 0;
     transform: translateY(6px);
   }
 }
 
-.inf-table [data-mk-dt-table] td[data-key='area'] {
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface);
+@keyframes est-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes est-pulse {
+  50% {
+    opacity: 0.55;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .inf-body,
-  .inf-kpi {
+  .est-body,
+  .est-hbars__fill,
+  .est-skeleton__bone {
     animation: none;
   }
 }

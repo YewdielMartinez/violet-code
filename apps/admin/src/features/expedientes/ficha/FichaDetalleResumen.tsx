@@ -149,9 +149,12 @@ export function FichaDetalleResumen({ expediente }: Props) {
                 <Dato
                   label="Servicios solicitados"
                   value={
-                    detail.serviciosSolicitados.length > 0
-                      ? detail.serviciosSolicitados.join(' · ')
-                      : null
+                    [
+                      ...detail.serviciosSolicitados,
+                      ...(detail.serviciosSolicitadosOtro?.trim()
+                        ? [`Otro: ${detail.serviciosSolicitadosOtro.trim()}`]
+                        : []),
+                    ].join(' · ') || null
                   }
                   fullWidth
                 />

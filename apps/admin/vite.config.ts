@@ -119,6 +119,8 @@ export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
+  // El worker de Whisper (dictado por voz local) importa módulos ES.
+  worker: { format: 'es' },
   build: {
     // modulePreload queda habilitado (valor por defecto): Vite inyecta <link rel="modulepreload"> para las
     // dependencias estáticas del entry y precarga las de cada import() dinámico antes de ejecutarlo.

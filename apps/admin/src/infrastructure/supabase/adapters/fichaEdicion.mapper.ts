@@ -81,6 +81,7 @@ export function toActualizarFichaArgs(input: FichaUpdateInput): ActualizarFichaA
     p_especificacion_droga: toOptionalRpcText(input.especificacionDroga),
     p_consumo_alcohol: input.consumoAlcohol ?? undefined,
     p_servicios_solicitados_area_ids: input.serviciosSolicitadosAreaIds ?? undefined,
+    p_servicios_solicitados_otro: toOptionalRpcText(input.serviciosSolicitadosOtro),
     p_campos_sin_dato: input.camposSinDato ?? undefined,
   };
 }
@@ -106,6 +107,7 @@ export function mapFichaActualizadaRow(row: ActualizarFichaRow): FichaActualizad
     especificacionDroga: row.especificacion_droga ?? null,
     consumoAlcohol: row.consumo_alcohol ?? null,
     serviciosSolicitadosAreaIds: row.servicios_solicitados_area_ids ?? [],
+    serviciosSolicitadosOtro: row.servicios_solicitados_otro ?? null,
     actualizadoEn: row.actualizado_en,
   };
 }

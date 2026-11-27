@@ -17,7 +17,8 @@ private val VioletShapes = Shapes(
 
 /**
  * Tema de Violet Code. Los colores vienen de VioletColors.kt, generado desde el mismo
- * tema que usa el panel web (packages/design-tokens). No usar colores sueltos en pantallas.
+ * tema por defecto del panel web (salmverse; packages/design-tokens). No usar colores sueltos en pantallas.
+ * Sin color dinámico (Material You) a propósito: la paleta de marca siempre aplica.
  *
  * @param themeMode claro, oscuro o el del sistema (por defecto).
  */

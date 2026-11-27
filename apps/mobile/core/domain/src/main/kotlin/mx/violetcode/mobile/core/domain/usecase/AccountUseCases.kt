@@ -6,9 +6,16 @@ import mx.violetcode.mobile.core.domain.account.AccountResult
 import mx.violetcode.mobile.core.domain.account.AlertReceipt
 import mx.violetcode.mobile.core.domain.account.AlertRepository
 import mx.violetcode.mobile.core.domain.account.RegistrationData
+import mx.violetcode.mobile.core.domain.account.ProfileState
 import mx.violetcode.mobile.core.domain.account.SessionState
 import mx.violetcode.mobile.core.domain.account.SignUpOutcome
 import mx.violetcode.mobile.core.domain.validation.RegistrationValidator
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 
 /** Valida la captura y crea la cuenta. Un dato inválido nunca llega al servidor. */
 class SignUpUseCase(private val accounts: AccountRepository) {
@@ -55,6 +62,33 @@ class SignOutUseCase(private val accounts: AccountRepository) {
 
 class ObserveSessionUseCase(private val accounts: AccountRepository) {
     operator fun invoke() = accounts.session
+}
+
+/**
+ * Perfil de la usuaria según la sesión: sin sesión → `SignedOut`; con sesión → `Loading` y luego `Ready`/`Unavailable`.
+ * [refresh] permite reintentar (cada emisión vuelve a leer el perfil).
+ */
+class ObserveMyProfileUseCase(private val accounts: AccountRepository) {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    operator fun invoke(refresh: Flow<Int> = flowOf(0)): Flow<ProfileState> =
+        combine(accounts.session, refresh) { session, _ -> session }.flatMapLatest { session ->
+            when (session) {
+                SessionState.Loading -> flowOf(ProfileState.Loading)
+                SessionState.SignedOut -> flowOf(ProfileState.SignedOut)
+                is SessionState.SignedIn -> flow {
+                    emit(ProfileState.Loading)
+                    emit(
+                        when (val result = accounts.getMyProfile()) {
+                            is AccountResult.Success ->
+                                result.value?.let { ProfileState.Ready(it) } ?: ProfileState.Unavailable
+                            is AccountResult.Failure ->
+                                if (result.reason == AccountFailure.NotSignedIn) ProfileState.SignedOut
+                                else ProfileState.Unavailable
+                        },
+                    )
+                }
+            }
+        }
 }
 
 /**

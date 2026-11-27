@@ -220,7 +220,7 @@ select results_eq(
 
 -- 20. Sin payload: la tabla solo guarda quién, qué, tabla y registro
 select results_eq(
-  $$select column_name::text
+  $$select column_name::text collate "default"
       from information_schema.columns
      where table_schema = 'public' and table_name = 'bitacora_acceso'
      order by ordinal_position$$,

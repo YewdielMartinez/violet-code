@@ -81,3 +81,52 @@ class ViolentometroTest {
         assertNull(Violentometro.peakLevel(emptyList()))
     }
 }
+
+class ViolentometroSelectionTest {
+    private val celar = Violentometro.itemAt(4)
+    private val cachetear = Violentometro.itemAt(17)
+    private val violar = Violentometro.itemAt(28)
+
+    @Test
+    fun `sin marcar no hay nivel ni zona`() {
+        val s = ViolentometroSelection()
+        assertNull(s.level)
+        assertNull(s.zone)
+    }
+
+    @Test
+    fun `la conducta marcada mas alta manda`() {
+        val s = ViolentometroSelection().toggle(celar).toggle(cachetear)
+        assertEquals(17, s.level)
+        assertEquals(ViolentometroZone.React, s.zone)
+        assertTrue(s.isSelected(celar))
+    }
+
+    @Test
+    fun `desmarcar baja el nivel`() {
+        val s = ViolentometroSelection().toggle(celar).toggle(violar).toggle(violar)
+        assertEquals(4, s.level)
+        assertEquals(ViolentometroZone.Care, s.zone)
+    }
+
+    @Test
+    fun `mover el marcador a mano manda hasta marcar otra conducta`() {
+        val s = ViolentometroSelection().toggle(celar).withManualLevel(25)
+        assertEquals(25, s.level)
+        assertEquals(ViolentometroZone.Help, s.zone)
+        assertEquals(4, s.toggle(violar).toggle(violar).level)
+    }
+
+    @Test
+    fun `el nivel manual se ajusta al rango`() {
+        assertEquals(30, ViolentometroSelection().withManualLevel(99).level)
+        assertEquals(0, ViolentometroSelection().withManualLevel(-3).level)
+    }
+
+    @Test
+    fun `limpiar borra todo`() {
+        val s = ViolentometroSelection().toggle(violar).withManualLevel(12).cleared()
+        assertNull(s.level)
+        assertTrue(s.selectedKeys.isEmpty())
+    }
+}

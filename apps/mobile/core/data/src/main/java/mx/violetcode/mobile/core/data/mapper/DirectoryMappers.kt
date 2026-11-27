@@ -18,8 +18,8 @@ private val CATEGORY_LABELS = mapOf(
 )
 
 internal fun SupabaseDirectoryDto.toEntity(): DirectoryEntryEntity {
-    // Seguridad: nunca exponer domicilio de refugios confidenciales.
-    val formattedAddress = if (categoria == "refugio") {
+    // Seguridad: nunca exponer domicilio de refugios confidenciales (la BD ya lo prohíbe; aquí se descarta otra vez).
+    val formattedAddress = if (categoria == DirectoryEntry.CATEGORY_SHELTER) {
         null
     } else {
         listOfNotNull(calle, numeroExterior, codigoPostal)
@@ -36,10 +36,11 @@ internal fun SupabaseDirectoryDto.toEntity(): DirectoryEntryEntity {
         description = CATEGORY_LABELS[categoria],
         phone = telefono,
         address = formattedAddress,
-        schedule = horario,
+        schedule = horario?.trim()?.ifEmpty { null } ?: if (es24Horas) "24 horas" else null,
         latitude = null,
         longitude = null,
         isEmergency = es24Horas || categoria == "emergencia",
+        category = categoria,
     )
 }
 
@@ -52,9 +53,11 @@ internal fun DirectoryEntryEntity.toDomainOrNull(): DirectoryEntry? {
         name = name,
         description = description,
         phone = phone,
-        address = address,
+        // Defensa en profundidad: aunque una fila local antigua traiga domicilio, un refugio nunca lo muestra.
+        address = if (category == DirectoryEntry.CATEGORY_SHELTER) null else address,
         schedule = schedule,
         location = if (latitude != null && longitude != null) GeoPoint(latitude, longitude) else null,
         isEmergency = isEmergency,
+        category = category,
     )
 }

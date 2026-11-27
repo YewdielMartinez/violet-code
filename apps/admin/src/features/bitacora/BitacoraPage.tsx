@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { DataTable, EmptyState, Pagination, Skeleton, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/data-table';
@@ -80,10 +80,9 @@ export default function BitacoraPage() {
   const loading = !sinRango && query.isPending;
   const isError = !sinRango && query.isError;
 
-  // Si los eventos de la página actual desaparecen (p. ej. se acotó el rango), se vuelve a la primera.
-  useEffect(() => {
-    if (!sinRango && query.isSuccess && !query.isPlaceholderData && pagina > 1 && rows.length === 0) setPagina(1);
-  }, [sinRango, query.isSuccess, query.isPlaceholderData, pagina, rows.length]);
+  // Si los eventos de la página actual desaparecen (p. ej. se acotó el rango), se vuelve a la primera. Se ajusta durante
+  // el render (no en un efecto) para no provocar un render intermedio con la página vacía.
+  if (!sinRango && query.isSuccess && !query.isPlaceholderData && pagina > 1 && rows.length === 0) setPagina(1);
 
   const handleDescargar = useCallback(
     async (formato: BitacoraExportFormato) => {

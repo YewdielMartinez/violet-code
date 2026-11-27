@@ -23,8 +23,7 @@ function stripInvalidXmlChars(text: string): string {
 
 /** Escapa texto XML y descarta los caracteres de control que XML 1.0 no admite. */
 function xmlText(text: string): string {
-  return text
-    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]/g, '')
+  return stripInvalidXmlChars(text)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')

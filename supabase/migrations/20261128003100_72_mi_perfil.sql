@@ -114,6 +114,7 @@ revoke all on function public.permisos_catalogo() from public, anon;
 grant execute on function public.permisos_catalogo() to authenticated;
 
 -- 3) RPC: public.get_mi_perfil -----------------------------------------
+drop function if exists public.get_mi_perfil();
 create or replace function public.get_mi_perfil()
 returns table (
   id           uuid,
@@ -188,6 +189,7 @@ revoke all on function public.get_mi_perfil() from public, anon;
 grant execute on function public.get_mi_perfil() to authenticated;
 
 -- 4) RPC: public.actualizar_mi_perfil ----------------------------------
+drop function if exists public.actualizar_mi_perfil(text, text);
 create or replace function public.actualizar_mi_perfil(
   p_nombre   text,
   p_telefono text default null

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema de la ventana (antes de que Compose pinte): fondo blanco, igual que el tema claro salmverse. -->
+    <style name="Theme.VioletCode.Base" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:colorBackground">@color/window_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Tema de la app una vez que termina la pantalla de arranque (postSplashScreenTheme). -->
+    <style name="Theme.VioletCode" parent="Theme.VioletCode.Base" />
+
+    <!--
+        Pantalla de arranque de la marca (androidx.core:core-splashscreen: Android 12+ nativa, antes compat).
+        Fondo blanco / negro (values-night vía window_background), ícono animado de las dos hojas (< 1000 ms).
+        Solo la usa MainActivity (ícono normal).
+    -->
+    <style name="Theme.VioletCode.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/window_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_splash_logo</item>
+        <item name="windowSplashScreenAnimationDuration">900</item>
+        <item name="postSplashScreenTheme">@style/Theme.VioletCode</item>
+    </style>
+
+    <!--
+        Pantalla de arranque NEUTRA del modo discreto: calculadora gris sobre el fondo de la calculadora, sin
+        logo ni colores de la marca y sin animación. La usa CalculatorLauncherActivity (alias «Calculadora»).
+    -->
+    <style name="Theme.VioletCode.Splash.Neutral" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_neutral_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_calculator</item>
+        <item name="postSplashScreenTheme">@style/Theme.VioletCode</item>
+    </style>
+</resources>

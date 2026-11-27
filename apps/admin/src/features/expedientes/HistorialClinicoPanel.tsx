@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
+import { memo, useEffect, useId, useRef, useState, type CSSProperties, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { EmptyState, GlassSwitch, LoadingButton, Skeleton, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
@@ -14,6 +14,9 @@ import {
   type HistorialClinicoCampo,
 } from '@/domain/models/HistorialClinico';
 import type { EstadoFicha } from '@/domain/models/Persona';
+import { DictadoVozControl } from '@/features/dictado-voz/DictadoVozControl';
+import { unirDictado } from '@/features/dictado-voz/unirDictado';
+import { useSpeechDictation } from '@/features/dictado-voz/useSpeechDictation';
 import { useAuth } from '@/shared/auth/useAuth';
 import { Icon } from '@/shared/ui/Icon';
 import {
@@ -50,6 +53,16 @@ function draftFromHistorial(historial: HistorialClinico | null | undefined): His
 }
 
 type Direction = 'none' | 'forward' | 'back';
+
+/** Campos de texto libre que pueden recibir una transcripción del dictado por voz. */
+type CampoTexto = Exclude<keyof HistorialDraft, 'tieneAtencionPsicologicaPrevia'>;
+
+const CAMPO_TEXTO_LABEL: Record<CampoTexto, string> = {
+  motivoConsulta: 'Motivo de consulta',
+  antecedentesPersonales: 'Antecedentes personales',
+  antecedentesFamiliares: 'Antecedentes familiares',
+  observacionesIniciales: 'Observaciones iniciales',
+};
 
 /** Debe coincidir con la duración de `.vc-hc-stage` en `historial-clinico.css`. */
 const SAVED_BUTTON_MS = 520;
@@ -114,6 +127,10 @@ interface TextAreaFieldProps {
   disabled: boolean;
   index: number;
   onChange: (value: string) => void;
+  /** Este campo recibirá la próxima transcripción del dictado. */
+  destinoDictado?: boolean;
+  /** Si existe, muestra «Dictar aquí» para elegir este campo como destino del dictado. */
+  onElegirDestino?: () => void;
 }
 
 function TextAreaField({
@@ -123,12 +140,40 @@ function TextAreaField({
   disabled,
   index,
   onChange,
+  destinoDictado = false,
+  onElegirDestino,
 }: TextAreaFieldProps) {
+  const id = useId();
   const nearLimit = value.length >= MAX_LENGTH - 1000;
   return (
-    <label className="vc-hc-edit-field" style={{ '--i': index } as CSSProperties}>
-      <span className="vc-hc-edit-field__label">{label}</span>
+    <div
+      className="vc-hc-edit-field"
+      style={{ '--i': index } as CSSProperties}
+      data-dictado={destinoDictado ? 'true' : undefined}
+    >
+      <div className="vc-hc-edit-field__head">
+        <label htmlFor={id} className="vc-hc-edit-field__label">
+          {label}
+        </label>
+        {destinoDictado ? (
+          <span className="vc-hc-edit-field__badge">
+            <Icon name="mic" /> Destino del dictado
+          </span>
+        ) : onElegirDestino && !disabled ? (
+          <button
+            type="button"
+            className="mk-button mk-button--text mk-button--sm"
+            aria-label={`Dictar en ${label}`}
+            onClick={onElegirDestino}
+          >
+            <Icon name="mic" /> Dictar aquí
+          </button>
+        ) : null}
+      </div>
       <textarea
+        id={id}
+        // Las narrativas clínicas no deben pasar por el corrector ortográfico del navegador ni del sistema.
+        spellCheck={false}
         rows={4}
         maxLength={MAX_LENGTH}
         disabled={disabled}
@@ -142,7 +187,7 @@ function TextAreaField({
           {value.length} / {MAX_LENGTH}
         </span>
       ) : null}
-    </label>
+    </div>
   );
 }
 
@@ -170,6 +215,9 @@ export const HistorialClinicoPanel = memo(function HistorialClinicoPanel({
   const [savedFlash, setSavedFlash] = useState(false);
   const [savedTick, setSavedTick] = useState(0);
   const [changed, setChanged] = useState<readonly HistorialClinicoCampo[]>([]);
+  /** Dictado por voz local (RF-12, RF-12.1): el audio se transcribe en este equipo y nunca se guarda. */
+  const dictado = useSpeechDictation();
+  const [destinoDictado, setDestinoDictado] = useState<CampoTexto>('motivoConsulta');
 
   const editButtonRef = useRef<HTMLButtonElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -212,18 +260,36 @@ export const HistorialClinicoPanel = memo(function HistorialClinicoPanel({
 
   function startEditing() {
     setDraft(draftFromHistorial(historial));
+    setDestinoDictado('motivoConsulta');
     setDirection('forward');
     setEditing(true);
   }
 
   function stopEditing() {
+    dictado.descartar();
     setDirection('back');
     setEditing(false);
   }
 
+  function insertarDictado(texto: string) {
+    const campo = destinoDictado;
+    const resultado = unirDictado(draft[campo], texto, MAX_LENGTH);
+    setDraft((prev) => ({ ...prev, [campo]: unirDictado(prev[campo], texto, MAX_LENGTH).texto }));
+    if (resultado.recortado) {
+      toast(`La transcripción se recortó para no pasar de ${MAX_LENGTH} caracteres.`, { tone: 'error' });
+    }
+  }
+
+  function dictadoProps(campo: CampoTexto) {
+    return {
+      destinoDictado: destinoDictado === campo,
+      onElegirDestino: dictado.activo ? undefined : () => setDestinoDictado(campo),
+    };
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (guardar.isPending || savedFlash) return;
+    if (guardar.isPending || savedFlash || dictado.activo) return;
 
     const tieneAlgunDato =
       Boolean(draft.motivoConsulta.trim()) ||
@@ -344,6 +410,15 @@ export const HistorialClinicoPanel = memo(function HistorialClinicoPanel({
                 className="vc-hc-form"
                 aria-label="Editar historial clínico"
               >
+                <div style={{ '--i': 0 } as CSSProperties} className="vc-hc-dictado">
+                  <DictadoVozControl
+                    dictado={dictado}
+                    disabled={busy}
+                    destinoLabel={CAMPO_TEXTO_LABEL[destinoDictado]}
+                    onInsertar={insertarDictado}
+                  />
+                </div>
+
                 <TextAreaField
                   label="Motivo de consulta"
                   placeholder="Describe el motivo principal de atención"
@@ -351,6 +426,7 @@ export const HistorialClinicoPanel = memo(function HistorialClinicoPanel({
                   disabled={busy}
                   index={0}
                   onChange={(motivoConsulta) => setDraft({ ...draft, motivoConsulta })}
+                  {...dictadoProps('motivoConsulta')}
                 />
 
                 <div className="vc-hc-form__pair">
@@ -361,6 +437,7 @@ export const HistorialClinicoPanel = memo(function HistorialClinicoPanel({
                     disabled={busy}
                     index={1}
                     onChange={(antecedentesPersonales) => setDraft({ ...draft, antecedentesPersonales })}
+                  {...dictadoProps('antecedentesPersonales')}
                   />
                   <TextAreaField
                     label="Antecedentes familiares"
@@ -369,6 +446,7 @@ export const HistorialClinicoPanel = memo(function HistorialClinicoPanel({
                     disabled={busy}
                     index={2}
                     onChange={(antecedentesFamiliares) => setDraft({ ...draft, antecedentesFamiliares })}
+                  {...dictadoProps('antecedentesFamiliares')}
                   />
                 </div>
 
@@ -389,6 +467,7 @@ export const HistorialClinicoPanel = memo(function HistorialClinicoPanel({
                   disabled={busy}
                   index={4}
                   onChange={(observacionesIniciales) => setDraft({ ...draft, observacionesIniciales })}
+                  {...dictadoProps('observacionesIniciales')}
                 />
 
                 <div className="vc-hc-form__footer" style={{ '--i': 5 } as CSSProperties}>
@@ -404,7 +483,7 @@ export const HistorialClinicoPanel = memo(function HistorialClinicoPanel({
                     type="submit"
                     state={guardar.isPending ? 'loading' : savedFlash ? 'success' : 'idle'}
                     labels={LOADING_LABELS}
-                    disabled={busy}
+                    disabled={busy || dictado.activo}
                     className="mk-button mk-button--filled"
                   >
                     Guardar historial

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Animación de la pantalla de arranque (Android 12+; duración total 800 ms, menor que windowSplashScreenAnimationDuration).
+    Las dos hojas brotan desde su base: escala + giro + aparición con la curva «signature» del sistema de diseño;
+    la hoja derecha entra 150 ms después. En Android < 12 se muestra el estado final, sin animar.
+    La hoja derecha usa keyframes (en vez de startOffset) para quedar oculta hasta que le toca.
+-->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:drawable="@drawable/ic_splash_logo">
+
+    <!-- Hoja izquierda: 0 a 650 ms -->
+    <target android:name="leafLeft">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator
+                    android:duration="650"
+                    android:interpolator="@interpolator/violet_signature"
+                    android:propertyName="scaleX"
+                    android:valueFrom="0.3"
+                    android:valueTo="1"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:duration="650"
+                    android:interpolator="@interpolator/violet_signature"
+                    android:propertyName="scaleY"
+                    android:valueFrom="0.3"
+                    android:valueTo="1"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:duration="650"
+                    android:interpolator="@interpolator/violet_signature"
+                    android:propertyName="rotation"
+                    android:valueFrom="-16"
+                    android:valueTo="0"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="leafLeftPath">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="400"
+                android:interpolator="@android:interpolator/linear"
+                android:propertyName="fillAlpha"
+                android:valueFrom="0"
+                android:valueTo="1"
+                android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+
+    <!-- Hoja derecha: 150 a 800 ms (se queda en el estado inicial los primeros 150 ms) -->
+    <target android:name="leafRight">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:duration="800">
+                    <propertyValuesHolder android:propertyName="scaleX" android:valueType="floatType">
+                        <keyframe android:fraction="0" android:value="0.3" />
+                        <keyframe android:fraction="0.1875" android:value="0.3" />
+                        <keyframe android:fraction="1" android:value="1" android:interpolator="@interpolator/violet_signature" />
+                    </propertyValuesHolder>
+                </objectAnimator>
+                <objectAnimator android:duration="800">
+                    <propertyValuesHolder android:propertyName="scaleY" android:valueType="floatType">
+                        <keyframe android:fraction="0" android:value="0.3" />
+                        <keyframe android:fraction="0.1875" android:value="0.3" />
+                        <keyframe android:fraction="1" android:value="1" android:interpolator="@interpolator/violet_signature" />
+                    </propertyValuesHolder>
+                </objectAnimator>
+                <objectAnimator android:duration="800">
+                    <propertyValuesHolder android:propertyName="rotation" android:valueType="floatType">
+                        <keyframe android:fraction="0" android:value="16" />
+                        <keyframe android:fraction="0.1875" android:value="16" />
+                        <keyframe android:fraction="1" android:value="0" android:interpolator="@interpolator/violet_signature" />
+                    </propertyValuesHolder>
+                </objectAnimator>
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="leafRightPath">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:duration="800">
+                <propertyValuesHolder android:propertyName="fillAlpha" android:valueType="floatType">
+                    <keyframe android:fraction="0" android:value="0" />
+                    <keyframe android:fraction="0.1875" android:value="0" />
+                    <keyframe android:fraction="0.6" android:value="1" />
+                    <keyframe android:fraction="1" android:value="1" />
+                </propertyValuesHolder>
+            </objectAnimator>
+        </aapt:attr>
+    </target>
+</animated-vector>

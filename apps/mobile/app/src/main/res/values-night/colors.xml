@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Modo oscuro del panel: negro puro. -->
+    <color name="window_background">#000000</color>
+    <!-- Hoja izquierda del logo en oscuro (clase leaf-dark del favicon del panel). -->
+    <color name="splash_leaf_left">#FFB1C1</color>
+</resources>
