@@ -1,17 +1,20 @@
 # RPC: `public.cambiar_estado_derivacion`
 
-- **Migración:** `supabase/migrations/20261126001500_25_rpc_derivaciones.sql`
-- **Cubre:** `RF-08` (SF-04)
+- **Migración:** `supabase/migrations/20261126001500_25_rpc_derivaciones.sql`, actualizada en `supabase/migrations/20261127000300_34_historial_canalizaciones.sql`
+- **Cubre:** `RF-08`, `RF-25` (SF-04 / Sprint 02 · A-02)
 
 ## Actores autorizados
-- `titular`, `subdireccion`, `trabajo_social`: pueden gestionar cualquier derivación activa.
-- `psicologia`, `juridico`: pueden gestionar únicamente derivaciones donde su `area_id` sea `area_origen_id` o `area_destino_id`.
+- Permiso `tiene_permiso('derivacion.gestionar')`:
+  - `titular`, `subdireccion`, `trabajo_social`: pueden gestionar cualquier derivación activa.
+  - `psicologia`, `juridico`: pueden gestionar únicamente derivaciones donde su `area_id` sea `area_origen_id` o `area_destino_id`.
+- Cada transición registra un evento en `public.canalizacion_evento`.
 
 ## Entrada
 ```ts
 {
   p_derivacion_id: string;     // UUID de la derivación activa
   p_estado: EstadoDerivacion;  // Estado destino
+  p_nota?: string | null;      // Máx. 1000 caracteres; obligatoria para 'concluida' y 'cancelada'
 }
 ```
 
@@ -25,5 +28,5 @@
 ```
 
 ## Errores
-- `42501`: sin permiso o intento de modificar una derivación de otra área.
-- `23514`: parámetros nulos, derivación inexistente/inactiva o transición no permitida.
+- `42501`: sin permiso (`derivacion.gestionar`) o intento de modificar una derivación de otra área.
+- `23514`: parámetros nulos, falta `p_nota` al concluir o cancelar, longitud excedida, derivación inexistente/inactiva o transición no permitida.

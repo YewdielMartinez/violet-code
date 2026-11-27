@@ -75,9 +75,9 @@ interface CrearCanalizacionResult {
 
 > Lista de derivaciones, de un expediente o de todos, filtrada por lo que el rol puede ver.
 
-| Permiso                       | Roles                  | Tipo    | Bitácora | Migración              |
-| ----------------------------- | ---------------------- | ------- | -------- | ---------------------- |
-| Rol + área (valida en el SQL) | Tit, Sub, TS, Psi, Jur | Lectura | No       | `_25_rpc_derivaciones` |
+| Permiso | Roles | Tipo | Bitácora | Migración |
+| --- | --- | --- | --- | --- |
+| `derivacion.gestionar` + área | Tit, Sub, TS, Psi, Jur | Lectura | No | `_34_historial_canalizaciones` (`_25_`) |
 
 **Llamada**
 
@@ -133,11 +133,11 @@ interface DerivacionRow {
 
 ## `cambiar_estado_derivacion`
 
-> Avanza o cancela una derivación respetando las transiciones.
+> Avanza o cancela una derivación respetando las transiciones y registra el evento en `canalizacion_evento`.
 
-| Permiso                       | Roles                  | Tipo      | Bitácora        | Migración              |
-| ----------------------------- | ---------------------- | --------- | --------------- | ---------------------- |
-| Rol + área (valida en el SQL) | Tit, Sub, TS, Psi, Jur | Escritura | Sí, por trigger | `_25_rpc_derivaciones` |
+| Permiso | Roles | Tipo | Bitácora | Migración |
+| --- | --- | --- | --- | --- |
+| `derivacion.gestionar` + área | Tit, Sub, TS, Psi, Jur | Escritura | Sí, por trigger + `canalizacion_evento` | `_34_historial_canalizaciones` (`_25_`) |
 
 **Llamada**
 
@@ -145,7 +145,8 @@ interface DerivacionRow {
 const { data, error } = await supabase
   .rpc("cambiar_estado_derivacion", {
     p_derivacion_id: id,
-    p_estado: "en_proceso",
+    p_estado: "concluida",
+    p_nota: "Valoración psicológica concluida.", // obligatoria en 'concluida' y 'cancelada'
   })
   .single();
 // data: { derivacion_id, estado, actualizado_en }
@@ -153,16 +154,75 @@ const { data, error } = await supabase
 
 **Transiciones válidas**
 
-| Desde        | Hacia                     |
-| ------------ | ------------------------- |
-| `pendiente`  | `en_proceso`, `cancelada` |
-| `en_proceso` | `concluida`, `cancelada`  |
+| Desde | Hacia | Nota (`p_nota`) |
+| --- | --- | --- |
+| `pendiente` | `en_proceso` | Opcional |
+| `pendiente` | `cancelada` | Obligatoria (`23514`) |
+| `en_proceso` | `concluida`, `cancelada` | Obligatoria (`23514`) |
 
 **Errores**
 
-| Código  | Cuándo                                                             | Mensaje UI      |
-| ------- | ------------------------------------------------------------------ | --------------- |
-| `42501` | Rol sin permiso, o Psi/Jur sobre una derivación ajena a su área    | Fijo de permiso |
-| `23514` | Parámetros nulos, derivación inexistente o transición no permitida | `error.message` |
+| Código | Cuándo | Mensaje UI |
+| --- | --- | --- |
+| `42501` | Rol sin permiso, o Psi/Jur sobre una derivación ajena a su área | Fijo de permiso |
+| `23514` | Parámetros nulos, falta `p_nota` al concluir/cancelar, derivación inexistente o transición no permitida | `error.message` |
 
 **En el front:** `DerivacionRepository.updateEstado` · `canalizaciones/useUpdateEstadoDerivacion` (ya existe; cambiar la implementación del adaptador a esta RPC).
+
+---
+
+## `get_historial_canalizaciones`
+
+> Lista todas las canalizaciones activas de un expediente con su arreglo cronológico de eventos (`canalizacion_evento`).
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+| --- | --- | --- | --- | --- |
+| `derivacion.gestionar` + área | Tit, Sub, TS, Psi, Jur | Lectura | No | `_34_historial_canalizaciones` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase.rpc("get_historial_canalizaciones", {
+  p_ficha_id: fichaId,
+});
+```
+
+**Respuesta** (arreglo, canalizaciones más recientes primero; `eventos` más antiguos primero)
+
+```ts
+interface CanalizacionEvento {
+  id: string;
+  estado_anterior: EstadoDerivacion | null;
+  estado_nuevo: EstadoDerivacion;
+  nota: string | null;
+  creado_por: string | null;
+  creado_por_nombre: string | null;
+  creado_en: string;
+}
+
+interface HistorialCanalizacionRow {
+  id: string;
+  ficha_id: string;
+  area_origen_id: number | null;
+  area_origen_nombre: string | null;
+  area_destino_id: number | null;
+  area_destino_nombre: string | null;
+  institucion_id: number | null;
+  institucion_nombre: string | null;
+  institucion_otra: string | null;
+  destino: DestinoDerivacion;
+  motivo: string | null;
+  fecha_derivacion: string;
+  estado: EstadoDerivacion;
+  creado_en: string;
+  actualizado_en: string;
+  eventos: CanalizacionEvento[];
+}
+```
+
+**Errores**
+
+| Código | Cuándo | Mensaje UI |
+| --- | --- | --- |
+| `42501` | Rol sin `derivacion.gestionar` | Vista de "sin acceso" |
+| `23514` | `p_ficha_id` nulo o expediente inexistente/inactivo | `error.message` |
