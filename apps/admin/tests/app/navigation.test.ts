@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MOBILE_NAV_MAX, canAccessPath, getMobilePaths, getNavigationForRole } from '@/app/navigation';
+import { MOBILE_NAV_MAX, NAVIGATION, canAccessPath, getMobilePaths, getNavigationForRole } from '@/app/navigation';
 
 describe('navigation permissions by role', () => {
   it('restringe a UMECA únicamente a la ruta raíz /', () => {
@@ -10,22 +10,28 @@ describe('navigation permissions by role', () => {
     expect(canAccessPath('umeca', '/usuarios')).toBe(false);
   });
 
-  it('limita a recepción a Tablero, Agenda y Actividades en el menú (Directorio solo por ruta)', () => {
-    expect(getNavigationForRole('recepcion').map((p) => p.path)).toEqual(['/', '/agenda', '/actividades']);
+  it('limita a recepción a Tablero, Agenda, Actividades y Estadísticas en el menú (Directorio solo por ruta)', () => {
+    expect(getNavigationForRole('recepcion').map((p) => p.path)).toEqual([
+      '/',
+      '/agenda',
+      '/actividades',
+      '/estadisticas',
+    ]);
     expect(canAccessPath('recepcion', '/actividades')).toBe(true);
     expect(canAccessPath('recepcion', '/agenda')).toBe(true);
+    expect(canAccessPath('recepcion', '/estadisticas')).toBe(true);
     expect(canAccessPath('recepcion', '/directorio')).toBe(true);
     expect(canAccessPath('recepcion', '/expedientes')).toBe(false);
     expect(canAccessPath('recepcion', '/solicitudes')).toBe(false);
     expect(canAccessPath('recepcion', '/usuarios')).toBe(false);
   });
 
-  it('permite módulos operativos a áreas de atención y bloquea módulos de dirección', () => {
+  it('permite módulos operativos y estadísticas a áreas de atención y bloquea usuarios', () => {
     for (const role of ['trabajo_social', 'psicologia', 'juridico'] as const) {
       expect(canAccessPath(role, '/expedientes')).toBe(true);
       expect(canAccessPath(role, '/solicitudes')).toBe(true);
       expect(canAccessPath(role, '/intervenciones')).toBe(true);
-      expect(canAccessPath(role, '/estadisticas')).toBe(false);
+      expect(canAccessPath(role, '/estadisticas')).toBe(true);
       expect(canAccessPath(role, '/usuarios')).toBe(false);
     }
   });
@@ -36,6 +42,12 @@ describe('navigation permissions by role', () => {
       expect(canAccessPath(role, '/estadisticas')).toBe(true);
       expect(canAccessPath(role, '/usuarios')).toBe(true);
     }
+    expect(NAVIGATION.find((p) => p.path === '/estadisticas')?.ready).toBe(true);
+  });
+
+  it('excluye Estadísticas de UMECA', () => {
+    expect(getNavigationForRole('umeca').map((p) => p.path)).not.toContain('/estadisticas');
+    expect(canAccessPath('umeca', '/estadisticas')).toBe(false);
   });
 
   it('muestra Agenda y Actividades a los 6 roles del personal y las niega a UMECA', () => {

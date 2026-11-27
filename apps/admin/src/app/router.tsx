@@ -9,6 +9,7 @@ import {
   AlertasPage,
   DashboardPage,
   DirectoryPage,
+  EstadisticasPage,
   ExpedienteDetailPage,
   ExpedientesPage,
   IntervencionesPage,
@@ -137,6 +138,7 @@ const READY: Record<string, ComponentType> = {
   '/agenda': AgendaPage,
   '/actividades': ActividadesPage,
   '/intervenciones': IntervencionesPage,
+  '/estadisticas': EstadisticasPage,
   '/usuarios': UsuariosPage,
 };
 
