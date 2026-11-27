@@ -4,6 +4,7 @@ import { availableWidgets, type LayoutItem, type WidgetId } from '@/features/das
 import { WidgetGrid } from '@/features/dashboard/WidgetGrid';
 import { renderWidget } from '@/features/dashboard/DashboardPage';
 import '@/features/dashboard/dashboard.css';
+import { InformesPanel } from './InformesPanel';
 
 const EXCLUDED_WIDGETS = new Set<WidgetId>(['alerts', 'cases', 'directory']);
 const noop = () => {};
@@ -39,8 +40,9 @@ export default function EstadisticasPage() {
         onAnnounce={noop}
       />
       {user.role !== 'recepcion' ? (
-        /* Espacio reservado para <InformesPanel /> cuando esté implementado */
-        <div className="vc-estadisticas__informes-slot" aria-hidden="true" />
+        <div className="vc-estadisticas__informes-slot">
+          <InformesPanel />
+        </div>
       ) : null}
     </section>
   );
