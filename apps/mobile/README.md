@@ -52,6 +52,12 @@ DirectorioScreen ──collect── DirectorioViewModel ──► ObserveDirect
 ## Tema
 
 `core/designsystem/.../theme/VioletColors.kt` lo **genera** `npm run tokens` desde `apps/admin/src/app/themes/salmverse.css` (tema por defecto del panel: burdeos `#850E35` y blanco en claro; negro puro `#000000` con superficies neutras y acentos rosa en oscuro). No editar a mano. Sin color dinámico (Material You): la paleta de marca siempre aplica. El fondo de ventana y de la pantalla de arranque (`res/values*/themes.xml`, `colors.xml`) usa blanco / negro.
+
+### Pantalla de arranque
+
+`androidx.core:core-splashscreen` (`installSplashScreen()` en `MainActivity`, antes de `super.onCreate`). `Theme.VioletCode.Splash` (parent `Theme.SplashScreen`, `postSplashScreenTheme = Theme.VioletCode`) muestra el logo de dos hojas (`drawable/ic_splash_logo.xml`, tomado de `apps/admin/public/logos/app-icon.svg`) animado con `drawable/avd_splash_logo.xml` (escala + giro + aparición, curva `signature`, 800 ms < `windowSplashScreenAnimationDuration` 900 ms) sobre blanco / negro (`window_background`; en oscuro la hoja izquierda es `#FFB1C1`). En Android < 12 la librería la dibuja sin animar el ícono. Se mantiene hasta que la sesión se lee (tope de 1,5 s) y sale con un desvanecimiento de ~300 ms (ícono encoge y se desvanece; curva `Glass`); con las animaciones del sistema apagadas (`ANIMATOR_DURATION_SCALE == 0`) se quita sin animar.
+
+**Modo discreto:** el tema de arranque sale de la actividad destino (el `android:theme` de un `<activity-alias>` no cambia el de la ventana de arranque), así que `.LauncherCalculator` apunta a `CalculatorLauncherActivity` (hereda de `MainActivity`) con `Theme.VioletCode.Splash.Neutral`: calculadora gris sobre `#1B1D1F` (el fondo de la calculadora), sin logo, sin colores de marca, sin espera ni animación de salida.
 Tailwind no aplica en Android nativo (Compose no usa CSS); la consistencia con el panel viene de los mismos tokens.
 
 ## Línea de diseño y microinteracciones
@@ -64,14 +70,13 @@ La app comparte la línea del panel web: los colores salen del tema `salmverse` 
 | `Modifier.pressScale(interactionSource)` | Presión elástica: baja a 0.95 y regresa con `spring(dampingRatio = 0.45, stiffness = 400)` | `--mk-ease-press` ("Motion 400/10") |
 | `Modifier.fadeInOnAppear(index)` | Aparición con fade + ascenso de 16 dp, 60 ms de retraso por índice (máx. 8 pasos), una sola vez por elemento | `fade-content` (sin desenfoque) |
 | `HoldToConfirmButton` | Botón circular: mantener ~1 s llena un anillo; soltar antes lo regresa; al completar vibra y llama `onConfirm`. Con TalkBack basta el doble toque (acción semántica `onClick`) | `hold-confirm` |
-| `ThemeModeSwitch` | Interruptor claro/oscuro con sol que gira hacia luna en la perilla | `glass-switch` con `icons="theme"` |
 | `VioletTheme(themeMode)` + `ThemeMode` | Claro / oscuro / sistema sobre `VioletLightScheme` / `VioletDarkScheme`; tipografía DM Sans | tema `salmverse`, `--mk-font` |
 
 Detalles:
 
-- **Reducir movimiento:** si el sistema tiene las animaciones apagadas, `pressScale`, `fadeInOnAppear`, `ThemeModeSwitch` y las transiciones de pestañas no animan. El tiempo de `HoldToConfirmButton` se mide con el reloj de fotogramas, así que la confirmación sigue exigiendo mantener presionado.
+- **Reducir movimiento:** si el sistema tiene las animaciones apagadas, `pressScale`, `fadeInOnAppear` y las transiciones de pestañas no animan. El tiempo de `HoldToConfirmButton` se mide con el reloj de fotogramas, así que la confirmación sigue exigiendo mantener presionado.
 - **Transiciones de pestañas** (`ui/VioletApp.kt`): navegación lateral = solo fade corto (~200 ms), sin deslizar. Los íconos de la barra inferior son rellenos al seleccionarse y se encogen al presionar.
-- **Tema elegido por la usuaria:** `ThemePreferences` (app, `SharedPreferences`, clave `theme_mode`, expuesto como `StateFlow` y registrado en Koin) alimenta `VioletTheme` desde `MainActivity`. El interruptor está en la barra superior, junto a "Salir rápido".
+- **Tema elegido por la usuaria:** `ThemePreferences` (app, `SharedPreferences`, clave `theme_mode`, expuesto como `StateFlow` y registrado en Koin) alimenta `VioletTheme` desde `MainActivity`. El control está en **Ajustes → Apariencia** (Sistema / Claro / Oscuro, botones segmentados); la barra superior solo tiene título, engrane/volver y «Salir rápido».
 - **Tipografía:** DM Sans (OFL) va empaquetada como fuente variable en `core/designsystem/src/main/res/font/dm_sans.ttf`; su licencia está en `core/designsystem/FONT-LICENSE-DMSans-OFL.txt`.
 - **Pantallas:** `feature/inicio` (saludo, tarjeta de emergencia, accesos rápidos), `Auxilio` (911 con mantener presionado) y `Directorio` (tarjetas escalonadas, botón de llamada con presión elástica).
 

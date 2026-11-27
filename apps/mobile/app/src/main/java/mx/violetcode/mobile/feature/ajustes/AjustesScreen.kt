@@ -18,6 +18,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -39,9 +42,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
 import mx.violetcode.mobile.core.designsystem.component.VioletMessageCard
 import mx.violetcode.mobile.core.designsystem.motion.fadeInOnAppear
+import mx.violetcode.mobile.core.designsystem.theme.ThemeMode
 import mx.violetcode.mobile.core.domain.disguise.PinPolicy
 import mx.violetcode.mobile.disguise.DisguiseController
 import mx.violetcode.mobile.feature.perfil.AccountCard
+import mx.violetcode.mobile.preferences.ThemePreferences
 import org.koin.compose.koinInject
 
 /**
@@ -54,8 +59,10 @@ fun AjustesScreen(
     onLogin: () -> Unit,
     onRegister: () -> Unit,
     controller: DisguiseController = koinInject(),
+    themePreferences: ThemePreferences = koinInject(),
 ) {
     val enabled by controller.enabled.collectAsState()
+    val themeMode by themePreferences.mode.collectAsState()
     var dialog by remember { mutableStateOf<Dialog?>(null) }
     var neutralSite by remember { mutableStateOf(controller.neutralSiteOnExit) }
     var notice by remember { mutableStateOf<String?>(null) }
@@ -78,11 +85,18 @@ fun AjustesScreen(
             modifier = Modifier.fadeInOnAppear(index = 1),
         )
 
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+            modifier = Modifier.fillMaxWidth().fadeInOnAppear(index = 2),
+        ) {
+            AppearanceSection(selected = themeMode, onSelect = themePreferences::setMode, modifier = Modifier.padding(16.dp))
+        }
+
         notice?.let { VioletMessageCard(it) }
 
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-            modifier = Modifier.fillMaxWidth().fadeInOnAppear(index = 2),
+            modifier = Modifier.fillMaxWidth().fadeInOnAppear(index = 3),
         ) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 SwitchRow(
@@ -109,7 +123,7 @@ fun AjustesScreen(
         if (!enabled) {
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                modifier = Modifier.fillMaxWidth().fadeInOnAppear(index = 3),
+                modifier = Modifier.fillMaxWidth().fadeInOnAppear(index = 4),
             ) {
                 Column(Modifier.padding(16.dp)) {
                     SwitchRow(
@@ -159,6 +173,40 @@ fun AjustesScreen(
 }
 
 private enum class Dialog { SetPin, ChangePin, ConfirmDisable }
+
+/** «Apariencia»: Sistema / Claro / Oscuro (se guarda en [ThemePreferences] y se aplica al instante). */
+@Composable
+private fun AppearanceSection(selected: ThemeMode, onSelect: (ThemeMode) -> Unit, modifier: Modifier = Modifier) {
+    val options = listOf(
+        ThemeMode.System to "Sistema",
+        ThemeMode.Light to "Claro",
+        ThemeMode.Dark to "Oscuro",
+    )
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column {
+            Text(
+                "Apariencia",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(
+                "Elige el tema de la app. «Sistema» sigue el del teléfono.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+            options.forEachIndexed { index, (mode, label) ->
+                SegmentedButton(
+                    selected = selected == mode,
+                    onClick = { onSelect(mode) },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                ) { Text(label, maxLines = 1) }
+            }
+        }
+    }
+}
 
 @Composable
 private fun SwitchRow(title: String, subtitle: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {

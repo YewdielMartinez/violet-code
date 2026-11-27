@@ -25,6 +25,19 @@
             android:name=".MainActivity"
             android:excludeFromRecents="true"
             android:exported="false"
+            android:theme="@style/Theme.VioletCode.Splash"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!--
+            Entrada del ícono disfrazado: es la misma pantalla (hereda de MainActivity) pero con un tema de arranque
+            NEUTRO (calculadora gris, sin marca). Se usa una actividad propia porque el tema de la pantalla de arranque
+            sale de la actividad destino; el alias no puede darle uno distinto.
+        -->
+        <activity
+            android:name=".CalculatorLauncherActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:theme="@style/Theme.VioletCode.Splash.Neutral"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- Ícono normal (por defecto). El modo discreto lo apaga y enciende el de la calculadora. -->
@@ -50,7 +63,7 @@
             android:icon="@mipmap/ic_launcher_calculator"
             android:label="@string/disguise_app_name"
             android:roundIcon="@mipmap/ic_launcher_calculator"
-            android:targetActivity=".MainActivity">
+            android:targetActivity=".CalculatorLauncherActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

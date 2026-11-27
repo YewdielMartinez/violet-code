@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ícono de la pantalla de arranque del modo discreto: calculadora genérica en grises, sin marca ni color de la app. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#9AA0A6"
+        android:pathData="M42,28h24a4,4 0 0 1 4,4v44a4,4 0 0 1 -4,4h-24a4,4 0 0 1 -4,-4v-44a4,4 0 0 1 4,-4z" />
+    <path
+        android:fillColor="#3A3F44"
+        android:pathData="M43,34h22v10h-22z" />
+    <path
+        android:fillColor="#5F6368"
+        android:pathData="M43,50h5v5h-5zM51.5,50h5v5h-5zM60,50h5v5h-5zM43,58.5h5v5h-5zM51.5,58.5h5v5h-5zM60,58.5h5v5h-5zM43,67h5v5h-5zM51.5,67h5v5h-5zM60,67h5v5h-5z" />
+</vector>

@@ -41,13 +41,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import mx.violetcode.mobile.core.designsystem.component.ThemeModeSwitch
 import mx.violetcode.mobile.core.designsystem.motion.VioletEasing
 import mx.violetcode.mobile.core.designsystem.motion.VioletMotion
 import mx.violetcode.mobile.core.designsystem.motion.pressScale
 import mx.violetcode.mobile.core.designsystem.motion.rememberReducedMotion
-import mx.violetcode.mobile.core.designsystem.theme.ThemeMode
-import mx.violetcode.mobile.core.designsystem.theme.isDark
 import mx.violetcode.mobile.feature.auxilio.AuxilioScreen
 import mx.violetcode.mobile.feature.cuenta.LoginScreen
 import mx.violetcode.mobile.feature.cuenta.RegistroScreen
@@ -83,14 +80,9 @@ private enum class Destination(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VioletApp(
-    themeMode: ThemeMode,
-    onThemeModeChange: (ThemeMode) -> Unit,
-    onQuickExit: () -> Unit,
-) {
+fun VioletApp(onQuickExit: () -> Unit) {
     val nav = rememberNavController()
     val current by nav.currentBackStackEntryAsState()
-    val darkTheme = themeMode.isDark()
 
     fun navigateTab(route: String) {
         nav.navigate(route) {
@@ -131,10 +123,6 @@ fun VioletApp(
                     IconButton(onClick = { nav.navigate(ROUTE_AJUSTES) { launchSingleTop = true } }) {
                         Icon(Icons.Outlined.Settings, contentDescription = "Ajustes")
                     }
-                    ThemeModeSwitch(
-                        darkTheme = darkTheme,
-                        onDarkThemeChange = { dark -> onThemeModeChange(if (dark) ThemeMode.Dark else ThemeMode.Light) },
-                    )
                     // Salida rápida siempre visible (requisito de seguridad de la usuaria).
                     val exitSource = remember { MutableInteractionSource() }
                     TextButton(
