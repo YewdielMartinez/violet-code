@@ -59,7 +59,8 @@ export default function NuevaFichaPage() {
     isSubmitting,
   } = useFichaForm(catalogos);
 
-  const blocker = useUnsavedChangesGuard(canCreate && isDirty);
+  const savedRef = useRef(false);
+  const blocker = useUnsavedChangesGuard(canCreate && isDirty, savedRef);
 
   useEffect(() => {
     initialize(seed ?? undefined);
@@ -90,14 +91,17 @@ export default function NuevaFichaPage() {
         else pendingFocusFieldRef.current = field;
       });
       if (!created) return;
-      toast(`Expediente ${created.folio} registrado.`);
+      savedRef.current = true;
+      toast(`Expediente ${created.folio} registrado.`, { tone: 'success' });
       if (created.agresorError) {
         toast(
           `No se pudo guardar la persona agresora: ${created.agresorError}. Puedes agregarla desde el expediente.`,
           { tone: 'error' },
         );
       }
-      navigate('/expedientes', { replace: true });
+      // Vuelve a la vista anterior; si no hay historial interno, respalda en /expedientes.
+      if (window.history.state?.idx > 0) navigate(-1);
+      else navigate('/expedientes', { replace: true });
     } catch (err) {
       const msg =
         typeof err === 'object' &&
