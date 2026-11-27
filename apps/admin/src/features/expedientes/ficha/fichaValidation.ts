@@ -46,7 +46,15 @@ export function validateStepIdentidad(input: FichaIdentidadInput): StepValidatio
 
 export function validateStepDomicilio(input: DomicilioInput): StepValidationFailure | null {
   const error = validateDomicilio(input);
-  if (!error) return null;
+  if (!error) {
+    if (!input.numeroExterior.trim()) {
+      return {
+        error: 'Captura el número exterior del domicilio (usa "S/N" si no tiene).',
+        field: 'numeroExterior',
+      };
+    }
+    return null;
+  }
 
   const cp = input.codigoPostalForaneo.trim();
   if (input.asentamientoId !== null && cp.length > 0) {
