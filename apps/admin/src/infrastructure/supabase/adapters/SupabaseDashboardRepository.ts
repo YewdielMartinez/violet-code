@@ -224,7 +224,7 @@ export const supabaseDashboardRepository: DashboardRepository = {
       id: row.cita_id,
       programadaEn: row.programada_en,
       estado: row.estado,
-      prioridad: row.prioridad ?? null,
+      prioridad: null,
       areaClave: row.area_clave ?? null,
       areaNombre: AREA_LABELS[row.area_clave] ?? 'Área',
       usuariaNombre: row.nombre_completo || 'Usuaria',

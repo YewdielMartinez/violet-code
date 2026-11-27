@@ -9,6 +9,7 @@ import type {
   TablaConsultaAgresor,
 } from '@/domain/ports/AgresorRepository';
 import { supabase } from '../client';
+import { mapSupabaseError } from './errors';
 import {
   mapAgresorRow,
   mapAsentamientoRow,
@@ -18,27 +19,7 @@ import {
 } from './agresor.mapper';
 
 const AGRESOR_SELECT =
-  'id, ficha_id, nombres, apellido_paterno, apellido_materno, parentesco_id, parentesco_otro, asentamiento_id, codigo_postal, calle, numero_exterior, numero_interior, referencias, ocupacion_id, ocupacion_otra, tiene_consumo_droga, drogas, especificacion_droga, especificacion_arma, observaciones, activo, actualizado_en';
-
-interface PostgrestLikeError {
-  code?: string;
-  message?: string;
-}
-
-function mapSupabaseError(error: PostgrestLikeError): Error {
-  switch (error.code) {
-    case '42501':
-      return new Error('No tienes permisos para acceder o modificar datos de la persona agresora.');
-    case '23503':
-      return new Error('Referencia inválida o catálogo no disponible. Recarga e intenta de nuevo.');
-    case '23505':
-      return new Error('Este registro ya existe.');
-    case 'P0001':
-      return new Error(error.message || 'La operación no cumple las reglas de negocio.');
-    default:
-      return new Error('No se pudo completar la operación en el servidor. Intenta de nuevo.');
-  }
-}
+  'id, ficha_id, nombres, apellido_paterno, apellido_materno, parentesco_id, parentesco_otro, asentamiento_id, codigo_postal, calle, numero_exterior, numero_interior, referencias, ocupacion_id, ocupacion_otra, drogas, especificacion_droga, especificacion_arma, observaciones, activo, actualizado_en';
 
 export const supabaseAgresorRepository: AgresorRepository = {
   async listarPorFicha(fichaId: string): Promise<Agresor[]> {

@@ -25,7 +25,6 @@ export type AgresorRow = Pick<
   | 'referencias'
   | 'ocupacion_id'
   | 'ocupacion_otra'
-  | 'tiene_consumo_droga'
   | 'drogas'
   | 'especificacion_droga'
   | 'especificacion_arma'
@@ -64,14 +63,19 @@ function buildPayload(input: AgresorInput): Omit<AgresorInsertRow, 'ficha_id'> {
 
   const tieneConsumoDroga = input.tieneConsumoDroga ?? null;
   const drogasRaw = tieneConsumoDroga === true ? (input.drogas ?? []).filter(isTipoDroga) : [];
-  const drogas = drogasRaw.length > 0 ? Array.from(new Set(drogasRaw)) : null;
+  const drogas: TipoDroga[] | null =
+    tieneConsumoDroga === false
+      ? ['no_consume']
+      : drogasRaw.length > 0
+        ? Array.from(new Set(drogasRaw))
+        : null;
   const especificacionDroga =
     tieneConsumoDroga === true ? normalizeNullableText(input.especificacionDroga) : null;
 
   const especificacionArma = normalizeNullableText(input.especificacionArma);
 
   return {
-    nombres: input.nombres.trim(),
+    nombres: normalizeNullableText(input.nombres),
     apellido_paterno: normalizeNullableText(input.apellidoPaterno),
     apellido_materno: normalizeNullableText(input.apellidoMaterno),
     parentesco_id: input.parentescoId ?? null,
@@ -84,7 +88,6 @@ function buildPayload(input: AgresorInput): Omit<AgresorInsertRow, 'ficha_id'> {
     referencias: normalizeNullableText(input.referencias),
     ocupacion_id: input.ocupacionId ?? null,
     ocupacion_otra: normalizeNullableText(input.ocupacionOtra),
-    tiene_consumo_droga: tieneConsumoDroga,
     drogas,
     especificacion_droga: especificacionDroga,
     especificacion_arma: especificacionArma,
@@ -93,10 +96,14 @@ function buildPayload(input: AgresorInput): Omit<AgresorInsertRow, 'ficha_id'> {
 }
 
 export function mapAgresorRow(row: AgresorRow): Agresor {
+  const tieneConsumoDroga =
+    row.drogas === null || row.drogas.length === 0 ? null : !row.drogas.includes('no_consume');
+  const drogas = row.drogas?.includes('no_consume') ? null : mapDrogasFromRow(row.drogas);
+
   return {
     id: row.id,
     fichaId: row.ficha_id,
-    nombres: row.nombres,
+    nombres: row.nombres ?? '',
     apellidoPaterno: row.apellido_paterno,
     apellidoMaterno: row.apellido_materno,
     parentescoId: row.parentesco_id,
@@ -109,8 +116,8 @@ export function mapAgresorRow(row: AgresorRow): Agresor {
     referencias: row.referencias,
     ocupacionId: row.ocupacion_id,
     ocupacionOtra: row.ocupacion_otra,
-    tieneConsumoDroga: row.tiene_consumo_droga,
-    drogas: mapDrogasFromRow(row.drogas),
+    tieneConsumoDroga,
+    drogas,
     especificacionDroga: row.especificacion_droga,
     especificacionArma: row.especificacion_arma,
     observaciones: row.observaciones,

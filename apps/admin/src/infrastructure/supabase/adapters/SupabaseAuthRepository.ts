@@ -106,12 +106,10 @@ function toAuthSession(accessToken: string, expiresAtSeconds: number | undefined
 
 type UmecaCitaBaseRow = Database['public']['Functions']['get_umeca_citas']['Returns'][number];
 
-/**
- * `get_umeca_citas` añadirá `area_clave` y `area_nombre`; aún no están en `database.types.ts` (se regenera con
- * `supabase gen types`), así que se tipan aquí como opcionales.
- * TODO: retirar este tipo y usar el de `database.types.ts` al regenerar los tipos.
- */
-type UmecaCitaRow = UmecaCitaBaseRow & { area_clave?: string | null; area_nombre?: string | null };
+type UmecaCitaRow = Omit<UmecaCitaBaseRow, 'area_clave' | 'area_nombre'> & {
+  area_clave?: string | null;
+  area_nombre?: string | null;
+};
 
 export function mapUmecaCitaRow(row: UmecaCitaRow): UmecaCita {
   return {
