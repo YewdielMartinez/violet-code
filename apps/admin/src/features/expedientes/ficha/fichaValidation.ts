@@ -113,7 +113,9 @@ const AGRESOR_FIELD_ORDER: readonly AgresorValidationField[] = [
   'nombres',
   'apellidoPaterno',
   'apellidoMaterno',
+  'parentescoId',
   'parentescoOtro',
+  'ocupacionId',
   'ocupacionOtra',
   'codigoPostal',
   'calle',
@@ -143,6 +145,13 @@ export function validateStepAgresor(
 
   if (!input.apellidoPaterno.trim()) {
     errors.apellidoPaterno = 'El apellido paterno de la persona agresora es obligatorio.';
+  }
+  // Si se captura cualquier dato de la persona agresora, el vínculo y la ocupación también son obligatorios.
+  if (input.parentescoId === null) {
+    errors.parentescoId = 'El parentesco con la usuaria es obligatorio.';
+  }
+  if (input.ocupacionId === null) {
+    errors.ocupacionId = 'La ocupación de la persona agresora es obligatoria.';
   }
 
   const firstKey = AGRESOR_FIELD_ORDER.find((key) => Boolean(errors[key]));

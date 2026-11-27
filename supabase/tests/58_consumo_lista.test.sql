@@ -250,7 +250,9 @@ from public.guardar_agresor(
   null, null, null, null, null, null, null, null, null, null,
   array['cristal']::public.tipo_droga[],
   'Diario',
-  'frecuente'::public.consumo_alcohol
+  'frecuente'::public.consumo_alcohol,
+  p_parentesco_id => (select id from public.cat_parentesco order by id limit 1),
+  p_ocupacion_id => (select id from public.cat_ocupacion order by id limit 1)
 );
 
 select is(
