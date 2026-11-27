@@ -8,7 +8,6 @@ const loadExpedientes = () => import('@/features/expedientes/ExpedientesPage');
 const loadExpedienteDetail = () => import('@/features/expedientes/ExpedienteDetailPage');
 const loadNuevaFicha = () => import('@/features/expedientes/ficha/NuevaFichaPage');
 const loadAlertas = () => import('@/features/solicitudes/AlertasPage');
-const loadIntervenciones = () => import('@/features/intervenciones/IntervencionesPage');
 const loadPending = () => import('@/shared/ui/PendingModulePage');
 
 export const LoginPage = lazy(loadLogin);
@@ -18,7 +17,6 @@ export const ExpedientesPage = lazy(loadExpedientes);
 export const ExpedienteDetailPage = lazy(loadExpedienteDetail);
 export const NuevaFichaPage = lazy(loadNuevaFicha);
 export const AlertasPage = lazy(loadAlertas);
-export const IntervencionesPage = lazy(loadIntervenciones);
 export const PendingModulePage = lazy(loadPending);
 
 const started = new WeakSet<() => Promise<unknown>>();
@@ -35,7 +33,6 @@ const ROUTE_LOADERS: Record<string, () => Promise<unknown>> = {
   '/expedientes': loadExpedientes,
   '/expedientes/nuevo': loadNuevaFicha,
   '/solicitudes': loadAlertas,
-  '/intervenciones': loadIntervenciones,
 };
 
 /** Precarga el chunk de una ruta al pasar el cursor o enfocar un enlace de navegación. */
@@ -47,10 +44,10 @@ export function preloadPage(path: string): void {
   loadOnce(ROUTE_LOADERS[path] ?? loadPending);
 }
 
-const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadDirectory, loadNuevaFicha, loadAlertas, loadIntervenciones, loadPending];
+const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadDirectory, loadNuevaFicha, loadCanalizaciones, loadAlertas, loadIntervenciones, loadPending];
 
 function scheduleIdle(cb: () => void): () => void {
-  if (typeof window === 'undefined') return () => {};
+  if (typeof window === 'undefined') return () => { };
   if (typeof window.requestIdleCallback === 'function') {
     const id = window.requestIdleCallback(cb, { timeout: 4000 });
     return () => window.cancelIdleCallback(id);
@@ -64,9 +61,9 @@ function scheduleIdle(cb: () => void): () => void {
  * sin competir con la ruta actual (y respetando ahorro de datos).
  */
 export function preloadPages(): () => void {
-  if (typeof window === 'undefined' || typeof document === 'undefined') return () => {};
+  if (typeof window === 'undefined' || typeof document === 'undefined') return () => { };
   const nav = typeof navigator !== 'undefined' ? (navigator as Navigator & { connection?: { saveData?: boolean } }) : null;
-  if (nav?.connection?.saveData) return () => {};
+  if (nav?.connection?.saveData) return () => { };
 
   let index = 0;
   let cancel: (() => void) | null = null;

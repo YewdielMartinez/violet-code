@@ -62,7 +62,20 @@ export const NAVIGATION: NavPage[] = [
     mobile: true,
     allowedRoles: ATTENTION_AND_DIRECTION,
   },
-  //QUITE EL MENU DE INTERVENCIONES 
+  {
+    path: '/intervenciones',
+    label: 'Intervenciones',
+    icon: 'clinical_notes',
+    ready: true,
+    allowedRoles: ATTENTION_AND_DIRECTION,
+  },
+  {
+    path: '/canalizaciones',
+    label: 'Canalizaciones',
+    icon: 'alt_route',
+    ready: true,
+    allowedRoles: ATTENTION_AND_DIRECTION,
+  },
   {
     path: '/agenda',
     label: 'Agenda',
