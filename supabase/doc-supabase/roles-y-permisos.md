@@ -12,7 +12,7 @@ El sistema utiliza un modelo híbrido **RBAC + ABAC ligero**:
   - `area_id = auth_area_id()` (por ejemplo `nota_area` privada por área o informes por área).
   - Creación de `cita` (`agenda.crear` + `puede_crear_cita_en_area(area_id)`): `recepcion` en `trabajo_social`, `psicologia` y `juridico`; `juridico` y `psicologia` solo en su propia área; `titular` y `subdireccion` en cualquier área; `trabajo_social` en ninguna.
   - `activo = true`, `pre_registro.auth_user_id = auth.uid()` y `alerta.origen = 'app_movil'`.
-- **Actores fuera de `empleado.rol`:** UMECA (`public.usuario_externo` validado con `es_umeca()`) y la usuaria de la app móvil (`auth.users` + `pre_registro`, validada por propiedad con `auth.uid()`). Para ambos, `tiene_permiso()` siempre devuelve `false`.
+- **Actores fuera de `empleado.rol` y separación por `app_metadata.tipo` ([`20261128000500_44_tipos_de_cuenta.sql`](../migrations/20261128000500_44_tipos_de_cuenta.sql)):** cada cuenta en `auth.users` tiene `raw_app_meta_data.tipo` (`'empleado'`, `'externo'` o `'usuaria_app'` por defecto al registrarse). `es_empleado_activo()` y `auth_rol()` exigen `tipo = 'empleado'`, `es_umeca()` exige `tipo = 'externo'` y `es_usuaria_app()` exige `tipo = 'usuaria_app'`. Para externos y usuarias de la app, `tiene_permiso()` siempre devuelve `false`.
 
 ### Claves de permiso centralizadas en `tiene_permiso(p_permiso)`
 

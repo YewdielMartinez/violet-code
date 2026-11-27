@@ -59,64 +59,64 @@ end $$;
 -- 1-3. psicologia: crea en su area, no en juridico ni TS
 select pg_temp.as_user('11111111-1111-4111-8111-111111111104'); -- psicologia
 select lives_ok(
-  $$insert into public.cita (persona_id, area_id, programada_en) values ('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'psicologia'), '2099-09-01T10:00:00-07:00')$$,
+  $$select * from public.crear_cita('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'psicologia'), '2099-09-01T10:00:00-07:00')$$,
   'psicologia crea cita de psicologia'
 );
 select throws_ok(
-  $$insert into public.cita (persona_id, area_id, programada_en) values ('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'juridico'), '2099-09-02T10:00:00-07:00')$$,
+  $$select * from public.crear_cita('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'juridico'), '2099-09-02T10:00:00-07:00')$$,
   '42501', null, 'psicologia no crea cita de juridico'
 );
 select throws_ok(
-  $$insert into public.cita (persona_id, area_id, programada_en) values ('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'trabajo_social'), '2099-09-03T10:00:00-07:00')$$,
+  $$select * from public.crear_cita('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'trabajo_social'), '2099-09-03T10:00:00-07:00')$$,
   '42501', null, 'psicologia no crea cita de trabajo_social'
 );
 
 -- 4-6. titular crea en cualquier area
 select pg_temp.as_user('11111111-1111-4111-8111-111111111101'); -- titular
 select lives_ok(
-  $$insert into public.cita (persona_id, area_id, programada_en) values ('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'trabajo_social'), '2099-09-04T10:00:00-07:00')$$,
+  $$select * from public.crear_cita('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'trabajo_social'), '2099-09-04T10:00:00-07:00')$$,
   'titular crea cita de trabajo_social'
 );
 select lives_ok(
-  $$insert into public.cita (persona_id, area_id, programada_en) values ('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'psicologia'), '2099-09-05T10:00:00-07:00')$$,
+  $$select * from public.crear_cita('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'psicologia'), '2099-09-05T10:00:00-07:00')$$,
   'titular crea cita de psicologia'
 );
 select lives_ok(
-  $$insert into public.cita (persona_id, area_id, programada_en) values ('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'juridico'), '2099-09-06T10:00:00-07:00')$$,
+  $$select * from public.crear_cita('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'juridico'), '2099-09-06T10:00:00-07:00')$$,
   'titular crea cita de juridico'
 );
 
 -- 7-8. subdireccion crea en cualquier area
 select pg_temp.as_user('11111111-1111-4111-8111-111111111102'); -- subdireccion
 select lives_ok(
-  $$insert into public.cita (persona_id, area_id, programada_en) values ('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'trabajo_social'), '2099-09-07T10:00:00-07:00')$$,
+  $$select * from public.crear_cita('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'trabajo_social'), '2099-09-07T10:00:00-07:00')$$,
   'subdireccion crea cita de trabajo_social'
 );
 select lives_ok(
-  $$insert into public.cita (persona_id, area_id, programada_en) values ('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'juridico'), '2099-09-08T10:00:00-07:00')$$,
+  $$select * from public.crear_cita('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'juridico'), '2099-09-08T10:00:00-07:00')$$,
   'subdireccion crea cita de juridico'
 );
 
 -- 9-10. trabajo_social no crea (ni en su area ni en otra)
 select pg_temp.as_user('11111111-1111-4111-8111-111111111103'); -- trabajo_social
 select throws_ok(
-  $$insert into public.cita (persona_id, area_id, programada_en) values ('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'trabajo_social'), '2099-09-09T10:00:00-07:00')$$,
+  $$select * from public.crear_cita('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'trabajo_social'), '2099-09-09T10:00:00-07:00')$$,
   '42501', null, 'trabajo_social no crea cita de trabajo_social'
 );
 select throws_ok(
-  $$insert into public.cita (persona_id, area_id, programada_en) values ('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'psicologia'), '2099-09-10T10:00:00-07:00')$$,
+  $$select * from public.crear_cita('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'psicologia'), '2099-09-10T10:00:00-07:00')$$,
   '42501', null, 'trabajo_social no crea cita de psicologia'
 );
 
 -- 11-12. recepcion crea; juridico no crea en psicologia
 select pg_temp.as_user('11111111-1111-4111-8111-111111111106'); -- recepcion
 select lives_ok(
-  $$insert into public.cita (persona_id, area_id, programada_en) values ('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'psicologia'), '2099-09-11T10:00:00-07:00')$$,
+  $$select * from public.crear_cita('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'psicologia'), '2099-09-11T10:00:00-07:00')$$,
   'recepcion crea cita de psicologia'
 );
 select pg_temp.as_user('11111111-1111-4111-8111-111111111105'); -- juridico
 select throws_ok(
-  $$insert into public.cita (persona_id, area_id, programada_en) values ('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'psicologia'), '2099-09-12T10:00:00-07:00')$$,
+  $$select * from public.crear_cita('97000000-0000-4000-a000-000000000101', (select id from public.cat_area where clave = 'psicologia'), '2099-09-12T10:00:00-07:00')$$,
   '42501', null, 'juridico no crea cita de psicologia'
 );
 

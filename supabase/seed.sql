@@ -320,18 +320,18 @@ begin
   -- 11. Citas (incluye asistida, cancelada->reagendada para mañana y UMECA)
   -- Exp. 1 queda sin cita futura para aparecer en vista_lista_urgencias.
   insert into public.cita (
-    id, persona_id, reagendada_de, area_id, programada_en, prioridad,
+    id, persona_id, reagendada_de, area_id, programada_en,
     recomendada_por, estado, confirmada_en, motivo_cancelacion, origen, creado_por
   ) values
-    (v_cita_1_psic, v_per_1, null, v_area_psic, now() - interval '3 days', 'alta',
+    (v_cita_1_psic, v_per_1, null, v_area_psic, now() - interval '3 days',
       'Trabajo Social', 'asistio', now() - interval '4 days', null, 'regular', v_uid_recep),
-    (v_cita_2_orig, v_per_2, null, v_area_psic, now() - interval '1 day', 'media',
+    (v_cita_2_orig, v_per_2, null, v_area_psic, now() - interval '1 day',
       'Trabajo Social', 'reagendada', null, 'Usuaria solicitó cambio por horario laboral', 'regular', v_uid_recep),
-    (v_cita_2_reag, v_per_2, v_cita_2_orig, v_area_psic, now() + interval '1 day', 'media',
+    (v_cita_2_reag, v_per_2, v_cita_2_orig, v_area_psic, now() + interval '1 day',
       'Trabajo Social', 'agendada', null, null, 'regular', v_uid_recep),
-    (v_cita_2_umeca, v_per_2, null, v_area_jur, now() + interval '3 days', 'alta',
+    (v_cita_2_umeca, v_per_2, null, v_area_jur, now() + interval '3 days',
       'UMECA', 'confirmada', now(), null, 'umeca', v_uid_jur),
-    (v_cita_3_ts, v_per_3, null, v_area_ts, now() - interval '15 days', 'baja',
+    (v_cita_3_ts, v_per_3, null, v_area_ts, now() - interval '15 days',
       'Recepción', 'asistio', now() - interval '15 days', null, 'regular', v_uid_recep);
 
   -- 12. Atenciones (Hoja de Seguimiento), Historial Clínico y Notas Privadas

@@ -4,7 +4,7 @@
 
 La app Kotlin habla con Supabase por HTTP (Retrofit + OkHttp en `core/data`), no con un SDK. Por eso aquí los ejemplos son peticiones HTTP a PostgREST. Las reglas de parámetros y errores son las mismas que en el resto de la referencia.
 
-La usuaria **no** es empleada: no tiene `empleado.rol` y `tiene_permiso()` siempre le devuelve `false`. Todo lo que puede hacer se decide por **propiedad** (`auth.uid()`): su cuenta, su pre-registro y sus alertas.
+La usuaria **no** es empleada: su cuenta en `auth.users` lleva `app_metadata.tipo = 'usuaria_app'` (asignado automáticamente por trigger en servidor al registrarse), no tiene `empleado.rol`, `es_usuaria_app()` devuelve `true` y `tiene_permiso()` siempre le devuelve `false`. Todo lo que puede hacer se decide por **propiedad** (`auth.uid()`): su cuenta, su pre-registro y sus alertas.
 
 ---
 
@@ -24,7 +24,50 @@ Content-Type: application/json
 
 ---
 
-## `pre_registro` (insert)
+## `registrar_mi_perfil` (RPC — reemplaza el `insert` directo a `pre_registro`)
+
+> El `insert` directo a `pre_registro` está bloqueado (`with check (false)`). La usuaria registra su perfil con este RPC, aceptando el aviso de privacidad.
+
+| Permiso | Quién | Tipo | Bitácora |
+|---|---|---|---|
+| `es_usuaria_app()` + `auth.uid()` | Usuaria de la app móvil | Escritura | Sí, por trigger |
+
+```http
+POST /rest/v1/rpc/registrar_mi_perfil
+Content-Type: application/json
+
+{
+  "p_curp": "TOVE960820MSLVRN03",
+  "p_nombres": "Elena",
+  "p_apellido_paterno": "Torres",
+  "p_apellido_materno": "Vázquez",
+  "p_celular": "6681000013",
+  "p_aviso_privacidad_aceptado": true
+}
+```
+
+- Nunca devuelve `persona_id` ni `estado`. Si la CURP ya existe en SEMUJERES, se liga silenciosamente en BD.
+- `42501` si no es cuenta `usuaria_app`; `23505` si ya tiene perfil; `23514` si falta aviso de privacidad o formato inválido.
+
+---
+
+## `get_mi_estado_app` y `desactivar_mi_cuenta`
+
+```http
+POST /rest/v1/rpc/get_mi_estado_app
+{}
+```
+Devuelve `{ "tiene_perfil": boolean, "puede_enviar_alerta": boolean, "alertas_ultima_hora": number }`.
+
+```http
+POST /rest/v1/rpc/desactivar_mi_cuenta
+{}
+```
+Desactiva el `pre_registro` y bloquea la cuenta para impedir futuras alertas.
+
+---
+
+## `pre_registro` (insert — DEPRECADO)
 
 > La usuaria se registra en la app con sus datos básicos. Es un `insert` directo sobre la tabla.
 
@@ -129,7 +172,33 @@ POST /rest/v1/rpc/actualizar_mi_pre_registro
 
 ---
 
-## `alerta` (insert)
+## `enviar_alerta` (RPC — reemplaza el `insert` directo a `alerta`)
+
+> El botón de auxilio. El `insert` directo sobre `alerta` está bloqueado para usuarias de la app (`42501`). Este RPC resuelve `pre_registro_id` desde la sesión y aplica un límite de **3 alertas por hora**.
+
+| Permiso | Quién | Tipo | Bitácora |
+|---|---|---|---|
+| `es_usuaria_app()` + perfil activo | Usuaria de la app móvil | Escritura | Sí, por trigger |
+
+```http
+POST /rest/v1/rpc/enviar_alerta
+Content-Type: application/json
+
+{
+  "p_asentamiento_id": null
+}
+```
+
+- `23514` si la usuaria no tiene perfil activo o ya envió 3 alertas en la última hora.
+
+### Configuración de Auth (local y proyecto remoto)
+En `supabase/config.toml` (y en el Dashboard de Supabase para el proyecto remoto en **Authentication → Providers / Sign In**):
+- **Confirmación de correo activa:** `enable_confirmations = true` en `[auth.email]`.
+- **Contraseña mínima de 8 caracteres:** `minimum_password_length = 8` en `[auth]`.
+
+---
+
+## `alerta` (insert — DEPRECADO para la app móvil)
 
 > El botón de auxilio. Inserta una alerta que llega a la cola de la línea 24/7.
 

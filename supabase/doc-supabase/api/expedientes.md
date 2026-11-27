@@ -138,8 +138,9 @@ interface BuscarExpedientesRow {
   persona_id: string;
   curp: string;
   nombre_completo: string;
-  sexo: "H" | "M";
-  fecha_nacimiento: string; // 'YYYY-MM-DD'
+  sexo: 'H' | 'M';
+  fecha_nacimiento: string;          // 'YYYY-MM-DD'
+  edad: number | null;               // calculada en servidor (America/Mazatlan)
   en_lista_urgencias: boolean;
   coincidencia: "curp" | "folio" | "nombre";
   similitud: number; // 1.0 en CURP/folio; 0..1 en nombre
@@ -330,6 +331,8 @@ interface ExpedienteDetalle {
     id: string;
     folio: string;
     estado: EstadoFicha;
+    prioridad: 'alta' | 'media' | 'baja' | null;
+    prioridad_actualizada_en: string | null;
     registrada_en: string;
     aviso_privacidad_aceptado_en: string;
     estado_civil: EstadoCivil | null;
@@ -430,6 +433,32 @@ interface ExpedienteDetalle {
 | `23514` | `p_ficha_id` nulo, expediente inexistente o inactivo | `error.message` ("Expediente no encontrado o inactivo") |
 
 **En el front:** `SupabaseFichaRepository.getDetail` (cambiar implementación) · hook `expedientes/useFichaDetail` · `queryKey ['expedientes','detail',id]`.
+
+---
+
+## `actualizar_domicilio`
+
+> Actualiza el domicilio actual de una persona (marca el anterior como `es_actual = false` y crea el nuevo con `es_actual = true`). Bloquea expedientes archivados (`23514`) y aplica concurrencia optimista (`23505`).
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+|---|---|---|---|---|
+| `expediente.escribir` | Tit, Sub, TS | Escritura | Sí, por trigger | `_49_rpc_actualizar_domicilio` |
+
+```ts
+const { data, error } = await supabase
+  .rpc('actualizar_domicilio', {
+    p_persona_id: personaId,
+    p_actualizado_en: domicilioActual.actualizado_en,
+    p_asentamiento_id: asentamientoId,
+    p_calle: calle,
+    p_numero_exterior: numExt,
+    p_numero_interior: numInt,
+    p_referencias: referencias,
+    p_codigo_postal: null,
+    p_zona: 'urbana',
+  })
+  .single();
+```
 
 ---
 
@@ -755,3 +784,32 @@ const { data, error } = await supabase
 ```
 
 **Errores:** `42501` (Psi, Jur, Rec, UMECA) · `23514` (expediente archivado, apoyo/material inconsistentes o datos de aportantes inválidos).
+
+---
+
+## `cambiar_prioridad_expediente`
+
+> Actualiza la prioridad operativa del expediente (`ficha_registro.prioridad` y `prioridad_actualizada_en`). Disponible para todos los roles operativos excepto Recepción, UMECA y app.
+
+| Permiso | Roles | Tipo | Bitácora | Migración |
+|---|---|---|---|---|
+| `expediente.ver` | Tit, Sub, TS, Psi, Jur | Escritura | Sí (`'actualizar'` sobre `ficha_registro`) | `_50_prioridad_en_expediente` |
+
+**Llamada**
+
+```ts
+const { data, error } = await supabase
+  .rpc('cambiar_prioridad_expediente', {
+    p_ficha_id: fichaId,
+    p_prioridad: 'alta',
+  })
+  .single();
+// data: { ficha_id, prioridad, prioridad_actualizada_en }
+```
+
+**Errores**
+
+| Código | Cuándo | Mensaje UI |
+|---|---|---|
+| `42501` | Recepción, UMECA, app, inactivo o sin sesión | Fijo de permiso |
+| `23514` | `p_ficha_id` nulo, expediente inexistente/inactivo o expediente archivado | `error.message` |

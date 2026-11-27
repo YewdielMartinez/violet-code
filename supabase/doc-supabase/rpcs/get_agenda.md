@@ -1,6 +1,6 @@
 # RPC: `public.get_agenda`
 
-- **Migración:** `supabase/migrations/20261126001200_22_rpc_agenda.sql` (Recepción con Jurídico desde `supabase/migrations/20261127000900_40_agenda_permisos_creacion.sql`)
+- **Migración:** `supabase/migrations/20261128001800_60_integrar_develop_y_supabase.sql` *(versión vigente: base de `50_prioridad_en_expediente.sql` y `47_tiene_permiso_agenda_alertas.sql` + alcance de Recepción con Jurídico de `40_agenda_permisos_creacion.sql`; origen en `22_rpc_agenda.sql`)*
 - **Cubre:** `RF-06`, `RN-04`, `RN-06` (SF-05, SF-06)
 
 ## Actores autorizados
@@ -23,7 +23,7 @@
 
 ## Salida
 Arreglo ordenado por `programada_en ASC`:
-- `cita_id`, `programada_en`, `estado`, `prioridad`
+- `cita_id`, `programada_en`, `estado`
 - `area_id`, `area_clave`, `recomendada_por`, `reagendada_de`, `origen`
 - `persona_id`, `nombre_completo`, `celular`
 

@@ -1,4 +1,4 @@
-
+﻿
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
@@ -227,14 +227,14 @@ isOneToOne: false
                   ]
                 },"atencion": {
                   Row: {
-                    "acciones_realizadas": string | null,"activo": boolean,"actualizado_en": string,"area_id": number,"atendida_en": string,"atendida_por": string | null,"celular": string | null,"cita_id": string | null,"creado_en": string,"creado_por": string | null,"domicilio_id": string | null,"estado_civil": Database["public"]['Enums']["estado_civil"] | null,"ficha_id": string,"id": string,"observaciones": string | null,"ocupacion_id": number | null,"ocupacion_otra": string | null,"prioridad": Database["public"]['Enums']["prioridad_nivel"] | null,"proxima_accion": string | null,"tipo_atencion_id": number
+                    "acciones_realizadas": string | null,"activo": boolean,"actualizado_en": string,"area_id": number,"atendida_en": string,"atendida_por": string | null,"celular": string | null,"cita_id": string | null,"creado_en": string,"creado_por": string | null,"domicilio_id": string | null,"estado_civil": Database["public"]['Enums']["estado_civil"] | null,"ficha_id": string,"folio_seguimiento": string,"id": string,"observaciones": string | null,"ocupacion_id": number | null,"ocupacion_otra": string | null,"prioridad": Database["public"]['Enums']["prioridad_nivel"] | null,"proxima_accion": string | null,"tipo_atencion_id": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "acciones_realizadas"?: string | null,"activo"?: boolean,"actualizado_en"?: string,"area_id": number,"atendida_en"?: string,"atendida_por"?: string | null,"celular"?: string | null,"cita_id"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"domicilio_id"?: string | null,"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"ficha_id": string,"id"?: string,"observaciones"?: string | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"prioridad"?: Database["public"]['Enums']["prioridad_nivel"] | null,"proxima_accion"?: string | null,"tipo_atencion_id": number
+                    "acciones_realizadas"?: string | null,"activo"?: boolean,"actualizado_en"?: string,"area_id": number,"atendida_en"?: string,"atendida_por"?: string | null,"celular"?: string | null,"cita_id"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"domicilio_id"?: string | null,"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"ficha_id": string,"folio_seguimiento"?: string,"id"?: string,"observaciones"?: string | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"prioridad"?: Database["public"]['Enums']["prioridad_nivel"] | null,"proxima_accion"?: string | null,"tipo_atencion_id": number
                   }
                   Update: {
-                    "acciones_realizadas"?: string | null,"activo"?: boolean,"actualizado_en"?: string,"area_id"?: number,"atendida_en"?: string,"atendida_por"?: string | null,"celular"?: string | null,"cita_id"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"domicilio_id"?: string | null,"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"ficha_id"?: string,"id"?: string,"observaciones"?: string | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"prioridad"?: Database["public"]['Enums']["prioridad_nivel"] | null,"proxima_accion"?: string | null,"tipo_atencion_id"?: number
+                    "acciones_realizadas"?: string | null,"activo"?: boolean,"actualizado_en"?: string,"area_id"?: number,"atendida_en"?: string,"atendida_por"?: string | null,"celular"?: string | null,"cita_id"?: string | null,"creado_en"?: string,"creado_por"?: string | null,"domicilio_id"?: string | null,"estado_civil"?: Database["public"]['Enums']["estado_civil"] | null,"ficha_id"?: string,"folio_seguimiento"?: string,"id"?: string,"observaciones"?: string | null,"ocupacion_id"?: number | null,"ocupacion_otra"?: string | null,"prioridad"?: Database["public"]['Enums']["prioridad_nivel"] | null,"proxima_accion"?: string | null,"tipo_atencion_id"?: number
                   }
                   Relationships: [
                     {
@@ -969,7 +969,12 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "actualizar_mi_pre_registro":
+            "actualizar_domicilio":
+{ Args: { "p_actualizado_en"?: string,"p_asentamiento_id"?: number,"p_calle"?: string,"p_codigo_postal"?: string,"p_numero_exterior"?: string,"p_numero_interior"?: string,"p_persona_id": string,"p_referencias"?: string,"p_zona"?: Database["public"]['Enums']["zona_geografica"] }; Returns: {
+              "actualizado_en": string,"domicilio_id": string,"es_actual": boolean,"persona_id": string
+            }[]
+                           },
+"actualizar_mi_pre_registro":
 { Args: { "p_apellido_materno"?: string,"p_apellido_paterno"?: string,"p_celular"?: string,"p_nombres"?: string }; Returns: {
               "actualizado_en": string,"apellido_materno": string,"apellido_paterno": string,"celular": string,"curp": string,"id": string,"nombres": string
             }[]
@@ -993,15 +998,21 @@ isOneToOne: false
 "auth_rol":
 { Args: Record<PropertyKey, never>; Returns: Database["public"]['Enums']["rol_empleado"]
                            },
+"auth_tipo_cuenta":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
 "buscar_expedientes":
 { Args: { "p_incluir_archivados"?: boolean,"p_limite"?: number,"p_termino": string }; Returns: {
-              "coincidencia": string,"curp": string,"en_lista_urgencias": boolean,"estado": Database["public"]['Enums']["estado_ficha"],"fecha_nacimiento": string,"ficha_id": string,"folio": string,"nombre_completo": string,"persona_id": string,"sexo": string,"similitud": number
+              "coincidencia": string,"curp": string,"edad": number,"en_lista_urgencias": boolean,"estado": Database["public"]['Enums']["estado_ficha"],"fecha_nacimiento": string,"ficha_id": string,"folio": string,"nombre_completo": string,"persona_id": string,"sexo": string,"similitud": number
             }[]
                            },
 "buscar_pre_registro_por_curp":
 { Args: { "p_curp": string }; Returns: {
               "apellido_materno": string,"apellido_paterno": string,"celular": string,"curp": string,"entidad_nacimiento": string,"fecha_nacimiento": string,"nombres": string,"persona_id": string,"pre_registro_id": string,"sexo": string
             }[]
+                           },
+"calcular_edad":
+{ Args: { "p_fecha": string }; Returns: number
                            },
 "cambiar_estado_cita":
 { Args: { "p_cita_id": string,"p_estado": Database["public"]['Enums']["estado_cita"],"p_motivo"?: string }; Returns: {
@@ -1013,9 +1024,22 @@ isOneToOne: false
               "actualizado_en": string,"derivacion_id": string,"estado": Database["public"]['Enums']["estado_derivacion"]
             }[]
                            },
+"corregir_seguimiento":
+{ Args: { "p_acciones_realizadas"?: string,"p_actualizado_en": string,"p_atencion_id": string,"p_observaciones"?: string,"p_prioridad"?: Database["public"]['Enums']["prioridad_nivel"],"p_proxima_accion"?: string,"p_tipo_atencion_id"?: number }; Returns: {
+              "actualizado_en": string,"atencion_id": string,"folio_seguimiento": string
+            }[]
+                           },
 "crear_ficha_completa":
 { Args: { "p_payload": Json }; Returns: {
               "ficha_id": string,"folio": string,"persona_id": string
+            }[]
+                           },
+"desactivar_mi_cuenta":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"enviar_alerta":
+{ Args: { "p_asentamiento_id"?: number }; Returns: {
+              "alerta_id": string,"creado_en": string,"estado": Database["public"]['Enums']["estado_alerta"]
             }[]
                            },
 "es_area_atencion":
@@ -1033,7 +1057,13 @@ isOneToOne: false
 "es_umeca":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"es_usuaria_app":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "generar_folio_ficha":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"generar_folio_seguimiento":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "get_actividades_preventivas":
@@ -1054,6 +1084,11 @@ isOneToOne: false
 "get_cola_alertas":
 { Args: { "p_estados"?: (Database["public"]['Enums']["estado_alerta"])[],"p_limite"?: number }; Returns: {
               "alerta_id": string,"asentamiento_nombre": string,"atendida_por_nombre": string,"celular": string,"creado_en": string,"estado": Database["public"]['Enums']["estado_alerta"],"ficha_id": string,"folio": string,"nombre_completo": string,"origen": Database["public"]['Enums']["origen_alerta"],"persona_id": string,"prioridad": Database["public"]['Enums']["prioridad_nivel"],"tiene_orden_vigente": boolean,"tomada_en": string
+            }[]
+                           },
+"get_contexto_seguimiento":
+{ Args: { "p_cita_id": string }; Returns: {
+              "edad": number,"es_primera_vez_area": boolean,"ficha_id": string,"folio_expediente": string,"nombre_persona": string,"tiene_historial_clinico": boolean,"tiene_orden_vigente": boolean,"ultima_proxima_accion": string,"ultimo_folio_seguimiento": string
             }[]
                            },
 "get_derivaciones":
@@ -1084,6 +1119,11 @@ isOneToOne: false
               "asentamiento_id": number,"codigo_postal": string,"estado": string,"latitud": number,"longitud": number,"municipio": string,"nombre": string,"tipo_asentamiento": string,"total_actividades": number,"total_alertas": number,"total_expedientes": number
             }[]
                            },
+"get_mi_estado_app":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "alertas_ultima_hora": number,"puede_enviar_alerta": boolean,"tiene_perfil": boolean
+            }[]
+                           },
 "get_mi_pre_registro":
 { Args: Record<PropertyKey, never>; Returns: {
               "apellido_materno": string,"apellido_paterno": string,"aviso_privacidad_aceptado_en": string,"celular": string,"creado_en": string,"curp": string,"id": string,"nombres": string
@@ -1110,9 +1150,14 @@ isOneToOne: false
 "registrar_consulta":
 { Args: { "p_registro_id": string,"p_tabla": string }; Returns: undefined
                            },
+"registrar_mi_perfil":
+{ Args: { "p_apellido_materno"?: string,"p_apellido_paterno": string,"p_aviso_privacidad_aceptado"?: boolean,"p_celular"?: string,"p_curp": string,"p_nombres": string }; Returns: {
+              "apellido_materno": string,"apellido_paterno": string,"aviso_privacidad_aceptado_en": string,"celular": string,"creado_en": string,"curp": string,"id": string,"nombres": string
+            }[]
+                           },
 "registrar_seguimiento":
 { Args: { "p_acciones_realizadas"?: string,"p_cita_id"?: string,"p_ficha_id": string,"p_observaciones"?: string,"p_prioridad"?: Database["public"]['Enums']["prioridad_nivel"],"p_proxima_accion"?: string,"p_proxima_cita_en"?: string,"p_tipo_atencion_id"?: number }; Returns: {
-              "atencion_id": string,"cita_proxima_id": string,"es_primera_vez_area": boolean,"tiene_historial_clinico": boolean
+              "atencion_id": string,"cita_proxima_id": string,"es_primera_vez_area": boolean,"folio_seguimiento": string,"tiene_historial_clinico": boolean
             }[]
                            },
 "tiene_orden_vigente":

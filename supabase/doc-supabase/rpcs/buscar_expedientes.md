@@ -1,6 +1,6 @@
 # `buscar_expedientes`
 
-- **Migración:** [`20261126000700_17_rpc_busqueda_expedientes.sql`](../../migrations/20261126000700_17_rpc_busqueda_expedientes.sql)
+- **Migración:** [`20261128000900_48_edad_en_expediente.sql`](../../migrations/20261128000900_48_edad_en_expediente.sql) *(actualiza [`20261126000700_17_rpc_busqueda_expedientes.sql`](../../migrations/20261126000700_17_rpc_busqueda_expedientes.sql))*
 - **Permiso RBAC:** `tiene_permiso('expediente.ver')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`, `psicologia`, `juridico` (`recepcion` y `umeca` denegados).
 
@@ -22,6 +22,7 @@
 | `nombre_completo` | `text` | Nombre completo concatenado. |
 | `sexo` | `text` | `'H'` o `'M'`. |
 | `fecha_nacimiento` | `date` | Fecha de nacimiento calculada desde CURP. |
+| `edad` | `integer` | Edad calculada en servidor (`calcular_edad()`), `null` si falta `fecha_nacimiento`. |
 | `en_lista_urgencias` | `boolean` | `true` si la ficha aparece en `vista_lista_urgencias`. |
 | `coincidencia` | `text` | `'curp'`, `'folio'` o `'nombre'`. |
 | `similitud` | `real` | Puntuación `0..1` (`1.0` en CURP/folio; `pg_trgm` + `unaccent` en nombre). |

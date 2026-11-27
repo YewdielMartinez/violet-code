@@ -43,6 +43,7 @@ Referencia técnica del modelo relacional, reglas de integridad, auditoría y co
 | [20261126001900_29_recepcion_sin_curp.sql](../migrations/20261126001900_29_recepcion_sin_curp.sql) | Restringe `persona_select` a `tiene_permiso('expediente.ver')` para no exponer CURP directa a Recepción. |
 | [20261126002000_30_revoke_anon_tables.sql](../migrations/20261126002000_30_revoke_anon_tables.sql) | Revoca privilegios SQL por defecto de `anon` sobre tablas, vistas y secuencias de `public` (y `DEFAULT PRIVILEGES`). |
 | [20261126002100_31_hardening_rls_e_indices.sql](../migrations/20261126002100_31_hardening_rls_e_indices.sql) | Inmutabilidad en Storage (elimina `update`), `(select ...)` en políticas faltantes, índices de búsqueda y privilegios por defecto de funciones. |
+| [20261128001800_60_integrar_develop_y_supabase.sql](../migrations/20261128001800_60_integrar_develop_y_supabase.sql) | Integra las líneas develop y supabase: versión final combinada de `get_agenda`, `cambiar_estado_cita`, `reagendar_cita`, `registrar_seguimiento` y `crear_cita` (base de la 47/50/51/54 + regla de agenda de la 40/42: Recepción ve, gestiona y crea en TS, Psicología y Jurídico), `get_expediente_detalle` (58 + edad de la 48 + prioridad de la 50) y `crear_ficha_completa` (59 + prioridad de la 50). |
 | [20261127000100_32_permisos_sprint02.sql](../migrations/20261127000100_32_permisos_sprint02.sql) | Agrega claves RBAC del Sprint 02 (`canalizacion.crear`, `expediente.reabrir`, `seguimiento.corregir`) en `tiene_permiso()`. |
 
 ---
