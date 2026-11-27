@@ -6,25 +6,43 @@ interface PasswordFieldProps {
   onChange: (value: string) => void;
   invalid?: boolean;
   describedBy?: string;
+  /** Etiqueta visible (por defecto «Contraseña», la del login). */
+  label?: string;
+  name?: string;
+  autoComplete?: string;
+  placeholder?: string;
+  /** Atributos `data-*` extra en el contenedor (p. ej. `data-usuario-field` para enfocar el campo inválido). */
+  dataAttrs?: Record<`data-${string}`, string>;
 }
 
 /** Campo de contraseña de motion-kit (.mk-field) con el botón de ver/ocultar DENTRO del campo. */
-export function PasswordField({ value, onChange, invalid, describedBy }: PasswordFieldProps) {
+export function PasswordField({
+  value,
+  onChange,
+  invalid,
+  describedBy,
+  label = 'Contraseña',
+  name = 'password',
+  autoComplete = 'current-password',
+  placeholder,
+  dataAttrs,
+}: PasswordFieldProps) {
   const id = useId();
   const [visible, setVisible] = useState(false);
 
   return (
-    <div className="mk-field">
+    <div className="mk-field" {...dataAttrs}>
       <label htmlFor={id} className="mk-field__label">
-        Contraseña
+        {label}
       </label>
       <div className="relative">
         <input
           id={id}
           type={visible ? 'text' : 'password'}
-          name="password"
-          autoComplete="current-password"
+          name={name}
+          autoComplete={autoComplete}
           required
+          placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           aria-invalid={invalid || undefined}

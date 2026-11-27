@@ -14,6 +14,7 @@ import {
   LoginPage,
   NuevaFichaPage,
   PendingModulePage,
+  UsuariosPage,
   preloadPage,
 } from './pages';
 
@@ -118,6 +119,7 @@ const READY: Record<string, ComponentType> = {
   '/agenda': AgendaPage,
   '/actividades': ActividadesPage,
   '/intervenciones': IntervencionesPage,
+  '/usuarios': UsuariosPage,
 };
 
 // Sin esqueleto: las páginas ya están precargadas; si alguna tarda, no se muestra un parpadeo intermedio.
