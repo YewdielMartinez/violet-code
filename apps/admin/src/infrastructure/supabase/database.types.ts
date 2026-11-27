@@ -1029,6 +1029,11 @@ isOneToOne: false
 "desactivar_mi_cuenta":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"enviar_alerta":
+{ Args: { "p_asentamiento_id"?: number }; Returns: {
+              "alerta_id": string,"creado_en": string,"estado": Database["public"]['Enums']["estado_alerta"]
+            }[]
+                           },
 "es_area_atencion":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },

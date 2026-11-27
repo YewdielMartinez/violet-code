@@ -6,7 +6,7 @@ Estados: `nueva → tomada → atendida`. Orígenes: `app_movil`, `telefono`, `p
 
 | Paso | Cómo | Quién |
 |---|---|---|
-| Alta desde la app | `.from('alerta').insert` (ver [app-movil.md](./app-movil.md#alerta-insert)) | Usuaria de la app |
+| Alta desde la app | `POST /rest/v1/rpc/enviar_alerta` (ver [app-movil.md](./app-movil.md#enviar_alerta)) | Usuaria de la app (`es_usuaria_app()`) |
 | Alta por teléfono o presencial | `.from('alerta').insert` con `origen: 'telefono' \| 'presencial'` | Tit, Sub, Jur (`alerta.atender`) |
 | Ver la cola | `get_cola_alertas` | Tit, Sub, Jur, TS, Psi |
 | Tomar | `tomar_alerta` | Tit, Sub, Jur |

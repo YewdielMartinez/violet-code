@@ -158,10 +158,9 @@ select pg_temp.as_user('97000000-0000-4000-a000-000000000011');
 select set_config('test.pre_1_id', public.mi_pre_registro_id()::text, true);
 select lives_ok(
   $$
-    insert into public.alerta (pre_registro_id, origen)
-    values (public.mi_pre_registro_id(), 'app_movil')
+    select * from public.enviar_alerta(null)
   $$,
-  'la usuaria app puede crear alerta app_movil usando mi_pre_registro_id()'
+  'la usuaria app puede crear alerta app_movil mediante enviar_alerta()'
 );
 
 select is(
@@ -181,8 +180,7 @@ select * from public.registrar_mi_perfil(
   true
 );
 
-insert into public.alerta (pre_registro_id, origen)
-values (public.mi_pre_registro_id(), 'app_movil');
+select * from public.enviar_alerta(null);
 
 select is(
   (select count(*)::integer from public.alerta),

@@ -111,10 +111,11 @@ select throws_ok(
 );
 
 -- 6. Prioridad inicial: Patricia (con orden vigente) -> alerta app_movil entra en 'alta'
-select pg_temp.as_user('93000000-0000-4000-a000-000000000011');
+reset role;
 insert into public.alerta (id, origen, pre_registro_id)
 values ('93000000-0000-4000-a000-000000000501', 'app_movil', '93000000-0000-4000-a000-000000000401');
 
+select pg_temp.as_user('93000000-0000-4000-a000-000000000011');
 select is(
   (select prioridad from public.alerta where id = '93000000-0000-4000-a000-000000000501'),
   'alta'::public.prioridad_nivel,
@@ -122,10 +123,11 @@ select is(
 );
 
 -- 7. Prioridad inicial: Valeria (sin orden) -> alerta entra en 'media'
-select pg_temp.as_user('93000000-0000-4000-a000-000000000012');
+reset role;
 insert into public.alerta (id, origen, pre_registro_id)
 values ('93000000-0000-4000-a000-000000000502', 'app_movil', '93000000-0000-4000-a000-000000000402');
 
+select pg_temp.as_user('93000000-0000-4000-a000-000000000012');
 select is(
   (select prioridad from public.alerta where id = '93000000-0000-4000-a000-000000000502'),
   'media'::public.prioridad_nivel,

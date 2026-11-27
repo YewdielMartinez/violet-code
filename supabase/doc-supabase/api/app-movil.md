@@ -172,7 +172,33 @@ POST /rest/v1/rpc/actualizar_mi_pre_registro
 
 ---
 
-## `alerta` (insert)
+## `enviar_alerta` (RPC — reemplaza el `insert` directo a `alerta`)
+
+> El botón de auxilio. El `insert` directo sobre `alerta` está bloqueado para usuarias de la app (`42501`). Este RPC resuelve `pre_registro_id` desde la sesión y aplica un límite de **3 alertas por hora**.
+
+| Permiso | Quién | Tipo | Bitácora |
+|---|---|---|---|
+| `es_usuaria_app()` + perfil activo | Usuaria de la app móvil | Escritura | Sí, por trigger |
+
+```http
+POST /rest/v1/rpc/enviar_alerta
+Content-Type: application/json
+
+{
+  "p_asentamiento_id": null
+}
+```
+
+- `23514` si la usuaria no tiene perfil activo o ya envió 3 alertas en la última hora.
+
+### Configuración de Auth (local y proyecto remoto)
+En `supabase/config.toml` (y en el Dashboard de Supabase para el proyecto remoto en **Authentication → Providers / Sign In**):
+- **Confirmación de correo activa:** `enable_confirmations = true` en `[auth.email]`.
+- **Contraseña mínima de 8 caracteres:** `minimum_password_length = 8` en `[auth]`.
+
+---
+
+## `alerta` (insert — DEPRECADO para la app móvil)
 
 > El botón de auxilio. Inserta una alerta que llega a la cola de la línea 24/7.
 
