@@ -130,11 +130,13 @@ export default function ExpedientesPage() {
       en_seguimiento: 0,
       prioritarios: 0,
       cerrado: 0,
+      archivado: 0,
     };
     for (const e of list) {
       if (e.estado === 'abierto') next.abierto++;
       else if (e.estado === 'en_seguimiento') next.en_seguimiento++;
       else if (e.estado === 'cerrado') next.cerrado++;
+      else if (e.estado === 'archivado') next.archivado++;
       if (e.enListaUrgencias) next.prioritarios++;
     }
     return next;

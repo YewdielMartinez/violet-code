@@ -1,7 +1,7 @@
 import type { DataAction, DataTableProps } from '@yewdiel21/motion-kit/react';
 import { ESTADO_FICHA_LABELS } from '../api';
 
-export type QuickFilter = 'todos' | 'abierto' | 'en_seguimiento' | 'prioritarios' | 'cerrado';
+export type QuickFilter = 'todos' | 'abierto' | 'en_seguimiento' | 'prioritarios' | 'cerrado' | 'archivado';
 
 export interface ExpedienteRow extends Record<string, unknown> {
   id: string;
@@ -54,6 +54,7 @@ export const QUICK_FILTERS: { id: QuickFilter; label: string }[] = [
   { id: 'en_seguimiento', label: 'En seguimiento' },
   { id: 'prioritarios', label: 'Prioritarios' },
   { id: 'cerrado', label: 'Cerrados' },
+  { id: 'archivado', label: 'Archivados' },
 ];
 
 const TABLE_DATE_FMT = new Intl.DateTimeFormat('es-MX', {
