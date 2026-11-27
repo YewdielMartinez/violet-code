@@ -88,7 +88,17 @@ export const NAVIGATION: NavPage[] = [
     label: 'Estadísticas',
     icon: 'monitoring',
     ready: true,
-    allowedRoles: ALL_EMPLOYEES,
+    // `informe.ver`: dirección y áreas de atención (recepción y UMECA no lo tienen).
+    allowedRoles: ATTENTION_AND_DIRECTION,
+  },
+  {
+    // `bitacora.ver` = `es_direccion()`: solo titular y subdirección. Solo lectura.
+    path: '/bitacora',
+    label: 'Bitácora',
+    title: 'Bitácora de accesos',
+    icon: 'policy',
+    ready: true,
+    allowedRoles: DIRECTION_ONLY,
   },
   {
     path: '/usuarios',

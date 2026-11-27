@@ -14,14 +14,14 @@ import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Sos
-import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Sos
-import androidx.compose.material.icons.outlined.TaskAlt
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -48,10 +48,19 @@ import mx.violetcode.mobile.core.designsystem.motion.rememberReducedMotion
 import mx.violetcode.mobile.core.designsystem.theme.ThemeMode
 import mx.violetcode.mobile.core.designsystem.theme.isDark
 import mx.violetcode.mobile.feature.auxilio.AuxilioScreen
+import mx.violetcode.mobile.feature.cuenta.LoginScreen
+import mx.violetcode.mobile.feature.cuenta.RegistroScreen
 import mx.violetcode.mobile.feature.directorio.DirectorioScreen
 import mx.violetcode.mobile.feature.inicio.InicioScreen
 import mx.violetcode.mobile.feature.orientacion.OrientacionScreen
-import mx.violetcode.mobile.feature.seguimiento.SeguimientoScreen
+import mx.violetcode.mobile.feature.ajustes.AjustesScreen
+
+/** Rutas de cuenta (no son pestañas de la barra inferior). */
+private const val ROUTE_LOGIN = "login"
+private const val ROUTE_REGISTRO = "registro"
+
+/** Ajustes de seguridad (modo discreto). Fuera de la barra inferior: se abre desde la barra superior. */
+private const val ROUTE_AJUSTES = "ajustes"
 
 private enum class Destination(
     val route: String,
@@ -63,7 +72,8 @@ private enum class Destination(
     Auxilio("auxilio", "Auxilio", Icons.Outlined.Sos, Icons.Filled.Sos),
     Orientacion("orientacion", "Orientación", Icons.AutoMirrored.Outlined.MenuBook, Icons.AutoMirrored.Filled.MenuBook),
     Directorio("directorio", "Directorio", Icons.Outlined.Place, Icons.Filled.Place),
-    Seguimiento("seguimiento", "Mi caso", Icons.Outlined.TaskAlt, Icons.Filled.TaskAlt),
+    // «Mi caso» (Seguimiento) queda fuera del MVP (RF-31): sin pestaña, sin ruta y sin acceso desde Inicio.
+    // SeguimientoScreen se conserva sin enlazar para habilitarla cuando exista el módulo de expedientes.
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -97,6 +107,9 @@ fun VioletApp(
             TopAppBar(
                 title = { Text("Violet Code", fontWeight = FontWeight.SemiBold) },
                 actions = {
+                    IconButton(onClick = { nav.navigate(ROUTE_AJUSTES) { launchSingleTop = true } }) {
+                        Icon(Icons.Outlined.Settings, contentDescription = "Ajustes")
+                    }
                     ThemeModeSwitch(
                         darkTheme = darkTheme,
                         onDarkThemeChange = { dark -> onThemeModeChange(if (dark) ThemeMode.Dark else ThemeMode.Light) },
@@ -140,13 +153,30 @@ fun VioletApp(
                     onEmergency = { navigateTab(Destination.Auxilio.route) },
                     onOrientacion = { navigateTab(Destination.Orientacion.route) },
                     onDirectorio = { navigateTab(Destination.Directorio.route) },
-                    onSeguimiento = { navigateTab(Destination.Seguimiento.route) },
                 )
             }
-            composable(Destination.Auxilio.route) { AuxilioScreen() }
-            composable(Destination.Orientacion.route) { OrientacionScreen() }
+            composable(Destination.Auxilio.route) {
+                AuxilioScreen(
+                    onLogin = { nav.navigate(ROUTE_LOGIN) { launchSingleTop = true } },
+                    onRegister = { nav.navigate(ROUTE_REGISTRO) { launchSingleTop = true } },
+                )
+            }
+            composable(Destination.Orientacion.route) { OrientacionScreen(onHelp = { navigateTab(Destination.Auxilio.route) }) }
             composable(Destination.Directorio.route) { DirectorioScreen() }
-            composable(Destination.Seguimiento.route) { SeguimientoScreen() }
+            composable(ROUTE_AJUSTES) { AjustesScreen() }
+            // Cuenta (RF-33): fuera de la barra inferior. Al terminar se regresa a la pantalla previa (Auxilio).
+            composable(ROUTE_LOGIN) {
+                LoginScreen(
+                    onSignedIn = { nav.popBackStack() },
+                    onRegister = { nav.navigate(ROUTE_REGISTRO) { popUpTo(ROUTE_LOGIN) { inclusive = true } } },
+                )
+            }
+            composable(ROUTE_REGISTRO) {
+                RegistroScreen(
+                    onSignedIn = { nav.popBackStack() },
+                    onGoLogin = { nav.navigate(ROUTE_LOGIN) { popUpTo(ROUTE_REGISTRO) { inclusive = true } } },
+                )
+            }
         }
     }
 }

@@ -66,7 +66,7 @@ internal fun DirectorioContent(state: DirectorioUiState, onRetry: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (state.lastError != null) {
-                item(key = "offline") { OfflineBanner(onRetry) }
+                item(key = "offline") { OfflineBanner(state.lastError, onRetry) }
             }
             itemsIndexed(state.entries, key = { _, entry -> entry.id }) { index, entry ->
                 DirectoryCard(entry, index)
@@ -89,7 +89,7 @@ private fun FullError(error: AppError?, onRetry: () -> Unit) {
 }
 
 @Composable
-private fun OfflineBanner(onRetry: () -> Unit) {
+private fun OfflineBanner(error: AppError?, onRetry: () -> Unit) {
     Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.medium) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
@@ -98,7 +98,11 @@ private fun OfflineBanner(onRetry: () -> Unit) {
             Icon(Icons.Outlined.CloudOff, contentDescription = null)
             Spacer(Modifier.width(12.dp))
             Text(
-                "Sin conexión. Mostrando información guardada.",
+                when (error) {
+                    AppError.Unauthorized -> "Inicia sesión para ver el directorio completo. Mientras tanto, estos son los números de emergencia."
+                    AppError.Network -> "Sin conexión. Mostrando información guardada."
+                    else -> "No se pudo actualizar. Mostrando información guardada."
+                },
                 Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -119,13 +123,15 @@ private fun DirectoryCard(entry: DirectoryEntry, index: Int) {
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(
-                if (entry.kind == EntryKind.VioletPoint) "Punto Violeta" else "Instancia",
+                if (entry.kind == EntryKind.VioletPoint) "Punto Violeta" else entry.description ?: "Instancia",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
             Text(entry.name, style = MaterialTheme.typography.titleMedium)
             entry.schedule?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-            entry.address?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+            // Nunca mostrar domicilio de refugios (confidencial), aunque llegara en los datos.
+            entry.address?.takeIf { entry.category != DirectoryEntry.CATEGORY_SHELTER }
+                ?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
             entry.phone?.let { phone ->
                 Spacer(Modifier.height(8.dp))
                 val callSource = remember { MutableInteractionSource() }

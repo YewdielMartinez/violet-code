@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Glifo de calculadora genérico para el ícono discreto. Sin ninguna referencia a la app real. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#ECEFF1"
+        android:pathData="M38,26h32a4,4 0 0 1 4,4v48a4,4 0 0 1 -4,4h-32a4,4 0 0 1 -4,-4v-48a4,4 0 0 1 4,-4z" />
+    <path
+        android:fillColor="#546E7A"
+        android:pathData="M40,32h28v12h-28z" />
+    <path
+        android:fillColor="#90A4AE"
+        android:pathData="M40,50h6v6h-6zM51,50h6v6h-6zM62,50h6v6h-6zM40,60h6v6h-6zM51,60h6v6h-6zM62,60h6v6h-6zM40,70h6v6h-6zM51,70h6v6h-6z" />
+    <path
+        android:fillColor="#FF7043"
+        android:pathData="M62,70h6v6h-6z" />
+</vector>

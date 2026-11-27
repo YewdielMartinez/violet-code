@@ -10,16 +10,15 @@ describe('navigation permissions by role', () => {
     expect(canAccessPath('umeca', '/usuarios')).toBe(false);
   });
 
-  it('limita a recepción a Tablero, Agenda, Actividades y Estadísticas en el menú (Directorio solo por ruta)', () => {
+  it('limita a recepción a Tablero, Agenda y Actividades en el menú (sin Estadísticas: no tiene informe.ver) (Directorio solo por ruta)', () => {
     expect(getNavigationForRole('recepcion').map((p) => p.path)).toEqual([
       '/',
       '/agenda',
       '/actividades',
-      '/estadisticas',
     ]);
     expect(canAccessPath('recepcion', '/actividades')).toBe(true);
     expect(canAccessPath('recepcion', '/agenda')).toBe(true);
-    expect(canAccessPath('recepcion', '/estadisticas')).toBe(true);
+    expect(canAccessPath('recepcion', '/estadisticas')).toBe(false);
     expect(canAccessPath('recepcion', '/directorio')).toBe(true);
     expect(canAccessPath('recepcion', '/expedientes')).toBe(false);
     expect(canAccessPath('recepcion', '/solicitudes')).toBe(false);
@@ -38,9 +37,10 @@ describe('navigation permissions by role', () => {
 
   it('permite todas las rutas del panel a titular y subdirección', () => {
     for (const role of ['titular', 'subdireccion'] as const) {
-      expect(getNavigationForRole(role)).toHaveLength(7);
+      expect(getNavigationForRole(role)).toHaveLength(8);
       expect(canAccessPath(role, '/estadisticas')).toBe(true);
       expect(canAccessPath(role, '/usuarios')).toBe(true);
+      expect(canAccessPath(role, '/bitacora')).toBe(true);
     }
     expect(NAVIGATION.find((p) => p.path === '/estadisticas')?.ready).toBe(true);
   });
@@ -48,6 +48,23 @@ describe('navigation permissions by role', () => {
   it('excluye Estadísticas de UMECA', () => {
     expect(getNavigationForRole('umeca').map((p) => p.path)).not.toContain('/estadisticas');
     expect(canAccessPath('umeca', '/estadisticas')).toBe(false);
+  });
+
+  it('Estadísticas (informe.ver) solo para dirección y áreas de atención; Bitácora (bitacora.ver) solo para dirección', () => {
+    for (const role of ['titular', 'subdireccion', 'trabajo_social', 'psicologia', 'juridico'] as const) {
+      expect(getNavigationForRole(role).map((p) => p.path)).toContain('/estadisticas');
+    }
+    for (const role of ['recepcion', 'umeca'] as const) {
+      expect(getNavigationForRole(role).map((p) => p.path)).not.toContain('/estadisticas');
+      expect(canAccessPath(role, '/estadisticas')).toBe(false);
+    }
+    for (const role of ['titular', 'subdireccion'] as const) {
+      expect(getNavigationForRole(role).map((p) => p.path)).toContain('/bitacora');
+    }
+    for (const role of ['trabajo_social', 'psicologia', 'juridico', 'recepcion', 'umeca'] as const) {
+      expect(getNavigationForRole(role).map((p) => p.path)).not.toContain('/bitacora');
+      expect(canAccessPath(role, '/bitacora')).toBe(false);
+    }
   });
 
   it('muestra Agenda y Actividades a los 6 roles del personal y las niega a UMECA', () => {

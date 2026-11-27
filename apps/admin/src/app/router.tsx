@@ -7,6 +7,7 @@ import {
   ActividadesPage,
   AgendaPage,
   AlertasPage,
+  BitacoraPage,
   DashboardPage,
   DirectoryPage,
   EstadisticasPage,
@@ -139,6 +140,7 @@ const READY: Record<string, ComponentType> = {
   '/actividades': ActividadesPage,
   '/intervenciones': IntervencionesPage,
   '/estadisticas': EstadisticasPage,
+  '/bitacora': BitacoraPage,
   '/usuarios': UsuariosPage,
 };
 

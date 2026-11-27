@@ -16,6 +16,7 @@ const loadAlertas = () => import('@/features/solicitudes/AlertasPage');
 const loadEstadisticas = () => import('@/features/informes/EstadisticasPage');
 const loadUsuarios = () => import('@/features/usuarios/UsuariosPage');
 const loadUsuarioForm = () => import('@/features/usuarios/UsuarioFormPage');
+const loadBitacora = () => import('@/features/bitacora/BitacoraPage');
 const loadPending = () => import('@/shared/ui/PendingModulePage');
 
 export const LoginPage = lazy(loadLogin);
@@ -33,6 +34,7 @@ export const AlertasPage = lazy(loadAlertas);
 export const EstadisticasPage = lazy(loadEstadisticas);
 export const UsuariosPage = lazy(loadUsuarios);
 export const UsuarioFormPage = lazy(loadUsuarioForm);
+export const BitacoraPage = lazy(loadBitacora);
 export const PendingModulePage = lazy(loadPending);
 
 const started = new WeakSet<() => Promise<unknown>>();
@@ -56,6 +58,7 @@ const ROUTE_LOADERS: Record<string, () => Promise<unknown>> = {
   '/actividades/nuevo': loadActividadForm,
   '/intervenciones': loadIntervenciones,
   '/estadisticas': loadEstadisticas,
+  '/bitacora': loadBitacora,
   '/usuarios': loadUsuarios,
   '/usuarios/nuevo': loadUsuarioForm,
 };
@@ -73,7 +76,7 @@ export function preloadPage(path: string): void {
   loadOnce(ROUTE_LOADERS[path] ?? loadPending);
 }
 
-const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadDirectory, loadNuevaFicha, loadAlertas, loadAgenda, loadActividades, loadActividadForm, loadIntervenciones, loadEstadisticas, loadUsuarios, loadUsuarioForm, loadPending];
+const PANEL_LOADERS = [loadDashboard, loadExpedientes, loadDirectory, loadNuevaFicha, loadAlertas, loadAgenda, loadActividades, loadActividadForm, loadIntervenciones, loadEstadisticas, loadBitacora, loadUsuarios, loadUsuarioForm, loadPending];
 
 function scheduleIdle(cb: () => void): () => void {
   if (typeof window === 'undefined') return () => { };

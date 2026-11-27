@@ -21,6 +21,7 @@ internal data class DirectoryEntryEntity(
     val latitude: Double?,
     val longitude: Double?,
     val isEmergency: Boolean,
+    val category: String? = null,
 )
 
 @Dao

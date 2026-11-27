@@ -20,7 +20,6 @@ import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Sos
-import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -48,7 +47,6 @@ fun InicioScreen(
     onEmergency: () -> Unit,
     onOrientacion: () -> Unit,
     onDirectorio: () -> Unit,
-    onSeguimiento: () -> Unit,
 ) {
     val greeting = remember { greetingForNow() }
 
@@ -86,15 +84,9 @@ fun InicioScreen(
                 modifier = Modifier.weight(1f).fadeInOnAppear(index = 3),
             )
         }
-        QuickActionCard(
-            title = "Mi caso",
-            subtitle = "Revisa el estado de tu atención",
-            icon = Icons.Outlined.TaskAlt,
-            onClick = onSeguimiento,
-            modifier = Modifier.fillMaxWidth().fadeInOnAppear(index = 4),
-        )
+        // «Mi caso» queda fuera del MVP (RF-31): sin acceso desde Inicio.
 
-        QuickExitNote(Modifier.fadeInOnAppear(index = 5))
+        QuickExitNote(Modifier.fadeInOnAppear(index = 4))
     }
 }
 
@@ -190,7 +182,7 @@ private fun QuickExitNote(modifier: Modifier = Modifier) {
             Icon(Icons.Outlined.Info, contentDescription = null)
             Spacer(Modifier.width(12.dp))
             Text(
-                "¿Necesitas salir de inmediato? Toca «Salir rápido», arriba a la derecha: cierra la app y la quita de recientes.",
+                "¿Necesitas salir de inmediato? Toca «Salir rápido», arriba a la derecha: cierra la app y la quita de recientes (con el modo discreto activo, vuelve a la calculadora).",
                 style = MaterialTheme.typography.bodyMedium,
             )
         }

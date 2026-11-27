@@ -63,6 +63,11 @@ dependencies {
     implementation(project(":core:data"))        // solo para registrar su módulo de Koin
     implementation(project(":core:designsystem"))
 
+    // Fija androidx.browser (transitiva de supabase auth-kt) a una versión compatible con compileSdk 35.
+    constraints {
+        implementation(libs.androidx.browser) { version { strictly(libs.versions.browser.get()) } }
+    }
+
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)

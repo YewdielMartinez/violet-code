@@ -125,3 +125,37 @@ object Violentometro {
     /** Nivel más alto entre las conductas marcadas; `null` si no hay ninguna. */
     fun peakLevel(selected: Collection<ViolentometroItem>): Int? = selected.maxOfOrNull { it.level }
 }
+
+/**
+ * Lo que la usuaria ha marcado en esta sesión. Solo vive en memoria: no se guarda ni se envía (RF-26.1).
+ *
+ * El marcador sigue a las conductas marcadas (la más alta manda); si mueve el marcador a mano, ese nivel
+ * manda hasta que marque otra conducta o limpie.
+ */
+data class ViolentometroSelection(
+    private val selected: Set<Int> = emptySet(),
+    val manualLevel: Int? = null,
+) {
+    /** `from` de cada conducta marcada. */
+    val selectedKeys: Set<Int> get() = selected
+
+    fun isSelected(item: ViolentometroItem): Boolean = item.from in selected
+
+    /** Nivel mostrado en la escala; `null` si no se ha marcado nada. */
+    val level: Int?
+        get() = manualLevel
+            ?: Violentometro.peakLevel(Violentometro.items.filter { it.from in selected })
+
+    val zone: ViolentometroZone? get() = level?.let(Violentometro::zoneFor)
+
+    fun toggle(item: ViolentometroItem): ViolentometroSelection =
+        ViolentometroSelection(
+            selected = if (item.from in selected) selected - item.from else selected + item.from,
+            manualLevel = null,
+        )
+
+    fun withManualLevel(level: Int): ViolentometroSelection =
+        copy(manualLevel = level.coerceIn(Violentometro.MIN_LEVEL, Violentometro.MAX_LEVEL))
+
+    fun cleared(): ViolentometroSelection = ViolentometroSelection()
+}
