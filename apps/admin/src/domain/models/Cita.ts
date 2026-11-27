@@ -59,6 +59,7 @@ export interface AgendaItem {
   citaId: string;
   programadaEn: string;
   estado: EstadoCita;
+  /** @deprecated La cita ya no maneja prioridad propia (`50_prioridad_en_expediente`); viene siempre null desde `get_agenda`. */
   prioridad: PrioridadNivel | null;
   areaId: number;
   areaClave: string;
@@ -82,6 +83,7 @@ export interface CitaCreateInput {
   personaId: string;
   areaId: number;
   programadaEn: string;
+  /** @deprecated `crear_cita` ya no recibe prioridad (la prioridad vive en el expediente). */
   prioridad?: PrioridadNivel | null;
   recomendadaPor?: string | null;
   origen?: OrigenCita;
@@ -97,6 +99,7 @@ export interface ReagendarCitaInput {
   citaId: string;
   nuevaFecha: string;
   motivo?: string | null;
+  /** @deprecated `reagendar_cita` ya no recibe `p_prioridad`. */
   prioridad?: PrioridadNivel | null;
 }
 
@@ -113,7 +116,10 @@ export interface ListaUrgenciasItem {
   folio: string;
   nombreCompleto: string;
   celular: string | null;
+  prioridadActualizadaEn?: string;
+  /** @deprecated `get_lista_urgencias` ya no devuelve el área de última prioridad (migración `52`). */
   areaUltimaPrioridad: string;
+  /** @deprecated Usar `prioridadActualizadaEn` (migración `52`). */
   fechaUltimaPrioridad: string;
 }
 

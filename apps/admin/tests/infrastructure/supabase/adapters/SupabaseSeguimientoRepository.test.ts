@@ -22,7 +22,6 @@ describe('supabaseSeguimientoRepository', () => {
       data: [
         {
           atencion_id: 'at-1',
-          folio_seguimiento: 'SEG-2026-00001',
           cita_proxima_id: 'cita-2',
           es_primera_vez_area: true,
           tiene_historial_clinico: false,
@@ -54,7 +53,7 @@ describe('supabaseSeguimientoRepository', () => {
     });
     expect(result).toEqual({
       atencionId: 'at-1',
-      folioSeguimiento: 'SEG-2026-00001',
+      folioSeguimiento: '',
       citaProximaId: 'cita-2',
       esPrimeraVezArea: true,
       tieneHistorialClinico: false,

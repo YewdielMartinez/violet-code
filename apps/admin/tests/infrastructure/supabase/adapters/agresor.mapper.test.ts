@@ -3,8 +3,7 @@ import {
   mapAgresorRow,
   mapAsentamientoRow,
   mapCatalogoRow,
-  toAgresorInsert,
-  toAgresorUpdate,
+  toGuardarAgresorArgs,
   type AgresorRow,
 } from '@/infrastructure/supabase/adapters/agresor.mapper';
 
@@ -62,8 +61,8 @@ describe('agresor.mapper', () => {
     });
   });
 
-  it('traduce AgresorInput a Insert limpiando espacios vacíos y respetando reglas condicionales', () => {
-    const insert = toAgresorInsert({
+  it('traduce AgresorInput a args de guardar_agresor al crear limpiando espacios vacíos y respetando reglas condicionales', () => {
+    const args = toGuardarAgresorArgs({
       fichaId: 'ficha-1',
       nombres: '  Héctor  ',
       apellidoPaterno: '  Montoya ',
@@ -79,55 +78,62 @@ describe('agresor.mapper', () => {
       ocupacionId: 3,
       ocupacionOtra: '',
       tieneConsumoDroga: false,
-      drogas: ['marihuana'], // debe anularse porque tieneConsumoDroga es false
+      drogas: ['marihuana'], // debe convertirse en ['no_consume']
       especificacionDroga: 'Detalle',
       especificacionArma: '  ',
       observaciones: '  Seguimiento activo.  ',
     });
 
-    expect(insert).toEqual({
-      ficha_id: 'ficha-1',
-      nombres: 'Héctor',
-      apellido_paterno: 'Montoya',
-      apellido_materno: null,
-      parentesco_id: 2,
-      parentesco_otro: null,
-      asentamiento_id: 15,
-      codigo_postal: null,
-      calle: 'Calle Central',
-      numero_exterior: null,
-      numero_interior: null,
-      referencias: null,
-      ocupacion_id: 3,
-      ocupacion_otra: null,
-      drogas: ['no_consume'],
-      especificacion_droga: null,
-      especificacion_arma: null,
-      observaciones: 'Seguimiento activo.',
+    expect(args).toEqual({
+      p_agresor_id: undefined,
+      p_ficha_id: 'ficha-1',
+      p_actualizado_en: undefined,
+      p_nombres: 'Héctor',
+      p_apellido_paterno: 'Montoya',
+      p_apellido_materno: undefined,
+      p_parentesco_id: 2,
+      p_parentesco_otro: undefined,
+      p_asentamiento_id: 15,
+      p_codigo_postal: undefined,
+      p_calle: 'Calle Central',
+      p_numero_exterior: undefined,
+      p_numero_interior: undefined,
+      p_referencias: undefined,
+      p_ocupacion_id: 3,
+      p_ocupacion_otra: undefined,
+      p_drogas: ['no_consume'],
+      p_especificacion_droga: undefined,
+      p_especificacion_arma: undefined,
+      p_observaciones: 'Seguimiento activo.',
     });
   });
 
-  it('traduce AgresorInput a Update preservando código postal manual y campos condicionales activos', () => {
-    const update = toAgresorUpdate({
-      fichaId: 'ficha-1',
-      nombres: 'Héctor',
-      asentamientoId: null,
-      codigoPostal: ' 81200 ',
-      tieneConsumoDroga: true,
-      drogas: ['cristal', 'cristal', 'otra'],
-      especificacionDroga: '  Policonsumo ',
-      especificacionArma: '  Corta ',
-    });
+  it('traduce AgresorInput a args de guardar_agresor al editar preservando CP manual y bloqueo optimista', () => {
+    const args = toGuardarAgresorArgs(
+      {
+        fichaId: 'ficha-1',
+        actualizadoEnEsperado: '2026-11-26T10:00:00Z',
+        nombres: 'Héctor',
+        asentamientoId: null,
+        codigoPostal: ' 81200 ',
+        tieneConsumoDroga: true,
+        drogas: ['cristal', 'cristal', 'otra'],
+        especificacionDroga: '  Policonsumo ',
+        especificacionArma: '  Corta ',
+      },
+      'agresor-1',
+    );
 
-    expect(update).toMatchObject({
-      nombres: 'Héctor',
-      asentamiento_id: null,
-      codigo_postal: '81200',
-      drogas: ['cristal', 'otra'],
-      especificacion_droga: 'Policonsumo',
-      especificacion_arma: 'Corta',
+    expect(args).toMatchObject({
+      p_agresor_id: 'agresor-1',
+      p_actualizado_en: '2026-11-26T10:00:00Z',
+      p_nombres: 'Héctor',
+      p_codigo_postal: '81200',
+      p_drogas: ['cristal', 'otra'],
+      p_especificacion_droga: 'Policonsumo',
+      p_especificacion_arma: 'Corta',
     });
-    expect('ficha_id' in update).toBe(false);
+    expect(args.p_ficha_id).toBeUndefined();
   });
 
   it('mapea filas de catálogos y asentamientos SEPOMEX', () => {

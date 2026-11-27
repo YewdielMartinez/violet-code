@@ -1,7 +1,7 @@
 import { supabase } from '../client';
+import { mapSupabaseError } from './errors';
 import type {
   ContextoHojaSeguimiento,
-  HojaSeguimientoCopia,
   TipoAtencion,
 } from '@/domain/models/HojaSeguimiento';
 import type {
@@ -22,29 +22,7 @@ import {
   mapDomicilioRow,
   mapNotaRow,
   mapTipoAtencionRow,
-  toAtencionCopiaUpdate,
-  toDomicilioHistoricoInsert,
 } from './seguimiento.mapper';
-
-/** Guarda la copia histórica del día sobre la atención recién creada (RLS `atencion_update` por área). */
-async function guardarCopiaHoja(atencionId: string, copia: HojaSeguimientoCopia): Promise<void> {
-  let domicilioId: string | null = null;
-  if (copia.domicilio) {
-    const { data, error } = await supabase
-      .from('domicilio')
-      .insert(toDomicilioHistoricoInsert(copia.personaId, copia.domicilio))
-      .select('id')
-      .single();
-    if (error) throw error;
-    domicilioId = data.id;
-  }
-
-  const { error } = await supabase
-    .from('atencion')
-    .update(toAtencionCopiaUpdate(copia, domicilioId))
-    .eq('id', atencionId);
-  if (error) throw error;
-}
 
 export const supabaseSeguimientoRepository: SeguimientoRepository = {
   async registrar(input: SeguimientoCreateInput): Promise<SeguimientoResult> {
@@ -59,32 +37,20 @@ export const supabaseSeguimientoRepository: SeguimientoRepository = {
       p_proxima_cita_en: input.proximaCitaEn ?? undefined,
     });
 
-    if (error) throw error;
+    if (error) throw mapSupabaseError(error);
 
     const row = Array.isArray(data) ? data[0] : data;
     if (!row) {
       throw new Error('El servidor no devolvió el resultado del seguimiento registrado.');
     }
 
-    const result: SeguimientoResult = {
+    return {
       atencionId: row.atencion_id,
       folioSeguimiento: '',
       citaProximaId: row.cita_proxima_id ?? null,
       esPrimeraVezArea: row.es_primera_vez_area,
       tieneHistorialClinico: row.tiene_historial_clinico,
     };
-
-    if (input.copia) {
-      // La hoja ya quedó registrada: si la copia falla no se lanza (reintentar duplicaría la hoja).
-      try {
-        await guardarCopiaHoja(result.atencionId, input.copia);
-        result.copiaGuardada = true;
-      } catch {
-        result.copiaGuardada = false;
-      }
-    }
-
-    return result;
   },
 
   async getLineaTiempo(fichaId: string): Promise<LineaTiempoEvento[]> {

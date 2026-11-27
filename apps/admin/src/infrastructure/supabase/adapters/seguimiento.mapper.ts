@@ -1,6 +1,6 @@
 import type { Database } from '../database.types';
-import type { DomicilioDetalle, DomicilioInput } from '@/domain/models/Domicilio';
-import type { HojaSeguimientoCopia, TipoAtencion } from '@/domain/models/HojaSeguimiento';
+import type { DomicilioDetalle } from '@/domain/models/Domicilio';
+import type { TipoAtencion } from '@/domain/models/HojaSeguimiento';
 import type { NotaPrivada } from '@/domain/models/NotaPrivada';
 import type { TipoEventoLineaTiempo } from '@/domain/models/Seguimiento';
 
@@ -66,38 +66,5 @@ export function mapDomicilioRow(row: DomicilioRow | null): DomicilioDetalle | nu
     numeroInterior: row.numero_interior,
     referencias: row.referencias,
     zona: row.zona,
-  };
-}
-
-const clean = (value: string | null | undefined) => value?.trim() || null;
-
-/** Domicilio histórico de la sesión: se inserta como no vigente para no reemplazar el de la ficha. */
-export function toDomicilioHistoricoInsert(
-  personaId: string,
-  input: DomicilioInput,
-): Tables['domicilio']['Insert'] {
-  return {
-    persona_id: personaId,
-    asentamiento_id: input.asentamientoId,
-    codigo_postal: input.asentamientoId === null ? clean(input.codigoPostalForaneo) : null,
-    calle: clean(input.calle),
-    numero_exterior: clean(input.numeroExterior),
-    numero_interior: clean(input.numeroInterior),
-    referencias: clean(input.referencias),
-    zona: input.zona || null,
-    es_actual: false,
-  };
-}
-
-export function toAtencionCopiaUpdate(
-  copia: HojaSeguimientoCopia,
-  domicilioId: string | null,
-): Tables['atencion']['Update'] {
-  return {
-    estado_civil: copia.estadoCivil,
-    ocupacion_id: copia.ocupacionId,
-    ocupacion_otra: clean(copia.ocupacionOtra),
-    celular: clean(copia.celular),
-    ...(domicilioId ? { domicilio_id: domicilioId } : {}),
   };
 }

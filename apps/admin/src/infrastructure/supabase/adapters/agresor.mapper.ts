@@ -33,8 +33,7 @@ export type AgresorRow = Pick<
   | 'actualizado_en'
 >;
 
-export type AgresorInsertRow = Database['public']['Tables']['agresor']['Insert'];
-export type AgresorUpdateRow = Database['public']['Tables']['agresor']['Update'];
+export type GuardarAgresorArgs = Database['public']['Functions']['guardar_agresor']['Args'];
 
 export type AsentamientoRow = Pick<
   Database['public']['Tables']['cat_asentamiento']['Row'],
@@ -46,9 +45,11 @@ export type CatalogoRow = Pick<
   'id' | 'clave' | 'nombre'
 >;
 
-function normalizeNullableText(value: string | null | undefined): string | null {
+function toRpcText(value: string | null | undefined, isEdit: boolean): string | undefined {
+  if (value === undefined) return undefined;
   const trimmed = value?.trim() ?? '';
-  return trimmed.length > 0 ? trimmed : null;
+  if (trimmed.length > 0) return trimmed;
+  return isEdit ? '' : undefined;
 }
 
 function mapDrogasFromRow(raw: string[] | null): TipoDroga[] | null {
@@ -57,41 +58,47 @@ function mapDrogasFromRow(raw: string[] | null): TipoDroga[] | null {
   return valid.length > 0 ? valid : null;
 }
 
-function buildPayload(input: AgresorInput): Omit<AgresorInsertRow, 'ficha_id'> {
+export function toGuardarAgresorArgs(
+  input: AgresorInput,
+  agresorId?: string | null,
+): GuardarAgresorArgs {
+  const isEdit = Boolean(agresorId);
   const asentamientoId = input.asentamientoId ?? null;
-  const codigoPostal = asentamientoId !== null ? null : normalizeNullableText(input.codigoPostal);
+  const codigoPostal =
+    asentamientoId !== null ? undefined : toRpcText(input.codigoPostal, isEdit);
 
   const tieneConsumoDroga = input.tieneConsumoDroga ?? null;
   const drogasRaw = tieneConsumoDroga === true ? (input.drogas ?? []).filter(isTipoDroga) : [];
-  const drogas: TipoDroga[] | null =
+  const drogas: TipoDroga[] | undefined =
     tieneConsumoDroga === false
       ? ['no_consume']
       : drogasRaw.length > 0
         ? Array.from(new Set(drogasRaw))
-        : null;
+        : undefined;
   const especificacionDroga =
-    tieneConsumoDroga === true ? normalizeNullableText(input.especificacionDroga) : null;
-
-  const especificacionArma = normalizeNullableText(input.especificacionArma);
+    tieneConsumoDroga === true ? toRpcText(input.especificacionDroga, isEdit) : undefined;
 
   return {
-    nombres: normalizeNullableText(input.nombres),
-    apellido_paterno: normalizeNullableText(input.apellidoPaterno),
-    apellido_materno: normalizeNullableText(input.apellidoMaterno),
-    parentesco_id: input.parentescoId ?? null,
-    parentesco_otro: normalizeNullableText(input.parentescoOtro),
-    asentamiento_id: asentamientoId,
-    codigo_postal: codigoPostal,
-    calle: normalizeNullableText(input.calle),
-    numero_exterior: normalizeNullableText(input.numeroExterior),
-    numero_interior: normalizeNullableText(input.numeroInterior),
-    referencias: normalizeNullableText(input.referencias),
-    ocupacion_id: input.ocupacionId ?? null,
-    ocupacion_otra: normalizeNullableText(input.ocupacionOtra),
-    drogas,
-    especificacion_droga: especificacionDroga,
-    especificacion_arma: especificacionArma,
-    observaciones: normalizeNullableText(input.observaciones),
+    p_agresor_id: agresorId ?? undefined,
+    p_ficha_id: isEdit ? undefined : input.fichaId,
+    p_actualizado_en: isEdit ? (input.actualizadoEnEsperado ?? undefined) : undefined,
+    p_nombres: toRpcText(input.nombres, isEdit),
+    p_apellido_paterno: toRpcText(input.apellidoPaterno, isEdit),
+    p_apellido_materno: toRpcText(input.apellidoMaterno, isEdit),
+    p_parentesco_id: input.parentescoId ?? undefined,
+    p_parentesco_otro: toRpcText(input.parentescoOtro, isEdit),
+    p_asentamiento_id: asentamientoId ?? undefined,
+    p_codigo_postal: codigoPostal,
+    p_calle: toRpcText(input.calle, isEdit),
+    p_numero_exterior: toRpcText(input.numeroExterior, isEdit),
+    p_numero_interior: toRpcText(input.numeroInterior, isEdit),
+    p_referencias: toRpcText(input.referencias, isEdit),
+    p_ocupacion_id: input.ocupacionId ?? undefined,
+    p_ocupacion_otra: toRpcText(input.ocupacionOtra, isEdit),
+    p_drogas: drogas,
+    p_especificacion_droga: especificacionDroga,
+    p_especificacion_arma: toRpcText(input.especificacionArma, isEdit),
+    p_observaciones: toRpcText(input.observaciones, isEdit),
   };
 }
 
@@ -124,17 +131,6 @@ export function mapAgresorRow(row: AgresorRow): Agresor {
     activo: row.activo,
     actualizadoEn: row.actualizado_en,
   };
-}
-
-export function toAgresorInsert(input: AgresorInput): AgresorInsertRow {
-  return {
-    ficha_id: input.fichaId,
-    ...buildPayload(input),
-  };
-}
-
-export function toAgresorUpdate(input: AgresorInput): AgresorUpdateRow {
-  return buildPayload(input);
 }
 
 export function mapCatalogoRow(row: CatalogoRow): CatalogoOpcion {

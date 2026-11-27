@@ -29,17 +29,17 @@ Corte: 27-nov-2026, rama `develop` con la migración `60_integrar_develop_y_supa
 | [`reabrir_ficha`](../rpcs/reabrir_ficha.md) | `38` | ✅ | ✅ `SupabaseFichaRepository.reopen` | |
 | [`actualizar_persona`](../rpcs/actualizar_persona.md) | `35` | ✅ | ❌ | |
 | [`actualizar_ficha`](../rpcs/actualizar_ficha.md) | `35` (última en `59`) | ✅ | ❌ | |
-| [`actualizar_domicilio`](../rpcs/actualizar_domicilio.md) | `49` | ✅ | ⚠️ | La copia de la hoja de seguimiento hace `insert` directo en `domicilio` (cerrado en `49`). |
+| [`actualizar_domicilio`](../rpcs/actualizar_domicilio.md) | `49` | ✅ | ❌ | Se quitó el insert directo en `domicilio` de la copia de la hoja; falta exponer la RPC en `SupabaseFichaRepository`. |
 | [`cambiar_prioridad_expediente`](../rpcs/cambiar_prioridad_expediente.md) | `50` | ✅ | ❌ | |
 | [`registrar_estudio_socioeconomico`](../rpcs/registrar_estudio_socioeconomico.md) | `37` | ✅ | ❌ | |
-| *(desactivar ficha)* | — | — | ⚠️ | `SupabaseFichaRepository.deactivate` hace `update ficha_registro` directo (cerrado en `39`). No existe RPC; usar `archivar_ficha` o crear una. |
+| *(desactivar ficha)* | — | — | ⚠️ `@deprecated` | `SupabaseFichaRepository.deactivate` quedó marcado `@deprecated` (sin RPC; RLS bloquea `42501`). |
 
 ### Agresor
 
 | RPC | Migración | Base de datos | Admin (adapters) | Nota |
 |---|---|---|---|---|
-| [`guardar_agresor`](../rpcs/guardar_agresor.md) | `36` (última en `57`) | ✅ | ⚠️ | `SupabaseAgresorRepository.crear/actualizar` hacen `insert`/`update` directo (cerrado en `39`). |
-| [`desactivar_agresor`](../rpcs/desactivar_agresor.md) | `36` | ✅ | ❌ | |
+| [`guardar_agresor`](../rpcs/guardar_agresor.md) | `36` (última en `58`) | ✅ | ✅ `SupabaseAgresorRepository.crear` / `actualizar` | |
+| [`desactivar_agresor`](../rpcs/desactivar_agresor.md) | `36` | ✅ | ✅ `SupabaseAgresorRepository.desactivar` | |
 
 ### Historial clínico
 
@@ -52,11 +52,11 @@ Corte: 27-nov-2026, rama `develop` con la migración `60_integrar_develop_y_supa
 
 | RPC | Migración | Base de datos | Admin (adapters) | Nota |
 |---|---|---|---|---|
-| [`get_agenda`](../rpcs/get_agenda.md) | `22` (última en `60`) | ✅ | ⚠️ `SupabaseCitaRepository` | El mapeo todavía lee `prioridad`, que la `50`/`60` quitó de la salida. |
-| [`crear_cita`](../rpcs/crear_cita.md) | `51` | ✅ | ⚠️ | `SupabaseCitaRepository.crear` hace `insert` directo en `cita` con `prioridad` (cerrado en `51`). |
+| [`get_agenda`](../rpcs/get_agenda.md) | `22` (última en `60`) | ✅ | ✅ `SupabaseCitaRepository.listarAgenda` | |
+| [`crear_cita`](../rpcs/crear_cita.md) | `51` (alcance `60`) | ✅ | ✅ `SupabaseCitaRepository.crear` | |
 | [`cambiar_estado_cita`](../rpcs/cambiar_estado_cita.md) | `22` (última en `47`) | ✅ | ✅ `SupabaseCitaRepository` | |
-| [`reagendar_cita`](../rpcs/reagendar_cita.md) | `23` (última en `60`) | ✅ | ⚠️ | El adapter manda `p_prioridad`, que ya no existe en la firma. |
-| [`get_lista_urgencias`](../rpcs/get_lista_urgencias.md) | `23` (última en `52`) | ✅ | ✅ `SupabaseCitaRepository` | Revisar el mapeo: la salida cambió a `prioridad_actualizada_en`. |
+| [`reagendar_cita`](../rpcs/reagendar_cita.md) | `23` (última en `60`) | ✅ | ✅ `SupabaseCitaRepository.reagendar` | |
+| [`get_lista_urgencias`](../rpcs/get_lista_urgencias.md) | `23` (última en `52`) | ✅ | ✅ `SupabaseCitaRepository.listarUrgencias` | Mapea `prioridad_actualizada_en`. |
 | [`buscar_personas_agenda`](../rpcs/buscar_personas_agenda.md) | `42_agenda` | ✅ | ✅ `SupabaseCitaRepository` | |
 | [`get_umeca_citas`](../rpcs/get_umeca_citas.md) | `05` | ✅ | ✅ `SupabaseAuthRepository` | Está en el adapter de Auth, no en el de Cita. |
 
@@ -64,7 +64,7 @@ Corte: 27-nov-2026, rama `develop` con la migración `60_integrar_develop_y_supa
 
 | RPC | Migración | Base de datos | Admin (adapters) | Nota |
 |---|---|---|---|---|
-| [`registrar_seguimiento`](../rpcs/registrar_seguimiento.md) | `19` (última en `60`) | ✅ | ✅ `SupabaseSeguimientoRepository.registrar` | Después llama a la copia de la hoja, que hace `update` directo en `atencion` (cerrado en `43`) ⚠️. |
+| [`registrar_seguimiento`](../rpcs/registrar_seguimiento.md) | `19` (última en `60`) | ✅ | ✅ `SupabaseSeguimientoRepository.registrar` | |
 | [`get_contexto_seguimiento`](../rpcs/get_contexto_seguimiento.md) | `42_rpc` | ✅ | ❌ | Hoy el contexto se arma leyendo `ficha_registro`, `persona` y `domicilio` por separado. |
 | [`corregir_seguimiento`](../rpcs/corregir_seguimiento.md) | `43` | ✅ | ❌ | |
 | [`get_linea_tiempo`](../rpcs/get_linea_tiempo.md) | `20` (última en `34`) | ✅ | ✅ `SupabaseSeguimientoRepository` | |

@@ -232,6 +232,7 @@ export const supabaseFichaRepository: FichaRepository = {
     return data.estado;
   },
 
+  /** @deprecated No hay RPC de baja física y la RLS sobre `ficha_registro` bloquea el update directo (`42501`). Usar `archive`. */
   async deactivate(fichaId: string): Promise<void> {
     const { error } = await supabase
       .from('ficha_registro')

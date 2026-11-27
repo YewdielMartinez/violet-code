@@ -14,8 +14,7 @@ import {
   mapAgresorRow,
   mapAsentamientoRow,
   mapCatalogoRow,
-  toAgresorInsert,
-  toAgresorUpdate,
+  toGuardarAgresorArgs,
 } from './agresor.mapper';
 
 const AGRESOR_SELECT =
@@ -35,36 +34,33 @@ export const supabaseAgresorRepository: AgresorRepository = {
   },
 
   async crear(input: AgresorInput): Promise<Agresor> {
-    const { data, error } = await supabase
-      .from('agresor')
-      .insert(toAgresorInsert(input))
-      .select(AGRESOR_SELECT)
-      .single();
+    const { data, error } = await supabase.rpc('guardar_agresor', toGuardarAgresorArgs(input));
 
     if (error) throw mapSupabaseError(error);
-    return mapAgresorRow(data);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió el registro de la persona agresora.');
+    }
+    return mapAgresorRow(row);
   },
 
   async actualizar(id: string, input: AgresorInput): Promise<Agresor> {
-    let query = supabase
-      .from('agresor')
-      .update(toAgresorUpdate(input))
-      .eq('id', id)
-      .eq('activo', true);
-
-    if (input.actualizadoEnEsperado) {
-      query = query.eq('actualizado_en', input.actualizadoEnEsperado);
-    }
-
-    const { data, error } = await query.select(AGRESOR_SELECT).maybeSingle();
+    const { data, error } = await supabase.rpc('guardar_agresor', toGuardarAgresorArgs(input, id));
 
     if (error) throw mapSupabaseError(error);
-    if (!data) {
-      throw new Error(
-        'Este registro fue modificado por otra compañera. Recarga los datos antes de guardar.',
-      );
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      throw new Error('El servidor no devolvió el registro actualizado de la persona agresora.');
     }
-    return mapAgresorRow(data);
+    return mapAgresorRow(row);
+  },
+
+  async desactivar(id: string, motivo?: string | null): Promise<void> {
+    const { error } = await supabase.rpc('desactivar_agresor', {
+      p_agresor_id: id,
+      p_motivo: motivo?.trim() || undefined,
+    });
+    if (error) throw mapSupabaseError(error);
   },
 
   async registrarConsulta(tabla: TablaConsultaAgresor, registroId: string): Promise<void> {
