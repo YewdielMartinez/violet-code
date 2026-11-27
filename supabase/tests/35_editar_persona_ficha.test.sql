@@ -270,8 +270,8 @@ set local role authenticated;
 
 -- 22-29) actualizar_ficha: validaciones, servicios solicitados y bitácora
 select throws_ok(
-  $$select * from public.actualizar_ficha('95000000-0000-4000-a000-000000000201', (select actualizado_en from public.ficha_registro where id = '95000000-0000-4000-a000-000000000201'), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, '{}'::smallint[])$$,
-  '23514', null, 'actualizar_ficha rechaza servicios solicitados vacios'
+  $$select * from public.actualizar_ficha('95000000-0000-4000-a000-000000000201', (select actualizado_en from public.ficha_registro where id = '95000000-0000-4000-a000-000000000201'), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, array[9999]::smallint[])$$,
+  '23514', null, 'actualizar_ficha rechaza area inexistente en servicios solicitados'
 );
 
 select throws_ok(
