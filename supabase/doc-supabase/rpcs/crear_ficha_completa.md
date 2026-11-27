@@ -1,14 +1,14 @@
 # `crear_ficha_completa`
 
-- **Migración:** [`20261126000800_18_rpc_detalle_y_archivo.sql`](../../migrations/20261126000800_18_rpc_detalle_y_archivo.sql) *(actualiza `_10_`, `_11_`, `_12_`, `_13_`)*
+- **Migración:** [`20261128001500_57_ficha_campos_opcionales.sql`](../../migrations/20261128001500_57_ficha_campos_opcionales.sql) *(actualiza `_10_`, `_11_`, `_12_`, `_13_`, `_18_`)*
 - **Permiso RBAC:** `tiene_permiso('expediente.escribir')`
 - **Actores autorizados:** `titular`, `subdireccion`, `trabajo_social`.
 
 ## 1. Entrada (`p_payload jsonb`)
 Objeto con tres secciones:
-- `identidad`: `curp`, `nombres`, `apellidoPaterno`, `apellidoMaterno`, `celular`, `escolaridad`, `discapacidad`, `grupoEtnico`, `religion`, `estadoCivil`, `ocupacionId`, `ocupacionOtra`, `tieneTrabajo`, `numeroHijas`, `numeroHijosHombres`, `servicioMedico`, `servicioMedicoOtro`, `tieneEmbarazo`, `tieneDenuncia`, `esVictimaDelito`, `tieneConsumoDroga`, `drogas` (`tipo_droga[]`), `especificacionDroga`, `tieneConsumoAlcohol`, `serviciosSolicitadosAreaIds` (no vacío), `avisoPrivacidadAceptado` (`true`).
+- `identidad`: `curp`, `nombres`, `apellidoPaterno`, `apellidoMaterno`, `celular`, `escolaridad`, `discapacidad`, `grupoEtnico`, `religion`, `estadoCivil`, `ocupacionId`, `ocupacionOtra`, `tieneTrabajo`, `numeroHijas`, `numeroHijosHombres`, `servicioMedico`, `servicioMedicoOtro`, `tieneEmbarazo`, `tieneDenuncia`, `esVictimaDelito`, `tieneConsumoDroga`, `drogas` (`tipo_droga[]`), `especificacionDroga`, `tieneConsumoAlcohol`, `serviciosSolicitadosAreaIds` (opcional; puede omitirse, ser `null` o `[]`), `avisoPrivacidadAceptado` (`true`).
 - `domicilio`: `asentamientoId` o `codigoPostalForaneo`, `calle`, `numeroExterior`, `numeroInterior`, `referencias`, `zona`.
-- `estudio`: `ingresoMensualPropio`, `numeroDependientes`, `tieneApoyo`, `especificacionApoyo`, `tipoVivienda`, `material`, `materialOtro`, `servicios` (`servicio_vivienda[]`), `bienes` (`bien_vivienda[]`), `aportantes[]`.
+- `estudio`: `ingresoMensualPropio`, `numeroDependientes`, `tieneApoyo`, `especificacionApoyo`, `tipoVivienda`, `material`, `materialOtro`, `servicios` (`servicio_vivienda[]`), `bienes` (`bien_vivienda[]`), `aportantes[]` (`nombre` opcional; si se envía no vacío, máximo 150 caracteres).
 
 ## 2. Salida
 | Columna | Tipo | Descripción |
@@ -25,5 +25,5 @@ Objeto con tres secciones:
 | Código (`SQLSTATE`) | Cuándo ocurre |
 |---|---|
 | `42501` | Actor sin permiso `expediente.escribir`. |
-| `23514` | Aviso de privacidad no aceptado o sin servicios solicitados. |
+| `23514` | Aviso de privacidad no aceptado o tipo inválido en `serviciosSolicitadosAreaIds`. |
 | `23505` | La CURP ya cuenta con un expediente registrado. |

@@ -1,6 +1,6 @@
 # RPC: `public.guardar_agresor`
 
-- **Migración:** `supabase/migrations/20261127000500_36_rpc_guardar_agresor.sql`
+- **Migración:** `supabase/migrations/20261128001500_57_ficha_campos_opcionales.sql` *(actualiza `_36_`)*
 - **Cubre:** `RF-05`, `RN-15.1` (Sprint 02 · A-04)
 
 ## Actores autorizados
@@ -13,7 +13,7 @@
   p_agresor_id?: string | null;     // null = crear; UUID = editar con bloqueo optimista
   p_ficha_id?: string | null;       // Obligatorio al crear
   p_actualizado_en?: string | null; // Obligatorio al editar (bloqueo optimista)
-  p_nombres?: string | null;        // Obligatorio al crear (1..100)
+  p_nombres?: string | null;        // Opcional al crear y editar ('' limpia a null; si hay valor, 1..100)
   p_apellido_paterno?: string | null;
   p_apellido_materno?: string | null;
   p_edad?: number | null;
