@@ -51,6 +51,7 @@ begin
     (v_uid_ts,  'TS Alerta',        'trabajo_social', v_area_ts, true),
     (v_uid_rec, 'Recepcion Alerta', 'recepcion',      null,      true)
   on conflict (id) do nothing;
+  update auth.users u set raw_app_meta_data = jsonb_set(coalesce(u.raw_app_meta_data, '{}'::jsonb), '{tipo}', to_jsonb('empleado'::text), true) where exists (select 1 from public.empleado e where e.id = u.id) and coalesce(u.raw_app_meta_data ->> 'tipo', '') <> 'empleado';
 
   insert into public.persona (id, curp, nombres, apellido_paterno, celular, creado_por) values
     (v_per_con_ord, 'AERT900512MSLRRR01', 'Patricia', 'ConOrden', '6684444444', v_uid_ts),

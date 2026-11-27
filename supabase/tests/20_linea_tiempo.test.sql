@@ -64,6 +64,7 @@ begin
     (v_uid_rec,   'Recepcion LT Test',  'recepcion',      null,        true),
     (v_uid_inact, 'Inactivo LT Test',   'trabajo_social', v_area_ts,   false)
   on conflict (id) do nothing;
+  update auth.users u set raw_app_meta_data = jsonb_set(coalesce(u.raw_app_meta_data, '{}'::jsonb), '{tipo}', to_jsonb('empleado'::text), true) where exists (select 1 from public.empleado e where e.id = u.id) and coalesce(u.raw_app_meta_data ->> 'tipo', '') <> 'empleado';
 
   insert into public.usuario_externo (id, nombre, dependencia, activo) values
     (v_uid_umeca, 'UMECA LT Test', 'umeca', true)

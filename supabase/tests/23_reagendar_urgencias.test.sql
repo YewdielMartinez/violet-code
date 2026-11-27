@@ -60,6 +60,7 @@ begin
     (v_uid_jur,  'Juridico Reag',   'juridico',       v_area_jur,  true),
     (v_uid_rec,  'Recepcion Reag',  'recepcion',      null,        true)
   on conflict (id) do nothing;
+  update auth.users u set raw_app_meta_data = jsonb_set(coalesce(u.raw_app_meta_data, '{}'::jsonb), '{tipo}', to_jsonb('empleado'::text), true) where exists (select 1 from public.empleado e where e.id = u.id) and coalesce(u.raw_app_meta_data ->> 'tipo', '') <> 'empleado';
 
   -- Desactivar urgencias previas en atencion/ficha de pruebas anteriores? Solo marcamos nuevas fichas:
   insert into public.persona (id, curp, nombres, apellido_paterno, celular, creado_por) values

@@ -53,6 +53,7 @@ begin
     (v_uid_rec,   'Recepcion Agenda',  'recepcion',      null,        true),
     (v_uid_inact, 'Inactivo Agenda',   'recepcion',      null,        false)
   on conflict (id) do nothing;
+  update auth.users u set raw_app_meta_data = jsonb_set(coalesce(u.raw_app_meta_data, '{}'::jsonb), '{tipo}', to_jsonb('empleado'::text), true) where exists (select 1 from public.empleado e where e.id = u.id) and coalesce(u.raw_app_meta_data ->> 'tipo', '') <> 'empleado';
 
   insert into public.persona (id, curp, nombres, apellido_paterno, celular, creado_por) values
     (v_per_adult, 'ROEL950512MSLRRR01', 'Elena', 'Rojas', '6681234567', v_uid_ts);

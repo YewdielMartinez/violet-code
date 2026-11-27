@@ -4,7 +4,7 @@
 
 La app Kotlin habla con Supabase por HTTP (Retrofit + OkHttp en `core/data`), no con un SDK. Por eso aquí los ejemplos son peticiones HTTP a PostgREST. Las reglas de parámetros y errores son las mismas que en el resto de la referencia.
 
-La usuaria **no** es empleada: no tiene `empleado.rol` y `tiene_permiso()` siempre le devuelve `false`. Todo lo que puede hacer se decide por **propiedad** (`auth.uid()`): su cuenta, su pre-registro y sus alertas.
+La usuaria **no** es empleada: su cuenta en `auth.users` lleva `app_metadata.tipo = 'usuaria_app'` (asignado automáticamente por trigger en servidor al registrarse), no tiene `empleado.rol`, `es_usuaria_app()` devuelve `true` y `tiene_permiso()` siempre le devuelve `false`. Todo lo que puede hacer se decide por **propiedad** (`auth.uid()`): su cuenta, su pre-registro y sus alertas.
 
 ---
 

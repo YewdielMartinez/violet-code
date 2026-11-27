@@ -70,10 +70,12 @@ begin
     (v_uid_rec,   'Recepcion Bitacora Test',  'recepcion',      null,        true),
     (v_uid_inact, 'Inactivo Bitacora Test',   'titular',        null,        false)
   on conflict (id) do nothing;
+  update auth.users u set raw_app_meta_data = jsonb_set(coalesce(u.raw_app_meta_data, '{}'::jsonb), '{tipo}', to_jsonb('empleado'::text), true) where exists (select 1 from public.empleado e where e.id = u.id) and coalesce(u.raw_app_meta_data ->> 'tipo', '') <> 'empleado';
 
   insert into public.usuario_externo (id, nombre, dependencia, activo) values
     (v_uid_umeca, 'UMECA Bitacora Test', 'umeca', true)
   on conflict (id) do nothing;
+  update auth.users u set raw_app_meta_data = jsonb_set(coalesce(u.raw_app_meta_data, '{}'::jsonb), '{tipo}', to_jsonb('externo'::text), true) where u.id = v_uid_umeca;
 
   insert into public.persona (id, curp, nombres, apellido_paterno, creado_por) values
     (v_per_1, 'TETE930410MSLRRR01', 'Lucia',  'Perez', v_uid_ts),
