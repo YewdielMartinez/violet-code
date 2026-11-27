@@ -107,13 +107,6 @@ export const NAVIGATION: NavPage[] = [
     ready: false,
     allowedRoles: DIRECTION_ONLY,
   },
-  {
-    path: '/auditoria',
-    label: 'Auditoría',
-    icon: 'policy',
-    ready: false,
-    allowedRoles: DIRECTION_ONLY,
-  },
 ];
 
 export const ALL_PAGES = NAVIGATION;
