@@ -84,13 +84,6 @@ export const ExpedienteContactoSection = memo(function ExpedienteContactoSection
                 >
                   <Icon name="content_copy" className="text-[20px]" />
                 </button>
-                <a
-                  href={`tel:${rawPhone}`}
-                  aria-label={`Llamar al ${rawPhone}`}
-                  className="grid size-11 place-items-center rounded-xl border border-outline-variant bg-surface-container-low text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
-                >
-                  <Icon name="call" className="text-[20px]" />
-                </a>
               </div>
             ) : null}
           </div>
