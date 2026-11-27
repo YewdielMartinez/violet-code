@@ -173,40 +173,54 @@
 
 .est-panel__head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
   min-height: 32px;
 }
 
+.est-panel__heading {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
 .est-panel__title {
   margin: 0;
   min-width: 0;
-  font-size: 0.9375rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
   color: var(--md-sys-color-on-surface);
+}
+
+/* Una línea de lectura bajo el título: flecha + texto (la dirección no depende solo del color). */
+.est-panel__insight {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .est-panel__viz {
   min-width: 0;
 }
 
-/* Paleta de una sola familia (burdeos / rosas del tema) sobre las variables del Chart del kit. La segunda serie es
-   el mismo acento mezclado con la superficie: contrasta con el fondo claro y con el negro puro. */
-.est-chart.mk-chart {
-  --mk-chart-mono: var(--md-sys-color-primary);
-  --mk-chart-1: var(--md-sys-color-primary);
-  --mk-chart-2: color-mix(in srgb, var(--md-sys-color-primary) 48%, var(--md-sys-color-surface));
-  --mk-chart-other: var(--md-sys-color-outline);
-  --mk-chart-grid: color-mix(in srgb, var(--md-sys-color-on-surface) 14%, transparent);
-  --mk-chart-surface: var(--md-sys-color-surface-container-lowest);
-}
+/* La paleta de las gráficas (acento del tema y su tinte) vive en `shared/ui/chart/chart.css` (`.vc-chart`). */
 
 /* ── Barras horizontales con etiqueta directa ───────────────────────────────────────────────────────────────────── */
 
+.est-hbars-wrap {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Etiqueta a la izquierda, barra sobre su pista y valor a la derecha; la lista crece en alto con las categorías. */
 .est-hbars {
   display: grid;
-  gap: 10px;
+  gap: 6px;
+  max-width: 48rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -214,17 +228,18 @@
 
 .est-hbars__row {
   display: grid;
-  grid-template-columns: minmax(6rem, 38%) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(6rem, 34%) minmax(0, 1fr) 3.5rem;
   align-items: center;
-  gap: 10px;
-  font-size: 0.8125rem;
+  gap: 12px;
+  min-height: 28px;
+  font-size: 0.875rem;
 }
 
 .est-hbars__label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-on-surface);
 }
 
 .est-hbars__track {
@@ -244,24 +259,40 @@
 }
 
 .est-hbars__value {
-  min-width: 2.5rem;
   text-align: end;
-  font-weight: 500;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--md-sys-color-on-surface);
 }
 
+.est-hbars__more {
+  justify-self: start;
+}
+
 .est-hbars__empty {
+  display: grid;
+  place-items: center;
+  min-height: 9rem;
   margin: 0;
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container-low);
   font-size: 0.875rem;
   color: var(--md-sys-color-on-surface-variant);
 }
 
 /* ── Tabla «Ver datos» ──────────────────────────────────────────────────────────────────────────────────────────── */
 
+/* «Ver datos»: región propia con desplazamiento y encabezado fijo; con muchas filas no se corta ni alarga la página. */
 .est-datatable-wrap {
-  overflow-x: auto;
+  max-height: 22rem;
+  overflow: auto;
   min-width: 0;
+  border-radius: 12px;
+}
+
+.est-datatable-wrap:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
 }
 
 .est-datatable {
@@ -280,8 +311,12 @@
 }
 
 .est-datatable thead th {
-  font-weight: 500;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  font-weight: 600;
   color: var(--md-sys-color-on-surface-variant);
+  background: var(--md-sys-color-surface-container-lowest);
 }
 
 .est-datatable tbody th {
@@ -321,6 +356,7 @@
   color: var(--md-sys-color-on-surface-variant);
 }
 
+/* Reportes: indicadores, gráfica y tabla en una sola columna a todo el ancho (nada se aprieta ni se corta). */
 .est-report-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -328,16 +364,32 @@
   min-width: 0;
 }
 
-@container (min-width: 64rem) {
-  .est-report-grid {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    align-items: start;
-  }
+.est-table {
+  min-width: 0;
 }
 
-.est-table [data-mk-dt-table] td:first-child {
+/* Fila «Total» del reporte. */
+.est-table [data-mk-dt-table] tbody tr[data-id='total'] td {
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-low);
   font-weight: 600;
   color: var(--md-sys-color-on-surface);
+}
+
+/* Contenedor angosto con scroll horizontal: la primera columna (el nombre de la fila) queda fija al desplazar. */
+@container (max-width: 52rem) {
+  .est-table:not([data-mk-reflow]) [data-mk-dt-table] :is(th, td):first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--md-sys-color-surface-container-lowest);
+    box-shadow: 1px 0 0 var(--md-sys-color-outline-variant);
+  }
+
+  .est-table:not([data-mk-reflow]) [data-mk-dt-table] thead th:first-child {
+    z-index: 2;
+    background: var(--md-sys-color-surface-container-low);
+  }
 }
 
 /* ── Esqueleto de carga ─────────────────────────────────────────────────────────────────────────────────────────── */

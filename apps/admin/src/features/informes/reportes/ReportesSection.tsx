@@ -1,27 +1,27 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { DataTable, EmptyState, Select, toast } from '@yewdiel21/motion-kit/react';
+import { EmptyState, Select, toast } from '@yewdiel21/motion-kit/react';
 import type { DataTableProps } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/data-table';
-import '@yewdiel21/motion-kit/css/components/filter-builder';
-import '@yewdiel21/motion-kit/css/components/menu';
-import '@yewdiel21/motion-kit/css/components/select';
-import '@yewdiel21/motion-kit/css/components/pagination';
 import '@yewdiel21/motion-kit/css/components/empty-state';
+import '@yewdiel21/motion-kit/css/components/select';
 import type { ReporteTipo } from '@/domain/models/Reporte';
 import { downloadBlob, toCsvBlob, toXlsx } from '@/shared/export';
 import {
   NOTA_SIN_DATOS_PERSONALES,
   chartFromContainer,
+  panelPorTitulo,
   usePrintable,
   type PrintBar,
   type PrintReportOptions,
 } from '@/shared/print';
 import { SkeletonRows } from '@/shared/ui/SkeletonRows';
 import { SmallEmptyState } from '@/shared/ui/SmallEmptyState';
+import { formatDecimal } from '@/shared/ui/table/tableFormat';
+import { VcDataTable } from '@/shared/ui/table/VcDataTable';
 import { ChartPanel, HBars, KitChart } from '../ChartPanel';
 import { KpiStrip, type KpiItem } from '../KpiStrip';
 import { useReporte } from '../api';
 import { REPORTES, REPORTE_OPCIONES, esReporteTipo, type ReporteFila, type ReporteGrafica } from './catalogo';
+import { insightPuntos } from './estadisticas';
 import { etiquetaPeriodo, type Periodo, type Rango } from './periodo';
 import { columnasExportacion, reporteFileName } from './reporteExport';
 import '../informes.css';
@@ -60,8 +60,9 @@ function GraficaReporte({ grafica, resumen }: { grafica: ReporteGrafica; resumen
     () => (grafica.kind === 'barras' ? [{ name: grafica.serie, values: grafica.values }] : []),
     [grafica],
   );
+  const insight = insightPuntos(grafica.kind === 'hbars' ? grafica.puntos : grafica.labels.map((label, i) => ({ label, value: grafica.values[i] })));
   return (
-    <ChartPanel title={grafica.titulo} summary={resumen} data={datosGrafica(grafica)} className="est-report-chart">
+    <ChartPanel title={grafica.titulo} insight={insight} summary={resumen} data={datosGrafica(grafica)} className="est-report-chart">
       {grafica.kind === 'barras' ? (
         <KitChart label={grafica.titulo} type="bar" labels={grafica.labels} series={series} barWidth={40} height={200} />
       ) : (
@@ -93,12 +94,21 @@ export function ReportesSection({ tipo, onTipo, periodo, rango, areaId, areaNomb
       (vista?.tabla.columnas ?? []).map((columna) => ({
         key: columna.key,
         label: columna.header,
-        ...(columna.numeric ? { type: 'number' as const, align: 'end' as const } : {}),
+        ...(columna.numeric
+          ? {
+              type: 'number' as const,
+              align: 'end' as const,
+              format: (value: unknown) => (typeof value === 'number' ? formatDecimal(value) : '—'),
+            }
+          : {}),
         sortable: !vista?.tabla.filas.some((fila) => fila.id === 'total'),
       })),
     [vista],
   );
   const rows = useMemo(() => (vista?.tabla.filas ?? []) as TablaRow[], [vista]);
+  // La primera columna de texto identifica la fila (área, destino…): destacada; las de texto se truncan con `title`.
+  const textKeys = useMemo(() => (vista?.tabla.columnas ?? []).filter((c) => !c.numeric).map((c) => c.key), [vista]);
+  const strongKeys = useMemo(() => textKeys.slice(0, 1), [textKeys]);
   const kpis = useMemo<KpiItem[]>(
     () => (vista?.kpis ?? []).map((kpi) => ({ id: kpi.label, label: kpi.label, value: kpi.value, text: `${kpi.label}: ${kpi.value}` })),
     [vista],
@@ -134,7 +144,7 @@ export function ReportesSection({ tipo, onTipo, periodo, rango, areaId, areaNomb
       grafica.kind === 'hbars'
         ? grafica.puntos.map((p) => ({ label: p.label, value: p.value }))
         : grafica.labels.map((label, i) => ({ label, value: grafica.values[i] }));
-    const chart = chartFromContainer(bodyRef.current, grafica.titulo, respaldo);
+    const chart = chartFromContainer(panelPorTitulo(bodyRef.current, grafica.titulo), grafica.titulo, respaldo);
     return {
       title: def.label,
       subtitle: def.aplicaArea ? `${subtitulo} · ${areaNombre ?? 'Todas las áreas'}` : subtitulo,
@@ -221,13 +231,15 @@ export function ReportesSection({ tipo, onTipo, periodo, rango, areaId, areaNomb
           <KpiStrip items={kpis} label={`${def.label}, ${subtitulo}`} />
           <div className="est-report-grid">
             <GraficaReporte grafica={vista.grafica} resumen={vista.resumenGrafica} />
-            <DataTable<TablaRow>
+            <VcDataTable<TablaRow>
               key={tipo}
-              className="vc-expediente-table est-table"
+              className="est-table"
+              strong={strongKeys}
+              truncate={textKeys}
               caption={`${def.label}, ${subtitulo}`}
               rows={rows}
               columns={columns}
-              pageSize={20}
+              pageSize={10}
               search={false}
               filters={false}
               columnsMenu={false}

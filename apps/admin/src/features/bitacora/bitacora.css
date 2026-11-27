@@ -1,21 +1,6 @@
 /* Bitácora: tabla de solo lectura (mismo `DataTable` y cápsulas `vc-dt-pill` que Expedientes, Usuarios y Actividades).
    Los colores salen de los tokens del tema. */
 
-/* Quién hizo el cambio es la columna principal: mismo énfasis que el nombre en Expedientes. */
-.vc-bitacora-table [data-mk-dt-table] td[data-key='actor'] {
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface);
-}
-
-/* Id del registro: identificador largo, en monoespaciada y que se parte en lugar de ensanchar la tabla. */
-.vc-bitacora-table [data-mk-dt-table] td[data-key='registro'] {
-  max-width: 16rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.8125rem;
-  color: var(--md-sys-color-on-surface-variant);
-  overflow-wrap: anywhere;
-}
-
 .vc-bitacora-pager {
   display: flex;
   justify-content: center;

@@ -1,13 +1,10 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { DataTable, EmptyState, Pagination, Skeleton, toast } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/data-table';
+import { EmptyState, Pagination, Skeleton, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
-import '@yewdiel21/motion-kit/css/components/filter-builder';
-import '@yewdiel21/motion-kit/css/components/menu';
 import '@yewdiel21/motion-kit/css/components/pagination';
-import '@yewdiel21/motion-kit/css/components/select';
 import '@yewdiel21/motion-kit/css/components/skeleton';
+import { VcDataTable } from '@/shared/ui/table/VcDataTable';
 import { puedeVerBitacora } from '@/domain/models/Bitacora';
 import { useAuth } from '@/shared/auth/useAuth';
 import { imprimirConAviso, useRolEtiqueta } from '@/shared/print';
@@ -24,7 +21,7 @@ import {
   totalPaginas,
   type BitacoraListFilters,
 } from './bitacoraList';
-import { COLUMNS, RETRY_ACTION, decorateBitacoraRows, toBitacoraRow, type BitacoraRow } from './bitacoraTableConfig';
+import { BITACORA_DECOR, COLUMNS, RETRY_ACTION, toBitacoraRow, type BitacoraRow } from './bitacoraTableConfig';
 import './bitacora.css';
 
 interface TableSectionProps {
@@ -36,12 +33,12 @@ interface TableSectionProps {
 const BitacoraTableSection = memo(function BitacoraTableSection({ isLoading, rows }: TableSectionProps) {
   return (
     <Skeleton loading={isLoading} shape="card" lines={6} label="Cargando bitácora">
-      <DataTable<BitacoraRow>
-        className="vc-expediente-table vc-bitacora-table"
+      <VcDataTable<BitacoraRow>
+        {...BITACORA_DECOR}
+        className="vc-bitacora-table"
         caption="Bitácora de accesos y cambios"
         rows={rows}
         columns={COLUMNS}
-        onRender={decorateBitacoraRows}
         pageSize={0}
         search={false}
         filters={false}

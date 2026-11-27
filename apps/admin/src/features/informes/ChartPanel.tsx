@@ -1,6 +1,8 @@
-import { useId, useState, type ReactNode } from 'react';
+import { useId, useRef, useState, type ReactNode } from 'react';
 import { Chart } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/chart';
+import { useBarValueLabels } from '@/shared/ui/chart/barValueLabels';
+import '@/shared/ui/chart/chart.css';
 import type { Punto } from './reportes/estadisticas';
 import './informes.css';
 
@@ -16,6 +18,8 @@ export interface ChartPanelProps {
   title: string;
   /** Frase para lectores de pantalla: qué muestra la gráfica y su dato más relevante. */
   summary: string;
+  /** Una línea de lectura visible bajo el título («▲ 12 % vs. mes anterior»). */
+  insight?: string | null;
   /** Alternativa en tabla: botón «Ver datos». */
   data: ChartTableData;
   className?: string;
@@ -23,17 +27,22 @@ export interface ChartPanelProps {
 }
 
 /**
- * Marco de una gráfica: título, resumen accesible y alternancia «Ver datos» ↔ «Ver gráfica» (la misma información en
- * tabla). El tamaño responde al ancho del contenedor (container queries), no al de la ventana.
+ * Marco de una gráfica: título, una línea de lectura (insight), resumen accesible y alternancia «Ver datos» ↔ «Ver
+ * gráfica» (la misma información en tabla). El tamaño responde al ancho del contenedor (container queries), no al de
+ * la ventana. La tabla «Ver datos» tiene su propia región con desplazamiento y encabezado fijo: con muchas filas no se
+ * corta ni alarga la página.
  */
-export function ChartPanel({ title, summary, data, className = '', children }: ChartPanelProps) {
+export function ChartPanel({ title, summary, insight, data, className = '', children }: ChartPanelProps) {
   const [verDatos, setVerDatos] = useState(false);
   const summaryId = useId();
 
   return (
     <section aria-label={title} aria-describedby={summaryId} className={`est-panel ${className}`}>
       <header className="est-panel__head">
-        <h3 className="est-panel__title">{title}</h3>
+        <div className="est-panel__heading">
+          <h3 className="est-panel__title">{title}</h3>
+          {insight ? <p className="est-panel__insight">{insight}</p> : null}
+        </div>
         <button
           type="button"
           className="mk-button mk-button--text mk-button--sm vc-press"
@@ -47,7 +56,7 @@ export function ChartPanel({ title, summary, data, className = '', children }: C
         {summary}
       </p>
       {verDatos ? (
-        <div className="est-datatable-wrap">
+        <div className="est-datatable-wrap" tabIndex={0} role="region" aria-label={`Datos de ${title}`}>
           <table className="est-datatable">
             <caption className="sr-only">{title}</caption>
             <thead>
@@ -90,6 +99,8 @@ export interface SerieBarras {
   values: number[];
 }
 
+const NO_VALUES: number[] = [];
+
 export interface BarrasChartProps {
   /** Nombre accesible de la gráfica (el kit lo usa también como título de su tabla). */
   label: string;
@@ -102,50 +113,79 @@ export interface BarrasChartProps {
 }
 
 /**
- * Gráfica del kit con la paleta de una sola familia (burdeos / rosas del tema). Texto de ejes en español, valores con
- * separador de miles y etiqueta directa del último valor (líneas / áreas) o leyenda cuando hay varias series.
+ * Gráfica del kit con la paleta de una sola familia (acento del tema y su tinte para la serie de comparación). Texto
+ * de ejes en español, valores con separador de miles, valor sobre cada barra cuando caben, etiqueta directa del último
+ * valor (líneas / áreas) y leyenda arriba a la derecha solo cuando hay varias series.
  */
 export function KitChart({ label, type, labels, series, stacked, height = 220, barWidth = 28 }: BarrasChartProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  // Las barras apiladas ya muestran su total; las líneas y áreas, el último valor.
+  const conEtiquetas = type === 'bar' && !stacked && series.length === 1;
+  useBarValueLabels(ref, series[0]?.values ?? NO_VALUES, formatNumber, conEtiquetas);
   return (
-    <Chart
-      className="est-chart"
-      type={type}
-      label={label}
-      labels={labels}
-      series={series}
-      stacked={stacked}
-      axis
-      legend={series.length > 1}
-      height={height}
-      barWidth={barWidth}
-      barStyle="rounded"
-      formatValue={formatNumber}
-      emptyLabel="Sin datos en el periodo"
-    />
+    <div ref={ref}>
+      <Chart
+        className="est-chart vc-chart"
+        type={type}
+        label={label}
+        labels={labels}
+        series={series}
+        stacked={stacked}
+        axis
+        legend={series.length > 1}
+        height={height}
+        barWidth={barWidth}
+        barStyle="rounded"
+        formatValue={formatNumber}
+        emptyLabel="Sin datos en el periodo"
+      />
+    </div>
   );
 }
 
+/** Categorías que se muestran de entrada en las barras horizontales; el resto va tras «Ver todo». */
+export const HBARS_LIMITE = 10;
+
 /**
- * Barras horizontales con la etiqueta a la izquierda y el valor al final de cada barra (etiquetado directo, sin
- * leyenda). Para categorías con nombres largos, donde las barras verticales obligarían a girar el texto.
+ * Barras horizontales con la etiqueta a la izquierda y el valor a la derecha (etiquetado directo, sin leyenda). Para
+ * categorías con nombres largos, donde las barras verticales obligarían a girar el texto. Muestra las primeras
+ * {@link HBARS_LIMITE} (los puntos llegan de mayor a menor); con más, «Ver todo» las despliega y la lista crece en alto
+ * en vez de apretarse ni cortarse.
  */
-export function HBars({ puntos, label }: { puntos: readonly Punto[]; label: string }) {
-  const max = Math.max(1, ...puntos.map((p) => p.value));
+export function HBars({ puntos, label, limite = HBARS_LIMITE }: { puntos: readonly Punto[]; label: string; limite?: number }) {
+  const [todo, setTodo] = useState(false);
   if (puntos.length === 0) return <p className="est-hbars__empty">Sin datos en el periodo</p>;
+  const max = Math.max(1, ...puntos.map((p) => p.value));
+  const total = puntos.reduce((sum, p) => sum + p.value, 0);
+  const hayMas = puntos.length > limite;
+  const visibles = hayMas && !todo ? puntos.slice(0, limite) : puntos;
   return (
-    <ul className="est-hbars" aria-label={label}>
-      {puntos.map((punto) => (
-        <li key={punto.label} className="est-hbars__row">
-          <span className="est-hbars__label" title={punto.label}>
-            {punto.label}
-          </span>
-          <span className="est-hbars__track" aria-hidden>
-            <span className="est-hbars__fill" style={{ width: `${Math.max(2, (punto.value / max) * 100)}%` }} />
-          </span>
-          <span className="est-hbars__value">{formatNumber(punto.value)}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="est-hbars-wrap">
+      <ul className="est-hbars" aria-label={label}>
+        {visibles.map((punto) => {
+          const parte = total > 0 ? Math.round((punto.value / total) * 100) : 0;
+          return (
+            <li key={punto.label} className="est-hbars__row" title={`${punto.label}: ${formatNumber(punto.value)} (${parte} %)`}>
+              <span className="est-hbars__label">{punto.label}</span>
+              <span className="est-hbars__track" aria-hidden>
+                <span className="est-hbars__fill" style={{ width: `${Math.max(2, (punto.value / max) * 100)}%` }} />
+              </span>
+              <span className="est-hbars__value">{formatNumber(punto.value)}</span>
+            </li>
+          );
+        })}
+      </ul>
+      {hayMas ? (
+        <button
+          type="button"
+          className="mk-button mk-button--text mk-button--sm vc-press est-hbars__more"
+          aria-expanded={todo}
+          onClick={() => setTodo((v) => !v)}
+        >
+          {todo ? 'Ver menos' : `Ver todo (${puntos.length})`}
+        </button>
+      ) : null}
+    </div>
   );
 }
 

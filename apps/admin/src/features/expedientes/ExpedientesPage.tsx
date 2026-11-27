@@ -8,19 +8,10 @@ import {
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  DataTable,
-  EmptyState,
-  Skeleton,
-  type DataAction,
-} from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/data-table';
+import { EmptyState, Skeleton, type DataAction } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
-import '@yewdiel21/motion-kit/css/components/filter-builder';
-import '@yewdiel21/motion-kit/css/components/menu';
-import '@yewdiel21/motion-kit/css/components/pagination';
-import '@yewdiel21/motion-kit/css/components/select';
 import '@yewdiel21/motion-kit/css/components/skeleton';
+import { VcDataTable } from '@/shared/ui/table/VcDataTable';
 import { preloadPage } from '@/app/pages';
 import { ArchivarExpedienteDialog } from './ArchivarExpedienteDialog';
 import { DesarchivarExpedienteDialog } from './DesarchivarExpedienteDialog';
@@ -41,12 +32,12 @@ import {
 } from './api';
 import {
   COLUMNS,
+  EXPEDIENTES_DECOR,
   QUICK_FILTERS,
   RETRY_ACTION,
   ROW_ACTIONS,
   ROW_ACTIONS_WITH_ARCHIVE,
   ROW_ACTIONS_WITH_ARCHIVE_AND_REOPEN,
-  decorateExpedienteRows,
   formatTableDate,
   type ExpedienteRow,
   type QuickFilter,
@@ -102,8 +93,8 @@ const ExpedientesTableSection = memo(function ExpedientesTableSection({
       onClickCapture={syncArchiveItems}
     >
       <Skeleton loading={isLoading} shape="card" lines={6} label="Cargando expedientes">
-        <DataTable<ExpedienteRow>
-          className="vc-expediente-table"
+        <VcDataTable<ExpedienteRow>
+          {...EXPEDIENTES_DECOR}
           caption="Listado de expedientes activos"
           rows={rows}
           columns={COLUMNS}
@@ -111,7 +102,6 @@ const ExpedientesTableSection = memo(function ExpedientesTableSection({
           onAction={onRowAction}
           onClick={onTableClick}
           onKeyDown={onTableKeyDown}
-          onRender={decorateExpedienteRows}
           pageSize={10}
           search="Buscar por folio, CURP o nombre…"
           emptyTitle="Sin expedientes en esta vista"

@@ -136,16 +136,6 @@
   line-height: 1.5;
 }
 
-/* Filas clicables en la tabla de expedientes */
-.vc-expediente-table [data-mk-dt-table] tbody tr[data-id]:not([data-mk-dt-loading]) {
-  cursor: pointer;
-}
-
-.vc-expediente-table [data-mk-dt-table] tbody tr[data-id]:not([data-mk-dt-loading]):focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: -2px;
-}
-
 @media (prefers-reduced-motion: reduce) {
 
   .mk-dialog.vc-expediente-dialog[data-mk-placement='side'],

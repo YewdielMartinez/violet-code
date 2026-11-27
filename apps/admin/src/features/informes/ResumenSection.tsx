@@ -18,6 +18,9 @@ import {
   distribucionPorSexo,
   distribucionPorTipo,
   filasDelPeriodo,
+  insightPuntos,
+  insightSerie,
+  insightSeguimiento,
   kpisAtenciones,
   kpiTexto,
   resumenDeTotal,
@@ -234,6 +237,7 @@ export function ResumenSection({
         <ChartPanel
           className="est-span-2"
           title="Atenciones por mes"
+          insight={insightSerie(mensual.values)}
           summary={resumenSerie('Atenciones por mes', mensual.largas, mensual.values)}
           data={{ columns: ['Mes', 'Atenciones'], rows: mensual.largas.map((mes, i) => [mes, mensual.values[i]]) }}
         >
@@ -248,6 +252,7 @@ export function ResumenSection({
 
         <ChartPanel
           title="Primera vez y seguimiento"
+          insight={insightSeguimiento(seguimiento.primeraVez, seguimiento.seguimiento)}
           summary={resumenSerie(
             'Atenciones de primera vez y seguimiento por mes',
             seguimiento.largas,
@@ -269,6 +274,7 @@ export function ResumenSection({
 
         <ChartPanel
           title="Mujeres y hombres atendidos"
+          insight={insightPuntos(sexo)}
           summary={resumenPuntos('Personas atendidas por sexo', sexo)}
           data={{ columns: ['Sexo', 'Personas'], rows: sexo.map((p) => [p.label, p.value]) }}
         >
@@ -277,6 +283,7 @@ export function ResumenSection({
 
         <ChartPanel
           title="Atenciones por tipo de atención"
+          insight={insightPuntos(porTipo)}
           summary={resumenPuntos('Atenciones por tipo de atención', porTipo)}
           data={{ columns: ['Tipo de atención', 'Atenciones'], rows: porTipo.map((p) => [p.label, p.value]) }}
         >
@@ -286,6 +293,7 @@ export function ResumenSection({
         {mostrarPorArea ? (
           <ChartPanel
             title="Atenciones por área"
+            insight={insightPuntos(porArea)}
             summary={resumenPuntos('Atenciones por área', porArea)}
             data={{ columns: ['Área', 'Atenciones'], rows: porArea.map((p) => [p.label, p.value]) }}
           >

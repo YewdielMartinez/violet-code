@@ -123,12 +123,3 @@
   line-height: 1.5;
 }
 
-/* Filas clicables en la tabla de canalizaciones */
-.vc-canalizaciones-table [data-mk-dt-table] tbody tr[data-id]:not([data-mk-dt-loading]) {
-  cursor: pointer;
-}
-
-.vc-canalizaciones-table [data-mk-dt-table] tbody tr[data-id]:not([data-mk-dt-loading]):focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: -2px;
-}

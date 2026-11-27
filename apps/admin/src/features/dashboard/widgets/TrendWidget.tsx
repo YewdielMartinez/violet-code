@@ -1,5 +1,8 @@
+import { useMemo } from 'react';
 import { Chart } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/chart';
+import { useBarValueLabels } from '@/shared/ui/chart/barValueLabels';
+import '@/shared/ui/chart/chart.css';
 import { useAlertsSummary } from '../api';
 import { clamp, useElementBox, useWidgetBox } from './box';
 import { Sparkline } from './Sparkline';
@@ -8,6 +11,8 @@ import { WidgetCard, WidgetEmpty, WidgetSkeleton } from './shared';
 
 const dayLabel = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString('es-MX', { weekday: 'short' }).replace('.', '');
+
+const formatCount = (n: number) => Math.round(n).toLocaleString('es-MX');
 
 const dayLong = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString('es-MX', { weekday: 'long' });
 
@@ -27,15 +32,21 @@ function TrendChart({ days, w, fallbackHeight }: { days: Body['days']; w: number
   const [chartRef, area] = useElementBox<HTMLDivElement>();
   const ready = useWhenVisible(chartRef);
   const plotHeight = clamp((area?.h ?? fallbackHeight) - X_AXIS, 72, 420);
+  const values = useMemo(() => days.map((d) => d.count), [days]);
+  const series = useMemo(() => [{ name: 'Alertas', values }], [values]);
+  const labels = useMemo(() => days.map((d) => dayLabel(d.date)), [days]);
+  useBarValueLabels(chartRef, values, formatCount, ready && plotHeight >= 120);
 
   return (
     <div ref={chartRef} className="min-h-0 min-w-0 flex-1 overflow-hidden">
       {ready ? (
         <Chart
+          className="vc-chart"
           type="bar"
           label="Alertas recibidas por día"
-          labels={days.map((d) => dayLabel(d.date))}
-          series={[{ name: 'Alertas', values: days.map((d) => d.count) }]}
+          labels={labels}
+          series={series}
+          formatValue={formatCount}
           barStyle="pill"
           barWidth={w >= 900 ? 44 : 28}
           axis={plotHeight >= 120}

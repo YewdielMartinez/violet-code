@@ -3,6 +3,8 @@
  * (`asistio`, `no_asistio`, `cancelo`, `pendiente`); se aceptan también los estados internos de la cita por si el
  * RPC cambia, para que nunca se muestre una clave cruda al usuario.
  */
+import type { PillTone } from '@/shared/ui/table/tableDecorate';
+
 export type AsistenciaUmeca = 'asistio' | 'no_asistio' | 'pendiente' | 'cancelo';
 
 export interface AsistenciaInfo {
@@ -12,6 +14,8 @@ export interface AsistenciaInfo {
   icon: string;
   /** Clases de Tailwind con tokens del tema (claro y oscuro). */
   chipClass: string;
+  /** Tono de la cápsula de la tabla (`vc-dt-pill`), el mismo que `chipClass`. */
+  tone: PillTone;
 }
 
 const INFO: Record<AsistenciaUmeca, AsistenciaInfo> = {
@@ -20,24 +24,28 @@ const INFO: Record<AsistenciaUmeca, AsistenciaInfo> = {
     label: 'Asistió',
     icon: 'event_available',
     chipClass: 'bg-status-success-bg text-status-success',
+    tone: 'success',
   },
   no_asistio: {
     clave: 'no_asistio',
     label: 'No asistió',
     icon: 'event_busy',
     chipClass: 'bg-status-danger-bg text-status-danger',
+    tone: 'danger',
   },
   pendiente: {
     clave: 'pendiente',
     label: 'Pendiente',
     icon: 'event_upcoming',
     chipClass: 'bg-secondary-container text-on-secondary-container',
+    tone: 'info',
   },
   cancelo: {
     clave: 'cancelo',
     label: 'Canceló',
     icon: 'cancel',
     chipClass: 'bg-surface-container-high text-on-surface-variant',
+    tone: 'neutral',
   },
 };
 

@@ -6,6 +6,8 @@ import {
   TIPO_INSTITUCION_LABELS,
   type ActividadPreventivaItem,
 } from '@/domain/models/ActividadPreventiva';
+import { createRowDecorator, PILL_SEPARATOR, type RowDecorSpec } from '@/shared/ui/table/tableDecorate';
+import { formatNumberCell, numericColumn } from '@/shared/ui/table/tableFormat';
 import { fechaCortaActividad, horaActividad, ubicacionActividad } from './actividadesList';
 
 export interface ActividadRow extends Record<string, unknown> {
@@ -24,8 +26,6 @@ export interface ActividadRow extends Record<string, unknown> {
   asistentes: number | null;
 }
 
-/** Separador entre las cápsulas de una misma celda de estado («Pendiente · Vencida»). */
-const PILL_SEPARATOR = ' · ';
 const VENCIDA_LABEL = 'Vencida';
 
 const ESTADO_OPTIONS = Object.values(ESTADO_ACTIVIDAD_LABELS).map((label) => ({ value: label, label }));
@@ -52,14 +52,7 @@ export const COLUMNS: DataTableProps<ActividadRow>['columns'] = [
     options: ESTADO_OPTIONS,
     format: (value, row) => (row.vencida ? `${String(value)}${PILL_SEPARATOR}${VENCIDA_LABEL}` : String(value)),
   },
-  {
-    key: 'asistentes',
-    label: 'Asistentes',
-    type: 'number',
-    sortable: true,
-    align: 'end',
-    format: (value) => (typeof value === 'number' ? String(value) : '—'),
-  },
+  numericColumn('asistentes', 'Asistentes', { format: (value) => formatNumberCell(value) }),
 ];
 
 export const ROW_ACTIONS: DataAction[] = [{ id: 'open', label: 'Ver detalle' }];
@@ -84,53 +77,27 @@ export function toActividadRow(item: ActividadPreventivaItem, ahora: Date): Acti
   };
 }
 
-type PillTone = 'success' | 'warning' | 'info' | 'danger' | 'neutral';
-
-const ESTADO_TONES: Record<string, PillTone> = {
-  [ESTADO_ACTIVIDAD_LABELS.pendiente]: 'info',
-  [ESTADO_ACTIVIDAD_LABELS.realizada]: 'success',
-  [ESTADO_ACTIVIDAD_LABELS.cancelada]: 'danger',
-  [VENCIDA_LABEL]: 'warning',
-};
-
-function buildPill(label: string, tone: PillTone): HTMLSpanElement {
-  const pill = document.createElement('span');
-  pill.className = `vc-dt-pill vc-dt-pill--${tone}`;
-
-  const dot = document.createElement('span');
-  dot.className = 'vc-dt-pill__dot';
-  dot.setAttribute('aria-hidden', 'true');
-
-  const text = document.createElement('span');
-  text.textContent = label;
-
-  pill.append(dot, text);
-  return pill;
-}
-
 /**
- * Reemplaza el texto de una celda por cápsulas (mismo `vc-dt-pill` que Expedientes y Usuarios). Con `split`, cada
- * fragmento separado por « · » es una cápsula (estado + «Vencida»). Es idempotente por celda: si el kit reescribe la
- * celda (búsqueda, ordenación), se vuelve a decorar.
+ * Presentación de la tabla: título destacado, textos largos truncados, estado (con «Vencida») e institución como
+ * cápsulas y filas enfocables. Con `split`, cada fragmento separado por « · » es una cápsula.
  */
-function decoratePillCell(td: HTMLTableCellElement | null, tones: Record<string, PillTone>, split: boolean): void {
-  if (!td || td.querySelector('.vc-dt-pill')) return;
-  const text = (td.textContent ?? '').trim();
-  if (!text) return;
+export const ACTIVIDADES_DECOR = {
+  pills: {
+    estado: {
+      split: true,
+      tones: {
+        [ESTADO_ACTIVIDAD_LABELS.pendiente]: 'info',
+        [ESTADO_ACTIVIDAD_LABELS.realizada]: 'success',
+        [ESTADO_ACTIVIDAD_LABELS.cancelada]: 'danger',
+        [VENCIDA_LABEL]: 'warning',
+      },
+    },
+    institucion: { tones: {} },
+  },
+  strong: ['titulo'],
+  truncate: ['titulo', 'sede', 'ubicacion'],
+  interactive: true,
+} satisfies RowDecorSpec;
 
-  const labels = split ? text.split(PILL_SEPARATOR) : [text];
-  const wrap = document.createElement('span');
-  wrap.className = 'vc-act-pills';
-  for (const label of labels) wrap.append(buildPill(label, tones[label] ?? 'neutral'));
-  td.replaceChildren(wrap);
-}
-
-/** Hace enfocables (Tab + Enter) las filas y decora estado e institución con cápsulas. */
-export function decorateActividadRows(tbody: HTMLTableSectionElement): void {
-  for (const tr of tbody.rows) {
-    if (!tr.dataset.id || tr.hasAttribute('data-mk-dt-loading')) continue;
-    tr.tabIndex = 0;
-    decoratePillCell(tr.querySelector<HTMLTableCellElement>('td[data-key="estado"]'), ESTADO_TONES, true);
-    decoratePillCell(tr.querySelector<HTMLTableCellElement>('td[data-key="institucion"]'), {}, false);
-  }
-}
+/** Decorador de filas (el mismo que aplica `VcDataTable`; exportado para pruebas). */
+export const decorateActividadRows = createRowDecorator(ACTIVIDADES_DECOR);

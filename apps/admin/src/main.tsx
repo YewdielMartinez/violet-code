@@ -72,6 +72,20 @@ function hideIconsUntilFontReady() {
 
 hideIconsUntilFontReady();
 
+/**
+ * Vercel Web Analytics: solo en producción y en diferido (tras el primer pintado) para no
+ * competir con la carga inicial. `inject()` sigue los cambios de ruta del SPA por su cuenta.
+ * No envía datos personales: solo rutas y métricas de navegación anónimas.
+ */
+function loadAnalytics() {
+  if (!import.meta.env.PROD) return;
+  const start = () => void import('@vercel/analytics').then(({ inject }) => inject({ mode: 'production' }));
+  if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(start, { timeout: 4000 });
+  else globalThis.setTimeout(start, 2000);
+}
+
+loadAnalytics();
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     {/* Tema predeterminado "salmverse" (rosa/tinto institucional); modo claro/oscuro sigue al sistema hasta que la persona elija. */}

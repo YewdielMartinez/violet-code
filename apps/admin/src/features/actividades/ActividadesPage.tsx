@@ -1,13 +1,9 @@
 import { memo, useCallback, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DataTable, EmptyState, Skeleton } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/data-table';
+import { EmptyState, Skeleton } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
-import '@yewdiel21/motion-kit/css/components/filter-builder';
-import '@yewdiel21/motion-kit/css/components/menu';
-import '@yewdiel21/motion-kit/css/components/pagination';
-import '@yewdiel21/motion-kit/css/components/select';
 import '@yewdiel21/motion-kit/css/components/skeleton';
+import { VcDataTable } from '@/shared/ui/table/VcDataTable';
 import { puedeRegistrarActividad } from '@/domain/models/ActividadPreventiva';
 import { useAuth } from '@/shared/auth/useAuth';
 import { PageHeader } from '@/shared/ui/PageHeader';
@@ -18,7 +14,7 @@ import {
   COLUMNS,
   RETRY_ACTION,
   ROW_ACTIONS,
-  decorateActividadRows,
+  ACTIVIDADES_DECOR,
   toActividadRow,
   type ActividadRow,
 } from './actividadesTableConfig';
@@ -80,8 +76,8 @@ const ActividadesTableSection = memo(function ActividadesTableSection({
 }: TableSectionProps) {
   return (
     <Skeleton loading={isLoading} shape="card" lines={6} label="Cargando actividades">
-      <DataTable<ActividadRow>
-        className="vc-expediente-table vc-actividades-table"
+      <VcDataTable<ActividadRow>
+        {...ACTIVIDADES_DECOR}
         caption="Listado de actividades preventivas"
         rows={rows}
         columns={COLUMNS}
@@ -89,7 +85,6 @@ const ActividadesTableSection = memo(function ActividadesTableSection({
         onAction={onRowAction}
         onClick={onTableClick}
         onKeyDown={onTableKeyDown}
-        onRender={decorateActividadRows}
         pageSize={10}
         search="Buscar por título, sede o lugar…"
         emptyTitle={emptyTitle}

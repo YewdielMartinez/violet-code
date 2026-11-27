@@ -6,6 +6,7 @@ import {
   type AccionBitacora,
   type BitacoraEvento,
 } from '@/domain/models/Bitacora';
+import { createRowDecorator, type RowDecorSpec } from '@/shared/ui/table/tableDecorate';
 import { fechaHoraBitacora } from './bitacoraList';
 
 export interface BitacoraRow extends Record<string, unknown> {
@@ -49,37 +50,26 @@ export const COLUMNS: DataTableProps<BitacoraRow>['columns'] = [
 
 export const RETRY_ACTION = [{ id: 'retry', label: 'Reintentar' }];
 
-type PillTone = 'success' | 'warning' | 'info' | 'danger' | 'neutral';
+/**
+ * Presentación de la tabla de solo lectura: quién hizo el cambio destacado, acción como cápsula, id del registro en
+ * monoespaciada y truncado (el id completo queda en el `title`). Las filas no son interactivas.
+ */
+export const BITACORA_DECOR = {
+  pills: {
+    accion: {
+      tones: {
+        [accionBitacoraLabel('ver' satisfies AccionBitacora)]: 'info',
+        [accionBitacoraLabel('crear' satisfies AccionBitacora)]: 'success',
+        [accionBitacoraLabel('actualizar' satisfies AccionBitacora)]: 'warning',
+        [accionBitacoraLabel('desactivar' satisfies AccionBitacora)]: 'danger',
+      },
+    },
+  },
+  strong: ['actor'],
+  mono: ['registro'],
+  muted: ['rol', 'fechaLabel'],
+  truncate: ['registro'],
+} satisfies RowDecorSpec;
 
-const ACCION_TONES: Record<string, PillTone> = {
-  [accionBitacoraLabel('ver' satisfies AccionBitacora)]: 'info',
-  [accionBitacoraLabel('crear' satisfies AccionBitacora)]: 'success',
-  [accionBitacoraLabel('actualizar' satisfies AccionBitacora)]: 'warning',
-  [accionBitacoraLabel('desactivar' satisfies AccionBitacora)]: 'danger',
-};
-
-/** Cápsula `vc-dt-pill` (mismo diseño que Expedientes, Usuarios y Actividades), una sola vez por celda. */
-function decoratePillCell(td: HTMLTableCellElement | null, tones: Record<string, PillTone>): void {
-  if (!td || td.querySelector('.vc-dt-pill')) return;
-  const rawText = td.textContent ?? '';
-  const key = rawText.trim();
-  if (!key) return;
-
-  const pill = document.createElement('span');
-  pill.className = `vc-dt-pill vc-dt-pill--${tones[key] ?? 'neutral'}`;
-  const dot = document.createElement('span');
-  dot.className = 'vc-dt-pill__dot';
-  dot.setAttribute('aria-hidden', 'true');
-  const label = document.createElement('span');
-  label.textContent = rawText;
-  pill.append(dot, label);
-  td.replaceChildren(pill);
-}
-
-/** Decora la acción con cápsulas. La bitácora es de solo lectura: las filas no son interactivas. */
-export function decorateBitacoraRows(tbody: HTMLTableSectionElement): void {
-  for (const tr of tbody.rows) {
-    if (!tr.dataset.id || tr.hasAttribute('data-mk-dt-loading')) continue;
-    decoratePillCell(tr.querySelector<HTMLTableCellElement>('td[data-key="accion"]'), ACCION_TONES);
-  }
-}
+/** Decorador de filas (el mismo que aplica `VcDataTable`; exportado para pruebas). */
+export const decorateBitacoraRows = createRowDecorator(BITACORA_DECOR);

@@ -1,3 +1,5 @@
+import '@/shared/ui/chart/chart.css';
+
 interface SparklineProps {
   values: readonly number[];
   /** Nombre accesible; los valores se agregan al final («Alertas por día: 1, 3, 2»). */
@@ -28,7 +30,7 @@ export function Sparkline({ values, label, className = '' }: SparklineProps) {
       aria-label={`${label}: ${values.join(', ')}`}
       viewBox={`0 0 ${W} ${H}`}
       preserveAspectRatio="none"
-      className={`text-primary ${className}`}
+      className={`vc-spark text-primary ${className}`}
     >
       <path d={area} fill="currentColor" opacity={0.12} />
       <path

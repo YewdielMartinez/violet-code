@@ -1,4 +1,5 @@
 import type { DataAction, DataTableProps } from '@yewdiel21/motion-kit/react';
+import { createRowDecorator, type PillColumnSpec, type RowDecorSpec } from '@/shared/ui/table/tableDecorate';
 import { ESTADO_FICHA_LABELS } from '../api';
 
 export type QuickFilter = 'todos' | 'abierto' | 'en_seguimiento' | 'prioritarios' | 'cerrado' | 'archivado';
@@ -78,58 +79,25 @@ export function formatTableDate(iso: string): string {
   return Number.isNaN(date.getTime()) ? iso : TABLE_DATE_FMT.format(date);
 }
 
-type PillTone = 'success' | 'warning' | 'info' | 'danger' | 'neutral';
-
-const ESTADO_TONES: Record<string, PillTone> = {
-  Abierto: 'info',
-  'En seguimiento': 'warning',
-  Cerrado: 'success',
+const ESTADO_PILL: PillColumnSpec = {
+  tones: { Abierto: 'info', 'En seguimiento': 'warning', Cerrado: 'success' },
 };
 
-const URGENCIA_TONES: Record<string, PillTone> = {
-  Urgente: 'danger',
-  Normal: 'neutral',
+const URGENCIA_PILL: PillColumnSpec = {
+  tones: { Urgente: 'danger', Normal: 'neutral' },
 };
-
-/** Reemplaza el texto plano de una celda por una cápsula visual preservando su `textContent`. */
-function decoratePillCell(
-  td: HTMLTableCellElement | null,
-  tones: Record<string, PillTone>,
-): void {
-  if (!td || td.querySelector('.vc-dt-pill')) return;
-  const rawText = td.textContent ?? '';
-  const key = rawText.trim();
-  if (!key) return;
-
-  const tone = tones[key] ?? 'neutral';
-  const pill = document.createElement('span');
-  pill.className = `vc-dt-pill vc-dt-pill--${tone}`;
-
-  const dot = document.createElement('span');
-  dot.className = 'vc-dt-pill__dot';
-  dot.setAttribute('aria-hidden', 'true');
-
-  const label = document.createElement('span');
-  label.textContent = rawText;
-
-  pill.append(dot, label);
-  td.replaceChildren(pill);
-}
 
 /**
- * Hace enfocables (Tab + Enter) las filas de la tabla y decora estado/prioridad con cápsulas, una sola vez por fila.
+ * Presentación de la tabla (cápsulas de estado y prioridad, folio y nombre destacados, filas enfocables). Constante de
+ * módulo: `VcDataTable` la recibe como props y construye su decorador una sola vez.
  * Sin `data-mk-shared`: hacer viajar nombre y folio al panel costaba la mitad de los frames al abrir.
  */
-export function decorateExpedienteRows(tbody: HTMLTableSectionElement): void {
-  for (const tr of tbody.rows) {
-    if (!tr.dataset.id || tr.hasAttribute('data-mk-dt-loading')) continue;
-    if (tr.dataset.vcDecorated === '1') continue;
-    tr.tabIndex = 0;
-    decoratePillCell(tr.querySelector<HTMLTableCellElement>('td[data-key="estado"]'), ESTADO_TONES);
-    decoratePillCell(
-      tr.querySelector<HTMLTableCellElement>('td[data-key="urgencia"]'),
-      URGENCIA_TONES,
-    );
-    tr.dataset.vcDecorated = '1';
-  }
-}
+export const EXPEDIENTES_DECOR = {
+  pills: { estado: ESTADO_PILL, urgencia: URGENCIA_PILL },
+  strong: ['nombreCompleto'],
+  mono: ['folio', 'curp'],
+  interactive: true,
+} satisfies RowDecorSpec;
+
+/** Decorador de filas (el mismo que aplica `VcDataTable`; exportado para pruebas). */
+export const decorateExpedienteRows = createRowDecorator(EXPEDIENTES_DECOR);

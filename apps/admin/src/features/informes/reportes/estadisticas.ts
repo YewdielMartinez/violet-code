@@ -188,6 +188,38 @@ export function distribucionPorSexo(resumen: ResumenAtenciones): Punto[] {
   ];
 }
 
+/**
+ * Una línea de lectura para el encabezado de una gráfica de serie: variación del último punto contra el anterior
+ * («▲ 12 % vs. mes anterior»). La dirección va en la flecha y en el texto, no solo en el color. `null` si no hay datos o
+ * solo hay un punto.
+ */
+export function insightSerie(values: readonly number[], anterior = 'mes anterior'): string | null {
+  if (values.length < 2 || values.every((v) => v === 0)) return null;
+  const delta = calcularDelta(values[values.length - 1], values[values.length - 2]);
+  if (delta.direccion === 'igual') return `= Igual que el ${anterior}`;
+  if (delta.direccion === 'sin_dato') return null;
+  const flecha = delta.direccion === 'sube' ? '▲' : '▼';
+  const signo = delta.pct === null ? (delta.direccion === 'sube' ? '+' : '−') : '';
+  const cuanto = delta.pct === null ? numero(Math.abs(delta.diff)) : `${Math.abs(delta.pct)} %`;
+  return `${flecha} ${signo}${cuanto} vs. ${anterior}`;
+}
+
+/** Línea de lectura de una distribución: el mayor y su parte del total («Mayor: Psicología · 45 %»). */
+export function insightPuntos(puntos: readonly Punto[]): string | null {
+  const total = puntos.reduce((sum, p) => sum + p.value, 0);
+  if (puntos.length === 0 || total === 0) return null;
+  const top = puntos.reduce((best, p) => (p.value > best.value ? p : best), puntos[0]);
+  return `Mayor: ${top.label} · ${Math.round((top.value / total) * 100)} %`;
+}
+
+/** Línea de lectura de primera vez vs seguimiento: qué parte de las atenciones del periodo son seguimiento. */
+export function insightSeguimiento(primeraVez: readonly number[], seguimiento: readonly number[]): string | null {
+  const sum = (list: readonly number[]) => list.reduce((acc, v) => acc + v, 0);
+  const total = sum(primeraVez) + sum(seguimiento);
+  if (total === 0) return null;
+  return `Seguimiento: ${Math.round((sum(seguimiento) / total) * 100)} % de las atenciones`;
+}
+
 /** Resumen en una frase de una serie (para `aria-label`): total y mes pico. */
 export function resumenSerie(titulo: string, largas: readonly string[], values: readonly number[]): string {
   const total = values.reduce((sum, v) => sum + v, 0);

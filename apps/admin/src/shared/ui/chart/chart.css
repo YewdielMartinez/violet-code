@@ -1,0 +1,89 @@
+/* Gráficas de Violet Code (`.vc-chart` sobre el `Chart` del kit): una sola familia de color (el acento del tema) con una
+   segunda serie en el mismo acento mezclado con la superficie, rejilla sutil, texto legible y leyenda arriba a la
+   derecha. Todo sale de los tokens del tema, así que respeta el tema y el modo claro / negro puro. Contrastes: texto
+   de ejes y etiquetas >= 4.5:1 (on-surface-variant / on-surface); marcas >= 3:1 contra la superficie. */
+
+.vc-chart.mk-chart {
+  --mk-chart-mono: var(--md-sys-color-primary);
+  --mk-chart-1: var(--md-sys-color-primary);
+  /* Serie de comparación: el mismo acento, 62 % sobre la superficie (>= 3:1 en claro y en negro puro). */
+  --mk-chart-2: color-mix(in srgb, var(--md-sys-color-primary) 62%, var(--md-sys-color-surface));
+  --mk-chart-3: color-mix(in srgb, var(--md-sys-color-primary) 40%, var(--md-sys-color-surface));
+  --mk-chart-other: var(--md-sys-color-outline);
+  --mk-chart-grid: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
+  --mk-chart-track: color-mix(in srgb, var(--md-sys-color-on-surface) 6%, transparent);
+  --mk-chart-surface: var(--md-sys-color-surface-container-lowest);
+  gap: 0.5rem;
+}
+
+/* Texto de ejes: 12px y color con contraste de texto, no el gris atenuado del kit. */
+.vc-chart.mk-chart text {
+  fill: var(--md-sys-color-on-surface-variant);
+  font-size: 12px;
+}
+
+/* Valor total de las columnas apiladas y valor sobre cada barra. */
+.vc-chart.mk-chart [data-mk-part='total'],
+.vc-chart.mk-chart [data-mk-part='bar-label'] {
+  fill: var(--md-sys-color-on-surface);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.vc-chart.mk-chart [data-mk-part='bar-label-layer'] {
+  animation: vc-chart-label-in 220ms ease-out both;
+  pointer-events: none;
+}
+
+/* Con una barra seleccionada el kit muestra su propio valor: las etiquetas fijas se apartan. */
+.vc-chart.mk-chart:has([data-mk-part='cursor'] [data-mk-part='bar-value']) [data-mk-part='bar-label-layer'] {
+  opacity: 0;
+}
+
+/* Leyenda solo con más de una serie (el kit ya la oculta con una), arriba a la derecha. */
+.vc-chart.mk-chart [data-mk-chart-legend] {
+  order: -1;
+  justify-content: flex-end;
+  font-size: 0.8125rem;
+}
+
+.vc-chart.mk-chart [data-mk-chart-legend] li {
+  border-color: var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Estado vacío con el mismo marco que el resto de estados vacíos. */
+.vc-chart.mk-chart [data-mk-chart-empty] {
+  min-height: 9rem;
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Minigráfica: la línea se dibuja de izquierda a derecha una sola vez. */
+.vc-spark {
+  animation: vc-spark-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes vc-spark-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes vc-chart-label-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc-chart.mk-chart [data-mk-part='bar-label-layer'],
+  .vc-spark {
+    animation: none;
+  }
+}

@@ -1,13 +1,9 @@
 import { useCallback, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { DataTable, EmptyState, Skeleton, toast } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/data-table';
+import { EmptyState, Skeleton, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
-import '@yewdiel21/motion-kit/css/components/filter-builder';
-import '@yewdiel21/motion-kit/css/components/menu';
-import '@yewdiel21/motion-kit/css/components/pagination';
-import '@yewdiel21/motion-kit/css/components/select';
 import '@yewdiel21/motion-kit/css/components/skeleton';
+import { VcDataTable } from '@/shared/ui/table/VcDataTable';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { ToolbarPrimaryButton } from '@/shared/ui/Toolbar';
 import {
@@ -27,7 +23,7 @@ import {
   CANALIZACIONES_ROW_ACTIONS,
   QUICK_FILTERS,
   RETRY_ACTION,
-  decorateCanalizacionRows,
+  CANALIZACIONES_DECOR,
   type DerivacionRow,
   type EstadoFilter,
 } from './canalizacionesTableConfig';
@@ -218,7 +214,8 @@ export default function CanalizacionesPage() {
       ) : (
         <div ref={tableRef} className="vc-canalizaciones-table min-w-0">
           <Skeleton loading={isLoading} shape="card" lines={6} label="Cargando canalizaciones">
-            <DataTable<DerivacionRow>
+            <VcDataTable<DerivacionRow>
+              {...CANALIZACIONES_DECOR}
               caption="Historial de canalizaciones"
               rows={rows}
               columns={CANALIZACIONES_COLUMNS}
@@ -226,9 +223,6 @@ export default function CanalizacionesPage() {
               onAction={handleRowAction}
               onClick={handleTableClick}
               onKeyDown={handleTableKeyDown}
-              onRender={decorateCanalizacionRows}
-              reflow="auto"
-              reflowAt={640}
               pageSize={10}
               search="Buscar por folio, usuaria o destino…"
               emptyTitle="Sin canalizaciones registradas"

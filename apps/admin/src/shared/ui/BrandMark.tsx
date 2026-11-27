@@ -2,23 +2,35 @@ import type { CSSProperties } from 'react';
 
 /**
  * Marca general de la aplicación (SIA-SEMUJERES): isotipo de hojas, cuadrado.
- * `size` es el lado en px. Usa el SVG vectorial (public/logos/app-icon.svg, fondo transparente, vino y rosa).
- * En modo oscuro `.vc-brand-mark` lo asienta sobre una placa clara para conservar el contraste (ver src/index.css).
+ * `size` es el lado en px. Usa los isotipos oficiales de fondo transparente:
+ * - claro: public/logos/app-icon.svg (hoja vino #7A0C31 + rosa #EF6F86);
+ * - oscuro: public/logos/app-icon-white-512.png (versión monocromática blanca oficial), legible sobre negro.
+ * Se pintan ambos y el CSS (src/index.css) muestra uno según el modo (explícito o "sistema").
  * Es decorativo: el nombre del sistema siempre va al lado como texto (o en el aria-label del botón que lo contiene).
  */
 export function BrandMark({ size = 36, className = '' }: { size?: number; className?: string }) {
+  const style = { '--vc-brand-size': `${size}px` } as CSSProperties;
   return (
-    <img
-      src="/logos/app-icon.svg"
-      alt=""
-      aria-hidden
-      width={size}
-      height={size}
-      decoding="async"
-      draggable={false}
-      className={`vc-brand-mark ${className}`.trim()}
-      style={{ '--vc-brand-size': `${size}px` } as CSSProperties}
-    />
+    <span className={`vc-brand-mark ${className}`.trim()} style={style} aria-hidden>
+      <img
+        src="/logos/app-icon.svg"
+        alt=""
+        width={size}
+        height={size}
+        decoding="async"
+        draggable={false}
+        className="vc-brand-mark__img vc-brand-mark__img--light"
+      />
+      <img
+        src="/logos/app-icon-white-512.png"
+        alt=""
+        width={size}
+        height={size}
+        decoding="async"
+        draggable={false}
+        className="vc-brand-mark__img vc-brand-mark__img--dark"
+      />
+    </span>
   );
 }
 

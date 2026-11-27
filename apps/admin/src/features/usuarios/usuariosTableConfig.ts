@@ -1,6 +1,7 @@
 import type { DataAction, DataTableProps } from '@yewdiel21/motion-kit/react';
 import { ESTADO_CUENTA_LABELS, ROLE_LABELS, ROLES_ASIGNABLES } from '@/domain/models/Usuario';
 import { formatTableDate } from '@/features/expedientes/drawer/expedientesTableConfig';
+import { createRowDecorator, type RowDecorSpec } from '@/shared/ui/table/tableDecorate';
 
 export { formatTableDate };
 
@@ -47,38 +48,19 @@ export const ROL_FILTERS: { id: UsuariosRolFilter; label: string }[] = [
   { id: 'umeca', label: 'UMECA' },
 ];
 
-type PillTone = 'success' | 'warning' | 'info' | 'danger' | 'neutral';
+/** Presentación de la tabla: cápsula de estado, nombre destacado y filas enfocables (ver `VcDataTable`). */
+export const USUARIOS_DECOR = {
+  pills: {
+    estado: {
+      tones: {
+        [ESTADO_CUENTA_LABELS.activo]: 'success',
+        [ESTADO_CUENTA_LABELS.inactivo]: 'neutral',
+      },
+    },
+  },
+  strong: ['nombreCompleto'],
+  interactive: true,
+} satisfies RowDecorSpec;
 
-const ESTADO_TONES: Record<string, PillTone> = {
-  [ESTADO_CUENTA_LABELS.activo]: 'success',
-  [ESTADO_CUENTA_LABELS.inactivo]: 'neutral',
-};
-
-/** Mismo decorado de cápsulas que la tabla de Expedientes (`vc-dt-pill`). */
-function decoratePillCell(td: HTMLTableCellElement | null, tones: Record<string, PillTone>): void {
-  if (!td || td.querySelector('.vc-dt-pill')) return;
-  const rawText = td.textContent ?? '';
-  const key = rawText.trim();
-  if (!key) return;
-
-  const pill = document.createElement('span');
-  pill.className = `vc-dt-pill vc-dt-pill--${tones[key] ?? 'neutral'}`;
-  const dot = document.createElement('span');
-  dot.className = 'vc-dt-pill__dot';
-  dot.setAttribute('aria-hidden', 'true');
-  const label = document.createElement('span');
-  label.textContent = rawText;
-  pill.append(dot, label);
-  td.replaceChildren(pill);
-}
-
-/** Hace enfocables (Tab + Enter) las filas y decora el estado con cápsulas, una sola vez por fila. */
-export function decorateUsuarioRows(tbody: HTMLTableSectionElement): void {
-  for (const tr of tbody.rows) {
-    if (!tr.dataset.id || tr.hasAttribute('data-mk-dt-loading')) continue;
-    if (tr.dataset.vcDecorated === '1') continue;
-    tr.tabIndex = 0;
-    decoratePillCell(tr.querySelector<HTMLTableCellElement>('td[data-key="estado"]'), ESTADO_TONES);
-    tr.dataset.vcDecorated = '1';
-  }
-}
+/** Decorador de filas (el mismo que aplica `VcDataTable`; exportado para pruebas). */
+export const decorateUsuarioRows = createRowDecorator(USUARIOS_DECOR);

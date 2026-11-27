@@ -1,16 +1,13 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { DataTable, EmptyState } from '@yewdiel21/motion-kit/react';
+import { EmptyState } from '@yewdiel21/motion-kit/react';
 import type { DataTableProps } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/data-table';
-import '@yewdiel21/motion-kit/css/components/filter-builder';
-import '@yewdiel21/motion-kit/css/components/menu';
-import '@yewdiel21/motion-kit/css/components/select';
-import '@yewdiel21/motion-kit/css/components/pagination';
 import '@yewdiel21/motion-kit/css/components/empty-state';
 import { fetchUmecaCitas, type UmecaCita } from '@/shared/auth/session';
 import { Icon } from '@/shared/ui/Icon';
 import { PageHeader } from '@/shared/ui/PageHeader';
+import { pillElement } from '@/shared/ui/table/tableDecorate';
+import { VcDataTable } from '@/shared/ui/table/VcDataTable';
 import {
   ASISTENCIA_OPCIONES,
   areaUmecaLabel,
@@ -35,17 +32,10 @@ type UmecaRow = {
 const CHIP_BASE =
   'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[0.8125rem] font-semibold leading-none whitespace-nowrap';
 
-/** Celda de estado del `DataTable` (API vanilla). */
+/** Celda de asistencia del `DataTable` (API vanilla): cápsula del sistema con ícono + texto (no depende solo del color). */
 function renderEstado(value: unknown): HTMLElement {
   const info = asistenciaInfo(String(value));
-  const chip = document.createElement('span');
-  chip.className = `${CHIP_BASE} ${info.chipClass}`;
-  const icon = document.createElement('span');
-  icon.className = 'mk-icon text-[16px]';
-  icon.setAttribute('aria-hidden', 'true');
-  icon.textContent = info.icon;
-  chip.append(icon, info.label);
-  return chip;
+  return pillElement(info.label, info.tone, info.icon);
 }
 
 function buildColumns(areas: readonly string[]): DataTableProps<UmecaRow>['columns'] {
@@ -78,6 +68,8 @@ function buildColumns(areas: readonly string[]): DataTableProps<UmecaRow>['colum
   ];
 }
 
+/** Columna principal de la tabla: la persona canalizada. */
+const UMECA_STRONG = ['persona'];
 const SORT_RECIENTES = { key: 'programadaEn', direction: 'desc' } as const;
 const RETRY_ACTION = [{ id: 'retry', label: 'Reintentar' }];
 
@@ -148,7 +140,8 @@ export function UmecaHomeView({ displayName }: { displayName: string }) {
             <ResumenChip info={asistenciaInfo('pendiente')} total={data.resumen.pendiente} />
             {data.resumen.cancelo > 0 ? <ResumenChip info={asistenciaInfo('cancelo')} total={data.resumen.cancelo} /> : null}
           </ul>
-          <DataTable<UmecaRow>
+          <VcDataTable<UmecaRow>
+            strong={UMECA_STRONG}
             caption="Asistencia de citas UMECA"
             rows={data.filas}
             columns={columns}

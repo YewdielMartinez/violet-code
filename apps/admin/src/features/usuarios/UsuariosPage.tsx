@@ -1,13 +1,9 @@
 import { memo, useCallback, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { DataTable, EmptyState, Skeleton, toast } from '@yewdiel21/motion-kit/react';
-import '@yewdiel21/motion-kit/css/components/data-table';
+import { EmptyState, Skeleton, toast } from '@yewdiel21/motion-kit/react';
 import '@yewdiel21/motion-kit/css/components/empty-state';
-import '@yewdiel21/motion-kit/css/components/filter-builder';
-import '@yewdiel21/motion-kit/css/components/menu';
-import '@yewdiel21/motion-kit/css/components/pagination';
-import '@yewdiel21/motion-kit/css/components/select';
 import '@yewdiel21/motion-kit/css/components/skeleton';
+import { VcDataTable } from '@/shared/ui/table/VcDataTable';
 import { preloadPage } from '@/app/pages';
 import { useAuth } from '@/shared/auth/useAuth';
 import { PageHeader } from '@/shared/ui/PageHeader';
@@ -29,7 +25,7 @@ import {
   ROL_FILTERS,
   RETRY_ACTION,
   ROW_ACTIONS,
-  decorateUsuarioRows,
+  USUARIOS_DECOR,
   formatTableDate,
   type UsuarioRow,
   type UsuariosQuickFilter,
@@ -55,8 +51,8 @@ const UsuariosTableSection = memo(function UsuariosTableSection({
 }: TableSectionProps) {
   return (
     <Skeleton loading={isLoading} shape="card" lines={6} label="Cargando usuarios">
-      <DataTable<UsuarioRow>
-        className="vc-expediente-table vc-usuarios-table"
+      <VcDataTable<UsuarioRow>
+        {...USUARIOS_DECOR}
         caption="Cuentas de acceso al panel"
         rows={rows}
         columns={COLUMNS}
@@ -64,7 +60,6 @@ const UsuariosTableSection = memo(function UsuariosTableSection({
         onAction={onRowAction}
         onClick={onTableClick}
         onKeyDown={onTableKeyDown}
-        onRender={decorateUsuarioRows}
         pageSize={10}
         search="Buscar por nombre…"
         emptyTitle="Sin cuentas en esta vista"

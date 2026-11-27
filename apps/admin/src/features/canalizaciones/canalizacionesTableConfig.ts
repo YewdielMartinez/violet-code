@@ -1,4 +1,5 @@
 import type { DataAction, DataTableProps } from '@yewdiel21/motion-kit/react';
+import { createRowDecorator, type RowDecorSpec } from '@/shared/ui/table/tableDecorate';
 import {
   ESTADO_DERIVACION_LABELS,
   ESTADOS_DERIVACION,
@@ -56,49 +57,18 @@ export const QUICK_FILTERS: { id: EstadoFilter; label: string }[] = [
   { id: 'cancelada', label: 'Canceladas' },
 ];
 
-type PillTone = 'success' | 'warning' | 'info' | 'danger' | 'neutral';
+/** Presentación de la tabla: folio monoespaciado, usuaria destacada, estado como cápsula y filas enfocables. */
+export const CANALIZACIONES_DECOR = {
+  pills: {
+    estadoLabel: {
+      tones: { Pendiente: 'warning', 'En proceso': 'info', Concluida: 'success', Cancelada: 'danger' },
+    },
+  },
+  strong: ['usuariaNombre'],
+  mono: ['folio'],
+  truncate: ['detalleDestino'],
+  interactive: true,
+} satisfies RowDecorSpec;
 
-const CANALIZACION_ESTADO_TONES: Record<string, PillTone> = {
-  Pendiente: 'warning',
-  'En proceso': 'info',
-  Concluida: 'success',
-  Cancelada: 'danger',
-};
-
-/** Reemplaza el texto plano de una celda por una cápsula visual preservando su `textContent`. */
-function decoratePillCell(
-  td: HTMLTableCellElement | null,
-  tones: Record<string, PillTone>,
-): void {
-  if (!td || td.querySelector('.vc-dt-pill')) return;
-  const rawText = td.textContent ?? '';
-  const key = rawText.trim();
-  if (!key) return;
-
-  const tone = tones[key] ?? 'neutral';
-  const pill = document.createElement('span');
-  pill.className = `vc-dt-pill vc-dt-pill--${tone}`;
-
-  const dot = document.createElement('span');
-  dot.className = 'vc-dt-pill__dot';
-  dot.setAttribute('aria-hidden', 'true');
-
-  const label = document.createElement('span');
-  label.textContent = rawText;
-
-  pill.append(dot, label);
-  td.replaceChildren(pill);
-}
-
-export function decorateCanalizacionRows(tbody: HTMLTableSectionElement) {
-  for (const tr of tbody.querySelectorAll<HTMLTableRowElement>('tr[data-id]')) {
-    if (tr.hasAttribute('data-mk-dt-loading') || tr.dataset.vcDecorated === '1') continue;
-    tr.tabIndex = 0;
-    tr.style.cursor = 'pointer';
-    decoratePillCell(
-      tr.querySelector<HTMLTableCellElement>('td[data-key="estadoLabel"]'),
-      CANALIZACION_ESTADO_TONES,
-    );
-    tr.dataset.vcDecorated = '1';
-  }
-}
+/** Decorador de filas (el mismo que aplica `VcDataTable`; exportado para pruebas). */
+export const decorateCanalizacionRows = createRowDecorator(CANALIZACIONES_DECOR);
