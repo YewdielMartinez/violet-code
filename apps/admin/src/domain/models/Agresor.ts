@@ -13,6 +13,7 @@ export const TIPOS_DROGA: readonly TipoDroga[] = [
 ];
 
 export const DROGA_LABELS: Record<TipoDroga, string> = {
+  no_consume: 'No consume',
   marihuana: 'Marihuana',
   cristal: 'Cristal',
   cocaina: 'Cocaína',

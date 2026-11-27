@@ -73,7 +73,7 @@ describe('supabaseAgresorRepository', () => {
     );
 
     await expect(supabaseAgresorRepository.listarPorFicha('ficha-1')).rejects.toThrow(
-      'No tienes permisos para acceder o modificar datos de la persona agresora.',
+      'No tienes permiso para realizar esta acción.',
     );
   });
 });

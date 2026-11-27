@@ -62,7 +62,7 @@ function mapAgendaRow(row: RpcAgendaRow): AgendaItem {
     citaId: row.cita_id,
     programadaEn: row.programada_en,
     estado: row.estado,
-    prioridad: row.prioridad,
+    prioridad: null,
     areaId: row.area_id,
     areaClave: row.area_clave,
     recomendadaPor: row.recomendada_por,
@@ -81,8 +81,8 @@ function mapUrgenciaRow(row: RpcUrgenciaRow): ListaUrgenciasItem {
     folio: row.folio,
     nombreCompleto: row.nombre_completo?.trim() || '—',
     celular: row.celular,
-    areaUltimaPrioridad: row.area_ultima_prioridad,
-    fechaUltimaPrioridad: row.fecha_ultima_prioridad,
+    areaUltimaPrioridad: '',
+    fechaUltimaPrioridad: row.prioridad_actualizada_en ?? null,
   };
 }
 
@@ -111,7 +111,6 @@ export const supabaseCitaRepository: CitaRepository = {
         persona_id: input.personaId,
         area_id: input.areaId,
         programada_en: input.programadaEn,
-        prioridad: input.prioridad ?? null,
         recomendada_por: recomendada || null,
         origen: input.origen ?? 'regular',
       })

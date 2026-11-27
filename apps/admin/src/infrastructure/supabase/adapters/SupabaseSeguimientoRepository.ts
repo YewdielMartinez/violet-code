@@ -68,7 +68,7 @@ export const supabaseSeguimientoRepository: SeguimientoRepository = {
 
     const result: SeguimientoResult = {
       atencionId: row.atencion_id,
-      folioSeguimiento: row.folio_seguimiento,
+      folioSeguimiento: '',
       citaProximaId: row.cita_proxima_id ?? null,
       esPrimeraVezArea: row.es_primera_vez_area,
       tieneHistorialClinico: row.tiene_historial_clinico,

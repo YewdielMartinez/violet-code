@@ -16,22 +16,22 @@ Reglas para todas:
 
 ## Catálogos
 
-| Tabla | Para qué | Leer | Escribir |
-|---|---|---|---|
-| `cat_area` | Áreas (TS, Psicología, Jurídico, ...) | Cualquier sesión | `catalogos.gestionar` (Tit, Sub) |
-| `cat_asentamiento` | Colonias SEPOMEX con CP y coordenadas | Cualquier sesión | Tit, Sub |
-| `cat_ocupacion` | Ocupaciones | Cualquier sesión | Tit, Sub |
-| `cat_parentesco` | Parentescos (agresor, aportantes) | Cualquier sesión | Tit, Sub |
-| `cat_tipo_atencion` | Tipos de atención por área (para `registrar_seguimiento`) | Cualquier sesión | Tit, Sub |
-| `cat_tipo_actividad` | Tipos de actividad preventiva | Cualquier sesión | Tit, Sub |
-| `cat_tipo_documento` | Tipos de documento | Cualquier sesión | Tit, Sub |
+| Tabla                | Para qué                                                  | Leer             | Escribir                         |
+| -------------------- | --------------------------------------------------------- | ---------------- | -------------------------------- |
+| `cat_area`           | Áreas (TS, Psicología, Jurídico, ...)                     | Cualquier sesión | `catalogos.gestionar` (Tit, Sub) |
+| `cat_asentamiento`   | Colonias SEPOMEX con CP y coordenadas                     | Cualquier sesión | Tit, Sub                         |
+| `cat_ocupacion`      | Ocupaciones                                               | Cualquier sesión | Tit, Sub                         |
+| `cat_parentesco`     | Parentescos (agresor, aportantes)                         | Cualquier sesión | Tit, Sub                         |
+| `cat_tipo_atencion`  | Tipos de atención por área (para `registrar_seguimiento`) | Cualquier sesión | Tit, Sub                         |
+| `cat_tipo_actividad` | Tipos de actividad preventiva                             | Cualquier sesión | Tit, Sub                         |
+| `cat_tipo_documento` | Tipos de documento                                        | Cualquier sesión | Tit, Sub                         |
 
 ```ts
 const { data } = await supabase
-  .from('cat_tipo_atencion')
-  .select('id, clave, nombre, area_id')
-  .eq('area_id', miAreaId)
-  .order('nombre')
+  .from("cat_tipo_atencion")
+  .select("id, clave, nombre, area_id")
+  .eq("area_id", miAreaId)
+  .order("nombre")
   .limit(100);
 ```
 
@@ -41,8 +41,8 @@ Las listas cerradas (estado civil, escolaridad, tipo de vivienda, estados de cit
 
 ## `directorio_institucion`
 
-| Leer | Escribir |
-|---|---|
+| Leer                                                               | Escribir                          |
+| ------------------------------------------------------------------ | --------------------------------- |
 | Empleados: todas (incluidas inactivas). UMECA y app: solo activas. | `directorio.gestionar` (Tit, Sub) |
 
 Se usa para derivaciones externas (`institucion_id`) y en la app (directorio de apoyo).
@@ -51,28 +51,30 @@ Se usa para derivaciones externas (`institucion_id`) y en la app (directorio de 
 
 ## Tablas del expediente
 
-| Tabla | Leer | Crear / editar | Nota |
-|---|---|---|---|
-| `persona` | `expediente.ver` (Tit, Sub, TS, Psi, Jur) | Solo RPC (`42501` directo) | Alta por `crear_ficha_completa`; edición por `actualizar_persona` ([expedientes.md](./expedientes.md)). |
-| `ficha_registro` | `expediente.ver` | Solo RPC (`42501` directo) | Alta por `crear_ficha_completa`; edición/archivo/reapertura por `actualizar_ficha`, `archivar_ficha` y `reabrir_ficha`. |
-| `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar` | `expediente.ver` | Solo RPC (`42501` directo) | Alta en `crear_ficha_completa`; edición por `actualizar_ficha` y `registrar_estudio_socioeconomico` ([expedientes.md](./expedientes.md)). |
-| `domicilio` | `expediente.ver` | Cerrado (`actualizar_domicilio`) | Usar el RPC [`actualizar_domicilio`](../rpcs/actualizar_domicilio.md); `insert`/`update` directos bloqueados (`42501`). |
-| `agresor` | `agresor.acceder` (Tit, Sub, TS, Psi, Jur) | Solo RPC (`42501` directo) | Alta/edición/baja únicamente por `guardar_agresor` y `desactivar_agresor` ([expedientes.md](./expedientes.md)); al abrirlo llama `registrar_consulta('agresor', id)`. |
-| `documento` | `expediente.ver` | `expediente.ver` | Ver [storage.md](./storage.md). |
+| Tabla                                                                    | Leer                                       | Crear / editar                   | Nota                                                                                                                                                                  |
+| ------------------------------------------------------------------------ | ------------------------------------------ | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `persona`                                                                | `expediente.ver` (Tit, Sub, TS, Psi, Jur)  | Solo RPC (`42501` directo)       | Alta por `crear_ficha_completa`; edición por `actualizar_persona` ([expedientes.md](./expedientes.md)).                                                               |
+| `ficha_registro`                                                         | `expediente.ver`                           | Solo RPC (`42501` directo)       | Alta por `crear_ficha_completa`; edición/archivo/reapertura por `actualizar_ficha`, `archivar_ficha` y `reabrir_ficha`.                                               |
+| `ficha_servicio_solicitado`, `estudio_socioeconomico`, `aportante_hogar` | `expediente.ver`                           | Solo RPC (`42501` directo)       | Alta en `crear_ficha_completa`; edición por `actualizar_ficha` y `registrar_estudio_socioeconomico` ([expedientes.md](./expedientes.md)).                             |
+| `domicilio`                                                              | `expediente.ver`                           | Cerrado (`actualizar_domicilio`) | Usar el RPC [`actualizar_domicilio`](../rpcs/actualizar_domicilio.md); `insert`/`update` directos bloqueados (`42501`).                                               |
+| `agresor`                                                                | `agresor.acceder` (Tit, Sub, TS, Psi, Jur) | Solo RPC (`42501` directo)       | Alta/edición/baja únicamente por `guardar_agresor` y `desactivar_agresor` ([expedientes.md](./expedientes.md)); al abrirlo llama `registrar_consulta('agresor', id)`. |
+| `documento`                                                              | `expediente.ver`                           | `expediente.ver`                 | Ver [storage.md](./storage.md).                                                                                                                                       |
 
 ### `orden_proteccion`
 
-| Leer | Crear / editar |
-|---|---|
+| Leer             | Crear / editar                                  |
+| ---------------- | ----------------------------------------------- |
 | `expediente.ver` | `orden_proteccion.escribir` (Tit, Sub, TS, Jur) |
 
 ```ts
-await supabase.from('orden_proteccion').insert({
-  ficha_id, agresor_id,            // agresor_id debe ser de la misma ficha
-  numero_oficio, autoridad_emisora,
-  fecha_emision: '2026-11-20',     // date
-  fecha_vigencia: '2027-02-20',    // >= fecha_emision o null
-  estado: 'vigente',               // 'vigente' | 'vencida' | 'cancelada' | 'en_tramite'
+await supabase.from("orden_proteccion").insert({
+  ficha_id,
+  agresor_id, // agresor_id debe ser de la misma ficha
+  numero_oficio,
+  autoridad_emisora,
+  fecha_emision: "2026-11-20", // date
+  fecha_vigencia: "2027-02-20", // >= fecha_emision o null
+  estado: "vigente", // 'vigente' | 'vencida' | 'cancelada' | 'en_tramite'
 });
 ```
 
@@ -80,31 +82,35 @@ Al crear o cambiar una orden vigente, un trigger sube a `alta` las alertas `nuev
 
 ### `historial_clinico`
 
-| Leer | Crear / editar |
-|---|---|
+| Leer                                        | Crear / editar             |
+| ------------------------------------------- | -------------------------- |
 | `historial_clinico.acceder` (Tit, Sub, Psi) | Solo RPC (`42501` directo) |
 
 Una sola fila por ficha (`ficha_id` único). Para leer y guardar usa las RPC [`get_historial_clinico` y `guardar_historial_clinico`](./expedientes.md#guardar_historial_clinico-y-get_historial_clinico) (registran `'ver'` en bitácora, validan RN-01 y aplican bloqueo optimista).
 
 ### `nota_area`
 
-| Leer | Crear / editar |
-|---|---|
-| `seguimiento.registrar` y **solo su área** (TS, Psi, Jur) | Igual |
+| Leer                                                      | Crear / editar |
+| --------------------------------------------------------- | -------------- |
+| `seguimiento.registrar` y **solo su área** (TS, Psi, Jur) | Igual          |
 
 Notas privadas de cada área. Dirección **no** las ve. `area_id` debe ser el del actor; si mandas otro, `42501`.
 
 ```ts
-await supabase.from('nota_area').insert({ ficha_id, area_id: miAreaId, contenido });
+await supabase
+  .from("nota_area")
+  .insert({ ficha_id, area_id: miAreaId, contenido });
 ```
 
 ### `atencion`
 
-| Leer | Crear / editar |
-|---|---|
-| `expediente.ver`: Dirección todas; áreas solo la suya | Igual |
+> **Cerrada la escritura directa (`42501`, migración `43`):** usa [`registrar_seguimiento`](../rpcs/registrar_seguimiento.md) para altas y [`corregir_seguimiento`](../rpcs/corregir_seguimiento.md) para correcciones.
 
-Para registrar una atención usa `registrar_seguimiento`, que además marca la cita y el estado de la ficha. El `insert` directo solo para correcciones.
+| Leer                                                  | Crear / editar             |
+| ----------------------------------------------------- | -------------------------- |
+| `expediente.ver`: Dirección todas; áreas solo la suya | Solo RPC (`42501` directo) |
+
+Para leer contexto previo a una sesión usa [`get_contexto_seguimiento`](../rpcs/get_contexto_seguimiento.md) y para el historial usa [`get_linea_tiempo`](../rpcs/get_linea_tiempo.md).
 
 ---
 
@@ -112,18 +118,18 @@ Para registrar una atención usa `registrar_seguimiento`, que además marca la c
 
 > **Cerrada la inserción directa (`42501`):** usa la RPC `crear_cita` (ver [crear_cita.md](../rpcs/crear_cita.md) y [agenda.md](./agenda.md)).
 
-| Crear | Regla |
-|---|---|
+| Crear                                                               | Regla                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `crear_cita`: `agenda.crear` + alcance (`puede_crear_cita_en_area`) | Recepción (TS, Psicología y Jurídico), Jurídico y Psicología (solo su área), Tit y Sub (todas las áreas). TS **no puede crear** (`42501`). Para elegir la persona: `buscar_personas_agenda`. Cambiar estado/reagendar: ver [agenda.md](./agenda.md). |
 
 ```ts
 const { data, error } = await supabase
-  .rpc('crear_cita', {
+  .rpc("crear_cita", {
     p_persona_id: personaId,
     p_area_id: areaId,
-    p_programada_en: '2026-12-01T10:00:00-07:00',
-    p_recomendada_por: 'Trabajo Social',
-    p_origen: 'regular', // 'umeca' para canalizaciones de UMECA
+    p_programada_en: "2026-12-01T10:00:00-07:00",
+    p_recomendada_por: "Trabajo Social",
+    p_origen: "regular", // 'umeca' para canalizaciones de UMECA
   })
   .single();
 ```
@@ -133,34 +139,14 @@ const { data, error } = await supabase
 - Rechaza fecha pasada, expediente archivado o cita duplicada en misma área y hora: `23514`.
 - Después invalida `['agenda']` y `['agenda','urgencias']`.
 
-## <a id="derivacion"></a>`derivacion` (alta)
+## <a id="derivacion"></a>`derivacion` (canalizaciones)
 
-| Crear | Regla |
-|---|---|
-| `derivacion.gestionar` (Tit, Sub, TS, Psi, Jur) | Un trigger valida destino y mayoría de edad. |
+> **Cerrada la inserción directa (`42501`, migración `33`):** el alta se hace únicamente por [`crear_canalizacion`](../rpcs/crear_canalizacion.md). Los cambios de estado van por [`cambiar_estado_derivacion`](../rpcs/cambiar_estado_derivacion.md) y la lectura por [`get_derivaciones`](../rpcs/get_derivaciones.md) o [`get_historial_canalizaciones`](../rpcs/get_historial_canalizaciones.md).
 
-```ts
-// Interna
-await supabase.from('derivacion').insert({
-  ficha_id, area_origen_id: miAreaId,
-  destino: 'psicologia', area_destino_id: idAreaPsicologia,
-  motivo: 'Requiere contención emocional',
-});
+| Operación        | RPC                                                                   | Regla                                                                                                                                              |
+| ---------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Alta             | `crear_canalizacion` (`derivacion.gestionar`: Tit, Sub, TS, Psi, Jur) | Valida expediente no archivado, área origen, destino interno vs externo (`otra_institucion`) y mayoría de edad para Psicología/Jurídico (`23514`). |
+| Cambio de estado | `cambiar_estado_derivacion`                                           | Transiciones desde `pendiente` / `en_proceso` / `aceptada`.                                                                                        |
+| Consulta         | `get_derivaciones`, `get_historial_canalizaciones`                    | Filtrado por área/estado o historial completo de la ficha.                                                                                         |
 
-// Externa
-await supabase.from('derivacion').insert({
-  ficha_id, area_origen_id: miAreaId,
-  destino: 'otra_institucion', institucion_id: idDelDirectorio,   // o institucion_otra: 'Nombre'
-  motivo: 'Asesoría laboral',
-});
-```
-
-| Regla (CHECK o trigger) | Error |
-|---|---|
-| Destino interno (`trabajo_social`, `psicologia`, `juridico`) ⇔ lleva `area_destino_id` | `23514` |
-| Interno no lleva `institucion_id` ni `institucion_otra` | `23514` |
-| `otra_institucion` necesita `institucion_id` o `institucion_otra` | `23514` |
-| `area_destino_id` debe corresponder al `destino` | `23514` |
-| Psi/Jur solo para mayores de 18 | `23514` |
-
-Nace `pendiente`. Los cambios de estado van por `cambiar_estado_derivacion`.
+Nace `pendiente`. Cualquier `insert` o `update` directo sobre `derivacion` devuelve `42501`.
