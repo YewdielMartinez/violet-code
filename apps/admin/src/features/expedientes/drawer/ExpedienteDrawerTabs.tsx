@@ -15,7 +15,7 @@ const ALL_TABS: readonly TabDefinition[] = [
   { id: 'agresor', label: 'Persona agresora', icon: 'shield_person', sensitive: true },
   { id: 'documentos', label: 'Documentos', icon: 'folder_open', sensitive: true },
   { id: 'canalizaciones', label: 'Canalizaciones', icon: 'alt_route', sensitive: true },
-  { id: 'ordenes', label: 'Órdenes', icon: 'gavel', sensitive: true },
+  { id: 'ordenes', label: 'Órdenes de Protección', icon: 'gavel', sensitive: true },
   // Dirección también las ve (es parte del acceso sensible); el panel de notas le explica que no aplica.
   { id: 'seguimiento', label: 'Seguimiento', icon: 'timeline', sensitive: true },
   { id: 'notas', label: 'Notas privadas', icon: 'lock', sensitive: true },
