@@ -13,21 +13,10 @@ import { useDocumentTitle } from '@/shared/ui/PageHeader';
 import { ThemeToggleButton } from '@/shared/ui/ThemeToggleButton';
 import { LoginHero } from './LoginHero';
 import { PrivacyNoticeLink } from './PrivacyNoticeLink';
+import { DemoAccessPicker } from './DemoAccessPicker';
+import { DEMO_ACCOUNTS, DEMO_PASSWORD, isDemoLoginEnabled, type DemoAccount } from './demoAccounts';
 
 type LoadingState = 'idle' | 'loading' | 'success' | 'error';
-
-// Solo en desarrollo: cuentas sintéticas sembradas en supabase/seed.sql (Demo1234!).
-const DEMO_ACCOUNTS = import.meta.env.DEV
-  ? [
-      'titular@demo.violetcode.local',
-      'subdireccion@demo.violetcode.local',
-      'trabajo.social@demo.violetcode.local',
-      'psicologia@demo.violetcode.local',
-      'juridico@demo.violetcode.local',
-      'recepcion@demo.violetcode.local',
-      'umeca@demo.violetcode.local',
-    ]
-  : [];
 
 function LoginForm({ formId }: { formId: string }) {
   const navigate = useNavigate();
@@ -38,7 +27,23 @@ function LoginForm({ formId }: { formId: string }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [state, setState] = useState<LoadingState>('idle');
+  const showDemo = isDemoLoginEnabled();
+  // Rol activo: derivado de los valores, así se apaga solo si la persona edita los campos.
+  const demoSelected = showDemo
+    ? DEMO_ACCOUNTS.find((a) => a.email === email && password === DEMO_PASSWORD)
+    : undefined;
   const [error, setError] = useState<string | null>(null);
+
+  /** Rellena correo y contraseña de la cuenta demo y deja el foco en «Entrar» (no envía el formulario). */
+  function fillDemo(account: DemoAccount, form: HTMLFormElement | null) {
+    setEmail(account.email);
+    setPassword(DEMO_PASSWORD);
+    setError(null);
+    const submit = form
+      ? Array.from(form.elements).find((el): el is HTMLButtonElement => el instanceof HTMLButtonElement && el.type === 'submit')
+      : undefined;
+    submit?.focus();
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -74,7 +79,7 @@ function LoginForm({ formId }: { formId: string }) {
       <Dialog.Body>
         <p className="mb-6 text-on-surface-variant">Usa tu correo institucional y tu contraseña personal.</p>
         <form id={formId} onSubmit={onSubmit} className="grid gap-4" noValidate>
-          <label className="mk-field">
+          <label className="mk-field" data-demo-filled={demoSelected ? '' : undefined}>
             <span className="mk-field__label">Correo institucional</span>
             <input
               type="email"
@@ -95,23 +100,21 @@ function LoginForm({ formId }: { formId: string }) {
             onChange={setPassword}
             invalid={Boolean(error)}
             describedBy={error ? errorId : undefined}
+            dataAttrs={demoSelected ? { 'data-demo-filled': '' } : undefined}
           />
 
           <p id={errorId} role="alert" className="min-h-5 text-sm text-error">
             {error}
           </p>
 
-          {DEMO_ACCOUNTS.length > 0 && (
-            <div className="rounded-2xl bg-surface-container px-4 py-3 text-sm text-on-surface-variant">
-              <p className="font-medium text-on-surface">Cuentas de demostración</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {DEMO_ACCOUNTS.map((account) => (
-                  <button key={account} type="button" className="mk-chip" onClick={() => setEmail(account)}>
-                    {account.split('@')[0]}
-                  </button>
-                ))}
-              </div>
-            </div>
+          {showDemo && (
+            <DemoAccessPicker
+              selectedId={demoSelected?.id}
+              onSelect={(account) => {
+                const form = document.getElementById(formId) as HTMLFormElement | null;
+                fillDemo(account, form);
+              }}
+            />
           )}
         </form>
       </Dialog.Body>

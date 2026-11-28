@@ -198,6 +198,32 @@
   transform: scale(0.97);
 }
 
+/* Acceso rápido de demostración del login (chips por rol). */
+.vc-demo-chip {
+  transition:
+    transform 0.14s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.vc-demo-chip:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* Campos rellenados por un chip: anillo tonal sutil, con un pulso breve al aparecer. */
+[data-demo-filled] input {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 7%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary) 35%, transparent);
+  animation: vc-demo-filled 0.7s ease-out;
+}
+
+@keyframes vc-demo-filled {
+  from {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--md-sys-color-primary) 0%, transparent);
+  }
+}
+
 /* Botón de ícono (⋮ del encabezado). */
 .vc-iconbtn {
   display: inline-grid;
@@ -547,6 +573,14 @@ button.vc-iconbtn:hover:not(:disabled) {
   .vc-iconbtn,
   .vc-dlg .mk-button {
     transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .vc-demo-chip {
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  [data-demo-filled] input {
+    animation: none;
   }
 
   .vc-press:active:not(:disabled),

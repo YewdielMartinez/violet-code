@@ -5,4 +5,6 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL: string;
   /** Llave pública (anon/publishable). Nunca la service_role en el navegador. */
   readonly VITE_SUPABASE_ANON_KEY: string;
+  /** `true` muestra el acceso rápido de demostración del login (en `npm run dev` siempre se muestra). Nunca en producción real. */
+  readonly VITE_DEMO_LOGIN?: string;
 }
