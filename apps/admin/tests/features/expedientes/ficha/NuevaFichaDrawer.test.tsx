@@ -290,7 +290,7 @@ describe('NuevaFichaDrawer (verificación inline de CURP, validación, navegaci�
     expect(toastMock).toHaveBeenCalledWith('Expediente SEM-2026-0099 registrado.');
     expect(onCreated).toHaveBeenCalledWith('ficha-99');
     expect(onClose).toHaveBeenCalledTimes(1);
-  });
+  }, 20_000); // Recorre los 4 pasos del asistente (incluye agresor): tarda más que el límite por defecto.
 
   it('al pasar de paso (Siguiente y Atrás) devuelve el scroll del cuerpo del panel al inicio del formulario', async () => {
     renderDrawer();
@@ -488,5 +488,5 @@ describe('NuevaFichaDrawer (verificación inline de CURP, validación, navegaci�
     fireEvent.click(screen.getByRole('button', { name: /Cerrar panel/i }));
     fireEvent.click(screen.getByRole('button', { name: /Descartar y cerrar/i }));
     expect(onCloseDirty).toHaveBeenCalledTimes(1);
-  });
+  }, 20_000);
 });

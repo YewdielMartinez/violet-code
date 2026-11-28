@@ -6,6 +6,9 @@ import {
   distribucionPorSexo,
   distribucionPorTipo,
   filasDelPeriodo,
+  insightPuntos,
+  insightSerie,
+  insightSeguimiento,
   kpisAtenciones,
   kpiTexto,
   resumenDeTotal,
@@ -157,5 +160,38 @@ describe('resúmenes accesibles', () => {
   it('describe una distribución', () => {
     expect(resumenPuntos('Por tipo', distribucionPorTipo(SERIE))).toBe('Por tipo: 17 en total; Terapia es el mayor con 10.');
     expect(resumenPuntos('Por tipo', [])).toBe('Por tipo: sin datos en el periodo.');
+  });
+});
+
+describe('insights de las gráficas', () => {
+  it('insightSerie: variación del último punto contra el anterior, con flecha y texto', () => {
+    expect(insightSerie([10, 20, 22])).toBe('▲ 10 % vs. mes anterior');
+    expect(insightSerie([20, 10])).toBe('▼ 50 % vs. mes anterior');
+    expect(insightSerie([5, 5])).toBe('= Igual que el mes anterior');
+    // Sin base de comparación (anterior 0): diferencia absoluta con signo.
+    expect(insightSerie([0, 7])).toBe('▲ +7 vs. mes anterior');
+    expect(insightSerie([1, 2], 'semana anterior')).toBe('▲ 100 % vs. semana anterior');
+  });
+
+  it('insightSerie: sin dato suficiente no devuelve nada', () => {
+    expect(insightSerie([])).toBeNull();
+    expect(insightSerie([9])).toBeNull();
+    expect(insightSerie([0, 0, 0])).toBeNull();
+  });
+
+  it('insightPuntos: el mayor y su parte del total', () => {
+    expect(
+      insightPuntos([
+        { label: 'Psicología', value: 45 },
+        { label: 'Jurídico', value: 55 },
+      ]),
+    ).toBe('Mayor: Jurídico · 55 %');
+    expect(insightPuntos([])).toBeNull();
+    expect(insightPuntos([{ label: 'A', value: 0 }])).toBeNull();
+  });
+
+  it('insightSeguimiento: parte de las atenciones que son seguimiento', () => {
+    expect(insightSeguimiento([5, 5], [10, 10])).toBe('Seguimiento: 67 % de las atenciones');
+    expect(insightSeguimiento([0], [0])).toBeNull();
   });
 });

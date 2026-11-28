@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { VcDataTable } from '@/shared/ui/table/VcDataTable';
 import { setTableDensity } from '@/shared/ui/table/useTableDensity';
@@ -20,6 +20,18 @@ const ROWS: Fila[] = Array.from({ length: 12 }, (_, i) => ({
 const PILLS = { estado: { tones: { Abierto: 'info', Cerrado: 'success' } } } as const;
 
 describe('VcDataTable', () => {
+  beforeAll(() => {
+    // jsdom no trae ResizeObserver (el kit lo usa para apilar las filas en cajas angostas).
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+  });
+
   afterEach(() => {
     cleanup();
     setTableDensity('regular');
